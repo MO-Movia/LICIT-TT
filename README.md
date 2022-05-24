@@ -35,10 +35,10 @@
 </div>
 <div align="center">
   <h3>
-    <a href="https://github.com/MO-Movia/licit/wiki">Wiki
+    <a href="https://github.com/MO-Movia/licit-tt/wiki">Wiki
     </a>
     <span> | </span>
-    <a href="http://greathints.com/licit">Demo
+    <a href="http://greathints.com/licit-tt">Demo
     </a>
     <span> | </span>
     <a href="https://prosemirror.net/">Based on...
@@ -51,7 +51,7 @@
 ### Getting repository
 
 ```
-git clone https://github.com/MO-Movia/licit.git
+git clone https://github.com/MO-Movia/licit-tt.git
 ```
 ### Install Prerequisite
 ```
