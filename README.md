@@ -24,9 +24,9 @@
 &nbsp;
 <div align="center">
 
-![Build Status](https://github.com/MO-Movia/licit/workflows/build/badge.svg?branch=main)
-![GitHub last commit](https://img.shields.io/github/last-commit/MO-Movia/licit)
-[![codecov](https://codecov.io/gh/MO-Movia/licit/branch/main/graph/badge.svg?token=33EHFUZOGL)](https://codecov.io/gh/MO-Movia/licit)
+![Build Status](https://github.com/MO-Movia/licit-tt/workflows/build/badge.svg?branch=main)
+![GitHub last commit](https://img.shields.io/github/last-commit/MO-Movia/licit-tt)
+[![codecov](https://codecov.io/gh/MO-Movia/licit-tt/branch/main/graph/badge.svg?token=33EHFUZOGL)](https://codecov.io/gh/MO-Movia/licit)
 ![Website](https://img.shields.io/website?down_color=red&down_message=Offline&up_color=green&up_message=Online&url=http://www.greathints.com)
 <!-- ![Dependencies](https://david-dm.org/MO-Movia/licit.svg) -->
 ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)
