@@ -46,6 +46,15 @@
   </h3>
 </div>
 
+## Test Coverage
+
+- **Full HTML report:** [coverage/lcov-report/src/index.html](coverage/lcov-report/src/index.html)
+
+<details>
+  <summary>Quick preview</summary>
+  <img src="coverage/preview.png" alt="Coverage preview" />
+</details>
+
 ## Getting Started
 
 ### Getting repository
