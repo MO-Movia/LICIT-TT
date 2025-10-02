@@ -53,7 +53,7 @@
   <img src="coverage/preview.png" alt="Coverage preview" />
 </details>
 
-## TipTap × Licit Integration — Module Change Log (Client Summary)
+## TipTap × Licit Integration — Module Change Log Summary
 
 | # | Module Repository | Description | Highlights |
 |---:|---|---|---|
