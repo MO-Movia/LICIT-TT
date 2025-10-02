@@ -48,12 +48,31 @@
 
 ## Test Coverage
 
-- **Full HTML report:** [coverage/lcov-report/src/index.html](coverage/lcov-report/src/index.html)
-
-<details>
+<details open>
   <summary>Quick preview</summary>
   <img src="coverage/preview.png" alt="Coverage preview" />
 </details>
+
+## TipTap × Licit Integration — Module Change Log (Client Summary)
+
+| # | Module Repository | Description | Highlights |
+|---:|---|---|---|
+| 1 | https://github.com/MO-Movia/licit | Editor integrated with TipTap & Licit | Broad refactor across editor; adopted shared toolbar module; aligned with theme system |
+| 2 | https://github.com/MO-Movia/licit-plugin-contrib-multimedia | Dark/Light theme support | Theme-aware toolbar icons; new SVG asset loader (`images.ts`); removed legacy icon-font CSS (avoided KNITE conflict) |
+| 3 | https://github.com/MO-Movia/licit-plugin-contrib-export-pdf | Dark/Light theme support | Theme-aware toolbar icons; added `images.ts` |
+| 4 | https://github.com/MO-Movia/licit-plugin-contrib-glossary | Dark/Light theme support | Theme-aware toolbar icons; added `images.ts` |
+| 5 | https://github.com/MO-Movia/licit-ui-commands | UI commands updated for theming | Introduced Theme context & provider; updated `CustomButton`, `PointerSurface`, `TooltipSurface`; CSS refresh (`czi-custom-button.css`, `czi-color-editor.css`) |
+| 6 | https://bitbucket.org/modus-operandi/mo-licit-citation | Dark/Light theme support | Theme-aware toolbar icons; added `images.ts` |
+| 7 | https://github.com/MO-Movia/MO-Movia-licit-plugin-contrib-infoicon | Dark/Light theme support | Theme-aware toolbar icons; added `images.ts` |
+| 8 | https://github.com/MO-Movia/licit-plugin-contrib-change-case | Dark/Light theme support | Theme-aware toolbar icons; added `images.ts` |
+| 9 | https://github.com/MO-Movia/licit-plugin-contrib-styles | Dark/Light theme support | Theme-aware toolbar icons; added `images.ts` |
+| 10 | https://github.com/MO-Movia/licit-plugin-contrib-vignette | Dark/Light theme support | Theme-aware toolbar icons; added `images.ts` |
+| 11 | https://github.com/MO-Movia/lict-toolbar | Standalone toolbar module | New shared toolbar; extracted and consolidated from `licit` and `ui-commands` |
+| 12 | https://github.com/MO-Movia/lict-doc-attrs-step | TipTap alignment | Exposed editor command surface globally to enable TipTap-based commands |
+| 13 | https://github.com/MO-Movia/MO-Movia-licit-plugin-contrib-table-mods | TipTap table alignment | Updated constants and node mapping to TipTap (`table_cell`, `table_row`) |
+| 14 | https://bitbucket.org/modus-operandi/knite-app | TipTap integration | Migrated imports to `@modusoperandi/licit-tiptap`; aligned editor usage across components/services |
+| 15 | https://bitbucket.org/modus-operandi/maw-smart-document | TipTap integration | Migrated imports; reconciled typing differences; temporarily sidelined a few legacy editor APIs pending re-integration |
+| 16 | https://bitbucket.org/modus-operandi/blade-editor | TipTap integration | Updated to new runtime/Editor components; normalized `Licit` typing; noted one minor handler to revisit (`goToEnd`) |
 
 ## Getting Started
 
