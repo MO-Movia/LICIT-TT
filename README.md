@@ -62,7 +62,7 @@
 | 3 | https://github.com/MO-Movia/licit-plugin-contrib-export-pdf | Changes done for Dark/Light Theme | Theme-aware toolbar icons<br>Added `images.ts` loader |
 | 4 | https://github.com/MO-Movia/licit-plugin-contrib-glossary | Changes done for Dark/Light Theme | Theme-aware toolbar icons<br>Added `images.ts` loader |
 | 5 | https://github.com/MO-Movia/licit-ui-commands | Changes done for Dark/Light Theme | Introduced Theme context/provider (`contextProvider.tsx`)<br>Updated `CustomButton.tsx`, `PointerSurface.tsx`, `TooltipSurface.tsx`<br>`index.ts` now exports the Theme provider<br>CSS refresh: `czi-custom-button.css`, `czi-color-editor.css` |
-| 6 | https://bitbucket.org/modus-operandi/mo-licit-citation | Changes done for Dark/Light Theme | Theme-aware toolbar icons (`CitationPlugin.ts`)<br>Added `images.ts` loader |
+| 6 | https://github.com/MO-Movia/licit-citation | Changes done for Dark/Light Theme | Theme-aware toolbar icons (`CitationPlugin.ts`)<br>Added `images.ts` loader |
 | 7 | https://github.com/MO-Movia/MO-Movia-licit-plugin-contrib-infoicon | Changes done for Dark/Light Theme | Theme-aware toolbar icons (`infoIconPlugin.ts`)<br>Added `images.ts` loader |
 | 8 | https://github.com/MO-Movia/licit-plugin-contrib-change-case | Changes done for Dark/Light Theme | Theme-aware toolbar icons (`changeCasePlugin.ts`)<br>Added `images.ts` loader |
 | 9 | https://github.com/MO-Movia/licit-plugin-contrib-styles | Changes done for Dark/Light Theme | `CustomMenuButton.tsx` imports Theme Context from `ui-commands`<br>`CustomStyleSubMenu.tsx` theme updates<br>`CustomMenuUI.tsx` theme updates |
@@ -73,6 +73,25 @@
 | 14 | https://bitbucket.org/modus-operandi/knite-app | Changes done for Tip-tap | Migrated Licit imports to `@modusoperandi/licit-tiptap` across app components/services<br>**Angular workspace update:** added `assets` entries for package SVGs → `assets/images` (`@modusoperandi/licit-tiptap`, `@modusoperandi/licit-multimedia`, `@modusoperandi/licit-vignette`) |
 | 15 | https://bitbucket.org/modus-operandi/maw-smart-document | Changes done for Tip-tap | Updated imports to `import { Licit } from '@modusoperandi/licit-tiptap'` in `document-page.component.ts`, `editor.component.ts`, `editor.service.ts`<br>Replaced `typeof Licit` usage with exported `Licit` type<br>Temporarily commented legacy editor service APIs: `exportPDF()`, `exportJSON()`, `docHighlight()`, `pageLayout()`, `insertReference()` (pending re-integration) |
 | 16 | https://bitbucket.org/modus-operandi/blade-editor | Changes done for Tip-tap | Updated to new runtime/editor components (`editor-runtime.ts`, `editor.component.ts`, `runtime.service.ts` → `@modusoperandi/licit-tiptap`)<br>Switched to public `Licit` type<br>Noted follow-up: `onComponentClick().goToEnd()` pending fix |
+
+## TipTap × Licit Integration — Known Issues
+
+| #  | Issue / Observation | Description | Plugin / Module |
+|----|----------------------|--------------|-----------------|
+| 1  | **Table – Split Row** | The “Split Row” option only works when multiple cells are merged. It should be disabled when not applicable. | Table Mods |
+| 2  | **Vignette Resizing** | When a vignette has only one line, the right-side resize bar is obstructed by a button, and the left side can’t be grabbed for resizing. | Vignette |
+| 3  | **Info Icon Placement** | The Info Icon should attach to the end of the selected word even if the cursor is placed in the middle of the word. | Info Icon |
+| 4  | **Justification Dropdown Indicator** | The Justification control should visually indicate it’s a dropdown menu. | Toolbar |
+| 5  | **Vignette Insertion Cursor** | After inserting a vignette, the cursor is not placed inside it automatically. | Vignette |
+| 6  | **Indent More – Failure** | The “Indent More” action occasionally fails with an error: “Indentation adjustment could not be applied.” | Styles |
+| 7  | **Page Layout Button** | The Page Layout option still appears in the toolbar; it has now been moved to KNITE and should be removed here. | Toolbar |
+| 8  | **Tiptap Editor – Performance Slowdown** | Noticeable lag when typing or editing content copied from KNITE (e.g., long documents). | Licit |
+| 9  | **Toolbar Tooltips** | Tooltips are not displayed for disabled toolbar items. | Toolbar |
+| 10 | **Glossary Hover Behavior** | When hovering over glossary text, the next paragraph shifts and edit/delete icons are misaligned. | Glossary |
+| 11 | **Paste Behavior** | After pasting, the cursor jumps to the next line instead of staying in place. | Licit |
+| 12 | **Numbering – Tab Indent Issue** | Using the Tab key for indentation displays numbering incorrectly (e.g., “2” instead of “1.1”); toolbar indentation works correctly. | Styles |
+| 13 | **Fill/Border Color Not Applied** | Fill or border color can be selected from the palette but doesn’t apply visually. | Styles |
+
 
 
 ## Getting Started
