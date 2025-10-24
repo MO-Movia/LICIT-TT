@@ -48,6 +48,13 @@
   </h3>
 </div>
 
+## Overall Status
+
+<details open>
+  <summary>Quick preview</summary>
+  <img src="status/preview.png" alt="Status preview" />
+</details>
+
 ## Test Coverage
 
 <details open>
