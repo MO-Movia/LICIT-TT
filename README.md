@@ -31,6 +31,8 @@
 <!-- ![Dependencies](https://david-dm.org/MO-Movia/licit.svg) -->
 ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Demo](https://img.shields.io/badge/demo-open-blue)](http://88.99.193.94:8085/licit-tiptap-v3/)
+
 
 </div>
 <div align="center">
