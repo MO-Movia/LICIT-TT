@@ -1,0 +1,37 @@
+.czi-editor-frameset .molm-czi-image-url-editor {
+  background: #fff;
+  box-shadow: var(--czi-overlay-shadow);
+  font-family: var(--czi-font-family);
+  font-size: var(--czi-font-size);
+  padding: 4px 10px;
+}
+
+.czi-editor-frameset .molm-czi-image-url-editor .molm-czi-form {
+  max-width: 90vw;
+  min-width: 40vw;
+  width: 500px;
+}
+
+.czi-editor-frameset .molm-czi-image-url-editor-src-input-row {
+  position: relative;
+}
+
+.czi-editor-frameset .molm-czi-image-url-editor-src-input-row input {
+  padding-right: 40px;
+  border: var(--czi-border-grey) !important;
+}
+
+.czi-editor-frameset .molm-czi-image-url-editor-input-preview {
+  background-color: #fff;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  border: solid 1px #fff;
+  bottom: 1px;
+  box-sizing: border-box;
+  outline: var(--czi-border-blue);
+  position: absolute;
+  right: 0;
+  top: 2px;
+  width: 36px;
+}

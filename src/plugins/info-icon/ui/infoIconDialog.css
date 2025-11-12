@@ -1,0 +1,123 @@
+.czi-editor-frameset .molinfo-infoContainer {
+  background: var(--czi-bg);
+  border-color: #e8b415;
+  border-style: solid;
+  border-width: 2px;
+  box-sizing: border-box !important;
+  color: var(--czi-text-color);
+  font-family: Arial, sans-serif;
+  height: 438px;
+  overflow: hidden;
+  position: relative;
+  width: 510px;
+}
+
+.czi-editor-frameset .molinfo-info-head {
+  box-sizing: unset !important;
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  height: 27px;
+  margin-left: 2px;
+  padding: 10px;
+  color: var(--czi-text-color);
+  text-align: left;
+}
+
+.czi-editor-frameset .molinfo-info-body {
+  background: transparent;
+  padding: 10px;
+  color: var(--czi-text-color);
+}
+
+.czi-editor-frameset .molinfo-info-close {
+  float: right;
+  border: none;
+  background: none;
+  font-size: 18px;
+  color: grey;
+}
+
+.czi-editor-frameset .molinfo-divider {
+  border-bottom: 2px solid #e8b415;
+  margin: 0 10px;
+}
+
+.czi-editor-frameset .molinfo-icon-container {
+  height: 3rem;
+  border: 1px solid #e8b415;
+  margin: 5px 0;
+  background-color: white;
+}
+
+.czi-editor-frameset .molinfo-dot-container {
+  float: right;
+  width: 10%;
+}
+
+.czi-editor-frameset .molinfo-dot-container > i {
+  float: right;
+  padding-right: 5px;
+  padding-top: 3px;
+  color: black;
+}
+
+.czi-editor-frameset .molinfo-icon-list {
+  float: left;
+  width: 85%;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  height: 3rem;
+}
+
+.czi-editor-frameset .molinfo-display-t {
+  padding: 5px 0;
+}
+
+.molinfo-editor-container .ProseMirror {
+  min-height: 12rem !important;
+  max-height: 12rem !important;
+  overflow-y: scroll;
+}
+
+.molinfo-insert-container {
+  float: right;
+  margin-top: 0.5rem;
+}
+
+.molinfo-insert-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  background-color: #e8b415;
+}
+
+.molinfo-icon-list-div {
+  padding: 5px;
+}
+
+.molinfo-icon-list-div i {
+  padding: 4px 7px;
+  cursor: pointer;
+}
+
+.molinfo-icon-active {
+  border: 3px solid #e8b415;
+}
+
+.icon-control-cont {
+  padding: 2px;
+  border: solid 2px #e8b415;
+  margin-top: 1.5rem;
+  margin-left: -50px;
+  position: fixed;
+  background: var(--czi-bg);
+  z-index: 9999;
+}
+
+.icon-control-cont > button {
+  margin: 4px;
+  width: 81px;
+  display: block;
+}

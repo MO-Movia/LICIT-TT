@@ -1,0 +1,99 @@
+{
+  "compilerOptions": {
+    "strict": false,
+    "jsx": "react",
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "lib": [
+      "ES2022",
+      "dom"
+    ],
+    "outDir": "dist",
+    "pretty": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "tsBuildInfoFile": "./node_modules/build.tsbuildinfo",
+    "paths": {
+      "@modusoperandi/licit": [
+        "./src/licit"
+      ],
+      "@modusoperandi/licit-doc-attrs-step": [
+        "./src/core"
+      ],
+      "@modusoperandi/licit-ui-commands": [
+        "./src/commands"
+      ],
+      "@modusoperandi/licit-contrib-plugin-block-control": [
+        "./src/plugins/block-control"
+      ],
+      "@modusoperandi/licit-changecase": [
+        "./src/plugins/change-case"
+      ],
+      "@modusoperandi/licit-citation": [
+        "./src/plugins/citation"
+      ],
+      "@modusoperandi/licit-rich-copy-embed-images": [
+        "./src/plugins/copy-images"
+      ],
+      "@modusoperandi/licit-custom-styles": [
+        "./src/plugins/custom-styles"
+      ],
+      "@modusoperandi/licit-export-pdf": [
+        "./src/plugins/export-pdf"
+      ],
+      "@modusoperandi/licit-glossary": [
+        "./src/plugins/glossary"
+      ],
+      "@modusoperandi/licit-plugin-highlight": [
+        "./src/plugins/highlight"
+      ],
+      "@modusoperandi/licit-info-icon": [
+        "./src/plugins/info-icon"
+      ],
+      "@modusoperandi/licit-multimedia": [
+        "./src/plugins/multimedia"
+      ],
+      "@modusoperandi/licit-object-id": [
+        "./src/plugins/object-id"
+      ],
+      "@modusoperandi/licit-paste-json": [
+        "./src/plugins/paste-json"
+      ],
+      "@modusoperandi/licit-vignette": [
+        "./src/plugins/vignette"
+      ],
+      /** These need to be swapped in code
+      "prosemirror-state": [
+        "@tiptap/pm/state"
+      ],
+      "prosemirror-model": [
+        "@tiptap/pm/model"
+      ],
+      "prosemirror-view": [
+        "@tiptap/pm/view"
+      ],
+      "prosemirror-transform": [
+        "@tiptap/pm/transform"
+      ],
+      "prosemirror-inputrules": [
+        "@tiptap/pm/inputrules"
+      ],
+      "prosemirror-tables": [
+        "@tiptap/pm/tables"
+      ],
+      "prosemirror-commands": [
+        "@tiptap/pm/commands"
+      ]
+      */
+    }
+  },
+  "typeAcquisition": {
+    "enable": true
+  },
+  "exclude": [
+    "node_modules"
+  ],
+}

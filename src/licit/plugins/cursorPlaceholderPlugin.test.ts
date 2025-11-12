@@ -1,0 +1,150 @@
+import {
+  EditorState,
+  PluginKey,
+  TextSelection,
+  Transaction,
+} from 'prosemirror-state';
+import {Schema, DOMParser} from 'prosemirror-model';
+import {EditorView} from 'prosemirror-view';
+import {schema as basicSchema} from 'prosemirror-schema-basic';
+import CursorPlaceholderPlugin, {
+  showCursorPlaceholder,
+  hideCursorPlaceholder,
+  findCursorPlaceholderPos,
+  // resetSingletonInstance,
+} from './cursorPlaceholderPlugin';
+import {SPEC} from './cursorPlaceholderPlugin'; // Ensure SPEC is exported
+
+describe('CursorPlaceholderPlugin', () => {
+  let state;
+  let view: EditorView;
+  let plugin: PluginKey<any>;
+
+  const createEditorState = () => {
+    const doc = basicSchema.node('doc', null, [
+      basicSchema.node('paragraph', null, basicSchema.text('Hello World')),
+    ]);
+
+    return EditorState.create({
+      doc,
+      schema: basicSchema,
+      plugins: [new CursorPlaceholderPlugin()],
+    });
+  };
+
+  beforeEach(() => {
+
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+
+    state = createEditorState();
+
+    view = new EditorView(div, {
+      state,
+    });
+
+    // Use PluginKey from SPEC
+    plugin = SPEC.key;
+  });
+
+  afterEach(() => {
+    view.destroy();
+  });
+
+  test('should initialize with an empty DecorationSet', () => {
+    const pluginState = plugin.getState(view.state);
+    expect(pluginState).not.toBeUndefined();
+    expect(pluginState).toBeInstanceOf(Object);
+    expect(pluginState.find().length).toBe(0);
+  });
+
+  test('should add a cursor placeholder', () => {
+    const tr = showCursorPlaceholder(view.state);
+    view.dispatch(tr as unknown as Transaction);
+
+    const pos = findCursorPlaceholderPos(view.state);
+    expect(pos).not.toBeNull();
+
+    const pluginState = plugin.getState(view.state);
+    const decorations = pluginState.find();
+    expect(decorations.length).toBe(1);
+    expect(decorations[0].spec.id.name).toBe('CursorPlaceholderPlugin');
+  });
+
+  test('should remove a cursor placeholder', () => {
+    let tr = showCursorPlaceholder(view.state);
+    view.dispatch(tr as unknown as Transaction);
+
+    tr = hideCursorPlaceholder(view.state);
+    view.dispatch(tr as unknown as Transaction);
+
+    const pos = findCursorPlaceholderPos(view.state);
+    expect(pos).toBeNull();
+
+    const pluginState = plugin.getState(view.state);
+    const decorations = pluginState.find();
+    expect(decorations.length).toBe(0);
+  });
+
+  test('should not add a placeholder if one already exists', () => {
+    let tr = showCursorPlaceholder(view.state);
+    view.dispatch(tr as unknown as Transaction);
+
+    const initialPos = findCursorPlaceholderPos(view.state);
+    expect(initialPos).not.toBeNull();
+
+    // Attempt to add another placeholder
+    tr = showCursorPlaceholder(view.state);
+    view.dispatch(tr as unknown as Transaction);
+
+    const finalPos = findCursorPlaceholderPos(view.state);
+    expect(finalPos).toBe(initialPos);
+
+    const pluginState = plugin.getState(view.state);
+    const decorations = pluginState.find();
+    expect(decorations.length).toBe(1);
+  });
+
+test('should handle selection changes correctly', () => {
+  const { doc } = view.state;
+  const tr = view.state.tr.setSelection(TextSelection.create(doc, 1, 1));
+  view.dispatch(tr);
+
+  const newTr = showCursorPlaceholder(view.state);
+  view.dispatch(newTr as unknown as Transaction);
+
+  const pos = findCursorPlaceholderPos(view.state);
+
+  expect(pos).not.toBeNull();
+});
+
+  test('should return null if singletonInstance is not initialized', () => {
+    const pos = findCursorPlaceholderPos(view.state);
+    expect(pos).toBeNull();
+  });
+  test('should replace selection with placeholder if selection is not empty', () => {
+    const {doc} = view.state;
+
+    //  Ensure there's at least one node in the document
+    expect(doc.childCount).toBeGreaterThan(0);
+    const paragraph = doc.firstChild;
+    expect(paragraph).not.toBeNull();
+    expect(paragraph!.type.name).toBe('paragraph');
+
+    // Calculate a safe range inside the paragraph
+    const endPos = Math.min(5, paragraph!.content.size);
+
+    //  Create a non-empty text selection
+    const tr = view.state.tr.setSelection(TextSelection.create(doc, 1, endPos));
+    view.dispatch(tr);
+
+    // Call your function (returns Transform)
+    const newTr = showCursorPlaceholder(view.state);
+
+    // TypeScript fix: treat it as a Transaction for the test
+    const tx = newTr as unknown as Transaction;
+
+    //  Verify transformation happened
+    expect(tx.steps.length).toBeGreaterThan(0);
+  });
+});

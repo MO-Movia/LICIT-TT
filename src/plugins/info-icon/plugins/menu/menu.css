@@ -1,0 +1,25 @@
+.ProseMirror-menubar {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 4px;
+}
+
+.ProseMirror-menuitem {
+  padding: 4px;
+}
+
+.ProseMirror-menuitem:hover {
+  background: #ddd;
+}
+
+.ProseMirror-menuitem > div:not(.ProseMirror-icon) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0 8px;
+}

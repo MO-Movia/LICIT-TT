@@ -1,0 +1,85 @@
+.enhanced-table-figure.landscape {
+  margin: 0 auto;
+}
+
+.enhanced-table-figure-notes {
+  padding: 5px;
+  border: 1px solid #333;
+}
+
+.enhanced-table-figure-capco {
+  padding: 5px;
+  font-size: 18px;
+  color: green;
+}
+
+/* Style for the Add Notes button inside the control */
+.enhanced-table-figure-add-notes {
+  font-size: 10px;
+  padding: 2px 5px;
+  cursor: pointer;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+/* Enhanced Table Figure Container */
+.enhanced-table-figure {
+  padding: 0;
+  margin: 0;
+  border: 2px solid black;
+  /* Default width: use portrait width or a fixed value; for example: */
+  width: 100%;
+  /* adjust as needed for your document's portrait width */
+  overflow-x: auto;
+  /* allow horizontal scrolling if content exceeds width */
+}
+
+/* When maximized, span the full viewport width */
+.enhanced-table-figure.maximized {
+  width: 100vw;
+  margin: 0;
+}
+
+/* Remove spacing inside the content area */
+.enhanced-table-figure-content {
+  padding: 0;
+  margin: 0;
+}
+
+/* Style for the selection handle */
+.enhanced-table-figure-select-handle {
+  font-size: 12px;
+  color: #333;
+  background: #ccc;
+  padding: 2px 4px;
+  border-radius: 3px;
+  user-select: none;
+}
+
+/* Style for the maximize toggle button */
+.enhanced-table-figure-maximize-button {
+  font-size: 12px;
+  color: #333;
+  background: #ccc;
+  padding: 2px 4px;
+  border-radius: 3px;
+  user-select: none;
+}
+
+.has-hover-handle .handle-hidden-on-hover {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.prosemirror-editor-wrapper:not(.readOnly)
+  .has-hover-handle:hover
+  .handle-hidden-on-hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ProseMirror[contenteditable="false"] .enhanced-table-figure-capco {
+  display: none !important;
+}

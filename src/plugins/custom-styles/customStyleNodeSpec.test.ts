@@ -1,0 +1,1017 @@
+import {
+  toCustomStyleDOM,
+  getCustomStyleAttrs,
+  countersRefresh,
+  getDetailsBullet,
+} from './CustomStyleNodeSpec';
+import * as customstyle from './customStyle';
+import { Node, DOMOutputSpec } from 'prosemirror-model';
+
+describe('getAttrs', () => {
+  const base = () => {
+    return { attrs: { styleName: '' } };
+  };
+  const dom = document.createElement('div');
+  dom.setAttribute('styleName', 'test_styles');
+
+  jest.spyOn(document, 'getElementById').mockReturnValue(dom);
+  it('should handle getAttrs', () => {
+    expect(getCustomStyleAttrs(base, dom)).toStrictEqual({
+      attrs: {
+        styleName: '',
+      },
+      styleName: 'test_styles',
+    });
+  });
+});
+describe('toCustomStyleDOM', () => {
+  const base = () => {
+    return ['span', { styleName: '' }] as unknown as DOMOutputSpec;
+  };
+
+  it('should handle toCustomStyleDOM ', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        hasBullet: true,
+        bulletLevel: '25CF',
+        styleLevel: 1,
+        paragraphSpacingBefore: '10',
+        paragraphSpacingAfter: '10',
+        strong: true,
+        boldNumbering: true,
+        em: true,
+        color: 'blue',
+        fontSize: '10',
+        fontName: 'Tahoma',
+        indent: '10',
+        hasNumbering: true,
+        isList: true,
+        indentPosition: '1.5',
+        isHangingIndentapplied: true,
+      },
+      styleName: '',
+    });
+    //const base = undefined
+
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: 'right',
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'FS_B01',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-bullet-color': '#000000',
+        'data-bullet-symbol': '● ',
+        'data-indent': '10',
+        'data-show-bullet': true,
+        indentPosition: '1.5',
+        'list-style-level': 1,
+        // 'hide-style-level': false,
+        style:
+          'text-align: right;line-height: 16pt;--czi-content-line-height: 16pt;--hangingIndentMargin: 144px;margin-bottom: 10pt !important;margin-top: 10pt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: blue;font-size: 10pt;font-family: Tahoma;counter-increment: L1 ;',
+        styleName: 'FS_B01',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when hasnumbering false', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        hasBullet: true,
+        bulletLevel: '25CF',
+        styleLevel: 1,
+        paragraphSpacingBefore: '10',
+        paragraphSpacingAfter: '10',
+        strong: true,
+        boldNumbering: true,
+        em: true,
+        color: 'blue',
+        fontSize: '10',
+        fontName: 'Tahoma',
+        indent: '10',
+        hasNumbering: false,
+      },
+      styleName: '',
+    });
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: 'right',
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'FS_B01',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-bullet-color': '#000000',
+        'data-bullet-symbol': '● ',
+        'data-indent': '10',
+        'data-show-bullet': true,
+        style:
+          'text-align: right;line-height: 16pt;--czi-content-line-height: 16pt;margin-bottom: 10pt !important;margin-top: 10pt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: blue;font-size: 10pt;font-family: Tahoma;',
+        styleName: 'FS_B01',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when styleName includes(RESERVED_STYLE_NONE_NUMBERING)', () => {
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: 'right',
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: '10Normal-@#$-10',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-bullet-color': '#000000',
+        'data-bullet-symbol': '● ',
+        'data-indent': '10',
+        'data-show-bullet': true,
+        style:
+          'text-align: right;line-height: 16pt;--czi-content-line-height: 16pt;margin-bottom: 10pt !important;margin-top: 10pt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: blue;font-size: 10pt;font-family: Tahoma;',
+        styleName: '10Normal-@#$-10',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when  hasBullet: false', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        hasBullet: false,
+        bulletLevel: '25CF',
+        styleLevel: 1,
+        paragraphSpacingBefore: 'null',
+        paragraphSpacingAfter: 'null',
+        strong: true,
+        boldNumbering: true,
+        em: true,
+        color: 'null',
+        fontSize: 'null',
+        fontName: 'null',
+        indent: 'null',
+        hasNumbering: true,
+        align: 'null',
+      },
+      styleName: '',
+    });
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'FS_B01',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-indent': 'null',
+        'data-style-level': '1',
+        'hide-style-level': false,
+        style:
+          'line-height: 16pt;--czi-content-line-height: 16pt;text-align: null;margin-bottom: nullpt !important;margin-top: nullpt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: null;font-size: nullpt;font-family: null;counter-increment: C1 ;',
+        styleName: 'FS_B01',
+      },
+    ]);
+  });
+
+  it('should handle toCustomStyleDOM when  hasBullet: false', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        hasBullet: true,
+        bulletLevel: '25CF1',
+        styleLevel: 1,
+        paragraphSpacingBefore: 'null',
+        paragraphSpacingAfter: 'null',
+        strong: true,
+        boldNumbering: true,
+        em: true,
+        color: 'null',
+        fontSize: 'null',
+        fontName: 'null',
+        indent: 'null',
+        hasNumbering: true,
+        align: 'null',
+      },
+      styleName: '',
+    });
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'FS_B01',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-indent': 'null',
+        'data-style-level': '1',
+        'hide-style-level': false,
+        style:
+          'line-height: 16pt;--czi-content-line-height: 16pt;text-align: null;margin-bottom: nullpt !important;margin-top: nullpt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: null;font-size: nullpt;font-family: null;',
+        styleName: 'FS_B01',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when  styleLevel: null', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        hasBullet: false,
+        bulletLevel: '25CF',
+        styleLevel: 10,
+        paragraphSpacingBefore: 'null',
+        paragraphSpacingAfter: 'null',
+        strong: true,
+        boldNumbering: true,
+        em: true,
+        color: 'null',
+        fontSize: 'null',
+        fontName: 'null',
+        indent: 'null',
+        hasNumbering: true,
+        align: 'null',
+      },
+      styleName: '',
+    });
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: null,
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        style: 'line-height: 16pt;--czi-content-line-height: 16pt;',
+        styleName: null,
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when  styleName: test', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        hasBullet: false,
+        bulletLevel: '25CF',
+        styleLevel: 10,
+        paragraphSpacingBefore: 'null',
+        paragraphSpacingAfter: 'null',
+        strong: true,
+        boldNumbering: true,
+        em: true,
+        color: 'null',
+        fontSize: 'null',
+        fontName: 'null',
+        indent: 'null',
+        hasNumbering: true,
+        align: 'null',
+      },
+      styleName: '',
+    });
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'test',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-indent': 'null',
+        'data-style-level': '10',
+        'hide-style-level': false,
+        style:
+          'line-height: 16pt;--czi-content-line-height: 16pt;text-align: null;margin-bottom: nullpt !important;margin-top: nullpt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: null;font-size: nullpt;font-family: null;counter-increment: C2 C3 C4 C5 C6 C7 C8 C9 C10 ;',
+        styleName: 'test',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when  styleprops null', () => {
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'test',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-indent': 'null',
+        'data-style-level': '10',
+        'hide-style-level': false,
+        style:
+          'line-height: 16pt;--czi-content-line-height: 16pt;text-align: null;margin-bottom: nullpt !important;margin-top: nullpt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: null;font-size: nullpt;font-family: null;',
+        styleName: 'test',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when  styleprops null and stylename has reservedStylenumbering and no styleLvel', () => {
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: '10Normal-@#$-',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-indent': 'null',
+        'data-style-level': '10',
+        'hide-style-level': false,
+        style:
+          'line-height: 16pt;--czi-content-line-height: 16pt;text-align: null;margin-bottom: nullpt !important;margin-top: nullpt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: null;font-size: nullpt;font-family: null;',
+        styleName: '10Normal-@#$-',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when  styleprops null and stylename has reservedStylenumbering and no styleLvel and 2 not equal to indices.length', () => {
+    // const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'Normal-@#$-Normal-@#$-Normal-@#$-',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-indent': 'null',
+        'data-style-level': '10',
+        'hide-style-level': false,
+        style:
+          'line-height: 16pt;--czi-content-line-height: 16pt;text-align: null;margin-bottom: nullpt !important;margin-top: nullpt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: null;font-size: nullpt;font-family: null;',
+        styleName: 'Normal-@#$-Normal-@#$-Normal-@#$-',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when lineSpacing is null', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        hasBullet: true,
+        bulletLevel: '25CF',
+        styleLevel: 1,
+        paragraphSpacingBefore: '10',
+        paragraphSpacingAfter: '10',
+        strong: true,
+        boldNumbering: true,
+        em: true,
+        color: 'blue',
+        fontSize: '10',
+        fontName: 'Tahoma',
+        indent: '10',
+        hasNumbering: true,
+      },
+      styleName: '',
+    });
+    //const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: 'right',
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: null,
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'FS_B01',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-bullet-color': '#000000',
+        'data-bullet-symbol': '● ',
+        'data-indent': '10',
+        'data-show-bullet': true,
+        'data-style-level': '1',
+        'hide-style-level': false,
+        style:
+          'text-align: right;margin-bottom: 10pt !important;margin-top: 10pt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: blue;font-size: 10pt;font-family: Tahoma;',
+        styleName: 'FS_B01',
+      },
+    ]);
+  });
+  it('should handle toCustomStyleDOM when align null', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        hasBullet: true,
+        bulletLevel: '25CF',
+        styleLevel: 1,
+        paragraphSpacingBefore: '10',
+        paragraphSpacingAfter: '10',
+        strong: true,
+        boldNumbering: true,
+        em: true,
+        color: 'blue',
+        fontSize: '10',
+        fontName: 'Tahoma',
+        indent: '10',
+        hasNumbering: true,
+        align: 'left',
+      },
+      styleName: '',
+    });
+    // const base = undefined;
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        color: null,
+        id: null,
+        indent: null,
+        lineSpacing: '16pt',
+        paddingBottom: null,
+        paddingTop: null,
+        capco: null,
+        styleName: 'FS_B01',
+      },
+      content: [
+        {
+          type: 'text',
+          marks: [
+            { type: 'mark-font-size', attrs: { pt: 11, overridden: false } },
+            {
+              type: 'mark-font-type',
+              attrs: { name: 'Arial', overridden: false },
+            },
+            {
+              type: 'mark-text-color',
+              attrs: { color: '#3b0df2', overridden: false },
+            },
+          ],
+          text: 'g',
+        },
+      ],
+    };
+    expect(toCustomStyleDOM(base, node as unknown as Node)).toStrictEqual([
+      'span',
+      {
+        'data-bullet-color': '#000000',
+        'data-bullet-symbol': '● ',
+        'data-indent': '10',
+        'data-show-bullet': true,
+        'data-style-level': '1',
+        'hide-style-level': false,
+        style:
+          'line-height: 16pt;--czi-content-line-height: 16pt;text-align: left;margin-bottom: 10pt !important;margin-top: 10pt !important;font-weight: bold; --czi-counter-bold: bold;font-style: italic;color: blue;font-size: 10pt;font-family: Tahoma;',
+
+        styleName: 'FS_B01',
+      },
+    ]);
+  });
+
+  it('should reset list style counters in window variables', () => {
+    const styleLevel = 3;
+    const isListStyle = true;
+    window['set-cust-list-style-counter-1'] = false;
+    window['set-cust-list-style-counter-2'] = false;
+    const result = countersRefresh(styleLevel, isListStyle);
+    expect(result).toBe('counter-increment: L1 L2 L3 ;');
+    expect(window['set-cust-list-style-counter-1']).toBe(true);
+    expect(window['set-cust-list-style-counter-2']).toBe(true);
+  });
+});
+
+  const base = () => {
+    return ['span', { styleName: '' }] as unknown as DOMOutputSpec;
+  };
+
+  describe('toCustomStyleDOM - overriddenIndent branch', () => {
+    it('should handle overriddenIndent when attrs.overriddenIndent is true', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue(null);
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          overriddenIndent: true,
+          overriddenIndentValue: 25,
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['data-indent']).toBe('25');
+    });
+
+    it('should handle indentOverriden when overriddenIndent is false and indentOverriden is not empty', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          indent: '15',
+          styleLevel: 0,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          overriddenIndent: false,
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['data-indent']).toBe(undefined);
+    });
+
+    it('should not add indent attribute when both conditions are false', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          indent: '',
+          styleLevel: 0,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          overriddenIndent: false,
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['data-indent']).toBeUndefined();
+    });
+  });
+
+  describe('toCustomStyleDOM - prefix, tot, tof, hideNumbering branches', () => {
+    it('should handle prefix attribute', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          prefixValue: 'Chapter ',
+          styleLevel: 1,
+          hasNumbering: true,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['prefix']).toBe('Chapter ');
+    });
+
+    it('should handle tot attribute', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          tot: true,
+          styleLevel: 1,
+          hasNumbering: true,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['tot']).toBe(true);
+    });
+
+    it('should handle tof attribute', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          tof: true,
+          styleLevel: 1,
+          hasNumbering: true,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['tof']).toBe(true);
+    });
+
+    it('should handle hideNumbering attribute', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          hideNumbering: true,
+          styleLevel: 1,
+          hasNumbering: true,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['hideNumbering']).toBe(true);
+    });
+  });
+
+  describe('toCustomStyleDOM - list-style-level with node.attrs.indent', () => {
+    it('should use node.attrs.indent when available for list styles', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          styleLevel: 2,
+          isList: true,
+          hasNumbering: true,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          indent: 3, // This should be used
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['list-style-level']).toBe(4); // indent + 1
+    });
+  });
+
+  describe('toCustomStyleDOM - bulletDetails without symbol', () => {
+    it('should not add bullet attributes when symbol is empty', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          hasBullet: true,
+          bulletLevel: 'INVALID_CODE', // This won't match any bullet
+          styleLevel: 1,
+          hasNumbering: true,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['data-bullet-symbol']).toBeUndefined();
+      expect(result[1]['data-show-bullet']).toBeUndefined();
+    });
+  });
+
+  describe('getDetailsBullet', () => {
+    it('should return bullet details for valid code 25CF', () => {
+      const result = getDetailsBullet('25CF');
+      expect(result).toEqual({ symbol: '● ', color: '#000000' });
+    });
+
+    it('should return bullet details for valid code 25CB', () => {
+      const result = getDetailsBullet('25CB');
+      expect(result).toEqual({ symbol: '○ ', color: '#000000' });
+    });
+
+    it('should return bullet details for valid code 2B9A', () => {
+      const result = getDetailsBullet('2B9A');
+      expect(result).toEqual({ symbol: '⮚ ', color: '#000000' });
+    });
+
+    it('should return bullet details for valid code 2713', () => {
+      const result = getDetailsBullet('2713');
+      expect(result).toEqual({ symbol: '✓ ', color: '#000000' });
+    });
+
+    it('should return bullet details for valid code 272A', () => {
+      const result = getDetailsBullet('272A');
+      expect(result).toEqual({ symbol: '✪ ', color: '#0000FF' });
+    });
+
+    it('should return bullet details for valid code 272A272A', () => {
+      const result = getDetailsBullet('272A272A');
+      expect(result).toEqual({ symbol: '✪✪ ', color: '#0000FF' });
+    });
+
+    it('should return empty bullet details for invalid code', () => {
+      const result = getDetailsBullet('INVALID');
+      expect(result).toEqual({ symbol: '', color: '' });
+    });
+  });
