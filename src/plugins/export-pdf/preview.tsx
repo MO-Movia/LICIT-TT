@@ -1,8 +1,11 @@
 import React from 'react';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import { Previewer, registerHandlers, registeredHandlers } from 'pagedjs';
 import { PDFHandler } from './handlers';
-import { createPopUp, atViewportCenter } from '@modusoperandi/licit-ui-commands';
+import {
+  createPopUp,
+  atViewportCenter,
+} from '@modusoperandi/licit-ui-commands';
 import { Loader } from './loader';
 import {
   SectionNodeStructure,
@@ -14,7 +17,7 @@ import {
   buildListOfIdsToRemove,
   buildListOfIdsToAdd,
 } from './utils/document-section-utils';
-import { Node } from 'prosemirror-model';
+import { Node } from '@tiptap/pm/model';
 import {
   DocumentStyle,
   getTableStyles,
@@ -129,10 +132,9 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     PDFHandler.state.isOnLoad = true;
     paged.preview(data1, [], divContainer).then(() => {
       PDFHandler.state.isOnLoad = false;
-      this.calcLogic()
+      this.calcLogic();
     });
   }
-
 
   public showAlert(): void {
     const anchor = null;
@@ -152,15 +154,22 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
   public replaceImageWidth = (imageElement, container: HTMLElement): void => {
     // Get the original width of the image.
-    const originalWidth = Number.parseInt(imageElement.getAttribute('width'), 10);
+    const originalWidth = Number.parseInt(
+      imageElement.getAttribute('width'),
+      10
+    );
 
     if (originalWidth <= 600) return;
 
     imageElement.style.maxWidth = '600px';
-    const enhancedFigures = container.querySelectorAll('.enhanced-table-figure[data-type="enhanced-table-figure"]');
+    const enhancedFigures = container.querySelectorAll(
+      '.enhanced-table-figure[data-type="enhanced-table-figure"]'
+    );
 
     for (const figure of enhancedFigures) {
-      const contentDiv = figure.querySelector<HTMLElement>('.enhanced-table-figure-content');
+      const contentDiv = figure.querySelector<HTMLElement>(
+        '.enhanced-table-figure-content'
+      );
       if (!contentDiv) continue;
 
       const hasEnhancedContent =
@@ -180,13 +189,12 @@ export class PreviewForm extends React.PureComponent<Props, State> {
             break;
           }
           parent = parent.parentElement;
-        };
-      };
-    };
+        }
+      }
+    }
   };
 
   public replaceTableWidth = (tableElement: HTMLElement): void => {
-
     // Calculate total width from data-colwidth of first row
     const firstRow = tableElement.querySelector('tr');
     if (!firstRow) return;
@@ -203,31 +211,36 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     if (totalWidth > 600) {
       tableElement.style.maxWidth = '600px';
 
-      // Rotate table 
+      // Rotate table
       if (totalWidth > 624) {
         tableElement.style.transform = 'rotate(-90deg)';
 
         // Hide overflow in parent wrapper
-        const targetClasses = ['enhanced-table-figure', 'enhanced-table-figure-content', 'tableWrapper', 'tablewrapper'];
+        const targetClasses = [
+          'enhanced-table-figure',
+          'enhanced-table-figure-content',
+          'tableWrapper',
+          'tablewrapper',
+        ];
         let parent: HTMLElement | null = tableElement.parentElement;
         while (parent) {
           if (targetClasses.some((cls) => parent.classList.contains(cls))) {
             parent.style.overflow = 'hidden';
             parent.style.overflowX = 'hidden';
             parent.style.overflowY = 'hidden';
-          };
+          }
           parent = parent.parentElement;
-        };
+        }
 
         // Set table height
         const tableHeight = tableElement.offsetHeight || totalWidth;
         tableElement.style.height = `${tableHeight}px`;
-      };
-    };
+      }
+    }
   };
 
   public getToc = async (view): Promise<void> => {
-      // Reset static lists
+    // Reset static lists
     PreviewForm.tocNodeList.length = 0;
     PreviewForm.tocHeader.length = 0;
     PreviewForm.tofNodeList.length = 0;
@@ -238,7 +251,6 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     const storeTOCvalue = getTableStyles(styles, 'toc');
     const storeTOFvalue = getTableStyles(styles, 'tof');
     const storeTOTvalue = getTableStyles(styles, 'tot');
-
 
     view?.state?.tr?.doc.descendants((node: Node) => {
       if (!node.attrs.styleName) {
@@ -529,7 +541,6 @@ export class PreviewForm extends React.PureComponent<Props, State> {
                     Last updated
                   </label>
                 </div>
-                
 
                 <h6 style={{ marginRight: 'auto', marginTop: '30px' }}>
                   Document Sections:
@@ -569,8 +580,12 @@ export class PreviewForm extends React.PureComponent<Props, State> {
                 <button
                   onClick={this.handleApply}
                   style={getButtonStyle('#4CAF50')}
-                  onMouseEnter={e => handleHover(e, '#45a049', '0 4px 8px rgba(0,0,0,0.25)')}
-                  onMouseLeave={e => handleHover(e, '#4CAF50', '0 2px 4px rgba(0,0,0,0.2)')}
+                  onMouseEnter={(e) =>
+                    handleHover(e, '#45a049', '0 4px 8px rgba(0,0,0,0.25)')
+                  }
+                  onMouseLeave={(e) =>
+                    handleHover(e, '#4CAF50', '0 2px 4px rgba(0,0,0,0.2)')
+                  }
                 >
                   Apply
                 </button>
@@ -590,8 +605,12 @@ export class PreviewForm extends React.PureComponent<Props, State> {
                 <button
                   onClick={this.handleConfirm}
                   style={getButtonStyle('#4CAF50')}
-                  onMouseEnter={e => handleHover(e, '#45a049', '0 4px 8px rgba(0,0,0,0.25)')}
-                  onMouseLeave={e => handleHover(e, '#4CAF50', '0 2px 4px rgba(0,0,0,0.2)')}
+                  onMouseEnter={(e) =>
+                    handleHover(e, '#45a049', '0 4px 8px rgba(0,0,0,0.25)')
+                  }
+                  onMouseLeave={(e) =>
+                    handleHover(e, '#4CAF50', '0 2px 4px rgba(0,0,0,0.2)')
+                  }
                 >
                   Confirm
                 </button>
@@ -599,8 +618,12 @@ export class PreviewForm extends React.PureComponent<Props, State> {
                 <button
                   onClick={this.handleCancel}
                   style={getButtonStyle('#f44336')}
-                  onMouseEnter={e => handleHover(e, '#d32f2f', '0 4px 8px rgba(0,0,0,0.25)')}
-                  onMouseLeave={e => handleHover(e, '#f44336', '0 2px 4px rgba(0,0,0,0.2)')}
+                  onMouseEnter={(e) =>
+                    handleHover(e, '#d32f2f', '0 4px 8px rgba(0,0,0,0.25)')
+                  }
+                  onMouseLeave={(e) =>
+                    handleHover(e, '#f44336', '0 2px 4px rgba(0,0,0,0.2)')
+                  }
                 >
                   Cancel
                 </button>
@@ -611,7 +634,6 @@ export class PreviewForm extends React.PureComponent<Props, State> {
       </div>
     );
   }
-  
 
   public handelDocumentTitle = (event): void => {
     if (event.target.checked) {
@@ -671,12 +693,11 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
   public lastUpdatedActive = (): void => {
     PreviewForm.lastUpdated = true;
-  }
+  };
 
   public lastUpdatedDeactive = (): void => {
     PreviewForm.lastUpdated = false;
-  }
-
+  };
 
   public citationActive = (): void => {
     PreviewForm.isCitation = true;
@@ -791,7 +812,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     // Skip if no href
     if (!href) return;
 
-    if (this.isExternalLink(href)&& !selectionId) {
+    if (this.isExternalLink(href) && !selectionId) {
       event.preventDefault();
       this.openExternalLink(href);
     } else {
@@ -802,7 +823,11 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
   // Check if a link is external if it startsWith http:// ,https:// or mailto:
   isExternalLink = (href: string): boolean => {
-    return href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:');
+    return (
+      href.startsWith('http://') ||
+      href.startsWith('https://') ||
+      href.startsWith('mailto:')
+    );
   };
 
   // Open external links safely
@@ -873,23 +898,25 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     editorView.dispatch(editorView.state.tr?.setMeta('suppressOnChange', true));
 
     paged.preview(data1, [], divContainer).then(() => {
-      const previewContainer: HTMLElement = document.querySelector('.exportpdf-preview-container');
+      const previewContainer: HTMLElement = document.querySelector(
+        '.exportpdf-preview-container'
+      );
       if (previewContainer) previewContainer.style.visibility = 'visible';
       this.addLinkEventListeners();
       this._popUp?.close();
     });
   };
 
-
-
   private prepareEditorContent(data: HTMLElement): void {
     const proseMirror = data.querySelector('.ProseMirror');
     if (proseMirror) {
       proseMirror.setAttribute('contenteditable', 'false');
       proseMirror.classList.remove('czi-prosemirror-editor');
-      proseMirror.querySelectorAll('.molm-czi-image-view-body-img-clip span').forEach(span => {
-        (span as HTMLElement).style.display = 'flex';
-      });
+      proseMirror
+        .querySelectorAll('.molm-czi-image-view-body-img-clip span')
+        .forEach((span) => {
+          (span as HTMLElement).style.display = 'flex';
+        });
     }
   }
 
@@ -904,7 +931,8 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   }
 
   private setLastUpdated(editorView): void {
-    const lastEdited = editorView?.state?.doc?.attrs?.objectMetaData?.lastEditedOn;
+    const lastEdited =
+      editorView?.state?.doc?.attrs?.objectMetaData?.lastEditedOn;
     const date = new Date(lastEdited);
     PreviewForm.formattedDate = date.toLocaleString('en-GB', {
       year: 'numeric',
@@ -918,8 +946,11 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   }
 
   private insertSectionHeaders(data: HTMLElement, editorView): void {
-    data.querySelectorAll('.titleHead, .forcePageSpacer, .tocHead, .tofHead, .totHead')
-      .forEach(n => n.remove());
+    data
+      .querySelectorAll(
+        '.titleHead, .forcePageSpacer, .tocHead, .tofHead, .totHead'
+      )
+      .forEach((n) => n.remove());
 
     let insertBeforeNode: ChildNode | null = data.firstChild;
 
@@ -932,7 +963,8 @@ export class PreviewForm extends React.PureComponent<Props, State> {
       header.style.color = '#2A6EBB';
       header.style.textAlign = 'center';
       header.style.fontWeight = 'bold';
-      header.textContent = editorView?.state?.doc?.attrs?.objectMetaData?.name ?? 'Untitled';
+      header.textContent =
+        editorView?.state?.doc?.attrs?.objectMetaData?.name ?? 'Untitled';
 
       titleDiv.appendChild(header);
       insertBeforeNode?.before(titleDiv);
@@ -948,7 +980,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     const sections = [
       { flag: PreviewForm.isToc, className: 'tocHead' },
       { flag: PreviewForm.isTof, className: 'tofHead' },
-      { flag: PreviewForm.isTot, className: 'totHead' }
+      { flag: PreviewForm.isTot, className: 'totHead' },
     ];
 
     sections.forEach(({ flag, className }) => {
@@ -966,8 +998,6 @@ export class PreviewForm extends React.PureComponent<Props, State> {
       insertBeforeNode = sectionSpacer.nextSibling;
     });
   }
-
-
 
   private replaceInfoIcons(data: HTMLElement): void {
     const icons = data.querySelectorAll('.infoicon');

@@ -1,9 +1,9 @@
-import {UICommand} from './UICommand';
-import {EditorState, Transaction} from 'prosemirror-state';
-import {createEditor, doc, p} from 'jest-prosemirror';
-import {Node} from 'prosemirror-model';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { UICommand } from './UICommand';
+import { EditorState, Transaction } from '@tiptap/pm/state';
+import { createEditor, doc, p } from 'jest-prosemirror';
+import { Node } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 
 class MockUICommand extends UICommand {
   waitForUserInput(): Promise<any> {
@@ -60,7 +60,7 @@ describe('UICommand', () => {
     beforeEach(() => {
       tr = new Transaction({} as unknown as Node);
       jest.spyOn(tr, 'setMeta').mockImplementation(() => tr);
-      state = {tr, other: tr};
+      state = { tr, other: tr };
       uiCmd = new MockUICommand();
     });
 

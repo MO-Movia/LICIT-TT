@@ -1,6 +1,6 @@
-import { EditorState, Transaction } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 
 import splitListItem from '../splitListItem';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
@@ -27,7 +27,7 @@ class ListSplitCommand extends UICommand {
     dispatch?: (tr: Transform) => void,
     _view?: EditorView
   ): boolean => {
-    const {selection, schema} = state;
+    const { selection, schema } = state;
     const tr = splitListItem(
       state.tr?.setSelection(selection),
       schema

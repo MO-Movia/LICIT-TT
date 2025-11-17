@@ -1,31 +1,29 @@
-import type { MarkSpec } from 'prosemirror-model';
+import type { MarkSpec } from '@tiptap/pm/model';
 
 const StrongMarkSpec: MarkSpec = {
   attrs: {
-    overridden: { default: false }
+    overridden: { default: false },
   },
   parseDOM: [
-
     {
       tag: 'strong',
       getAttrs: (dom: HTMLElement) => {
         const _overridden = dom.getAttribute('overridden');
         return { overridden: _overridden === 'true' };
-      }
+      },
     },
     {
       tag: 'b',
       getAttrs: (dom: HTMLElement) => {
         const _overridden = dom.getAttribute('overridden');
         return { overridden: _overridden === 'true' };
-      }
+      },
     },
     {
       tag: 'span[style*=font-weight]',
       getAttrs: (dom: HTMLElement) => {
         const _overridden = dom.getAttribute('overridden');
         return { overridden: _overridden === 'true' };
-
       },
     },
   ],

@@ -1,6 +1,6 @@
-import { Selection, NodeSelection } from 'prosemirror-state';
-import { Node, NodeType } from 'prosemirror-model';
-import { CellSelection, TableMap } from 'prosemirror-tables';
+import { Selection, NodeSelection } from '@tiptap/pm/state';
+import { Node, NodeType } from '@tiptap/pm/model';
+import { CellSelection, TableMap } from '@tiptap/pm/tables';
 
 // Whether the selection is a node for the node type provided.
 export function isNodeSelectionForNodeType(
@@ -13,7 +13,10 @@ export function isNodeSelectionForNodeType(
   return false;
 }
 
-export function getSelectionRange(selection: Selection): { from: number; to: number } {
+export function getSelectionRange(selection: Selection): {
+  from: number;
+  to: number;
+} {
   if (selection instanceof CellSelection) {
     const $anchor = selection.$anchorCell;
     const $head = selection.$headCell;
@@ -40,7 +43,10 @@ export function getSelectedCellPositions(selection: Selection): number[] {
   const map = TableMap.get(table);
   const start = selection.$anchorCell.start(-1); // Position where table content starts
 
-  const rect = map.rectBetween(selection.$anchorCell.pos - start, selection.$headCell.pos - start);
+  const rect = map.rectBetween(
+    selection.$anchorCell.pos - start,
+    selection.$headCell.pos - start
+  );
 
   for (let row = rect.top; row < rect.bottom; row++) {
     for (let col = rect.left; col < rect.right; col++) {
@@ -64,7 +70,10 @@ export function isColumnCellSelected(selection: Selection): boolean {
   const tableStart = $anchor.start(-1);
   const map = TableMap.get(table);
 
-  const rect = map.rectBetween($anchor.pos - tableStart, $head.pos - tableStart);
+  const rect = map.rectBetween(
+    $anchor.pos - tableStart,
+    $head.pos - tableStart
+  );
 
   // Row selection = full width across columns
   const isRowSelection = rect.left === 0 && rect.right === map.width;

@@ -1,4 +1,4 @@
-import {NodeSpec} from 'prosemirror-model';
+import { NodeSpec } from '@tiptap/pm/model';
 
 const CSS_ROTATE_PATTERN = /rotate\(([0-9.]+)rad\)/i;
 const EMPTY_CSS_VALUE = new Set(['0%', '0pt', '0px']);
@@ -8,12 +8,12 @@ export function getCropRotate(
   marginLeft: string,
   marginTop: string
 ): {
-  crop: {width: number; height: number; left: number; top: number} | null;
+  crop: { width: number; height: number; left: number; top: number } | null;
   rotate: number | null;
 } {
   let crop = null;
   let rotate = null;
-  const {parentElement} = dom;
+  const { parentElement } = dom;
   if (parentElement instanceof HTMLElement) {
     // Special case for Google doc's image.
     const ps = parentElement.style;
@@ -42,7 +42,7 @@ export function getCropRotate(
       }
     }
   }
-  return {crop, rotate};
+  return { crop, rotate };
 }
 
 export function getAlign(
@@ -68,9 +68,9 @@ export function getAttrs(dom: string | HTMLElement) {
   if (typeof dom === 'string') {
     return false;
   }
-  const {cssFloat, display} = dom.style;
-  let {marginTop, marginLeft} = dom.style;
-  let {width, height} = dom.style;
+  const { cssFloat, display } = dom.style;
+  let { marginTop, marginLeft } = dom.style;
+  let { width, height } = dom.style;
   const align = getAlign(dom, cssFloat, display);
 
   width = width || dom.getAttribute('width');
@@ -78,7 +78,7 @@ export function getAttrs(dom: string | HTMLElement) {
   marginLeft = marginLeft || dom.getAttribute('marginLeft');
   marginTop = marginTop || dom.getAttribute('marginTop');
 
-  const {crop, rotate} = getCropRotate(dom, marginLeft, marginTop);
+  const { crop, rotate } = getCropRotate(dom, marginLeft, marginTop);
 
   return {
     align,
@@ -99,21 +99,21 @@ export function getAttrs(dom: string | HTMLElement) {
 export const VideoNodeSpec: NodeSpec = {
   inline: true,
   attrs: {
-    id: {default: null},
-    align: {default: null},
-    alt: {default: ''},
-    crop: {default: null},
-    height: {default: null},
-    rotate: {default: null},
-    src: {default: null},
-    title: {default: ''},
-    width: {default: null},
+    id: { default: null },
+    align: { default: null },
+    alt: { default: '' },
+    crop: { default: null },
+    height: { default: null },
+    rotate: { default: null },
+    src: { default: null },
+    title: { default: '' },
+    width: { default: null },
   },
   group: 'inline',
   draggable: true,
-  parseDOM: [{tag: 'iframe[src]', getAttrs}],
+  parseDOM: [{ tag: 'iframe[src]', getAttrs }],
   toDOM(node) {
-    const newAttrs = {...node.attrs};
+    const newAttrs = { ...node.attrs };
     newAttrs.allow = 'autoplay';
     newAttrs.frameBorder = '0';
     newAttrs.allowFullScreen = true;

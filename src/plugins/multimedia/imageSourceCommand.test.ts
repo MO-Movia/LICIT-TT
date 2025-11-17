@@ -3,12 +3,12 @@ import {
   insertImage,
   getImageSize,
 } from './ImageSourceCommand';
-import {Transform} from 'prosemirror-transform';
-import {Schema} from 'prosemirror-model';
-import {MultimediaPlugin} from './index';
-import {createEditor, doc, p} from 'jest-prosemirror';
-import {EditorView} from 'prosemirror-view';
-import {TextSelection, Plugin, PluginKey} from 'prosemirror-state';
+import { Transform } from '@tiptap/pm/transform';
+import { Schema } from '@tiptap/pm/model';
+import { MultimediaPlugin } from './index';
+import { createEditor, doc, p } from 'jest-prosemirror';
+import { EditorView } from '@tiptap/pm/view';
+import { TextSelection, Plugin, PluginKey } from '@tiptap/pm/state';
 
 class TestPlugin extends Plugin {
   constructor() {
@@ -21,13 +21,13 @@ class TestPlugin extends Plugin {
 describe('insert image', () => {
   const mockSchema = new Schema({
     nodes: {
-      doc: {content: 'image'},
+      doc: { content: 'image' },
       text: {},
       image: {
         inline: true,
         attrs: {
-          src: {default: ''},
-          alt: {default: null},
+          src: { default: '' },
+          alt: { default: null },
         },
         group: 'inline',
         draggable: true,
@@ -46,14 +46,14 @@ describe('insert image', () => {
           },
         ],
         toDOM(node) {
-          return ['img', {src: node.attrs.src, alt: node.attrs.alt || ''}];
+          return ['img', { src: node.attrs.src, alt: node.attrs.alt || '' }];
         },
       },
     },
   });
   const mockTransaction = {
     // Define any properties or methods that your function requires.
-    selection: {from: 0, to: 1},
+    selection: { from: 0, to: 1 },
     tr: {
       selection: {},
     },
@@ -68,13 +68,13 @@ describe('insert image', () => {
   it('should handle !selection', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'image'},
+        doc: { content: 'image' },
         text: {},
         image: {
           inline: true,
           attrs: {
-            src: {default: ''},
-            alt: {default: null},
+            src: { default: '' },
+            alt: { default: null },
           },
           group: 'inline',
           draggable: true,
@@ -93,7 +93,7 @@ describe('insert image', () => {
             },
           ],
           toDOM(node) {
-            return ['img', {src: node.attrs.src, alt: node.attrs.alt || ''}];
+            return ['img', { src: node.attrs.src, alt: node.attrs.alt || '' }];
           },
         },
       },
@@ -114,7 +114,7 @@ describe('insert image', () => {
   it('should handle !image', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'paragraph+'},
+        doc: { content: 'paragraph+' },
         text: {},
         paragraph: {
           content: 'text*',
@@ -148,7 +148,7 @@ describe('ImageSourceCommand ', () => {
   const selection = TextSelection.create(view.state.doc, 0, 0);
   const tr = view.state.tr.setSelection(selection);
   view.updateState(
-    view.state.reconfigure({plugins: [plugin, new TestPlugin()]})
+    view.state.reconfigure({ plugins: [plugin, new TestPlugin()] })
   );
   view.dispatch(tr);
   const imagesourcecommand = new ImageSourceCommand();
@@ -174,13 +174,13 @@ describe('inserimage', () => {
   it('should handle inserimage when src null', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'image'},
+        doc: { content: 'image' },
         text: {},
         image: {
           inline: true,
           attrs: {
-            src: {default: ''},
-            alt: {default: null},
+            src: { default: '' },
+            alt: { default: null },
           },
           group: 'inline',
           draggable: true,
@@ -199,7 +199,7 @@ describe('inserimage', () => {
             },
           ],
           toDOM(node) {
-            return ['img', {src: node.attrs.src, alt: node.attrs.alt || ''}];
+            return ['img', { src: node.attrs.src, alt: node.attrs.alt || '' }];
           },
         },
       },
@@ -271,7 +271,7 @@ describe('getImageSize', () => {
     } as unknown as typeof Image;
 
     const size = await getImageSize('dummy-src');
-    expect(size).toEqual({width: mockWidth, height: mockHeight});
+    expect(size).toEqual({ width: mockWidth, height: mockHeight });
   });
 
   it('should reject on error', async () => {

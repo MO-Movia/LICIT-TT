@@ -1,7 +1,7 @@
-import { toggleMark } from 'prosemirror-commands';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { toggleMark } from '@tiptap/pm/commands';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import { findNodesWithSameMark } from './findNodesWithSameMark';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import * as React from 'react';
@@ -89,7 +89,7 @@ export class MarkToggleCommand extends UICommand {
     state: EditorState,
     tr: Transform,
     posfrom: number,
-    posto: number,
+    posto: number
   ) => {
     const { schema } = state;
     const markType = schema.marks[this._markName];
@@ -113,8 +113,8 @@ export class MarkToggleCommand extends UICommand {
     tr: Transform,
     from: number,
     to: number
-  )=> {
-   const { schema } = state;
+  ) => {
+    const { schema } = state;
     const markType = schema.marks[this._markName];
     if (!markType) {
       return false;
@@ -157,12 +157,10 @@ export function toggleCustomStyle(
   if ($cursor && $cursor.parentOffset === 0 && posfrom === posto) {
     if (markType.isInSet(state.storedMarks || $cursor.marks())) {
       tr = state.tr.removeStoredMark(markType);
-    }
-    else {
+    } else {
       tr = state.tr.addStoredMark(markType.create(attrs));
     }
-  }
-  else {
+  } else {
     // [FS] IRAD-1043 2020-10-27
     // No need to remove the applied custom style, if user select the same style multiple times.
     let from = posfrom;
@@ -171,7 +169,9 @@ export function toggleCustomStyle(
       from = pos;
       to = from + node.nodeSize;
       if (node && 0 < node.marks?.length) {
-        const overridden = node.marks.find(mark => mark.type.name === 'override');
+        const overridden = node.marks.find(
+          (mark) => mark.type.name === 'override'
+        );
         const skip = overridden?.attrs[markType.name] === true;
         if (!skip) {
           attrs = { overridden: false };

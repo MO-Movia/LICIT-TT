@@ -1,15 +1,15 @@
 import * as React from 'react';
-import {Schema} from 'prosemirror-model';
-import {EditorState} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { Schema } from '@tiptap/pm/model';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 
-import {SetDocAttrStep, UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { SetDocAttrStep, UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import DocLayoutEditor from '../ui/docLayoutEditor';
-import {createPopUp, ThemeContext} from '@modusoperandi/licit-ui-commands';
+import { createPopUp, ThemeContext } from '@modusoperandi/licit-ui-commands';
 
-import type {DocLayoutEditorValue} from '../ui/docLayoutEditor';
-import {Editor} from '@tiptap/react';
+import type { DocLayoutEditorValue } from '../ui/docLayoutEditor';
+import { Editor } from '@tiptap/react';
 
 function setDocLayout(
   tr: Transform,
@@ -17,7 +17,7 @@ function setDocLayout(
   width?: number,
   layout?: string
 ): Transform {
-  const {doc} = tr;
+  const { doc } = tr;
   if (!doc) {
     return tr;
   }
@@ -60,7 +60,7 @@ class DocLayoutCommand extends UICommand {
       return Promise.resolve(undefined);
     }
 
-    const {doc} = state;
+    const { doc } = state;
 
     return new Promise((resolve) => {
       const props = {
@@ -85,12 +85,12 @@ class DocLayoutCommand extends UICommand {
     inputs?: DocLayoutEditorValue
   ): boolean => {
     if (dispatch) {
-      const {selection, schema} = state;
-      let {tr} = state;
+      const { selection, schema } = state;
+      let { tr } = state;
       tr = tr.setSelection(selection);
 
       if (inputs) {
-        const {width, layout} = inputs;
+        const { width, layout } = inputs;
         (tr as Transform) = setDocLayout(tr, schema, width, layout);
       }
       this.getEditor().view.dispatch(tr);

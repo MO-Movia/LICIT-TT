@@ -1,8 +1,8 @@
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { Editor } from '@tiptap/react';
 import TableAddColumnBeforeCommand from './tableAddColumnBeforeCommand';
-import { Schema } from 'prosemirror-model';
+import { Schema } from '@tiptap/pm/model';
 
 // Mock Editor (used by TableAddColumnBeforeCommand)
 jest.mock('@tiptap/react', () => {

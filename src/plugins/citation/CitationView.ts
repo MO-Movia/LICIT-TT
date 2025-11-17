@@ -1,7 +1,7 @@
-import { Transform } from 'prosemirror-transform';
-import { DOMSerializer, Node, Mark, Attrs } from 'prosemirror-model';
-import { EditorView, Decoration } from 'prosemirror-view';
-import { Transaction, Selection } from 'prosemirror-state';
+import { Transform } from '@tiptap/pm/transform';
+import { DOMSerializer, Node, Mark, Attrs } from '@tiptap/pm/model';
+import { EditorView, Decoration } from '@tiptap/pm/view';
+import { Transaction, Selection } from '@tiptap/pm/state';
 import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 import {
   createPopUp,

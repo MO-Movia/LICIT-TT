@@ -1,4 +1,4 @@
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
 
 import { MARK_FONT_TYPE } from '@modusoperandi/licit-ui-commands';
 import findActiveMark from './findActiveMark';

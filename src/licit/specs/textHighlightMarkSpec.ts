@@ -1,4 +1,4 @@
-import { Mark, MarkSpec, Node } from 'prosemirror-model';
+import { Mark, MarkSpec, Node } from '@tiptap/pm/model';
 
 import { isTransparent, toCSSColor } from '../toCSSColor';
 

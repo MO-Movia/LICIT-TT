@@ -1,6 +1,6 @@
-import { Node, Schema } from 'prosemirror-model';
-import { Plugin, PluginKey } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { Node, Schema } from '@tiptap/pm/model';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import {
   makeKeyMapWithCommon,
   createKeyMapPlugin,
@@ -9,15 +9,11 @@ import { InfoIconNodeSpec } from './infoIconNodeSpec';
 import { InfoIconView } from './infoIconView';
 import { InfoIconCommand } from './infoIconCommand';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import {DarkThemeIcon, LightThemeIcon} from './images';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 
 export const INFO_ICON = 'infoicon';
-export const KEY_INFO_ICON = makeKeyMapWithCommon(
-  'infoIcon',
-  'Mod-Alt' + '-i'
-);
+export const KEY_INFO_ICON = makeKeyMapWithCommon('infoIcon', 'Mod-Alt' + '-i');
 const INFO_ICON_CMD = new InfoIconCommand();
-
 
 function createInfoIconKeyMap() {
   return {
@@ -51,25 +47,21 @@ export class InfoIconPlugin extends Plugin {
   }
 
   initKeyCommands(): unknown {
-    return createKeyMapPlugin(createInfoIconKeyMap(),
-      'InfoIconKeyMap'
-    );
+    return createKeyMapPlugin(createInfoIconKeyMap(), 'InfoIconKeyMap');
   }
 
   initButtonCommands(theme: string): unknown {
-    
-      let image = null;
-      if ('light' == theme) {
-        image = LightThemeIcon;
-      } else {
-        image = DarkThemeIcon;
-      }
+    let image = null;
+    if ('light' == theme) {
+      image = LightThemeIcon;
+    } else {
+      image = DarkThemeIcon;
+    }
 
-      return {
-        [`[${image}] Add Info Icon`]: INFO_ICON_CMD,
-      };
-    } 
-  
+    return {
+      [`[${image}] Add Info Icon`]: INFO_ICON_CMD,
+    };
+  }
 }
 
 export function bindInfoIconView(

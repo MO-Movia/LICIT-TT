@@ -1,10 +1,19 @@
-import { CursorPlaceholderPlugin, showCursorPlaceholder, hideCursorPlaceholder, findCursorPlaceholderPos, specFinder, resetInstance, isPlugin, getSingletonInstance } from './CursorPlaceholderPlugin';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { Decoration, DecorationSet } from 'prosemirror-view';
-jest.mock('prosemirror-state');
-jest.mock('prosemirror-view');
-jest.mock('prosemirror-transform');
+import {
+  CursorPlaceholderPlugin,
+  showCursorPlaceholder,
+  hideCursorPlaceholder,
+  findCursorPlaceholderPos,
+  specFinder,
+  resetInstance,
+  isPlugin,
+  getSingletonInstance,
+} from './CursorPlaceholderPlugin';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
+jest.mock('@tiptap/pm/state');
+jest.mock('@tiptap/pm/view');
+jest.mock('@tiptap/pm/transform');
 
 // Mock Decoration.widget
 jest.spyOn(Decoration, 'widget').mockImplementation((pos, element, spec) => {
@@ -44,7 +53,7 @@ describe('CursorPlaceholderPlugin', () => {
     } as unknown as DecorationSet;
 
     // Mock Decoration
-    jest.spyOn(Decoration, 'widget').mockImplementation(() => ({} as any));
+    jest.spyOn(Decoration, 'widget').mockImplementation(() => ({}) as any);
   });
 
   afterEach(() => {
@@ -167,18 +176,18 @@ describe('CursorPlaceholderPlugin', () => {
   });
 
   describe('resetInstance', () => {
-  it('should reset the singleton instance', () => {
-    // Create a new instance to set the singleton
-    const plugin = new CursorPlaceholderPlugin();
-    
-    // Verify the singleton was set
-    expect(getSingletonInstance()).toBe(plugin);
-    
-    // Reset the instance
-    resetInstance();
-    
-    // Verify it's now null
-    expect(getSingletonInstance()).toBeNull();
+    it('should reset the singleton instance', () => {
+      // Create a new instance to set the singleton
+      const plugin = new CursorPlaceholderPlugin();
+
+      // Verify the singleton was set
+      expect(getSingletonInstance()).toBe(plugin);
+
+      // Reset the instance
+      resetInstance();
+
+      // Verify it's now null
+      expect(getSingletonInstance()).toBeNull();
+    });
   });
-});
 });

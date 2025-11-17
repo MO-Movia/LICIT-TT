@@ -1,4 +1,4 @@
-import type { MarkSpec, DOMOutputSpec } from 'prosemirror-model';
+import type { MarkSpec, DOMOutputSpec } from '@tiptap/pm/model';
 
 const CODE_DOM: DOMOutputSpec = ['code', 0];
 

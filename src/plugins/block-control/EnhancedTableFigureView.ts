@@ -1,8 +1,13 @@
-import { Node as ProseMirrorNode } from 'prosemirror-model';
-import { EditorView, NodeView } from 'prosemirror-view';
-import { NodeSelection, TextSelection } from 'prosemirror-state';
+import { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import { EditorView, NodeView } from '@tiptap/pm/view';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { addNotesCommand } from './EnhancedTableCommands';
-import { atAnchorBottomCenter, createPopUp, PopUpHandle, uuid } from '@modusoperandi/licit-ui-commands';
+import {
+  atAnchorBottomCenter,
+  createPopUp,
+  PopUpHandle,
+  uuid,
+} from '@modusoperandi/licit-ui-commands';
 import { ImageInlineEditor } from './ui/ImageInlineEditor';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
@@ -47,7 +52,9 @@ export class EnhancedTableFigureView implements NodeView {
     this.dom.style.overflowY = 'visible';
 
     // This is the wider content (table holder)
-    this.contentDOM.style.width = isLandscape ? `${landscapeWidthPx}px` : '100%';
+    this.contentDOM.style.width = isLandscape
+      ? `${landscapeWidthPx}px`
+      : '100%';
 
     // end
     this.contentDOM.className = 'enhanced-table-figure-content';
@@ -89,8 +96,13 @@ export class EnhancedTableFigureView implements NodeView {
       e.preventDefault();
       const { state, dispatch } = this.view;
       const pos = this.getPos();
-      if (state.selection instanceof NodeSelection && state.selection.from === pos) {
-        dispatch(state.tr.setSelection(TextSelection.create(state.doc, pos + 1)));
+      if (
+        state.selection instanceof NodeSelection &&
+        state.selection.from === pos
+      ) {
+        dispatch(
+          state.tr.setSelection(TextSelection.create(state.doc, pos + 1))
+        );
       } else {
         dispatch(state.tr.setSelection(NodeSelection.create(state.doc, pos)));
       }
@@ -132,13 +144,17 @@ export class EnhancedTableFigureView implements NodeView {
 
   updateNotesTrigger() {
     let notesExists = false;
-    this.node.forEach(child => {
+    this.node.forEach((child) => {
       if (child.type.name === 'enhanced_table_figure_notes') {
         notesExists = true;
       }
     });
     this.addNotesButton.style.display =
-      !notesExists && (this.node.attrs.figureType === 'table' || this.node.attrs.figureType === 'figure') ? 'block' : 'none';
+      !notesExists &&
+      (this.node.attrs.figureType === 'table' ||
+        this.node.attrs.figureType === 'figure')
+        ? 'block'
+        : 'none';
   }
 
   selectNode() {
@@ -187,7 +203,6 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   _onChange = (value?: { align: string }): void => {
-
     const align = value ? value.align : null;
     const pos = this.getPos();
     const attrs = {

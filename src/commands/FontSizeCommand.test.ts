@@ -1,9 +1,9 @@
-import {FontSizeCommand} from './FontSizeCommand';
-import {EditorState, TextSelection} from 'prosemirror-state';
-import {MARK_FONT_SIZE, MARK_FONT_TYPE} from './MarkNames';
-import {Schema, Node} from 'prosemirror-model';
-import {schema} from 'prosemirror-test-builder';
-import {Transform} from 'prosemirror-transform';
+import { FontSizeCommand } from './FontSizeCommand';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { MARK_FONT_SIZE, MARK_FONT_TYPE } from './MarkNames';
+import { Schema, Node } from '@tiptap/pm/model';
+import { schema } from 'prosemirror-test-builder';
+import { Transform } from '@tiptap/pm/transform';
 import * as applymark from './applyMark';
 import * as ismarkcommandenabled from './isTextStyleMarkCommandEnabled';
 
@@ -37,18 +37,17 @@ describe('FontSizeCommand', () => {
       head: 0,
     },
     plugins: [],
-    schema: {marks: {'mark-font-size': MARK_FONT_SIZE}},
+    schema: { marks: { 'mark-font-size': MARK_FONT_SIZE } },
     tr: {
       doc: {
         nodeAt: (_x) => {
-          return {isAtom: true, isLeaf: true, isText: false};
+          return { isAtom: true, isLeaf: true, isText: false };
         },
-        resolve:()=>{
-          return {pos:0};
+        resolve: () => {
+          return { pos: 0 };
         },
-        nodesBetween:()=>{}
+        nodesBetween: () => {},
       },
-
     },
   } as unknown as EditorState;
 
@@ -61,7 +60,7 @@ describe('FontSizeCommand', () => {
   it('should call when execute function return true', () => {
     jest
       .spyOn(applymark, 'applyMark')
-      .mockReturnValue({docChanged: true} as unknown as Transform);
+      .mockReturnValue({ docChanged: true } as unknown as Transform);
 
     const test = plugin.execute(state, (_x) => {
       return '';
@@ -92,11 +91,11 @@ describe('FontSizeCommand', () => {
         head: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-type': MARK_FONT_TYPE}},
+      schema: { marks: { 'mark-font-type': MARK_FONT_TYPE } },
       tr: {
         doc: {
           nodeAt: (_x) => {
-            return {isAtom: true, isLeaf: true, isText: false};
+            return { isAtom: true, isLeaf: true, isText: false };
           },
         },
       },
@@ -123,11 +122,11 @@ describe('FontSizeCommand', () => {
         head: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-size': MARK_FONT_SIZE}},
+      schema: { marks: { 'mark-font-size': MARK_FONT_SIZE } },
       tr: {
         doc: {
           nodeAt: (_x) => {
-            return {isAtom: true, isLeaf: true, isText: false};
+            return { isAtom: true, isLeaf: true, isText: false };
           },
         },
       },
@@ -170,7 +169,7 @@ describe('FontSizeCommand', () => {
         to: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-size': undefined}},
+      schema: { marks: { 'mark-font-size': undefined } },
     } as unknown as EditorState;
 
     const test = plugin.isEnabled(state);
@@ -194,19 +193,19 @@ describe('FontSizeCommand', () => {
   });
 
   it('should enable the command when text style mark is enabled', () => {
-    const state = EditorState.create({schema: schema1});
+    const state = EditorState.create({ schema: schema1 });
     const isEnabled = command.isEnabled(state);
     expect(isEnabled).toBe(false);
   });
 
   it('should apply the font size mark to the current selection', () => {
-    const state = EditorState.create({schema: schema1});
+    const state = EditorState.create({ schema: schema1 });
     command.execute(state, dispatch);
     const transform = new Transform(schema as unknown as Node);
     expect(dispatch).not.toHaveBeenCalledWith(expect.any(transform));
   });
   it('execute without dispatch', () => {
-    const state = EditorState.create({schema: schema1});
+    const state = EditorState.create({ schema: schema1 });
     const test = command.execute(state);
     expect(test).toBeDefined();
   });

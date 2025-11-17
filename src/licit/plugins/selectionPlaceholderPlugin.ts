@@ -1,8 +1,6 @@
-import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { Decoration, DecorationSet } from 'prosemirror-view';
-
-import '../styles/czi-selection-placeholder.css';
+import { EditorState, Plugin, PluginKey, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 const PLACE_HOLDER_ID = { name: 'SelectionPlaceholderPlugin' };
 

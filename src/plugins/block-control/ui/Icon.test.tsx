@@ -1,4 +1,4 @@
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import { builders } from 'prosemirror-test-builder';
 import { schema } from 'jest-prosemirror';
 import { EnhancedTableFigure } from '../index';

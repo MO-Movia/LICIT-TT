@@ -1,6 +1,6 @@
-import { Node } from 'prosemirror-model';
-import { EditorState, TextSelection } from 'prosemirror-state';
-import { CellSelection, TableMap } from 'prosemirror-tables';
+import { Node } from '@tiptap/pm/model';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { CellSelection, TableMap } from '@tiptap/pm/tables';
 import { findParentNodeOfType } from 'prosemirror-utils';
 
 type Result = {
@@ -33,9 +33,9 @@ function findActionableCellFromSelection(
   return posFound === null
     ? null
     : {
-      node: nodeFound,
-      pos: posFound,
-    };
+        node: nodeFound,
+        pos: posFound,
+      };
 }
 
 export default function findActionableCell(state: EditorState): Result | null {

@@ -1,11 +1,9 @@
-import {ENTER, LinkURLEditor} from './LinkURLEditor';
+import { ENTER, LinkURLEditor } from './LinkURLEditor';
 import React from 'react';
-import { EditorView } from 'prosemirror-view';
-import { EditorState } from 'prosemirror-state';
+import { EditorView } from '@tiptap/pm/view';
+import { EditorState } from '@tiptap/pm/state';
 import { schema, builders } from 'prosemirror-test-builder';
-import {
-  Schema,
-} from 'prosemirror-model';
+import { Schema } from '@tiptap/pm/model';
 
 describe('LinkURLEditor', () => {
   let props;
@@ -15,7 +13,7 @@ describe('LinkURLEditor', () => {
     const after = ' world';
     const mySchema = new Schema({
       nodes: schema.spec.nodes,
-      marks: schema.spec.marks
+      marks: schema.spec.marks,
     });
     const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
     const state = EditorState.create({
@@ -44,46 +42,44 @@ describe('LinkURLEditor', () => {
     };
   });
 
-it('renders LinkURLEditor',()=>{
-  const wrapper = new LinkURLEditor({...props});
-  expect(wrapper.render()).toBeDefined();
-  const wrapper2 = new LinkURLEditor({...props1});
-  expect(wrapper2.render()).toBeDefined();
+  it('renders LinkURLEditor', () => {
+    const wrapper = new LinkURLEditor({ ...props });
+    expect(wrapper.render()).toBeDefined();
+    const wrapper2 = new LinkURLEditor({ ...props1 });
+    expect(wrapper2.render()).toBeDefined();
+  });
+
+  it('should call _cancel()', () => {
+    const wrapper = new LinkURLEditor({ ...props });
+    expect(wrapper._cancel()).toBeUndefined();
+  });
+
+  it('should call _onKeyDown() and apply on ENTER key press', () => {
+    const wrapper = new LinkURLEditor({ ...props });
+    const mockEvent = {
+      keyCode: ENTER,
+      preventDefault: jest.fn(),
+    } as unknown as KeyboardEvent;
+    wrapper._apply = jest.fn();
+    wrapper._onKeyDown(mockEvent);
+    expect(mockEvent.preventDefault).toHaveBeenCalled();
+    expect(wrapper._apply).toHaveBeenCalled();
+  });
+
+  it('should call _onURLChange() and update state with new URL', () => {
+    const wrapper = new LinkURLEditor({ ...props });
+    const mockEvent = {
+      target: { value: 'https://example.com' },
+    } as React.ChangeEvent<HTMLInputElement>;
+    wrapper.setState = jest.fn();
+    wrapper._onURLChange(mockEvent);
+    expect(wrapper.setState).toHaveBeenCalledWith({
+      url: 'https://example.com',
+    });
+  });
+
+  it('should call _apply()', () => {
+    const wrapper = new LinkURLEditor({ ...props });
+    expect(wrapper._apply()).toBeDefined();
+  });
 });
-
-it('should call _cancel()',()=>{
-  const wrapper = new LinkURLEditor({...props});
-  expect(wrapper._cancel()).toBeUndefined();
-});
-
-it('should call _onKeyDown() and apply on ENTER key press', () => {
-  const wrapper = new LinkURLEditor({...props});
-  const mockEvent = { keyCode: ENTER, preventDefault: jest.fn() } as unknown as KeyboardEvent;
-  wrapper._apply = jest.fn();
-  wrapper._onKeyDown(mockEvent);
-  expect(mockEvent.preventDefault).toHaveBeenCalled();
-  expect(wrapper._apply).toHaveBeenCalled();
-});
-
-it('should call _onURLChange() and update state with new URL', () => {
-  const wrapper = new LinkURLEditor({...props});
-  const mockEvent = { target: { value: 'https://example.com' } } as React.ChangeEvent<HTMLInputElement>;
-  wrapper.setState = jest.fn();
-  wrapper._onURLChange(mockEvent);
-  expect(wrapper.setState).toHaveBeenCalledWith({ url: 'https://example.com' });
-});
-
-it('should call _apply()', () => {
-  const wrapper = new LinkURLEditor({...props});
-  expect(wrapper._apply()).toBeDefined();
-});
-});
-
-
-
-
-
-
-
-
-

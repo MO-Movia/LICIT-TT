@@ -1,11 +1,10 @@
 import { EditorFocused } from '../constants';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView, Decoration } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView, Decoration } from '@tiptap/pm/view';
 import * as React from 'react';
 
 import { preLoadFonts } from '../specs/fontTypeMarkSpec';
-import '../styles/czi-editor.css';
 import type { EditorRuntime } from '../types';
 
 export type EditorProps = {
@@ -33,7 +32,7 @@ export type EditorProps = {
   readOnly?: boolean;
   runtime?: EditorRuntime;
   transformPastedHTML?: (html: string) => string;
-  toolbarConfig?:any;
+  toolbarConfig?: any;
 };
 // FS IRAD-988 2020-06-18
 preLoadFonts();

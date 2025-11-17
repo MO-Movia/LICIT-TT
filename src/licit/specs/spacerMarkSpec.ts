@@ -1,4 +1,4 @@
-import { Mark, MarkSpec, Attrs } from 'prosemirror-model';
+import { Mark, MarkSpec, Attrs } from '@tiptap/pm/model';
 
 export const DOM_ATTRIBUTE_SIZE = 'data-spacer-size';
 export const SPACER_SIZE_TAB = 'tab';

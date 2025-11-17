@@ -1,6 +1,6 @@
-import { Schema } from 'prosemirror-model';
-import { EditorState, EditorStateConfig, Transaction } from 'prosemirror-state';
-import { DecorationSet, EditorView } from 'prosemirror-view';
+import { Schema } from '@tiptap/pm/model';
+import { EditorState, EditorStateConfig, Transaction } from '@tiptap/pm/state';
+import { DecorationSet, EditorView } from '@tiptap/pm/view';
 import { LicitHighlightTextPlugin, PluginState } from '.';
 const writeText = jest.fn().mockReturnValue('copy');
 
@@ -10,9 +10,9 @@ Object.assign(navigator, {
   },
 });
 describe('LicitHighlightTextPlugin', () => {
-  jest.mock('prosemirror-model', () => {
+  jest.mock('@tiptap/pm/model', () => {
     const originalModule: { DOMParser: () => object } =
-      jest.requireActual('prosemirror-model');
+      jest.requireActual('@tiptap/pm/model');
     jest.spyOn(originalModule, 'DOMParser').mockReturnValue({
       fromSchema: jest.fn(() => ({
         parse: jest.fn(),

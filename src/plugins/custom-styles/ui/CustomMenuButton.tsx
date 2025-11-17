@@ -3,11 +3,15 @@
 // Need to add Icons instead of label
 
 import cx from 'classnames';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import React from 'react';
-import { CustomButton, createPopUp,ThemeContext } from '@modusoperandi/licit-ui-commands';
+import {
+  CustomButton,
+  createPopUp,
+  ThemeContext,
+} from '@modusoperandi/licit-ui-commands';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { uuid } from './Uuid';
 import { CustomMenuUI } from './CustomMenuUI';
@@ -33,7 +37,7 @@ export class CustomMenuButton extends React.PureComponent<
     expanded: false,
   };
   static contextType = ThemeContext;
-  _menu  = null;
+  _menu = null;
   _id = uuid();
 
   render(): React.ReactElement {
@@ -88,7 +92,7 @@ export class CustomMenuButton extends React.PureComponent<
     const menuProps = {
       ...this.props,
       onCommand: this._onCommand,
-      theme:this.context
+      theme: this.context,
       // popupId: this._popupId
     };
     if (menu) {

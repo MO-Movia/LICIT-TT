@@ -1,19 +1,19 @@
-import {createEditor, doc, p} from 'jest-prosemirror';
+import { createEditor, doc, p } from 'jest-prosemirror';
 import {
   EditorState,
   TextSelection,
   Plugin,
   PluginKey,
   Transaction,
-} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {MultimediaPlugin} from './index';
-import {resolveImage} from './ui/resolveImage';
+} from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { MultimediaPlugin } from './index';
+import { resolveImage } from './ui/resolveImage';
 import * as resolveImageMod from './ui/resolveImage';
-import {ImageSourceCommand, insertImage} from './ImageSourceCommand';
-import {ImageNodeView} from './ui/ImageNodeView';
-import {Schema, Node} from 'prosemirror-model';
-import {schema} from 'prosemirror-test-builder';
+import { ImageSourceCommand, insertImage } from './ImageSourceCommand';
+import { ImageNodeView } from './ui/ImageNodeView';
+import { Schema, Node } from '@tiptap/pm/model';
+import { schema } from 'prosemirror-test-builder';
 import {
   ImageUploadPlaceholderPlugin,
   uploadImageFiles,
@@ -24,12 +24,12 @@ import {
   ImageEditorProps,
   ImageURLEditor,
 } from './ui/ImageURLEditor';
-import {ImageInlineEditor} from './ui/ImageInlineEditor';
-import {EditorView} from 'prosemirror-view';
-import {ImageNodeSpec, getAttrs} from './ImageNodeSpec';
+import { ImageInlineEditor } from './ui/ImageInlineEditor';
+import { EditorView } from '@tiptap/pm/view';
+import { ImageNodeSpec, getAttrs } from './ImageNodeSpec';
 
 import React from 'react';
-import {EditorFocused} from './ui/CustomNodeView';
+import { EditorFocused } from './ui/CustomNodeView';
 
 class TestPlugin extends Plugin {
   constructor() {
@@ -65,7 +65,9 @@ const newstate: EditorState = EditorState.create({
 
 const selection = TextSelection.create(view.state.doc, 0, 0);
 const tr = view.state.tr.setSelection(selection);
-view.updateState(view.state.reconfigure({plugins: [plugin, new TestPlugin()]}));
+view.updateState(
+  view.state.reconfigure({ plugins: [plugin, new TestPlugin()] })
+);
 
 view.dispatch(tr);
 const newstate1: EditorState = EditorState.create({
@@ -74,7 +76,7 @@ const newstate1: EditorState = EditorState.create({
   plugins: [new MultimediaPlugin()],
 });
 const srcevent = {
-  target: {value: 'https://www.youtube.com/embed/ru60J99ojJw'},
+  target: { value: 'https://www.youtube.com/embed/ru60J99ojJw' },
 } as React.ChangeEvent<HTMLInputElement>;
 
 describe('MultimediaPlugin', () => {
@@ -278,7 +280,7 @@ describe('ImageEditor ', () => {
   it('Image Inline Editor', async () => {
     const props = {
       onSelect: (_val: 'RIGHT') => undefined,
-      value: {align: 'RIGHT'},
+      value: { align: 'RIGHT' },
     };
     const ImgInlinEdtr = new ImageInlineEditor(props);
     const x = ImgInlinEdtr.render();
@@ -296,7 +298,7 @@ describe('ImageEditor ', () => {
     });
     const cusEdtView = {
       ...view1,
-      runtime: {canUploadImage: () => true},
+      runtime: { canUploadImage: () => true },
       readOnly: false,
       disabled: false,
     };
@@ -304,7 +306,7 @@ describe('ImageEditor ', () => {
 
     const filex: File = new File([], 'NEW FILE');
 
-    expect(uploadImageFiles(view, [filex], {x: 1, y: 2})).toBeDefined();
+    expect(uploadImageFiles(view, [filex], { x: 1, y: 2 })).toBeDefined();
   });
 
   it('should upload image files readonly and disabled true and runtime.canuploadimage true', () => {
@@ -325,7 +327,7 @@ describe('ImageEditor ', () => {
     const view: customEditorView = cusEdtView as customEditorView;
     const filex: File = new File([], 'NEW FILE');
 
-    expect(uploadImageFiles(view, [filex], {x: 1, y: 2})).toBeDefined();
+    expect(uploadImageFiles(view, [filex], { x: 1, y: 2 })).toBeDefined();
   });
 });
 
@@ -346,9 +348,7 @@ describe('resolveImage ', () => {
 
 describe('resolveImage ', () => {
   it('should resolve Image - onLoad offline', async () => {
-    const spy = jest
-      .spyOn(Object, 'hasOwn')
-      .mockReturnValue(true);
+    const spy = jest.spyOn(Object, 'hasOwn').mockReturnValue(true);
     const res = {
       complete: true,
       height: 400,
@@ -386,7 +386,7 @@ describe('Image Node View ', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -395,7 +395,7 @@ describe('Image Node View ', () => {
     const newState = EditorState.create({
       doc: schema.nodeFromJSON({
         type: 'doc',
-        attrs: {layout: null, padding: null, width: null, counterFlags: null},
+        attrs: { layout: null, padding: null, width: null, counterFlags: null },
         content: [
           {
             type: 'paragraph',
@@ -471,7 +471,7 @@ describe('Image Node View ', () => {
       canLoadHTML: () => true,
       loadHTML: jest.fn().mockResolvedValue('baz'),
     };
-    const editFoc = {...editor.view, ...foc} as unknown as EditorFocused;
+    const editFoc = { ...editor.view, ...foc } as unknown as EditorFocused;
     const ImageNdView = new ImageNodeView(newNode, editFoc, () => 10, []);
     expect(ImageNdView).toBeTruthy();
   });

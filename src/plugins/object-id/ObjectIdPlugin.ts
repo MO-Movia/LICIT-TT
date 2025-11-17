@@ -5,11 +5,11 @@ import {
   PluginKey,
   TextSelection,
   Transaction,
-} from 'prosemirror-state';
+} from '@tiptap/pm/state';
 import { SetDocAttrStep } from '@modusoperandi/licit-doc-attrs-step';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
 import { createObjectId } from './create-object-id';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import {
   Schema,
   Node,
@@ -17,7 +17,7 @@ import {
   Slice,
   AttributeSpec,
   NodeType,
-} from 'prosemirror-model';
+} from '@tiptap/pm/model';
 
 const SPEC = 'spec';
 const ATTR_OBJID = 'objectId';

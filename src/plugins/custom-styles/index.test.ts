@@ -25,7 +25,7 @@ import {
   PluginKey,
   TextSelection,
   Transaction,
-} from 'prosemirror-state';
+} from '@tiptap/pm/state';
 import {
   setStyles,
   getCustomStyleByName,
@@ -35,9 +35,9 @@ import {
   getHidenumberingFlag,
   setHidenumberingFlag,
 } from './customStyle';
-import { Schema, Mark, Node, Slice, ResolvedPos } from 'prosemirror-model';
+import { Schema, Mark, Node, Slice, ResolvedPos } from '@tiptap/pm/model';
 import { isTransparent, toCSSColor } from './toCSSColor';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import * as DOMfunc from './CustomStyleNodeSpec';
 
 import { CustomStyleCommand } from './CustomStyleCommand';
@@ -275,9 +275,15 @@ const mockSchema = new Schema({
     'mark-hanging-indent': {
       attrs: { prefix: { default: 0 } },
       parseDOM: [{ tag: 'span.hanging' }],
-      toDOM(mark) { return ['span', { class: 'hanging', 'data-prefix': mark.attrs.prefix }, 0]; }
+      toDOM(mark) {
+        return [
+          'span',
+          { class: 'hanging', 'data-prefix': mark.attrs.prefix },
+          0,
+        ];
+      },
     },
-    spacer: { attrs: {} }
+    spacer: { attrs: {} },
   },
 });
 
@@ -422,7 +428,7 @@ describe('applyNormalIfNoStyle', () => {
           nodesBetween: () => {
             return {};
           },
-          nodeAt: () => { },
+          nodeAt: () => {},
         },
         setSelection: setSelection,
       };
@@ -450,7 +456,7 @@ describe('applyNormalIfNoStyle', () => {
             nodesBetween: () => {
               return {};
             },
-            nodeAt: () => { },
+            nodeAt: () => {},
           },
           setSelection: setSelection,
           selection: {
@@ -590,7 +596,7 @@ describe('onUpdateAppendTransaction', () => {
         isTextblock: true,
       } as unknown as Node;
     };
-    mockdoc.nodesBetween = () => { };
+    mockdoc.nodesBetween = () => {};
     const mockSlice1 = {
       content: {
         childCount: 3,
@@ -623,7 +629,7 @@ describe('onUpdateAppendTransaction', () => {
               max: () => 1,
             }) as unknown as ResolvedPos,
           nodesBetween: () => ({}),
-          nodeAt: () => { },
+          nodeAt: () => {},
         },
         setSelection: setSelection,
         scrollIntoView: () => {
@@ -1939,7 +1945,7 @@ describe('Custom Style Plugin pass', () => {
 
   it('Test 1 ', () => {
     const props = {
-      dispatch: () => { },
+      dispatch: () => {},
       editorState: state,
       editorView: editor.view,
     };
@@ -5446,7 +5452,7 @@ describe('applyStyleForNextParagraph', () => {
     const paragraph1 = {
       type: { name: 'paragraph' },
       isBlock: true,
-      child() { },
+      child() {},
       childCount: 0,
       attrs: {
         styleName: 'Bold',
@@ -5457,7 +5463,7 @@ describe('applyStyleForNextParagraph', () => {
     const paragraph2 = {
       type: { name: 'paragraph' },
       isBlock: true,
-      child() { },
+      child() {},
       childCount: 0,
       attrs: {
         styleName: 'Bold',
@@ -5495,7 +5501,7 @@ describe('applyStyleForNextParagraph', () => {
           return {
             type: { name: 'paragraph' },
             isBlock: true,
-            child() { },
+            child() {},
             childCount: 0,
             attrs: {
               styleName: 'Bold',
@@ -5512,7 +5518,7 @@ describe('applyStyleForNextParagraph', () => {
           return {
             type: { name: 'paragraph' },
             isBlock: true,
-            child() { },
+            child() {},
             childCount: 0,
             attrs: {
               styleName: 'Bold',
@@ -5537,7 +5543,7 @@ describe('applyStyleForNextParagraph', () => {
         return {
           type: { name: 'paragraph' },
           isBlock: true,
-          child() { },
+          child() {},
           childCount: 0,
           attrs: {
             styleName: 'Bold',
@@ -5559,7 +5565,7 @@ describe('applyStyleForNextParagraph', () => {
         return {
           type: { name: 'paragraph' },
           isBlock: true,
-          child() { },
+          child() {},
           childCount: 0,
           attrs: {
             styleName: 'Bold',
@@ -5604,7 +5610,7 @@ describe('applyStyleForNextParagraph', () => {
           return {
             type: { name: 'paragraph' },
             isBlock: true,
-            child() { },
+            child() {},
             childCount: 0,
             attrs: {
               styleName: 'Bold',
@@ -5621,7 +5627,7 @@ describe('applyStyleForNextParagraph', () => {
           return {
             type: { name: 'paragraph' },
             isBlock: true,
-            child() { },
+            child() {},
             childCount: 0,
             attrs: {
               styleName: 'Bold',
@@ -5676,14 +5682,22 @@ describe('applyHangingIndentTransform', () => {
     const newPara = result.doc.firstChild;
     expect(newPara.textContent).toContain('after');
     // first child got prefix:0 mark removed spacer
-    expect(newPara.firstChild.marks.some(m => m.type.name === 'mark-hanging-indent')).toBe(true);
+    expect(
+      newPara.firstChild.marks.some(
+        (m) => m.type.name === 'mark-hanging-indent'
+      )
+    ).toBe(true);
   });
 
   it('flushes queued children before spacer with prefix:0', () => {
     const textBefore = mockSchema.text('before');
     const spacer = mockSchema.text(' ', [mockSchema.mark('spacer')]);
     const textAfter = mockSchema.text('after');
-    const para = mockSchema.node('paragraph', null, [textBefore, spacer, textAfter]);
+    const para = mockSchema.node('paragraph', null, [
+      textBefore,
+      spacer,
+      textAfter,
+    ]);
     const state = createState(para);
     const tr = state.tr;
 

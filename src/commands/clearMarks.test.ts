@@ -1,8 +1,13 @@
-import { Mark, Node, Schema } from 'prosemirror-model';
-import { clearHeading, clearMarks, comapreMarks, extractParagraphs } from './clearMarks';
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { Mark, Node, Schema } from '@tiptap/pm/model';
+import {
+  clearHeading,
+  clearMarks,
+  comapreMarks,
+  extractParagraphs,
+} from './clearMarks';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
 import { doc, p } from 'prosemirror-test-builder';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 import { MARK_EM, MARK_FONT_SIZE, MARK_STRONG } from './MarkNames';
 import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
 import { Style } from './runtime.service';
@@ -51,10 +56,14 @@ describe('clearMarks', () => {
     ]),
     mySchema.node('bullet_list', { marks: [] }, [
       mySchema.node('list_item', { marks: [] }, [
-        mySchema.node('paragraph', { marks: [] }, [mySchema.text('List item 1')]),
+        mySchema.node('paragraph', { marks: [] }, [
+          mySchema.text('List item 1'),
+        ]),
       ]),
       mySchema.node('list_item', { marks: [] }, [
-        mySchema.node('paragraph', { marks: [] }, [mySchema.text('List item 2')]),
+        mySchema.node('paragraph', { marks: [] }, [
+          mySchema.text('List item 2'),
+        ]),
       ]),
     ]),
     mySchema.node('blockquote', { marks: [] }, [
@@ -79,14 +88,30 @@ describe('clearMarks', () => {
           content: 'text*',
           group: 'block',
           attrs: { styleName: { default: null } },
-          parseDOM: [{ tag: 'p', getAttrs: (dom) => ({ styleName: dom.getAttribute('styleName') }) }],
-          toDOM: (node) => ['p', node.attrs.styleName ? { styleName: node.attrs.styleName } : {}, 0],
+          parseDOM: [
+            {
+              tag: 'p',
+              getAttrs: (dom) => ({ styleName: dom.getAttribute('styleName') }),
+            },
+          ],
+          toDOM: (node) => [
+            'p',
+            node.attrs.styleName ? { styleName: node.attrs.styleName } : {},
+            0,
+          ],
         },
         text: { group: 'inline' },
       },
       marks: {
         override: {
-          parseDOM: [{ tag: 'span', getAttrs: (dom) => ({ class: dom.classList.contains('override') ? 'override' : null }) }],
+          parseDOM: [
+            {
+              tag: 'span',
+              getAttrs: (dom) => ({
+                class: dom.classList.contains('override') ? 'override' : null,
+              }),
+            },
+          ],
           toDOM: () => ['span', { class: 'override' }],
         },
         strong: {
@@ -105,7 +130,6 @@ describe('clearMarks', () => {
           parseDOM: [{ tag: 's' }],
           toDOM: () => ['s'],
         },
-
       },
     });
 
@@ -116,24 +140,54 @@ describe('clearMarks', () => {
         {
           type: 'paragraph',
           attrs: { styleName: 'header1' },
-          content: [{ type: 'text', text: 'Text with overridden mark', marks: [{ type: 'strong' }] }],
+          content: [
+            {
+              type: 'text',
+              text: 'Text with overridden mark',
+              marks: [{ type: 'strong' }],
+            },
+          ],
         },
         {
           type: 'paragraph',
-          content: [{ type: 'text', text: 'Some emphasized text', marks: [{ type: 'em' }] }],
+          content: [
+            {
+              type: 'text',
+              text: 'Some emphasized text',
+              marks: [{ type: 'em' }],
+            },
+          ],
         },
         {
           type: 'paragraph',
-          content: [{ type: 'text', text: 'Underlined text', marks: [{ type: 'underline' }] }],
+          content: [
+            {
+              type: 'text',
+              text: 'Underlined text',
+              marks: [{ type: 'underline' }],
+            },
+          ],
         },
         {
           type: 'paragraph',
           attrs: { styleName: 'customStyle' },
-          content: [{ type: 'text', text: 'Styled paragraph with strike', marks: [{ type: 'strike' }] }],
+          content: [
+            {
+              type: 'text',
+              text: 'Styled paragraph with strike',
+              marks: [{ type: 'strike' }],
+            },
+          ],
         },
         {
           type: 'paragraph',
-          content: [{ type: 'text', text: 'Text with overridden mark', marks: [{ type: 'override' }] }],
+          content: [
+            {
+              type: 'text',
+              text: 'Text with overridden mark',
+              marks: [{ type: 'override' }],
+            },
+          ],
         },
       ],
     };
@@ -141,7 +195,9 @@ describe('clearMarks', () => {
     const tr = {
       doc: docNode,
       selection: { from: 3, to: 4 },
-      removeMark: () => { return {}; }
+      removeMark: () => {
+        return {};
+      },
     } as unknown as Transform;
     const clearmarks = clearMarks(tr, mySchema);
     expect(clearmarks).toBe(tr);
@@ -263,7 +319,9 @@ describe('clearMarks', () => {
     const tr = {
       doc: docNode,
       selection: { from: 0, to: 20 },
-      removeMark: () => { return {}; }
+      removeMark: () => {
+        return {};
+      },
     } as unknown as Transform;
     const clearmarks = clearMarks(tr, mySchema);
     expect(clearmarks).toBe(tr);
@@ -300,7 +358,10 @@ describe('clearMarks', () => {
         text: {},
       },
     });
-    const tr = { doc: {}, selection: { from: 0, to: 1 } } as unknown as Transform;
+    const tr = {
+      doc: {},
+      selection: { from: 0, to: 1 },
+    } as unknown as Transform;
     const clearmarks = clearMarks(tr, schema1);
     expect(clearmarks).toBe(tr);
   });
@@ -495,53 +556,240 @@ describe('clearMarks', () => {
 });
 describe('comapreMarks', () => {
   it('should handle comapreMarks', () => {
-    const test = comapreMarks({ styles: { 'em': [] } } as unknown as Style, { attrs: {}, type: { name: 'em' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test = comapreMarks(
+      { styles: { em: [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'em' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test).toBeDefined();
-    const test9 = comapreMarks({ styles: { 'em': false } } as unknown as Style, { attrs: {}, type: { name: 'em' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test9 = comapreMarks(
+      { styles: { em: false } } as unknown as Style,
+      { attrs: {}, type: { name: 'em' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test9).toBeDefined();
-    const test1 = comapreMarks({ styles: { 'mark-text-color': [] } } as unknown as Style, { attrs: {}, type: { name: 'mark-text-color' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test1 = comapreMarks(
+      { styles: { 'mark-text-color': [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'mark-text-color' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test1).toBeDefined();
-    const test1a = comapreMarks({ styles: { 'mark-text-color': [], 'color': true } } as unknown as Style, { attrs: {}, type: { name: 'mark-text-color' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test1a = comapreMarks(
+      { styles: { 'mark-text-color': [], color: true } } as unknown as Style,
+      { attrs: {}, type: { name: 'mark-text-color' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test1a).toBeDefined();
-    const test2 = comapreMarks({ styles: { 'mark-font-size': [] } } as unknown as Style, { attrs: {}, type: { name: 'mark-font-size' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test2 = comapreMarks(
+      { styles: { 'mark-font-size': [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'mark-font-size' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test2).toBeDefined();
-    const test2a = comapreMarks({ styles: { 'mark-font-size': [], 'fontSize': true } } as unknown as Style, { attrs: {}, type: { name: 'mark-font-size' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test2a = comapreMarks(
+      { styles: { 'mark-font-size': [], fontSize: true } } as unknown as Style,
+      { attrs: {}, type: { name: 'mark-font-size' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test2a).toBeDefined();
-    const test3 = comapreMarks({ styles: { 'mark-font-type': [] } } as unknown as Style, { attrs: {}, type: { name: 'mark-font-type' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test3 = comapreMarks(
+      { styles: { 'mark-font-type': [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'mark-font-type' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test3).toBeDefined();
-    const test3a = comapreMarks({ styles: { 'mark-font-type': [], 'fontName': true } } as unknown as Style, { attrs: {}, type: { name: 'mark-font-type' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test3a = comapreMarks(
+      { styles: { 'mark-font-type': [], fontName: true } } as unknown as Style,
+      { attrs: {}, type: { name: 'mark-font-type' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test3a).toBeDefined();
-    const test4 = comapreMarks({ styles: { 'strike': [] } } as unknown as Style, { attrs: {}, type: { name: 'strike' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test4 = comapreMarks(
+      { styles: { strike: [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'strike' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test4).toBeDefined();
-    const test5 = comapreMarks({ styles: { 'super': [] } } as unknown as Style, { attrs: {}, type: { name: 'super' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test5 = comapreMarks(
+      { styles: { super: [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'super' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test5).toBeDefined();
-    const test6 = comapreMarks({ styles: { 'mark-text-highlight': [] } } as unknown as Style, { attrs: {}, type: { name: 'mark-text-highlight' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test6 = comapreMarks(
+      { styles: { 'mark-text-highlight': [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'mark-text-highlight' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test6).toBeDefined();
-    const test6a = comapreMarks({ styles: { 'mark-text-highlight': [], 'textHighlight': true } } as unknown as Style, { attrs: {}, type: { name: 'mark-text-highlight' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test6a = comapreMarks(
+      {
+        styles: { 'mark-text-highlight': [], textHighlight: true },
+      } as unknown as Style,
+      { attrs: {}, type: { name: 'mark-text-highlight' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test6a).toBeDefined();
-    const test7 = comapreMarks({ styles: { 'underline': [] } } as unknown as Style, { attrs: {}, type: { name: 'underline' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test7 = comapreMarks(
+      { styles: { underline: [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'underline' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test7).toBeDefined();
-    const test8 = comapreMarks({ styles: { 'test': [] } } as unknown as Style, { attrs: {}, type: { name: 'test' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
+    const test8 = comapreMarks(
+      { styles: { test: [] } } as unknown as Style,
+      { attrs: {}, type: { name: 'test' } } as unknown as Mark,
+      {},
+      0,
+      {} as unknown as Node,
+      {} as unknown as Schema
+    );
     expect(test8).toBeDefined();
   });
   it('should handle comapreMarks', () => {
-    const test = comapreMarks({ styles: { 'em': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'em' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test = comapreMarks(
+      { styles: { em: [] } } as unknown as Style,
+      { attrs: { overridden: true }, type: { name: 'em' } } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test).toBeDefined();
-    const test1 = comapreMarks({ styles: { '': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'mark-text-color' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test1 = comapreMarks(
+      { styles: { '': [] } } as unknown as Style,
+      {
+        attrs: { overridden: true },
+        type: { name: 'mark-text-color' },
+      } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test1).toBeDefined();
-    const test2 = comapreMarks({ styles: { '': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'mark-font-size' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test2 = comapreMarks(
+      { styles: { '': [] } } as unknown as Style,
+      {
+        attrs: { overridden: true },
+        type: { name: 'mark-font-size' },
+      } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test2).toBeDefined();
-    const test3 = comapreMarks({ styles: { '': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'mark-font-type' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test3 = comapreMarks(
+      { styles: { '': [] } } as unknown as Style,
+      {
+        attrs: { overridden: true },
+        type: { name: 'mark-font-type' },
+      } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test3).toBeDefined();
-    const test4 = comapreMarks({ styles: { '': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'strike' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test4 = comapreMarks(
+      { styles: { '': [] } } as unknown as Style,
+      {
+        attrs: { overridden: true },
+        type: { name: 'strike' },
+      } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test4).toBeDefined();
-    const test5 = comapreMarks({ styles: { '': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'super' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test5 = comapreMarks(
+      { styles: { '': [] } } as unknown as Style,
+      {
+        attrs: { overridden: true },
+        type: { name: 'super' },
+      } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test5).toBeDefined();
-    const test6 = comapreMarks({ styles: { '': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'mark-text-highlight' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test6 = comapreMarks(
+      { styles: { '': [] } } as unknown as Style,
+      {
+        attrs: { overridden: true },
+        type: { name: 'mark-text-highlight' },
+      } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test6).toBeDefined();
-    const test7 = comapreMarks({ styles: { '': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'underline' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test7 = comapreMarks(
+      { styles: { '': [] } } as unknown as Style,
+      {
+        attrs: { overridden: true },
+        type: { name: 'underline' },
+      } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test7).toBeDefined();
-    const test8 = comapreMarks({ styles: { '': [] } } as unknown as Style, { attrs: { overridden: true }, type: { name: 'test' } } as unknown as Mark, [], 0, {} as unknown as Node, { marks: {} } as unknown as Schema);
+    const test8 = comapreMarks(
+      { styles: { '': [] } } as unknown as Style,
+      {
+        attrs: { overridden: true },
+        type: { name: 'test' },
+      } as unknown as Mark,
+      [],
+      0,
+      {} as unknown as Node,
+      { marks: {} } as unknown as Schema
+    );
     expect(test8).toBeDefined();
   });
   // it('should handle extractParagraphs',()=>{
@@ -554,14 +802,15 @@ describe('comapreMarks', () => {
   //   expect(extractParagraphs({content:[],attrs:{styleName:'test'},type:{name:'heading'}},[],[])).toBeUndefined();
   // })
 
-
-
   // describe('extractParagraphs', () => {
   it('should add paragraph to normalParagraphs when styleName is null', () => {
-    const normalParagraphs= [];
-    const otherParagraphs= [];
+    const normalParagraphs = [];
+    const otherParagraphs = [];
     extractParagraphs(
-      { attrs: { styleName: null }, type: { name: 'paragraph' } } as unknown as Node,
+      {
+        attrs: { styleName: null },
+        type: { name: 'paragraph' },
+      } as unknown as Node,
       normalParagraphs,
       otherParagraphs
     );
@@ -571,10 +820,13 @@ describe('comapreMarks', () => {
   });
 
   it('should add paragraph to normalParagraphs when styleName is "Normal"', () => {
-    const normalParagraphs= [];
-    const otherParagraphs= [];
+    const normalParagraphs = [];
+    const otherParagraphs = [];
     extractParagraphs(
-      { attrs: { styleName: 'Normal' }, type: { name: 'paragraph' } } as unknown as Node,
+      {
+        attrs: { styleName: 'Normal' },
+        type: { name: 'paragraph' },
+      } as unknown as Node,
       normalParagraphs,
       otherParagraphs
     );
@@ -587,7 +839,10 @@ describe('comapreMarks', () => {
     const normalParagraphs = [];
     const otherParagraphs = [];
     extractParagraphs(
-      { attrs: { styleName: 'test' }, type: { name: 'paragraph' } } as unknown as Node,
+      {
+        attrs: { styleName: 'test' },
+        type: { name: 'paragraph' },
+      } as unknown as Node,
       normalParagraphs,
       otherParagraphs
     );
@@ -619,7 +874,11 @@ describe('comapreMarks', () => {
     const normalParagraphs = [];
     const otherParagraphs = [];
     extractParagraphs(
-      { content: [], attrs: { styleName: 'test' }, type: { name: 'heading' } } as unknown as Node,
+      {
+        content: [],
+        attrs: { styleName: 'test' },
+        type: { name: 'heading' },
+      } as unknown as Node,
       normalParagraphs,
       otherParagraphs
     );
@@ -628,5 +887,4 @@ describe('comapreMarks', () => {
     expect(otherParagraphs).toHaveLength(0);
   });
   // });
-
 });

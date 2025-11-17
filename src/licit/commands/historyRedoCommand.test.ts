@@ -1,7 +1,7 @@
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import HistoryRedoCommand from './historyRedoCommand';
 import { Editor } from '@tiptap/react';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 
 describe('HistoryRedoCommand', () => {

@@ -1,5 +1,5 @@
-import {Transform} from 'prosemirror-transform';
-import {VideoFromURLCommand} from './VideoFromURLCommand';
+import { Transform } from '@tiptap/pm/transform';
+import { VideoFromURLCommand } from './VideoFromURLCommand';
 
 describe('VideoFromURLCommand', () => {
   it('should noop executeCustom', () => {

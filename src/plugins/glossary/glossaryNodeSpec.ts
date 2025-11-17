@@ -1,5 +1,5 @@
-import type {Attrs, DOMOutputSpec, Node, NodeSpec} from 'prosemirror-model';
-import {GLOSSARY} from './types';
+import type { Attrs, DOMOutputSpec, Node, NodeSpec } from '@tiptap/pm/model';
+import { GLOSSARY } from './types';
 
 export const GlossaryNodeSpec: NodeSpec = {
   atom: true,
@@ -10,13 +10,13 @@ export const GlossaryNodeSpec: NodeSpec = {
   selectable: true,
   // added new attributes to this spec.
   attrs: {
-    from: {default: null},
-    to: {default: null},
-    type: {default: 1},
-    term: {default: null},
-    description: {default: null},
-    definition: {default: null},
-    id: {default: null},
+    from: { default: null },
+    to: { default: null },
+    type: { default: 1 },
+    term: { default: null },
+    description: { default: null },
+    definition: { default: null },
+    id: { default: null },
   },
   toDOM,
   parseDOM: [
@@ -49,7 +49,7 @@ function getAttrs(dom: HTMLElement): Attrs {
 }
 
 function toDOM(node: Node): DOMOutputSpec {
-  const {from, to, type, description, definition, term, id} = node.attrs;
+  const { from, to, type, description, definition, term, id } = node.attrs;
   const attrs = {
     from,
     to,

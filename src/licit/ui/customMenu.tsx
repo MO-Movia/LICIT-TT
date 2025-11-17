@@ -1,7 +1,5 @@
 import * as React from 'react';
 
-import '../styles/czi-custom-menu.css';
-import '../styles/czi-custom-scrollbar.css';
 import cx from 'classnames';
 
 class CustomMenu extends React.Component<

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import CommandMenu from './commandMenu';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import { STRONG, TABLE_INSERT_TABLE } from '../editorCommands';
 import { Arr } from './commandMenuButton';
 
@@ -41,7 +41,11 @@ describe('CommandMenu', () => {
       plugins: [],
       tr: {
         doc: {
-          nodeAt: (_x: number) => ({ isAtom: true, isLeaf: true, isText: false }),
+          nodeAt: (_x: number) => ({
+            isAtom: true,
+            isLeaf: true,
+            isText: false,
+          }),
         },
       },
       schema: { marks: { 'mark-font-type': undefined } },

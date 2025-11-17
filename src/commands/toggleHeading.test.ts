@@ -1,7 +1,7 @@
-import {toggleHeading,setHeadingNode} from './toggleHeading';
-import {Node, Schema} from 'prosemirror-model';
-import {Transform} from 'prosemirror-transform';
-import {BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH} from './NodeNames';
+import { toggleHeading, setHeadingNode } from './toggleHeading';
+import { Node, Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
+import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
 import * as isListNode from './isListNode';
 import * as isInsideListItem from './isInsideListItem';
 
@@ -14,16 +14,16 @@ describe('toggleHeading', () => {
   const mySchema = new Schema({
     nodes: {
       doc: {
-        attrs: {lineSpacing: {default: 'test'}},
+        attrs: { lineSpacing: { default: 'test' } },
         content: 'block+',
       },
       paragraph: {
-        attrs: {lineSpacing: {default: 'test'}},
+        attrs: { lineSpacing: { default: 'test' } },
         content: 'text*',
         group: 'block',
       },
       heading: {
-        attrs: {lineSpacing: {default: 'test'}},
+        attrs: { lineSpacing: { default: 'test' } },
         content: 'text*',
         group: 'block',
         defining: true,
@@ -33,12 +33,12 @@ describe('toggleHeading', () => {
         group: 'block',
       },
       list_item: {
-        attrs: {lineSpacing: {default: 'test'}},
+        attrs: { lineSpacing: { default: 'test' } },
         content: 'paragraph',
         defining: true,
       },
       blockquote: {
-        attrs: {lineSpacing: {default: 'test'}},
+        attrs: { lineSpacing: { default: 'test' } },
         content: 'block+',
         group: 'block',
       },
@@ -50,26 +50,26 @@ describe('toggleHeading', () => {
 
   // Create a dummy document using the defined schema
   const dummyDoc = mySchema.node('doc', null, [
-    mySchema.node('heading', {lineSpacing: 'test'}, [
+    mySchema.node('heading', { lineSpacing: 'test' }, [
       mySchema.text('Heading 1'),
     ]),
-    mySchema.node('paragraph', {lineSpacing: 'test'}, [
+    mySchema.node('paragraph', { lineSpacing: 'test' }, [
       mySchema.text('This is a paragraph'),
     ]),
-    mySchema.node('bullet_list', {lineSpacing: 'test'}, [
-      mySchema.node('list_item', {lineSpacing: 'test'}, [
-        mySchema.node('paragraph', {lineSpacing: 'test'}, [
+    mySchema.node('bullet_list', { lineSpacing: 'test' }, [
+      mySchema.node('list_item', { lineSpacing: 'test' }, [
+        mySchema.node('paragraph', { lineSpacing: 'test' }, [
           mySchema.text('List item 1'),
         ]),
       ]),
-      mySchema.node('list_item', {lineSpacing: 'test'}, [
-        mySchema.node('paragraph', {lineSpacing: 'test'}, [
+      mySchema.node('list_item', { lineSpacing: 'test' }, [
+        mySchema.node('paragraph', { lineSpacing: 'test' }, [
           mySchema.text('List item 2'),
         ]),
       ]),
     ]),
-    mySchema.node('blockquote', {lineSpacing: 'test'}, [
-      mySchema.node('paragraph', {lineSpacing: 'test'}, [
+    mySchema.node('blockquote', { lineSpacing: 'test' }, [
+      mySchema.node('paragraph', { lineSpacing: 'test' }, [
         mySchema.text('This is a blockquote'),
       ]),
     ]),
@@ -91,7 +91,7 @@ describe('toggleHeading', () => {
 
   it('should be check the condition nodeType === blockquote', () => {
     const tr = {
-      selection: {from: 2, to: 4},
+      selection: { from: 2, to: 4 },
       doc: dummyDoc,
     } as unknown as Transform;
     const sc = {
@@ -108,7 +108,7 @@ describe('toggleHeading', () => {
 
   it('should be check the condition isInsideListItem(tr.doc, pos)', () => {
     const tr = {
-      selection: {from: 2, to: 4},
+      selection: { from: 2, to: 4 },
       doc: dummyDoc,
       nodeAt: (_a) => {
         return undefined;
@@ -134,7 +134,7 @@ describe('toggleHeading', () => {
   });
   it('should be check the condition level !== null', () => {
     const tr = {
-      selection: {from: 2, to: 4},
+      selection: { from: 2, to: 4 },
       doc: dummyDoc,
       nodeAt: (_a) => {
         return undefined;
@@ -163,7 +163,7 @@ describe('toggleHeading', () => {
   });
 
   it('should be check the condition (pos >= tr.doc.content.size) inside the setHeadingNode() function', () => {
-    const tr = {doc: {content: {size: 1}}} as unknown as Transform;
+    const tr = { doc: { content: { size: 1 } } } as unknown as Transform;
     const sc = {
       nodes: {
         heading: HEADING,
@@ -178,7 +178,7 @@ describe('toggleHeading', () => {
   it('should be check the condition (!node || !heading || !paragraph || !blockquote) inside the setHeadingNode() function', () => {
     const tr = {
       doc: {
-        content: {size: 2},
+        content: { size: 2 },
         nodeAt: (_a) => {
           return undefined;
         },

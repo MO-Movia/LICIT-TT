@@ -1,6 +1,6 @@
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import * as React from 'react';
 
 import { FontSizeCommand } from '@modusoperandi/licit-ui-commands';
@@ -36,7 +36,9 @@ class FontSizeCommandMenuButton extends React.PureComponent<PropsType> {
     const { dispatch, editorState, editorView } = this.props;
     const fontSize = findActiveFontSize(editorState);
     // const className = String(fontSize).length <= 2 ? 'width-30' : 'width-60';
-    const className = (String(fontSize).length <= 2 ? 'width-30' : 'width-60') + ' czi-dropdown-border';
+    const className =
+      (String(fontSize).length <= 2 ? 'width-30' : 'width-60') +
+      ' czi-dropdown-border';
     return (
       <CommandMenuButton
         className={className}

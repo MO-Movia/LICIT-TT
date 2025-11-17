@@ -3,11 +3,11 @@ import {
   TextSelection,
   Selection,
   Transaction,
-} from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { CellSelection } from 'prosemirror-tables';
-import { EditorView } from 'prosemirror-view';
-import { Node, Fragment, Schema } from 'prosemirror-model';
+} from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { CellSelection } from '@tiptap/pm/tables';
+import { EditorView } from '@tiptap/pm/view';
+import { Node, Fragment, Schema } from '@tiptap/pm/model';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import {
   atViewportCenter,

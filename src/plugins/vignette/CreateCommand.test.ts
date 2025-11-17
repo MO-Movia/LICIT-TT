@@ -1,7 +1,7 @@
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import {createCommand} from './CreateCommand';
-import {EditorState} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
+import { createCommand } from './CreateCommand';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 
 describe('create command', () => {
   let command: UICommand;
@@ -18,9 +18,9 @@ describe('create command', () => {
 
   it('should execute', () => {
     const mockState = {
-        tr: {
-          docChanged: false
-        }
+      tr: {
+        docChanged: false,
+      },
     } as unknown as EditorState;
     expect(command.execute(mockState)).toBeFalsy();
   });

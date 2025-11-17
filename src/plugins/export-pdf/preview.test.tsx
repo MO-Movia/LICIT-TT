@@ -1,12 +1,11 @@
 import { PreviewForm } from './preview';
-import { EditorView } from 'prosemirror-view';
-import { EditorState } from 'prosemirror-state';
-import { Schema } from 'prosemirror-model';
+import { EditorView } from '@tiptap/pm/view';
+import { EditorState } from '@tiptap/pm/state';
+import { Schema } from '@tiptap/pm/model';
 import * as tcUtils from './utils/table-of-contents-utils';
 import { StoredStyle } from './utils/table-of-contents-utils';
 
 describe('PreviewForm', () => {
-
   it('should call calcLogic when PreviewForm.isToc = true ', () => {
     const dommock = document.createElement('div');
     const parentelement = document.createElement('div');
@@ -22,8 +21,18 @@ describe('PreviewForm', () => {
       .mockReturnValue(document.createElement('div'));
     const props = {
       editorState: { doc: { attrs: { gg: null } } } as unknown as EditorState,
-      editorView: { dom: dommock, dispatch: () => { }, state: { tr: { setMeta: () => { return {}; } } } } as unknown as EditorView,
-      onClose: () => { },
+      editorView: {
+        dom: dommock,
+        dispatch: () => {},
+        state: {
+          tr: {
+            setMeta: () => {
+              return {};
+            },
+          },
+        },
+      } as unknown as EditorView,
+      onClose: () => {},
     };
     const prevForm = new PreviewForm(props);
     PreviewForm['isToc'] = true;
@@ -48,9 +57,9 @@ describe('PreviewForm', () => {
       editorView: {
         dom: dommock,
         state: { doc: { attrs: { gg: null } } },
-        dispatch: () => { }
+        dispatch: () => {},
       } as unknown as EditorView,
-      onClose: () => { },
+      onClose: () => {},
     };
     const prevForm = new PreviewForm(props);
 
@@ -76,12 +85,12 @@ describe('PreviewForm', () => {
       editorView: {
         dom: dommock,
         state: { doc: { attrs: { gg: null } } },
-        dispatch: () => { }
+        dispatch: () => {},
       } as unknown as EditorView,
-      onClose: () => { },
+      onClose: () => {},
     };
     const prevForm = new PreviewForm(props);
-    jest.spyOn(prevForm, 'insertFooters').mockImplementation(() => { });
+    jest.spyOn(prevForm, 'insertFooters').mockImplementation(() => {});
 
     PreviewForm['isToc'] = false;
     PreviewForm['isTitle'] = true;
@@ -127,14 +136,12 @@ describe('PreviewForm component', () => {
     };
 
     const previewForm = new PreviewForm(props);
-    jest.spyOn(previewForm, 'prepareCSSRules').mockImplementation(() => { });
+    jest.spyOn(previewForm, 'prepareCSSRules').mockImplementation(() => {});
     previewForm.handleConfirm();
     expect(window.open).toHaveBeenCalledWith('', '_blank');
     expect(printWindowMock.document.open).toHaveBeenCalled();
     expect(printWindowMock.document.writeln).toHaveBeenCalledWith(
-      expect.stringContaining(
-        '<!DOCTYPE html>'
-      )
+      expect.stringContaining('<!DOCTYPE html>')
     );
     expect(printWindowMock.document.documentElement.firstChild).not.toBeNull();
     expect(printWindowMock.document.documentElement.appendChild).not.toBeNull();
@@ -153,7 +160,7 @@ describe('PreviewForm component', () => {
     const previewForm = new PreviewForm(props);
     const spy = jest
       .spyOn(previewForm, 'calcLogic')
-      .mockImplementation(() => { });
+      .mockImplementation(() => {});
     previewForm.handelCitation({ target: { checked: true } });
     expect(spy).toBeDefined();
   });
@@ -168,11 +175,10 @@ describe('PreviewForm component', () => {
     const previewForm = new PreviewForm(props);
     const spy = jest
       .spyOn(previewForm, 'calcLogic')
-      .mockImplementation(() => { });
+      .mockImplementation(() => {});
     previewForm.handelCitation({ target: { checked: false } });
     expect(spy).toBeDefined();
   });
-
 
   it('should call the function handleCancel()', () => {
     const props = {
@@ -249,14 +255,16 @@ describe('PreviewForm component', () => {
       editorState: {} as unknown as EditorState,
       editorView: {
         dom: { parentElement: { parentElement: el } },
-        dispatch: () => { }
+        dispatch: () => {},
       } as unknown as EditorView,
       onClose() {
         return;
       },
     };
     const Previewform = new PreviewForm(props);
-    const spy = jest.spyOn(Previewform, 'getToc').mockReturnValue(null as unknown as Promise<void>);
+    const spy = jest
+      .spyOn(Previewform, 'getToc')
+      .mockReturnValue(null as unknown as Promise<void>);
     Previewform.componentDidMount();
     expect(spy).toHaveBeenCalled();
   });
@@ -350,12 +358,14 @@ describe('PreviewForm component', () => {
     expect(imageElement.style.maxWidth).toBe('');
     expect(imageElement.style.transform).toBe('');
   });
-  
+
   it('should return early if contentDiv is not present', () => {
     const props = {
       editorState: {} as unknown as EditorState,
       editorView: {} as unknown as EditorView,
-      onClose() { return; },
+      onClose() {
+        return;
+      },
     };
 
     const Previewform = new PreviewForm(props);
@@ -410,7 +420,9 @@ describe('PreviewForm component', () => {
     const props = {
       editorState: {} as unknown as EditorState,
       editorView: {} as unknown as EditorView,
-      onClose() { return; },
+      onClose() {
+        return;
+      },
     };
 
     const Previewform = new PreviewForm(props);
@@ -504,12 +516,11 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const previewForm = new PreviewForm(props);
       const calcLogicSpy = jest
         .spyOn(previewForm, 'calcLogic')
-        .mockImplementation(() => { });
+        .mockImplementation(() => {});
 
       previewForm.lastUpdatedActive();
       expect(PreviewForm['lastUpdated']).toBe(true);
       expect(calcLogicSpy).toBeDefined();
-
     });
 
     it('should handle handleLastUpdated correctly', () => {
@@ -521,10 +532,10 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const previewForm = new PreviewForm(props);
       const lastUpdatedActiveSpy = jest
         .spyOn(previewForm, 'lastUpdatedActive')
-        .mockImplementation(() => { });
+        .mockImplementation(() => {});
       const lastUpdatedDeactiveSpy = jest
         .spyOn(previewForm, 'lastUpdatedDeactive')
-        .mockImplementation(() => { });
+        .mockImplementation(() => {});
 
       previewForm.handleLastUpdated({ target: { checked: true } });
       expect(lastUpdatedActiveSpy).toHaveBeenCalledTimes(1);
@@ -570,7 +581,7 @@ describe('addLinkEventListeners && handleLinkClick', () => {
             },
           },
         },
-        dispatch: () => { }
+        dispatch: () => {},
       } as unknown as EditorView;
 
       const props = {
@@ -581,7 +592,7 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const previewForm = new PreviewForm(props);
       const showAlertSpy = jest
         .spyOn(previewForm, 'showAlert')
-        .mockImplementation(() => { });
+        .mockImplementation(() => {});
       PreviewForm['lastUpdated'] = true;
       previewForm?.calcLogic();
 
@@ -606,7 +617,7 @@ describe('addLinkEventListeners && handleLinkClick', () => {
             },
           },
         },
-        dispatch: () => { }
+        dispatch: () => {},
       } as unknown as EditorView;
 
       const props = {
@@ -617,7 +628,7 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const previewForm = new PreviewForm(props);
       const showAlertSpy = jest
         .spyOn(previewForm, 'showAlert')
-        .mockImplementation(() => { });
+        .mockImplementation(() => {});
 
       previewForm?.calcLogic();
       expect(showAlertSpy).toHaveBeenCalled();
@@ -627,22 +638,27 @@ describe('addLinkEventListeners && handleLinkClick', () => {
     const schema = new Schema({
       nodes: {
         doc: {
-          content: 'block+'
+          content: 'block+',
         },
         paragraph: {
           attrs: { styleName: { default: null } },
           content: 'text*',
           group: 'block',
-          parseDOM: [{ tag: 'p', getAttrs: dom => ({ styleName: dom.getAttribute('stylename') }) }],
+          parseDOM: [
+            {
+              tag: 'p',
+              getAttrs: (dom) => ({ styleName: dom.getAttribute('stylename') }),
+            },
+          ],
           toDOM(node) {
             return ['p', { stylename: node.attrs.styleName }, 0];
-          }
+          },
         },
         text: {
-          group: 'inline'
-        }
+          group: 'inline',
+        },
       },
-      marks: {}
+      marks: {},
     });
     const doc = {
       type: 'doc',
@@ -650,64 +666,81 @@ describe('addLinkEventListeners && handleLinkClick', () => {
         {
           type: 'paragraph',
           attrs: { styleName: 'TOT Table' },
-          content: [{ type: 'text', text: 'Table 1: Revenue by Quarter' }]
-        }
-      ]
+          content: [{ type: 'text', text: 'Table 1: Revenue by Quarter' }],
+        },
+      ],
     };
     const newDoc = schema.nodeFromJSON(doc);
 
     const view = {
       runtime: {
         getStylesAsync: () => {
-          return [{ 'toc': true, styleName: 'TOC Heading 1', name: 'TOC Heading 1' },
-          { 'tof': true, styleName: 'TOF Figure', name: 'TOF Figure' }, { 'tot': true, styleName: 'TOT Table', name: 'TOT Table' }]
-        }
+          return [
+            { toc: true, styleName: 'TOC Heading 1', name: 'TOC Heading 1' },
+            { tof: true, styleName: 'TOF Figure', name: 'TOF Figure' },
+            { tot: true, styleName: 'TOT Table', name: 'TOT Table' },
+          ];
+        },
       },
-      state: { tr: { doc: newDoc } }
+      state: { tr: { doc: newDoc } },
     } as unknown as EditorView;
 
-    jest.spyOn(tcUtils, 'getTableStyles').mockReturnValue([{ 'tot': true, styleName: 'TOT Table', name: 'TOT Table' } as unknown as StoredStyle])
+    jest.spyOn(tcUtils, 'getTableStyles').mockReturnValue([
+      {
+        tot: true,
+        styleName: 'TOT Table',
+        name: 'TOT Table',
+      } as unknown as StoredStyle,
+    ]);
     expect(previewForm.getToc(view)).toBeDefined();
-  })
+  });
   it('should handle calcLogic', () => {
     jest.spyOn(document, 'getElementById').mockReturnValue(null);
     expect(previewForm.calcLogic()).toBeUndefined();
-
-  })
+  });
   it('should handle updateDocumentSectionList', () => {
     previewForm.state.flattenedSectionNodeStructure = [{ isChecked: false }];
     expect(previewForm.updateDocumentSectionList()).toBeUndefined();
-
-  })
+  });
   it('should handle showTof', () => {
     expect(PreviewForm.showTof()).toBe(true);
-
-  })
+  });
   it('should handle showTot', () => {
     expect(PreviewForm.showTot()).toBe(true);
-
-  })
+  });
   it('should handle showCitation', () => {
     expect(PreviewForm.showCitation()).toBe(false);
-  })
+  });
   it('should handle handleTOCChange ', () => {
-    expect(previewForm.handleTOCChange({ target: { checked: true } })).toBeUndefined();
-  })
+    expect(
+      previewForm.handleTOCChange({ target: { checked: true } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOCChange when checked is false', () => {
-    expect(previewForm.handleTOCChange({ target: { checked: false } })).toBeUndefined();
-  })
+    expect(
+      previewForm.handleTOCChange({ target: { checked: false } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOFChange ', () => {
-    expect(previewForm.handleTOFChange({ target: { checked: true } })).toBeUndefined();
-  })
+    expect(
+      previewForm.handleTOFChange({ target: { checked: true } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOFChange when checked is false', () => {
-    expect(previewForm.handleTOFChange({ target: { checked: false } })).toBeUndefined();
-  })
+    expect(
+      previewForm.handleTOFChange({ target: { checked: false } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOTChange ', () => {
-    expect(previewForm.handleTOTChange({ target: { checked: true } })).toBeUndefined();
-  })
+    expect(
+      previewForm.handleTOTChange({ target: { checked: true } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOTChange when checked is false', () => {
-    expect(previewForm.handleTOTChange({ target: { checked: false } })).toBeUndefined();
-  })
+    expect(
+      previewForm.handleTOTChange({ target: { checked: false } })
+    ).toBeUndefined();
+  });
 });
 
 describe('YourClassName', () => {
@@ -720,9 +753,9 @@ describe('YourClassName', () => {
       editorView: {
         dom: dommock,
         state: { doc: { attrs: { gg: null } } },
-        dispatch: () => { }
+        dispatch: () => {},
       } as unknown as EditorView,
-      onClose: () => { },
+      onClose: () => {},
     };
     instance = new PreviewForm(props);
     // reset static flags before each test
@@ -781,7 +814,10 @@ describe('addLinkEventListeners && handleLinkClick', () => {
   });
 
   it('should add click event listeners to all links', () => {
-    const addEventSpy = jest.spyOn(HTMLAnchorElement.prototype, 'addEventListener');
+    const addEventSpy = jest.spyOn(
+      HTMLAnchorElement.prototype,
+      'addEventListener'
+    );
     previewForm.addLinkEventListeners();
     expect(addEventSpy).toHaveBeenCalledTimes(3);
   });
@@ -794,14 +830,22 @@ describe('addLinkEventListeners && handleLinkClick', () => {
   });
 
   it('should open external link in new tab', () => {
-    const openSpy = jest.spyOn(globalThis, 'open').mockImplementation(() => null);
+    const openSpy = jest
+      .spyOn(globalThis, 'open')
+      .mockImplementation(() => null);
     previewForm.openExternalLink('https://external.com');
-    expect(openSpy).toHaveBeenCalledWith('https://external.com', '_blank', 'noopener,noreferrer');
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://external.com',
+      '_blank',
+      'noopener,noreferrer'
+    );
   });
 
   it('should handle click on external link', () => {
     const link = document.querySelector('.external-link')!;
-    const openSpy = jest.spyOn(previewForm, 'openExternalLink').mockImplementation(() => {});
+    const openSpy = jest
+      .spyOn(previewForm, 'openExternalLink')
+      .mockImplementation(() => {});
     const preventDefault = jest.fn();
 
     const event = new MouseEvent('click', { bubbles: true });
@@ -815,7 +859,9 @@ describe('addLinkEventListeners && handleLinkClick', () => {
 
   it('should handle click on internal link by href', () => {
     const link = document.querySelector('.internal-link')!;
-    const scrollSpy = jest.spyOn(previewForm, 'scrollToInternalTarget').mockImplementation(() => {});
+    const scrollSpy = jest
+      .spyOn(previewForm, 'scrollToInternalTarget')
+      .mockImplementation(() => {});
     const preventDefault = jest.fn();
 
     const event = new MouseEvent('click', { bubbles: true });
@@ -829,7 +875,9 @@ describe('addLinkEventListeners && handleLinkClick', () => {
 
   it('should handle click on internal link by selectionId', () => {
     const link = document.querySelector('.selection-link')!;
-    const scrollSpy = jest.spyOn(previewForm, 'scrollToInternalTarget').mockImplementation(() => {});
+    const scrollSpy = jest
+      .spyOn(previewForm, 'scrollToInternalTarget')
+      .mockImplementation(() => {});
     const preventDefault = jest.fn();
 
     const event = new MouseEvent('click', { bubbles: true });

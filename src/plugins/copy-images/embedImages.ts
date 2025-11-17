@@ -5,9 +5,9 @@ import {
   Node,
   DOMParser,
   DOMOutputSpec,
-} from 'prosemirror-model';
-import { Plugin, PluginKey, EditorState } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+} from '@tiptap/pm/model';
+import { Plugin, PluginKey, EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import type { EditorRuntime } from './Types';
 const UNSUPPRT_XEMF_STRING = 'x-emf';
 export class RichCopyEmbedImagePlugin extends Plugin {

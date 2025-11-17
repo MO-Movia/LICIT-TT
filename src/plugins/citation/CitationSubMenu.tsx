@@ -1,5 +1,5 @@
 import React from 'react';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import scrollIntoView from 'smooth-scroll-into-view-if-needed';
 import { sanitizeURL } from './sanitizeURL';
 import { CitationToolButton } from './ui/CitationToolButton';

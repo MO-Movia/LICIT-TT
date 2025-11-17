@@ -1,7 +1,7 @@
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { CustomMenuButton } from './CustomMenuButton';
-import { EditorState } from 'prosemirror-state';
-import { Schema } from 'prosemirror-model';
+import { EditorState } from '@tiptap/pm/state';
+import { Schema } from '@tiptap/pm/model';
 
 describe('CustomMenuButton', () => {
   const mockState = {

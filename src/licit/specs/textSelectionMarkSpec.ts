@@ -1,4 +1,4 @@
-import { MarkSpec } from 'prosemirror-model';
+import { MarkSpec } from '@tiptap/pm/model';
 
 const TextSelectionMarkSpec: MarkSpec = {
   attrs: {

@@ -1,6 +1,6 @@
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import { AddCitationCommand } from './AddCitationCommand';
-import { TextSelection } from 'prosemirror-state';
+import { TextSelection } from '@tiptap/pm/state';
 import { CITATION_NOTE } from './Constants';
 import { defaultCitationText } from './CitationBuilder';
 import { Citation, pluginKey } from './Types';

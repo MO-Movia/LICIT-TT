@@ -1,14 +1,14 @@
 import { createEditor, doc, p } from 'jest-prosemirror';
 import { CustomstylePlugin } from '../index';
 import { CustomMenuUI } from './CustomMenuUI';
-import { Schema } from 'prosemirror-model';
-import { EditorState } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { Schema } from '@tiptap/pm/model';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import { CustomStyleCommand } from '../CustomStyleCommand';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { SyntheticEvent } from 'react';
-import { Transform } from 'prosemirror-transform';
-import { Node } from 'prosemirror-model';
+import { Transform } from '@tiptap/pm/transform';
+import { Node } from '@tiptap/pm/model';
 
 describe('Custom Menu UI   ', () => {
   const TestCustomStyleRuntime = {

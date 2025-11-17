@@ -1,7 +1,7 @@
-import { Fragment } from 'prosemirror-model';
-import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { Fragment } from '@tiptap/pm/model';
+import { EditorState, Transaction, TextSelection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import React from 'react';
 import {
   hideCursorPlaceholder,
@@ -11,7 +11,6 @@ import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { createPopUp, PopUpHandle } from '@modusoperandi/licit-ui-commands';
 
 import type { ImageProps } from './Types';
-
 
 // Command to insert the Enhanced Table/Figure node (for image)
 export function insertEnhancedImageFigure(tr, schema, imageUrl, altText = '') {
@@ -49,7 +48,10 @@ export function insertEnhancedImageFigure(tr, schema, imageUrl, altText = '') {
   // Assemble the composite in the order: [body, capco]
   const content = Fragment.fromArray([bodyNode, capcoNode]);
   // Set the figureType to 'figure'.
-  const figureNode = figureNodeType.create({ figureType: 'figure', orientation: 'landscape' }, content);
+  const figureNode = figureNodeType.create(
+    { figureType: 'figure', orientation: 'landscape' },
+    content
+  );
 
   // Insert the figure node.
   tr = tr.insert(from, figureNode);
@@ -63,7 +65,6 @@ export function insertEnhancedImageFigure(tr, schema, imageUrl, altText = '') {
   }
   return tr;
 }
-
 
 export class ImageSourceCommand extends UICommand {
   _popUp?: PopUpHandle;
@@ -151,7 +152,12 @@ export class ImageSourceCommand extends UICommand {
     return tr;
   }
 
-  executeCustomStyleForTable(_state: EditorState, tr: Transform, _from: number, _to: number): Transform {
+  executeCustomStyleForTable(
+    _state: EditorState,
+    tr: Transform,
+    _from: number,
+    _to: number
+  ): Transform {
     return tr;
   }
 }

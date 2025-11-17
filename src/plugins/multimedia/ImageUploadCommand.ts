@@ -1,11 +1,11 @@
-import {EditorState} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import React from 'react';
 
-import {ImageSourceCommand} from './ImageSourceCommand';
-import {EditorRuntime} from './Types';
-import {ImageUploadEditor} from './ui/ImageUploadEditor';
-import {Transform} from 'prosemirror-transform';
+import { ImageSourceCommand } from './ImageSourceCommand';
+import { EditorRuntime } from './Types';
+import { ImageUploadEditor } from './ui/ImageUploadEditor';
+import { Transform } from '@tiptap/pm/transform';
 
 export class ImageUploadCommand extends ImageSourceCommand {
   isEnabled = (state: EditorState, view: EditorView | null): boolean => {
@@ -18,7 +18,7 @@ export class ImageUploadCommand extends ImageSourceCommand {
       return false;
     }
 
-    const {canUploadImage, uploadImage} = runtime;
+    const { canUploadImage, uploadImage } = runtime;
     if (!uploadImage || !canUploadImage?.()) {
       return false;
     }
@@ -30,10 +30,7 @@ export class ImageUploadCommand extends ImageSourceCommand {
     return ImageUploadEditor;
   }
 
-  executeCustomStyleForTable(
-    _state: EditorState,
-    tr: Transform,
-  ): Transform {
+  executeCustomStyleForTable(_state: EditorState, tr: Transform): Transform {
     return tr;
   }
 }

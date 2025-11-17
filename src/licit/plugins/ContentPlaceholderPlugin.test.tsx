@@ -1,5 +1,5 @@
-import { EditorView } from 'prosemirror-view';
-import { PluginKey } from 'prosemirror-state';
+import { EditorView } from '@tiptap/pm/view';
+import { PluginKey } from '@tiptap/pm/state';
 import ContentPlaceholderPlugin from './ContentPlaceholderPlugin';
 import isEditorStateEmpty from '../isEditorStateEmpty';
 import ReactDOM from 'react-dom';

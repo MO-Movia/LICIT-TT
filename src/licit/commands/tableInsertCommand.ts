@@ -1,8 +1,8 @@
 import * as React from 'react';
 import nullthrows from 'nullthrows';
-import { EditorState, TextSelection } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import { atAnchorRight, createPopUp } from '@modusoperandi/licit-ui-commands';
 import TableGridSizeEditor from '../ui/tableGridSizeEditor';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
@@ -38,7 +38,7 @@ class TableInsertCommand extends UICommand {
   isEnabled = (state: EditorState): boolean => {
     const tr = state;
     let bOK = false;
-    const {selection} = tr;
+    const { selection } = tr;
     if (selection instanceof TextSelection) {
       bOK = selection.from === selection.to;
       // [FS] IRAD-1065 2020-09-18
@@ -101,8 +101,8 @@ class TableInsertCommand extends UICommand {
     inputs?: TableGridSizeEditorState
   ): boolean => {
     if (inputs) {
-      const {rows, cols} = inputs;
-      return this.getEditor().commands.insertTable({rows, cols});
+      const { rows, cols } = inputs;
+      return this.getEditor().commands.insertTable({ rows, cols });
     }
     return false;
   };

@@ -1,5 +1,5 @@
 import HardBreakNodeSpec from './hardBreakNodeSpec';
-import { NodeSpec } from 'prosemirror-model';
+import { NodeSpec } from '@tiptap/pm/model';
 
 describe('HardBreakNodeSpec', () => {
   it('should have correct properties', () => {

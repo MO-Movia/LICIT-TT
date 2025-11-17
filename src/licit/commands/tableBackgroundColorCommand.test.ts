@@ -1,5 +1,5 @@
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import TableBackgroundColorCommand from './tableBackgroundColorCommand';
 
 describe('TableBackgroundColorCommand', () => {

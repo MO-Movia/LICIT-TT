@@ -1,5 +1,5 @@
-import { Schema, Node } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
+import { Schema, Node } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 import {
   setTextAlign,
   setTextLineSpacing,

@@ -3,17 +3,17 @@ import {
   PluginKey,
   TextSelection,
   Transaction,
-} from 'prosemirror-state';
-import {Schema, DOMParser} from 'prosemirror-model';
-import {EditorView} from 'prosemirror-view';
-import {schema as basicSchema} from 'prosemirror-schema-basic';
+} from '@tiptap/pm/state';
+import { Schema, DOMParser } from '@tiptap/pm/model';
+import { EditorView } from '@tiptap/pm/view';
+import { schema as basicSchema } from '@tiptap/pm/schema-basic';
 import CursorPlaceholderPlugin, {
   showCursorPlaceholder,
   hideCursorPlaceholder,
   findCursorPlaceholderPos,
   // resetSingletonInstance,
 } from './cursorPlaceholderPlugin';
-import {SPEC} from './cursorPlaceholderPlugin'; // Ensure SPEC is exported
+import { SPEC } from './cursorPlaceholderPlugin'; // Ensure SPEC is exported
 
 describe('CursorPlaceholderPlugin', () => {
   let state;
@@ -33,7 +33,6 @@ describe('CursorPlaceholderPlugin', () => {
   };
 
   beforeEach(() => {
-
     const div = document.createElement('div');
     document.body.appendChild(div);
 
@@ -105,25 +104,25 @@ describe('CursorPlaceholderPlugin', () => {
     expect(decorations.length).toBe(1);
   });
 
-test('should handle selection changes correctly', () => {
-  const { doc } = view.state;
-  const tr = view.state.tr.setSelection(TextSelection.create(doc, 1, 1));
-  view.dispatch(tr);
+  test('should handle selection changes correctly', () => {
+    const { doc } = view.state;
+    const tr = view.state.tr.setSelection(TextSelection.create(doc, 1, 1));
+    view.dispatch(tr);
 
-  const newTr = showCursorPlaceholder(view.state);
-  view.dispatch(newTr as unknown as Transaction);
+    const newTr = showCursorPlaceholder(view.state);
+    view.dispatch(newTr as unknown as Transaction);
 
-  const pos = findCursorPlaceholderPos(view.state);
+    const pos = findCursorPlaceholderPos(view.state);
 
-  expect(pos).not.toBeNull();
-});
+    expect(pos).not.toBeNull();
+  });
 
   test('should return null if singletonInstance is not initialized', () => {
     const pos = findCursorPlaceholderPos(view.state);
     expect(pos).toBeNull();
   });
   test('should replace selection with placeholder if selection is not empty', () => {
-    const {doc} = view.state;
+    const { doc } = view.state;
 
     //  Ensure there's at least one node in the document
     expect(doc.childCount).toBeGreaterThan(0);

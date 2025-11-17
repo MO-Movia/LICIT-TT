@@ -22,17 +22,17 @@ import {
   applyStyleForTableColumnCell,
 } from './CustomStyleCommand';
 import * as cusstylecommand from './CustomStyleCommand';
-import { EditorState, Selection, Transaction } from 'prosemirror-state';
+import { EditorState, Selection, Transaction } from '@tiptap/pm/state';
 
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 
-import { Schema, Node } from 'prosemirror-model';
-import { schema } from 'prosemirror-schema-basic';
+import { Schema, Node } from '@tiptap/pm/model';
+import { schema } from '@tiptap/pm/schema-basic';
 import * as customstyles from './customStyle';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 import type { Style } from './StyleRuntime';
 import { doc, p } from 'jest-prosemirror';
-import { CellSelection, tableNodes } from 'prosemirror-tables';
+import { CellSelection, tableNodes } from '@tiptap/pm/tables';
 
 describe('CustomStyleCommand', () => {
   const styl = {

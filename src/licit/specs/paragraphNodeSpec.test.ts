@@ -3,25 +3,25 @@ import ParagraphNodeSpec, {
   getParagraphNodeAttrs,
   toParagraphDOM,
 } from './paragraphNodeSpec';
-import {DOMOutputSpec} from 'prosemirror-model';
+import { DOMOutputSpec } from '@tiptap/pm/model';
 
 describe('ParagraphNodeSpec', () => {
   it('should have correct default attributes', () => {
     expect(ParagraphNodeSpec.attrs).toEqual({
-      align: {default: null},
-      color: {default: null},
-      id: {default: null},
-      indent: {default: null},
-      lineSpacing: {default: null},
-      overriddenAlign: {default: null},
-      overriddenAlignValue: {default: null},
-      overriddenIndent: {default: null},
-      overriddenIndentValue: {default: null},
-      overriddenLineSpacing: {default: null},
-      overriddenLineSpacingValue: {default: null},
-      paddingBottom: {default: null},
-      paddingTop: {default: null},
-      reset: {default: null},
+      align: { default: null },
+      color: { default: null },
+      id: { default: null },
+      indent: { default: null },
+      lineSpacing: { default: null },
+      overriddenAlign: { default: null },
+      overriddenAlignValue: { default: null },
+      overriddenIndent: { default: null },
+      overriddenIndentValue: { default: null },
+      overriddenLineSpacing: { default: null },
+      overriddenLineSpacingValue: { default: null },
+      paddingBottom: { default: null },
+      paddingTop: { default: null },
+      reset: { default: null },
     });
   });
 

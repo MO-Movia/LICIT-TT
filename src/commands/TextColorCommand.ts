@@ -4,10 +4,10 @@ import { applyMark, updateMarksAttrs } from './applyMark';
 import { createPopUp } from './ui/createPopUp';
 import { findNodesWithSameMark } from './findNodesWithSameMark';
 import { isTextStyleMarkCommandEnabled } from './isTextStyleMarkCommandEnabled';
-import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorState, TextSelection, Transaction } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import { MARK_TEXT_COLOR } from './MarkNames';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 import { RuntimeService } from './runtime.service';
 
 export class TextColorCommand extends UICommand {
@@ -43,7 +43,7 @@ export class TextColorCommand extends UICommand {
     const result = findNodesWithSameMark(doc, from, to, markType);
     const hex = result ? result.mark.attrs.color : null;
     const node = state.tr.doc.nodeAt(from);
-    const Textmark = node?.marks.find(mark => mark?.attrs?.color);
+    const Textmark = node?.marks.find((mark) => mark?.attrs?.color);
     const Textcolor = Textmark?.attrs?.color;
     return new Promise((resolve) => {
       this._popUp = createPopUp(
@@ -68,7 +68,7 @@ export class TextColorCommand extends UICommand {
     state: EditorState,
     dispatch?: (tr: Transform) => void,
     _view?: EditorView,
-    color?: { color, selectedOption }
+    color?: { color; selectedOption }
   ): boolean => {
     if (dispatch && color?.color !== undefined) {
       const { schema } = state;

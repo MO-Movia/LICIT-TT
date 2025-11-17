@@ -1,5 +1,5 @@
-import {CitationNodeSpec, getAttrs} from './CitationNodeSpec';
-import {Node} from 'prosemirror-model';
+import { CitationNodeSpec, getAttrs } from './CitationNodeSpec';
+import { Node } from '@tiptap/pm/model';
 
 const node: Node = {
   attrs: {
@@ -26,7 +26,7 @@ const node: Node = {
     authorTitle: 'Author',
     from: '0',
     isCitationObject: 'false',
-    to:'9',
+    to: '9',
   },
 } as unknown as Node; // ignore missing elements
 

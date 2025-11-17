@@ -1,5 +1,5 @@
-import { EditorState, Plugin, PluginKey } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 
 import findActionableCell from '../findActionableCell';
 import {
@@ -10,9 +10,8 @@ import TableCellMenu from '../ui/tableCellMenu';
 import bindScrollHandler from '../bindScrollHandler';
 import isElementFullyVisible from '../isElementFullyVisible';
 
-import '../styles/czi-pop-up.css';
 import { EditorViewEx } from '../constants';
-import { CellSelection } from 'prosemirror-tables';
+import { CellSelection } from '@tiptap/pm/tables';
 
 class TableCellTooltipView {
   _cellElement: Node | null;
@@ -52,7 +51,6 @@ class TableCellTooltipView {
       pluginView: this,
       actionNode,
     };
-
 
     if (cellEl && !isElementFullyVisible(cellEl as HTMLElement)) {
       cellEl = null;

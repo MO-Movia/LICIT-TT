@@ -1,4 +1,4 @@
-import { Node, DOMOutputSpec } from 'prosemirror-model';
+import { Node, DOMOutputSpec } from '@tiptap/pm/model';
 import type { KeyValuePair } from './Constants';
 import { toCSSLineSpacing } from '@modusoperandi/licit-ui-commands';
 
@@ -85,8 +85,7 @@ function toDOM(base: toDOMFn | undefined, node: Node) {
   }
   if (node.attrs.overriddenIndent) {
     output[1][ATTRIBUTE_INDENT] = String(node.attrs.overriddenIndentValue);
-  }
-  else if ('' !== indentOverriden) {
+  } else if ('' !== indentOverriden) {
     output[1][ATTRIBUTE_INDENT] = String(indentOverriden);
   }
 

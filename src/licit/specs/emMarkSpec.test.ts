@@ -1,5 +1,5 @@
 import EMMarkSpec from './emMarkSpec'; // Adjust import path
-import {Attrs, Mark, MarkType} from 'prosemirror-model';
+import { Attrs, Mark, MarkType } from '@tiptap/pm/model';
 
 describe('EMMarkSpec', () => {
   it('parseDOM should parse <i>, <em>, and span with italic style', () => {
@@ -43,17 +43,17 @@ describe('EMMarkSpec', () => {
     const mockMarkType = {} as MarkType;
     const mockMark: Mark = {
       type: mockMarkType,
-      attrs: {overridden: true} as Attrs,
+      attrs: { overridden: true } as Attrs,
       addToSet: (marks: readonly Mark[]) => [...marks],
       removeFromSet: () => [],
       isInSet: () => false,
       eq: () => true,
-      toJSON: () => ({attrs: {overridden: true}, type: 'em'}),
+      toJSON: () => ({ attrs: { overridden: true }, type: 'em' }),
     };
 
     if (!EMMarkSpec.toDOM) throw new Error('EMMarkSpec.toDOM is not defined');
 
     const domOutput = EMMarkSpec.toDOM(mockMark, true);
-    expect(domOutput).toEqual(['em', {overridden: true}, 0]);
+    expect(domOutput).toEqual(['em', { overridden: true }, 0]);
   });
 });

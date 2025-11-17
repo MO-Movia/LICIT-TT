@@ -1,13 +1,16 @@
-import { Node, NodeType, Schema } from 'prosemirror-model';
-import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { Node, NodeType, Schema } from '@tiptap/pm/model';
+import { EditorState, TextSelection, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import * as React from 'react';
 import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { getSelectionRange, isColumnCellSelected, getSelectedCellPositions, findParagraphsInNode } from './isNodeSelectionForNodeType';
-
-
+import {
+  getSelectionRange,
+  isColumnCellSelected,
+  getSelectedCellPositions,
+  findParagraphsInNode,
+} from './isNodeSelectionForNodeType';
 
 export function setTextAlign(
   tr: Transform,
@@ -34,7 +37,7 @@ export function setTextAlign(
   if (isColumnCellSelected(selection)) {
     const positions = getSelectedCellPositions(selection);
     if (positions.length > 0) {
-      positions.forEach(pos => {
+      positions.forEach((pos) => {
         const node = tr.doc.nodeAt(pos);
         findParagraphsInNode(node, pos, (paraNode, paraPos) => {
           const align = paraNode.attrs.align ?? null;
@@ -48,8 +51,7 @@ export function setTextAlign(
         });
       });
     }
-  }
-  else {
+  } else {
     const { from, to } = getSelectionRange(selection);
     doc.nodesBetween(from, to, (node, pos, _parentNode) => {
       const nodeType = node.type;
@@ -77,7 +79,7 @@ export function setTextAlign(
         ...attrs,
         align: alignment,
         overriddenAlign: true,
-        overriddenAlignValue: alignment
+        overriddenAlignValue: alignment,
       };
     } else {
       const isOverridden = attrs.overriddenAlign ?? null;
@@ -85,7 +87,7 @@ export function setTextAlign(
         ...attrs,
         align: isOverridden ? attrs.align : null,
         overriddenAlign: isOverridden ? attrs.overriddenAlign : null,
-        overriddenAlignValue: isOverridden ? attrs.overriddenAlignValue : null
+        overriddenAlignValue: isOverridden ? attrs.overriddenAlignValue : null,
       };
     }
     tr = tr.setNodeMarkup(pos, nodeType, attrs, node.marks);
@@ -159,16 +161,17 @@ export class TextAlignCommand extends UICommand {
     );
     if (tr.docChanged) {
       // set the value of overriddenAlign to true if the user override the align style.
-      if (
-        selection.$head.parent.attrs.align !== this._alignment
-      ) {
-        const nodePos = Math.max(0, selection.head - selection.$head.parentOffset - 1);
+      if (selection.$head.parent.attrs.align !== this._alignment) {
+        const nodePos = Math.max(
+          0,
+          selection.head - selection.$head.parentOffset - 1
+        );
         const node = tr.doc.nodeAt(nodePos);
         if (node) {
           const newAttrs = {
             ...node.attrs,
             overriddenAlign: true,
-            overriddenAlignValue: this._alignment
+            overriddenAlignValue: this._alignment,
           };
           tr = tr.setNodeMarkup(nodePos, null, newAttrs);
         }
@@ -203,11 +206,7 @@ export class TextAlignCommand extends UICommand {
   ): Transform => {
     const { schema, selection } = state;
     if (isColumnCellSelected(selection)) {
-      tr = setTextAlign(
-        tr,
-        schema,
-        this._alignment
-      );
+      tr = setTextAlign(tr, schema, this._alignment);
     }
     return tr;
   };

@@ -1,6 +1,6 @@
-import { Fragment, Schema } from 'prosemirror-model';
-import { TextSelection, Transaction } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { Fragment, Schema } from '@tiptap/pm/model';
+import { TextSelection, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 
 import { MARK_TEXT_SELECTION } from './MarkNames';
 import { PARAGRAPH, TEXT } from './NodeNames';

@@ -1,14 +1,14 @@
 // Plugin to handle Citation.
-import {Plugin, PluginKey} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {Schema} from 'prosemirror-model';
-import {VignetteCommand} from './VignetteCommand';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { Schema } from '@tiptap/pm/model';
+import { VignetteCommand } from './VignetteCommand';
 import {
   VignetteTableCellNodeSpec,
   VignetteTableNodeSpec,
 } from './VignetteNodeSpec';
-import {TABLE, TABLE_CELL} from './Constants';
-import {DarkThemeIcon, LightThemeIcon} from './images';
+import { TABLE, TABLE_CELL } from './Constants';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 
 export class VignettePlugin extends Plugin {
   _view: EditorView = null;
@@ -47,7 +47,6 @@ export class VignettePlugin extends Plugin {
   }
 
   initButtonCommands(theme: string) {
-
     let image = null;
     if ('light' == theme) {
       image = LightThemeIcon;

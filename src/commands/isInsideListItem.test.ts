@@ -1,5 +1,5 @@
-import {Schema} from 'prosemirror-model';
-import {isInsideListItem} from './isInsideListItem';
+import { Schema } from '@tiptap/pm/model';
+import { isInsideListItem } from './isInsideListItem';
 
 describe('isInsideListItem', () => {
   it('should return true if the position is inside a list item', () => {

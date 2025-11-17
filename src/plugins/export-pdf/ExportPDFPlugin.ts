@@ -1,13 +1,13 @@
-import {Schema} from 'prosemirror-model';
-import {Plugin, PluginKey} from 'prosemirror-state';
+import { Schema } from '@tiptap/pm/model';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import {
   makeKeyMapWithCommon,
   createKeyMapPlugin,
 } from '@modusoperandi/licit-doc-attrs-step';
 
-import {ExportPDFCommand} from './exportPdfCommand';
-import {EditorView} from 'prosemirror-view';
-import {DarkThemeIcon, LightThemeIcon} from './images';
+import { ExportPDFCommand } from './exportPdfCommand';
+import { EditorView } from '@tiptap/pm/view';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 
 export const KEY_EXPORT_PDF = makeKeyMapWithCommon(
   'exportPDF',

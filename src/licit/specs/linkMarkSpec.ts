@@ -1,4 +1,4 @@
-import type { MarkSpec, Attrs } from 'prosemirror-model';
+import type { MarkSpec, Attrs } from '@tiptap/pm/model';
 
 const LinkMarkSpec: MarkSpec = {
   attrs: {
@@ -17,7 +17,7 @@ const LinkMarkSpec: MarkSpec = {
       getAttrs: (dom: HTMLElement): Attrs => {
         const href = dom.getAttribute('href');
         const target = href && href.indexOf('#') === 0 ? '' : 'blank';
-          const selectionId = dom.getAttribute('selectionId') || '';
+        const selectionId = dom.getAttribute('selectionId') || '';
         return {
           href: dom.getAttribute('href'),
           title: dom.getAttribute('title'),

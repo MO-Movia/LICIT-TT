@@ -1,9 +1,9 @@
-import { EditorState, TextSelection, AllSelection } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState, TextSelection, AllSelection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import { clearMarks, clearHeading } from '@modusoperandi/licit-ui-commands';
 import MarksClearCommand from './marksClearCommand';
-import { Schema } from 'prosemirror-model';
+import { Schema } from '@tiptap/pm/model';
 
 jest.mock('@modusoperandi/licit-ui-commands', () => ({
   clearMarks: jest.fn(),

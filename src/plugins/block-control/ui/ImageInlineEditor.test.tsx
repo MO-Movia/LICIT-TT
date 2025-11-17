@@ -1,9 +1,9 @@
 import { ImageInlineEditor, ImageInlineEditorValue } from './ImageInlineEditor';
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import { schema } from 'prosemirror-test-builder';
 import { EnhancedTableFigure } from '../index';
 import { createEditor, doc, p } from 'jest-prosemirror';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 
 describe('ImageInlineEditor', () => {
   const plugin = new EnhancedTableFigure();

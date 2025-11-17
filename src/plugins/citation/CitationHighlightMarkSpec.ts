@@ -1,4 +1,4 @@
-import { Node, DOMOutputSpec } from 'prosemirror-model';
+import { Node, DOMOutputSpec } from '@tiptap/pm/model';
 import { isTransparent, toCSSColor } from './toCSSColor';
 
 // Always append to base calls.
@@ -7,14 +7,17 @@ const MARKFROM = 'markFrom';
 const APPLIEDHIGHLIGHT = 'appliedHighlight';
 
 export type toDOMFn = (node: Node) => DOMOutputSpec;
-export type getAttrsFromNodeFn = (p: Node | string) => {[k: string]: string};
+export type getAttrsFromNodeFn = (p: Node | string) => { [k: string]: string };
 export type Attrs = {
   highlightColor: string;
   hasCitation: boolean;
   markFrom: string;
   appliedHighlight: string;
 };
-export type getAttrsFromDomFn = (base: getAttrsFromNodeFn, dom: HTMLElement) => Attrs;
+export type getAttrsFromDomFn = (
+  base: getAttrsFromNodeFn,
+  dom: HTMLElement
+) => Attrs;
 export function getAttrs(base: getAttrsFromNodeFn, dom: HTMLElement): Attrs {
   const attrs = base(dom as unknown as Node | string);
   attrs[HASCITATION] = dom.getAttribute(HASCITATION);
@@ -29,7 +32,6 @@ export function getAttrs(base: getAttrsFromNodeFn, dom: HTMLElement): Attrs {
     markFrom: opacity,
     appliedHighlight: zIndex === '1' ? color : 'transparent',
   };
-
 }
 
 function toDOM(base: toDOMFn, node: Node): DOMOutputSpec {
@@ -37,7 +39,8 @@ function toDOM(base: toDOMFn, node: Node): DOMOutputSpec {
   output[1][HASCITATION] = node.attrs[HASCITATION];
   output[1][MARKFROM] = node.attrs[MARKFROM];
   output[1][APPLIEDHIGHLIGHT] = node.attrs[APPLIEDHIGHLIGHT];
-  const { highlightColor, hasCitation, markFrom, appliedHighlight } = node.attrs;
+  const { highlightColor, hasCitation, markFrom, appliedHighlight } =
+    node.attrs;
   let style = '';
   if (highlightColor && !hasCitation) {
     style += `background-color: ${highlightColor};`;

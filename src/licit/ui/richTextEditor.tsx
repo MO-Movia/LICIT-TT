@@ -1,5 +1,5 @@
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import * as React from 'react';
 import { Editor, EditorContent } from '@tiptap/react';
 import EditorFrameset from './editorFrameset';
@@ -9,14 +9,14 @@ import uuid from './uuid';
 
 import type { EditorFramesetProps } from './editorFrameset';
 import type { EditorProps } from './editor';
-import { Transaction } from 'prosemirror-state';
+import { Transaction } from '@tiptap/pm/state';
 // import { EditorToolbar } from '@modusoperandi/licit-toolbar';
 type EditorContainer = { editor?: Editor };
 
 type RichTextEditorProps = EditorContainer &
   EditorFramesetProps &
   EditorProps &
-  RichTextEditorState & { children?};
+  RichTextEditorState & { children? };
 
 type RichTextEditorState = {
   editorView?: EditorView;
@@ -28,7 +28,7 @@ class RichTextEditor extends React.PureComponent<
 > {
   declare props: RichTextEditorProps;
 
- declare  state: RichTextEditorState;
+  declare state: RichTextEditorState;
 
   _id: string;
 
@@ -56,7 +56,7 @@ class RichTextEditor extends React.PureComponent<
       //placeholder,
       readOnly,
       width,
-      toolbarConfig
+      toolbarConfig,
     } = this.props;
 
     const { editorState /*, runtime*/ } = this.props;

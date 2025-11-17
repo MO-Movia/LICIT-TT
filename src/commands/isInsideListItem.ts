@@ -1,6 +1,6 @@
-import {Node} from 'prosemirror-model';
+import { Node } from '@tiptap/pm/model';
 
-import {LIST_ITEM} from './NodeNames';
+import { LIST_ITEM } from './NodeNames';
 
 export function isInsideListItem(doc: Node, pos: number): boolean {
   if (doc.nodeSize < 2 || pos < 2) {

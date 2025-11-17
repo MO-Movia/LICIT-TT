@@ -1,5 +1,4 @@
 import * as React from 'react';
-import './infoicon-note.css';
 
 type AlertProps = {
   initialValue: Record<string, never>;

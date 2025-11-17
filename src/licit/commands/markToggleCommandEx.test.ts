@@ -1,7 +1,7 @@
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import { MarkToggleCommand } from '@modusoperandi/licit-ui-commands';
 import MarkToggleCommandEx from './markToggleCommandEx';
-import { Schema } from 'prosemirror-model';
+import { Schema } from '@tiptap/pm/model';
 
 describe('MarkToggleCommandEx', () => {
   let state: EditorState;

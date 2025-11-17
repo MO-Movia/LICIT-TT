@@ -1,6 +1,6 @@
 import * as React from 'react';
 import CommandMenuButton from './commandMenuButton';
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { CustomButton } from '@modusoperandi/licit-ui-commands';
 
@@ -27,14 +27,12 @@ jest.mock('./editorToolbarConfig', () => ({
 jest.mock('./uuid', () => jest.fn(() => 'mock-uuid'));
 
 jest.mock('./commandMenu', () => 'CommandMenu');
-  
+
 const mockCommand = {
   isEnabled: jest.fn(() => true),
 };
 
-const mockCommandGroups = [
-  { Bold: mockCommand },
-];
+const mockCommandGroups = [{ Bold: mockCommand }];
 
 const mockProps = {
   commandGroups: mockCommandGroups,
@@ -62,20 +60,20 @@ describe('CommandMenuButton', () => {
   });
 
   test('should toggle expanded state on click', () => {
-  const instance = new (CommandMenuButton as any)(mockProps);
-  const setStateSpy = jest.spyOn(instance, 'setState');
+    const instance = new (CommandMenuButton as any)(mockProps);
+    const setStateSpy = jest.spyOn(instance, 'setState');
 
-  // Simulate first click (expands)
-  instance._onClick();
-  expect(setStateSpy).toHaveBeenNthCalledWith(1, { expanded: true });
+    // Simulate first click (expands)
+    instance._onClick();
+    expect(setStateSpy).toHaveBeenNthCalledWith(1, { expanded: true });
 
-  // Manually reflect the state change (React would normally do this)
-  instance.state.expanded = true;
+    // Manually reflect the state change (React would normally do this)
+    instance.state.expanded = true;
 
-  // Simulate second click (collapses)
-  instance._onClick();
-  expect(setStateSpy).toHaveBeenNthCalledWith(2, { expanded: false });
-});
+    // Simulate second click (collapses)
+    instance._onClick();
+    expect(setStateSpy).toHaveBeenNthCalledWith(2, { expanded: false });
+  });
 
   test('should call createPopUp when _showMenu is triggered', () => {
     const { createPopUp } = require('@modusoperandi/licit-ui-commands');
@@ -117,19 +115,16 @@ describe('CommandMenuButton', () => {
     expect(hideMenuSpy).toHaveBeenCalled();
   });
 
-test('should pass correct theme to CustomButton', () => {
-  const instance = new (CommandMenuButton as any)(mockProps);
-  const rendered = instance.render();
+  test('should pass correct theme to CustomButton', () => {
+    const instance = new (CommandMenuButton as any)(mockProps);
+    const rendered = instance.render();
 
-  // The rendered element is a React element of type 'button' (CustomButton mock)
-  expect(rendered.type).toBe(CustomButton);
+    // The rendered element is a React element of type 'button' (CustomButton mock)
+    expect(rendered.type).toBe(CustomButton);
 
-  // Props passed to CustomButton should include theme derived from UICommand.theme
-  expect(rendered.props.theme).toBe('light');
-  expect(rendered.props.className).toContain('czi-custom-menu-button');
-  expect(rendered.props.label).toBe('Bold');
+    // Props passed to CustomButton should include theme derived from UICommand.theme
+    expect(rendered.props.theme).toBe('light');
+    expect(rendered.props.className).toContain('czi-custom-menu-button');
+    expect(rendered.props.label).toBe('Bold');
+  });
 });
-
-
-});
-

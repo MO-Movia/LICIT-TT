@@ -2,9 +2,9 @@
 
 import { CitationPlugin } from './CitationPlugin';
 import { schema, builders } from 'prosemirror-test-builder';
-import { EditorState } from 'prosemirror-state';
-import { DOMOutputSpec, Mark, MarkSpec, Schema } from 'prosemirror-model';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { DOMOutputSpec, Mark, MarkSpec, Schema } from '@tiptap/pm/model';
+import { EditorView } from '@tiptap/pm/view';
 import { CitationView } from './CitationView';
 import { CitationSubMenu } from './CitationSubMenu';
 import React from 'react';

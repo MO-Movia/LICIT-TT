@@ -1,20 +1,17 @@
 import * as React from 'react';
-import './ui/infoIconDialog.css';
-import {EditorState} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {DOMSerializer, Schema, DOMParser} from 'prosemirror-model';
-import {schema} from 'prosemirror-schema-basic';
-import {addListNodes} from 'prosemirror-schema-list';
-import 'font-awesome/css/font-awesome.min.css';
-import 'prosemirror-menu/style/menu.css';
-import {SearchInfoIcon} from './searchInfoIcon';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
-import {plugins} from './plugins';
-import {FaIcons, FONTAWESOMEICONS} from './ui/FaIcon';
-import {SELECTEDINFOICON} from './constants';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { DOMSerializer, Schema, DOMParser } from '@tiptap/pm/model';
+import { schema } from '@tiptap/pm/schema-basic';
+import { addListNodes } from '@tiptap/pm/schema-list';
+import { SearchInfoIcon } from './searchInfoIcon';
+import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { plugins } from './plugins';
+import { FaIcons, FONTAWESOMEICONS } from './ui/FaIcon';
+import { SELECTEDINFOICON } from './constants';
 
 type InfoDialogProps = {
-  infoIcon: {name; unicode};
+  infoIcon: { name; unicode };
   description: string;
   editorView: EditorView;
   mode: number;
@@ -41,7 +38,8 @@ export class InfoIconDialog extends React.PureComponent<
       from: props.from,
       to: props.to,
       infoIcon: props.infoIcon || null,
-      faIcons: (this.getCacheIcons().length > 0 ? this.getCacheIcons() : props.faIcons),
+      faIcons:
+        this.getCacheIcons().length > 0 ? this.getCacheIcons() : props.faIcons,
       isOpen: props.isOpen || false,
       isButtonEnabled: props.isButtonEnabled || false,
       isEditorEmpty: props.isEditorEmpty || false,
@@ -99,7 +97,8 @@ export class InfoIconDialog extends React.PureComponent<
             <span>
               {this.state.infoIcon ? (
                 <span>
-                  Current Selection (<span className={this.state.infoIcon?.name}></span>)
+                  Current Selection (
+                  <span className={this.state.infoIcon?.name}></span>)
                 </span>
               ) : (
                 <span>Select Icon</span>
@@ -111,7 +110,7 @@ export class InfoIconDialog extends React.PureComponent<
               {this.state.faIcons.map((icon, index) => {
                 if (index < 10)
                   return (
-                    <div className="molinfo-icon-list-div"  key={icon.id}>
+                    <div className="molinfo-icon-list-div" key={icon.id}>
                       <i
                         className={icon.name}
                         id={`infoIcon ${index}`}
@@ -121,7 +120,7 @@ export class InfoIconDialog extends React.PureComponent<
                             this.selectInfoIcon(icon);
                           }
                         }}
-                        role='menu'
+                        role="menu"
                         tabIndex={0}
                       ></i>
                     </div>
@@ -138,7 +137,7 @@ export class InfoIconDialog extends React.PureComponent<
                     this.setVisible(!this.state.isOpen);
                   }
                 }}
-                role='menu'
+                role="menu"
                 tabIndex={0}
               ></i>
               {this.state.isOpen && (
@@ -178,11 +177,11 @@ export class InfoIconDialog extends React.PureComponent<
 
   selectInfoIcon = (clickedIcon): void => {
     if (clickedIcon.unicode === this.state.infoIcon?.unicode) {
-      this.setState({infoIcon: null}, () => {
+      this.setState({ infoIcon: null }, () => {
         this.validateInsert();
       });
     } else {
-      this.setState({infoIcon: clickedIcon}, () => {
+      this.setState({ infoIcon: clickedIcon }, () => {
         this.validateInsert();
       });
     }
@@ -206,9 +205,9 @@ export class InfoIconDialog extends React.PureComponent<
         (this.state.selectedIconName !== this.state.infoIcon.name ||
           desc !== this.state.description)
       ) {
-        this.setState({isButtonEnabled: true});
+        this.setState({ isButtonEnabled: true });
       } else {
-        this.setState({isButtonEnabled: false});
+        this.setState({ isButtonEnabled: false });
       }
     } else {
       this.setState((prevState) => ({
@@ -226,7 +225,7 @@ export class InfoIconDialog extends React.PureComponent<
           this._popUp.close();
           this._popUp = null;
           if (undefined !== val) {
-            this.setState({faIcons: this.getCacheIcons()});
+            this.setState({ faIcons: this.getCacheIcons() });
           }
         }
       },
@@ -234,7 +233,7 @@ export class InfoIconDialog extends React.PureComponent<
   }
 
   setVisible(isOpen) {
-    this.setState({isOpen: isOpen});
+    this.setState({ isOpen: isOpen });
   }
 
   _onRemove() {
@@ -245,7 +244,7 @@ export class InfoIconDialog extends React.PureComponent<
       if (element.unicode === iconName) {
         lcListItem.splice(i, 1);
         localStorage.setItem(SELECTEDINFOICON, JSON.stringify(lcListItem));
-        this.setState({faIcons: this.getCacheIcons(), infoIcon: null});
+        this.setState({ faIcons: this.getCacheIcons(), infoIcon: null });
       }
     });
   }
@@ -289,7 +288,4 @@ export class InfoIconDialog extends React.PureComponent<
       }
     }
   }
-
-
-
 }

@@ -1,7 +1,7 @@
 import cx from 'classnames';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import * as React from 'react';
 
 import { CustomButton, ThemeContext } from '@modusoperandi/licit-ui-commands';
@@ -21,7 +21,7 @@ export type CommandButtonProps = {
 };
 class CommandButton extends React.PureComponent<CommandButtonProps> {
   static contextType = ThemeContext;
-  declare  props: CommandButtonProps;
+  declare props: CommandButtonProps;
 
   render(): React.ReactElement<CustomButton> {
     const {
@@ -54,7 +54,7 @@ class CommandButton extends React.PureComponent<CommandButtonProps> {
         label={label}
         onClick={this._onUIEnter}
         onMouseEnter={this._onUIEnter}
-        theme={theme?theme.toString():'dark'}
+        theme={theme ? theme.toString() : 'dark'}
         title={title}
         value={command}
       />

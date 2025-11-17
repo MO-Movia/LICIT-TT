@@ -1,16 +1,16 @@
-import {DOMSerializer, Node} from 'prosemirror-model';
-import {Transaction} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { DOMSerializer, Node } from '@tiptap/pm/model';
+import { Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import {
   createPopUp,
   PopUpHandle,
   atAnchorTopCenter,
 } from '@modusoperandi/licit-ui-commands';
-import {InfoIconSubMenu} from './InfoIconSubMenu';
-import {INFO_ICON} from './constants';
-import {InfoIconDialog} from './infoIconDialog';
-import {findParentNodeOfTypeClosestToPos} from 'prosemirror-utils';
+import { InfoIconSubMenu } from './InfoIconSubMenu';
+import { INFO_ICON } from './constants';
+import { InfoIconDialog } from './infoIconDialog';
+import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 
 type CBFn = () => void;
 
@@ -53,7 +53,7 @@ export class InfoIconView {
   }
 
   getNodePosEx(left: number, top: number): number {
-    const objPos = this.outerView.posAtCoords({left, top});
+    const objPos = this.outerView.posAtCoords({ left, top });
     return objPos ? objPos.pos : null;
   }
 
@@ -102,7 +102,7 @@ export class InfoIconView {
     }
     this.nodePosition = this.getNodePosition(e);
     const popup = this._popUp_subMenu;
-    if(popup){
+    if (popup) {
       popup.close('');
     }
     const viewPops = {
@@ -122,7 +122,7 @@ export class InfoIconView {
     });
   }
   isPNodeNull(pNode) {
-     return pNode === null;
+    return pNode === null;
   }
 
   parentNodeType(pNode) {
@@ -180,7 +180,9 @@ export class InfoIconView {
       this._popUp_subMenu.close('');
     }
     if (this._popUp_subMenu === null) {
-      const subMenu = document.getElementsByClassName('molcit-infoicon-submenu');
+      const subMenu = document.getElementsByClassName(
+        'molcit-infoicon-submenu'
+      );
       if (subMenu.length > 0) {
         subMenu[0].remove();
       }
@@ -192,7 +194,7 @@ export class InfoIconView {
   };
 
   onEditInfo = (view: EditorView): void => {
-    if(this._popUp_subMenu){
+    if (this._popUp_subMenu) {
       this._popUp_subMenu.close('');
     }
 
@@ -224,8 +226,8 @@ export class InfoIconView {
 
   updateInfoIcon(view: EditorView, infoicon): void {
     if (view.dispatch) {
-      const {selection} = view.state;
-      let {tr} = view.state;
+      const { selection } = view.state;
+      let { tr } = view.state;
       tr = tr.setSelection(selection);
       tr = this.updateInfoObject(tr, infoicon) as Transaction;
       view.dispatch(tr);
@@ -266,7 +268,7 @@ export class InfoIconView {
   }
 
   onInfoRemove = (view: EditorView): void => {
-    const {tr} = view.state;
+    const { tr } = view.state;
     if (view.state.selection.$head.nodeBefore?.type.name === 'infoicon') {
       const from = view.state.selection.$head.pos - 2;
       tr.delete(from, from + 2);

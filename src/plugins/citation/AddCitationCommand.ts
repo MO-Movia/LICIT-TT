@@ -1,9 +1,9 @@
 import React from 'react';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { Attrs, Fragment, ResolvedPos } from 'prosemirror-model';
-import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { Attrs, Fragment, ResolvedPos } from '@tiptap/pm/model';
+import { EditorState, NodeSelection, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import { CitationDialog } from './CitationDialog';
 import {
   createPopUp,

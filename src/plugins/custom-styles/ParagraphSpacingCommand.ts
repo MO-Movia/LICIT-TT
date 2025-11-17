@@ -4,10 +4,10 @@ import {
   EditorState,
   TextSelection,
   Transaction,
-} from 'prosemirror-state';
+} from '@tiptap/pm/state';
 import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
-import { Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
+import { Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 
 export function setParagraphSpacing(
   tr: Transform,
@@ -104,7 +104,7 @@ export class ParagraphSpacingCommand extends UICommand {
   executeCustom(state: EditorState, tr: Transform): Transform {
     return tr;
   }
-   executeCustomStyleForTable(state: EditorState, tr: Transform): Transform {
+  executeCustomStyleForTable(state: EditorState, tr: Transform): Transform {
     return tr;
   }
   _paragraphSpacing?: string;

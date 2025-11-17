@@ -1,4 +1,4 @@
-import { NodeSpec, DOMOutputSpec } from 'prosemirror-model';
+import { NodeSpec, DOMOutputSpec } from '@tiptap/pm/model';
 
 const BR_DOM: DOMOutputSpec = ['br'];
 

@@ -1,5 +1,5 @@
-import {schema} from 'prosemirror-schema-basic';
-import {isOrderedListNode} from './isOrderedListNode';
+import { schema } from '@tiptap/pm/schema-basic';
+import { isOrderedListNode } from './isOrderedListNode';
 
 describe('isOrderedListNode', () => {
   it('should return false if the node type is not "ordered_list"', () => {

@@ -1,8 +1,8 @@
 import { CitationView } from './CitationView'; // Import CreateCitationObject type
-import { Node, Mark } from 'prosemirror-model';
-import { EditorView } from 'prosemirror-view';
-import { Selection } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { Node, Mark } from '@tiptap/pm/model';
+import { EditorView } from '@tiptap/pm/view';
+import { Selection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { Citation } from './Types';
 import { CapcoService } from './Constants';
 

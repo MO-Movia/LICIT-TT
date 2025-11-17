@@ -1,12 +1,14 @@
 import * as React from 'react';
 import LinkTooltip from './linkTooltip';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import scrollIntoView from 'smooth-scroll-into-view-if-needed';
 import sanitizeURL from '../sanitizeURL';
 import { CustomButton } from '@modusoperandi/licit-ui-commands';
 
 // ---- Mock dependencies ----
-jest.mock('smooth-scroll-into-view-if-needed', () => jest.fn(() => Promise.resolve()));
+jest.mock('smooth-scroll-into-view-if-needed', () =>
+  jest.fn(() => Promise.resolve())
+);
 jest.mock('../sanitizeURL', () => jest.fn((url) => `sanitized:${url}`));
 jest.mock('@modusoperandi/licit-ui-commands', () => ({
   CustomButton: jest.fn((props) => ({ type: 'CustomButton', props })),
@@ -26,7 +28,6 @@ describe('LinkTooltip (pure Jest tests)', () => {
     };
     instance = new LinkTooltip(mockProps);
   });
-
 
   it('should call window.open with sanitized URL for normal links', () => {
     const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);

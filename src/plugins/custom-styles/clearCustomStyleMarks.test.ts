@@ -1,8 +1,9 @@
-import { Schema, Node } from 'prosemirror-model';
-import { removeTextAlignAndLineSpacing, clearCustomStyleAttribute } from './clearCustomStyleMarks';
-import { Transform } from 'prosemirror-transform';
-
-
+import { Schema, Node } from '@tiptap/pm/model';
+import {
+  removeTextAlignAndLineSpacing,
+  clearCustomStyleAttribute,
+} from './clearCustomStyleMarks';
+import { Transform } from '@tiptap/pm/transform';
 
 describe('removeTextAlignAndLineSpacing', () => {
   const transaction = {
@@ -94,7 +95,10 @@ describe('removeTextAlignAndLineSpacing', () => {
     },
   });
 
-  const removetextalignandlinespacing = removeTextAlignAndLineSpacing(transaction as unknown as Transform, mySchema);
+  const removetextalignandlinespacing = removeTextAlignAndLineSpacing(
+    transaction as unknown as Transform,
+    mySchema
+  );
 
   it('should return tr', () => {
     expect(removetextalignandlinespacing).toBeDefined();
@@ -116,11 +120,15 @@ describe('removeTextAlignAndLineSpacing', () => {
     const myNode = {
       attrs: {},
     };
-    expect(clearCustomStyleAttribute(myNode as unknown as Node)).toBeUndefined();
+    expect(
+      clearCustomStyleAttribute(myNode as unknown as Node)
+    ).toBeUndefined();
   });
 
   it('should handle clearCustomStyleAttribute', () => {
     const myNode = {};
-    expect(clearCustomStyleAttribute(myNode as unknown as Node)).toBeUndefined();
+    expect(
+      clearCustomStyleAttribute(myNode as unknown as Node)
+    ).toBeUndefined();
   });
 });

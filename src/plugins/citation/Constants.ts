@@ -1,5 +1,5 @@
-import {Node} from 'prosemirror-model';
-import {Transform} from 'prosemirror-transform';
+import { Node } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 export const CITATION_NOTE = 'citationnote';
 export const MARK_UNDERLINE = 'underline';
 export const MARK_TEXT_HIGHLIGHT = 'mark-text-highlight';

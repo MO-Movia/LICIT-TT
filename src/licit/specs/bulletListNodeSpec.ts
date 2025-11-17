@@ -1,4 +1,4 @@
-import { Node, NodeSpec, DOMOutputSpec } from 'prosemirror-model';
+import { Node, NodeSpec, DOMOutputSpec } from '@tiptap/pm/model';
 
 import { ATTRIBUTE_LIST_STYLE_TYPE } from './listItemNodeSpec';
 import { LIST_ITEM } from '@modusoperandi/licit-ui-commands';

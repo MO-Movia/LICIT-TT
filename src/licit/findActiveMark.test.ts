@@ -1,18 +1,20 @@
-import { Node, MarkType, Mark } from 'prosemirror-model';
+import { Node, MarkType, Mark } from '@tiptap/pm/model';
 import findActiveMark from './findActiveMark';
 
 // Mock data for ProseMirror Node and Mark
-const createMockNode = (marks: Mark[] = [], size: number = 1) => ({
-  nodeSize: size,
-  marks,
-  nodeAt: jest.fn(function (pos: number) {
-    return pos < size ? this : null; // Returns null when position is out of range
-  }),
-}) as unknown as Node;
+const createMockNode = (marks: Mark[] = [], size: number = 1) =>
+  ({
+    nodeSize: size,
+    marks,
+    nodeAt: jest.fn(function (pos: number) {
+      return pos < size ? this : null; // Returns null when position is out of range
+    }),
+  }) as unknown as Node;
 
-const createMockMark = (type: string) => ({
-  type: { name: type } as MarkType,
-}) as Mark;
+const createMockMark = (type: string) =>
+  ({
+    type: { name: type } as MarkType,
+  }) as Mark;
 
 describe('findActiveMark', () => {
   it('should return the active mark when it exists within the specified range', () => {
@@ -88,35 +90,35 @@ describe('findActiveMark', () => {
   });
 
   it('skips positions when nodeAt returns null', () => {
-  // nodeSize > 2 so function doesn't return early
-  const doc = {
-    nodeSize: 5,
-    nodeAt: jest.fn().mockReturnValue(null), // always returns null -> triggers !node branch
-  } as unknown as Node;
+    // nodeSize > 2 so function doesn't return early
+    const doc = {
+      nodeSize: 5,
+      nodeAt: jest.fn().mockReturnValue(null), // always returns null -> triggers !node branch
+    } as unknown as Node;
 
-  const result = findActiveMark(doc, 0, 2, { name: 'bold' } as MarkType);
-  expect(result).toBeNull();
-  expect(doc.nodeAt).toHaveBeenCalled(); // optional: ensures the loop actually called nodeAt
-});
+    const result = findActiveMark(doc, 0, 2, { name: 'bold' } as MarkType);
+    expect(result).toBeNull();
+    expect(doc.nodeAt).toHaveBeenCalled(); // optional: ensures the loop actually called nodeAt
+  });
 
-it('skips nodes that do not have marks (node.marks is falsy)', () => {
-  // nodeSize > 2 so function doesn't return early
-  // nodeAt returns an object without marks (or marks = undefined)
-  const nodeWithoutMarks = {
-    nodeSize: 1,
-    // intentionally no 'marks' property
-  } as unknown as Node;
+  it('skips nodes that do not have marks (node.marks is falsy)', () => {
+    // nodeSize > 2 so function doesn't return early
+    // nodeAt returns an object without marks (or marks = undefined)
+    const nodeWithoutMarks = {
+      nodeSize: 1,
+      // intentionally no 'marks' property
+    } as unknown as Node;
 
-  const doc = {
-    nodeSize: 4,
-    nodeAt: jest.fn((pos: number) => {
-      // return the "no-marks" node for pos 0 and null elsewhere
-      return pos === 0 ? (nodeWithoutMarks as any) : null;
-    }),
-  } as unknown as Node;
+    const doc = {
+      nodeSize: 4,
+      nodeAt: jest.fn((pos: number) => {
+        // return the "no-marks" node for pos 0 and null elsewhere
+        return pos === 0 ? (nodeWithoutMarks as any) : null;
+      }),
+    } as unknown as Node;
 
-  const result = findActiveMark(doc, 0, 1, { name: 'bold' } as MarkType);
-  expect(result).toBeNull();
-  expect(doc.nodeAt).toHaveBeenCalledWith(0);
-});
+    const result = findActiveMark(doc, 0, 1, { name: 'bold' } as MarkType);
+    expect(result).toBeNull();
+    expect(doc.nodeAt).toHaveBeenCalledWith(0);
+  });
 });

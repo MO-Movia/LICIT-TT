@@ -7,11 +7,11 @@
  * - We do not rely on doc.content.size (which can cause out-of-bound issues).
  */
 
-import {EditorState, TextSelection} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {Schema, DOMParser} from 'prosemirror-model';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { Schema, DOMParser } from '@tiptap/pm/model';
 import LinkTooltipPlugin from './linkTooltipPlugin';
-import {findNodesWithSameMark} from '@modusoperandi/licit-ui-commands';
+import { findNodesWithSameMark } from '@modusoperandi/licit-ui-commands';
 
 jest.mock('@modusoperandi/licit-ui-commands', () => {
   const actual = jest.requireActual('@modusoperandi/licit-ui-commands');
@@ -22,7 +22,7 @@ jest.mock('@modusoperandi/licit-ui-commands', () => {
     atAnchorTopCenter: jest.fn(),
   };
 });
-import {MARK_LINK, createPopUp} from '@modusoperandi/licit-ui-commands';
+import { MARK_LINK, createPopUp } from '@modusoperandi/licit-ui-commands';
 
 jest.mock('../lookUpElement', () => {
   return {
@@ -48,7 +48,7 @@ const mockCreatePopUp = createPopUp as jest.MockedFunction<typeof createPopUp>;
 function createTestSchema() {
   return new Schema({
     nodes: {
-      doc: {content: 'block+'},
+      doc: { content: 'block+' },
       text: {},
       paragraph: {
         content: 'text*',
@@ -58,8 +58,8 @@ function createTestSchema() {
     },
     marks: {
       [MARK_LINK]: {
-        attrs: {href: {}},
-        toDOM: (node) => ['a', {href: node.attrs.href}, 0],
+        attrs: { href: {} },
+        toDOM: (node) => ['a', { href: node.attrs.href }, 0],
       },
     },
   });
@@ -90,7 +90,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
       plugins: [new LinkTooltipPlugin()],
     });
 
-    editorView = new EditorView(container, {state});
+    editorView = new EditorView(container, { state });
 
     // Directly get the plugin's view:
     const plugin = editorView.state.plugins.find(
@@ -146,7 +146,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
     // We'll mock createPopUp so onClose sets a new href
     mockCreatePopUp.mockImplementationOnce((comp, props, opts) => {
       opts?.onClose?.('https://edited.com');
-      return {update: jest.fn(), close: jest.fn()};
+      return { update: jest.fn(), close: jest.fn() };
     });
     pluginView._onEdit && pluginView._onEdit(editorView);
     expect(true).toBe(true);
@@ -168,7 +168,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
     const mockDestroy = jest.spyOn(pluginView, 'destroy');
     const mockView = {
       ...editorView,
-      state: {schema: {marks: {}}},
+      state: { schema: { marks: {} } },
     } as unknown as EditorView;
 
     pluginView.update(mockView, null);
@@ -182,7 +182,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
     // Get link mark type from schema
     const markType = editorView!.state.schema.marks[MARK_LINK];
-    const validMark = markType.create({href: 'https://example.com'});
+    const validMark = markType.create({ href: 'https://example.com' });
 
     // Mock findNodesWithSameMark to return valid from/to positions
     (
@@ -201,7 +201,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
     // Mock domAtPos to simulate no DOM element found
     const mockDomAtPos: EditorView['domAtPos'] = () =>
-      null as unknown as {node: Node; offset: number};
+      null as unknown as { node: Node; offset: number };
 
     // Mock view instance preserving EditorView prototype
     const mockView: EditorView = Object.assign(
@@ -220,14 +220,14 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
   });
 
   it('prevents duplicate editors by checking if this._editor exists', () => {
-    pluginView._editor = {close: jest.fn()};
+    pluginView._editor = { close: jest.fn() };
 
-    const mockPopup = {update: jest.fn()};
+    const mockPopup = { update: jest.fn() };
 
     // Extend pluginView with mock lookUpElement safely
     const testPluginView = Object.assign(pluginView, {
       lookUpElement: jest.fn().mockReturnValue(true),
-    }) as typeof pluginView & {lookUpElement: () => boolean};
+    }) as typeof pluginView & { lookUpElement: () => boolean };
 
     testPluginView.update(editorView, null);
 
@@ -236,105 +236,103 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
   });
 
   it('calls destroy() when lookUpElement returns null (covers !anchorEl)', () => {
-  const mockDestroy = jest.spyOn(pluginView, 'destroy');
+    const mockDestroy = jest.spyOn(pluginView, 'destroy');
 
-  // Mock domAtPos to return a valid node so that lookUpElement is actually called
-  const mockDomAtPos: EditorView['domAtPos'] = () => ({
-    node: document.createElement('span'),
-    offset: 0,
+    // Mock domAtPos to return a valid node so that lookUpElement is actually called
+    const mockDomAtPos: EditorView['domAtPos'] = () => ({
+      node: document.createElement('span'),
+      offset: 0,
+    });
+
+    // Temporarily make lookUpElement return null
+    (lookUpElement as jest.Mock).mockReturnValueOnce(null);
+
+    const markType = editorView!.state.schema.marks[MARK_LINK];
+    (
+      findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+    ).mockReturnValue({
+      mark: markType.create({ href: 'https://example.com' }),
+      from: { node: null, pos: 5 },
+      to: { node: null, pos: 9 },
+    });
+
+    const mockView: EditorView = Object.assign(
+      Object.create(Object.getPrototypeOf(editorView)),
+      {
+        ...editorView,
+        domAtPos: mockDomAtPos,
+        readOnly: false,
+      }
+    );
+
+    // Run update → should hit `if (!anchorEl)`
+    pluginView.update(mockView, editorView!.state);
+
+    expect(mockDestroy).toHaveBeenCalled();
   });
 
-  // Temporarily make lookUpElement return null
-  (lookUpElement as jest.Mock).mockReturnValueOnce(null);
+  it('returns early when anchorEl is the same as this._anchorEl (covers equality branch)', () => {
+    const mockDestroy = jest.spyOn(pluginView, 'destroy');
 
-  const markType = editorView!.state.schema.marks[MARK_LINK];
-  (
-    findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
-  ).mockReturnValue({
-    mark: markType.create({href: 'https://example.com'}),
-    from: { node: null, pos: 5 },
-    to: { node: null, pos: 9 },
+    // Create a shared anchor element
+    const sameAnchor = document.createElement('a');
+    sameAnchor.href = 'https://example.com';
+
+    // Assign it to the plugin’s cached anchor
+    pluginView._anchorEl = sameAnchor;
+
+    //Mock lookUpElement to return the SAME element
+    (lookUpElement as jest.Mock).mockImplementationOnce(() => sameAnchor);
+
+    // Mock domAtPos to return something valid so lookUpElement is called
+    const mockDomAtPos: EditorView['domAtPos'] = () => ({
+      node: document.createElement('span'),
+      offset: 0,
+    });
+
+    // Mock findNodesWithSameMark to simulate a valid found mark
+    const markType = editorView!.state.schema.marks[MARK_LINK];
+    (
+      findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+    ).mockReturnValue({
+      mark: markType.create({ href: 'https://example.com' }),
+      from: { node: null, pos: 5 },
+      to: { node: null, pos: 9 },
+    });
+
+    //Build a mock EditorView to pass to update()
+    const mockView: EditorView = Object.assign(
+      Object.create(Object.getPrototypeOf(editorView)),
+      {
+        ...editorView,
+        domAtPos: mockDomAtPos,
+        readOnly: false,
+        state: editorView!.state,
+      }
+    );
+
+    // Clear any calls made by earlier plugin initialization
+    (lookUpElement as jest.Mock).mockClear();
+
+    // Call update() — should hit (anchorEl === this._anchorEl)
+    pluginView.update(mockView, editorView!.state);
+
+    // Verify branch behavior
+    expect(lookUpElement).toHaveBeenCalledTimes(1); // called exactly once in this run
+    expect(mockDestroy).not.toHaveBeenCalled(); // early return — no destroy()
+    expect(pluginView._anchorEl).toBe(sameAnchor); // cached anchor unchanged
   });
-
-  const mockView: EditorView = Object.assign(
-    Object.create(Object.getPrototypeOf(editorView)),
-    {
-      ...editorView,
-      domAtPos: mockDomAtPos,
-      readOnly: false,
-    }
-  );
-
-  // Run update → should hit `if (!anchorEl)`
-  pluginView.update(mockView, editorView!.state);
-
-  expect(mockDestroy).toHaveBeenCalled();
-});
-
-it('returns early when anchorEl is the same as this._anchorEl (covers equality branch)', () => {
-  const mockDestroy = jest.spyOn(pluginView, 'destroy');
-
-  // Create a shared anchor element
-  const sameAnchor = document.createElement('a');
-  sameAnchor.href = 'https://example.com';
-
-  // Assign it to the plugin’s cached anchor
-  pluginView._anchorEl = sameAnchor;
-
-  //Mock lookUpElement to return the SAME element
-  (lookUpElement as jest.Mock).mockImplementationOnce(() => sameAnchor);
-
-  // Mock domAtPos to return something valid so lookUpElement is called
-  const mockDomAtPos: EditorView['domAtPos'] = () => ({
-    node: document.createElement('span'),
-    offset: 0,
-  });
-
-  // Mock findNodesWithSameMark to simulate a valid found mark
-  const markType = editorView!.state.schema.marks[MARK_LINK];
-  (
-    findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
-  ).mockReturnValue({
-    mark: markType.create({ href: 'https://example.com' }),
-    from: { node: null, pos: 5 },
-    to: { node: null, pos: 9 },
-  });
-
-  //Build a mock EditorView to pass to update()
-  const mockView: EditorView = Object.assign(
-    Object.create(Object.getPrototypeOf(editorView)),
-    {
-      ...editorView,
-      domAtPos: mockDomAtPos,
-      readOnly: false,
-      state: editorView!.state,
-    }
-  );
-
-  // Clear any calls made by earlier plugin initialization
-  (lookUpElement as jest.Mock).mockClear();
-
-  // Call update() — should hit (anchorEl === this._anchorEl)
-  pluginView.update(mockView, editorView!.state);
-
-  // Verify branch behavior
-  expect(lookUpElement).toHaveBeenCalledTimes(1); // called exactly once in this run
-  expect(mockDestroy).not.toHaveBeenCalled(); // early return — no destroy()
-  expect(pluginView._anchorEl).toBe(sameAnchor); // cached anchor unchanged
-});
-
-
 });
 
 /** Insert 'Link' text with a link mark at a known valid position (pos=5). */
 function insertLinkAtPos(editorView: EditorView, pos: number, href: string) {
-  const {state, dispatch} = editorView;
+  const { state, dispatch } = editorView;
   const linkMark = state.schema.marks[MARK_LINK];
   if (!linkMark) return;
 
   const tr = state.tr.insert(
     pos,
-    state.schema.text('Link').mark([linkMark.create({href})])
+    state.schema.text('Link').mark([linkMark.create({ href })])
   );
   dispatch(tr);
 }

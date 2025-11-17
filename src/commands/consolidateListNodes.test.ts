@@ -1,8 +1,13 @@
-import {consolidateListNodes} from './consolidateListNodes';
-import {doc, li, ol, p, ul} from 'prosemirror-test-builder';
-import {EditorState, Transaction} from 'prosemirror-state';
-import {schema} from 'prosemirror-schema-basic';
-import {Schema} from 'prosemirror-model';
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
+import { consolidateListNodes } from './consolidateListNodes';
+import { doc, li, ol, p, ul } from 'prosemirror-test-builder';
+import { EditorState, Transaction } from '@tiptap/pm/state';
+import { schema } from '@tiptap/pm/schema-basic';
+import { Schema } from '@tiptap/pm/model';
 
 describe('consolidateListNodes', () => {
   it('should consolidate list nodes', () => {
@@ -12,7 +17,7 @@ describe('consolidateListNodes', () => {
     };
     const schema1 = new Schema({
       nodes: {
-        doc: {content: 'paragraph+'},
+        doc: { content: 'paragraph+' },
         paragraph: {
           content: 'text*',
           toDOM() {
@@ -31,7 +36,7 @@ describe('consolidateListNodes', () => {
       schema: schema1,
     });
 
-    const {tr} = state;
+    const { tr } = state;
 
     const transformedTr = consolidateListNodes(tr);
     expect(transformedTr.doc).toBeDefined();
@@ -39,7 +44,7 @@ describe('consolidateListNodes', () => {
 
   it('should handle linkOrderedListCounters', () => {
     const tr = {
-      doc: {nodeSize: 2},
+      doc: { nodeSize: 2 },
       getMeta: () => {
         return null;
       },
@@ -52,7 +57,7 @@ describe('consolidateListNodes', () => {
       doc: doc(p('Item 1')),
       schema: schema,
     });
-    const {tr} = state;
+    const { tr } = state;
 
     const transformedTr = consolidateListNodes(tr);
     expect(transformedTr.doc).toBeDefined();
@@ -79,7 +84,7 @@ describe('consolidateListNodes', () => {
       schema: schema,
     });
 
-    const {tr} = state;
+    const { tr } = state;
 
     const transformedTr = consolidateListNodes(tr);
     expect(transformedTr.doc.content.childCount).toBe(1);
@@ -92,7 +97,7 @@ describe('consolidateListNodes', () => {
       schema: schema,
     });
 
-    const {tr} = state;
+    const { tr } = state;
 
     const pos = 1;
 
@@ -107,7 +112,7 @@ describe('consolidateListNodes', () => {
       schema: schema,
     });
 
-    const {tr} = state;
+    const { tr } = state;
 
     const transformedTr = consolidateListNodes(tr);
     expect(transformedTr.doc.content.childCount).toBe(3);

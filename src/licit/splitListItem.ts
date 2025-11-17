@@ -1,7 +1,7 @@
 import uuid from './ui/uuid';
-import { Fragment, Schema } from 'prosemirror-model';
-import { TextSelection, Transaction, NodeSelection } from 'prosemirror-state';
-import { Transform, canSplit } from 'prosemirror-transform';
+import { Fragment, Schema } from '@tiptap/pm/model';
+import { TextSelection, Transaction, NodeSelection } from '@tiptap/pm/state';
+import { Transform, canSplit } from '@tiptap/pm/transform';
 import {
   LIST_ITEM,
   ORDERED_LIST,

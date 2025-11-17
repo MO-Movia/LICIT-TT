@@ -1,5 +1,5 @@
 import TextUnderlineMarkSpec from './textUnderlineMarkSpec'; // Adjust the import path as needed
-import {Mark} from 'prosemirror-model';
+import { Mark } from '@tiptap/pm/model';
 
 describe('TextUnderlineMarkSpec', () => {
   describe('parseDOM', () => {
@@ -15,7 +15,7 @@ describe('TextUnderlineMarkSpec', () => {
       const attrs = rule?.getAttrs?.(
         mockElement as unknown as HTMLElement & string
       );
-      expect(attrs).toEqual({overridden: true});
+      expect(attrs).toEqual({ overridden: true });
     });
 
     it('should correctly parse overridden="false" attribute', () => {
@@ -29,7 +29,7 @@ describe('TextUnderlineMarkSpec', () => {
       const attrs = rule?.getAttrs?.(
         mockElement as unknown as HTMLElement & string
       );
-      expect(attrs).toEqual({overridden: false});
+      expect(attrs).toEqual({ overridden: false });
     });
 
     it('should default to false if overridden attribute is missing', () => {
@@ -41,31 +41,31 @@ describe('TextUnderlineMarkSpec', () => {
       const attrs = rule?.getAttrs?.(
         mockElement as unknown as HTMLElement & string
       );
-      expect(attrs).toEqual({overridden: false});
+      expect(attrs).toEqual({ overridden: false });
     });
   });
 
   describe('toDOM', () => {
     it('should return a <u> element with overridden=true attribute', () => {
       const mockMark = {
-        attrs: {overridden: true},
+        attrs: { overridden: true },
       } as unknown as Mark;
 
       expect(TextUnderlineMarkSpec.toDOM).toBeDefined();
 
       const result = TextUnderlineMarkSpec.toDOM!(mockMark, false);
 
-      expect(result).toEqual(['u', {overridden: true}, 0]);
+      expect(result).toEqual(['u', { overridden: true }, 0]);
     });
 
     it('should return a <u> element with overridden=false attribute when not set', () => {
       const mockMark = {
-        attrs: {overridden: false},
+        attrs: { overridden: false },
       } as unknown as Mark;
 
       const result = TextUnderlineMarkSpec.toDOM!(mockMark, false);
 
-      expect(result).toEqual(['u', {overridden: false}, 0]);
+      expect(result).toEqual(['u', { overridden: false }, 0]);
     });
   });
 });

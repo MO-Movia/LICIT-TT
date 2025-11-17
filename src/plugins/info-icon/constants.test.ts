@@ -1,9 +1,9 @@
 import { getNode } from './constants';
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import { schema, builders } from 'prosemirror-test-builder';
 import {
     Schema,
-} from 'prosemirror-model';
+} from '@tiptap/pm/model';
 import { InfoIconPlugin } from './index';
 describe('should work getNode function', () => {
 

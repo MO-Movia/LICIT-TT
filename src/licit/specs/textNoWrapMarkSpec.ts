@@ -1,4 +1,4 @@
-import type { MarkSpec, DOMOutputSpec } from 'prosemirror-model';
+import type { MarkSpec, DOMOutputSpec } from '@tiptap/pm/model';
 
 const NO_WRAP_DOM: DOMOutputSpec = ['nobr', 0];
 

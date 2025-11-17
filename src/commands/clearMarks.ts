@@ -1,8 +1,8 @@
-import { Mark, MarkType, Node, Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
+import { Mark, MarkType, Node, Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 import { HEADING, PARAGRAPH } from './NodeNames';
 import * as MarkNames from './MarkNames';
-import { TextSelection, Transaction } from 'prosemirror-state';
+import { TextSelection, Transaction } from '@tiptap/pm/state';
 import { getStyleByName, Style } from './runtime.service';
 import { getSelectionRange } from './isNodeSelectionForNodeType';
 const STRONG = 'strong';
@@ -68,10 +68,10 @@ export function clearMarks(tr: Transform, schema: Schema): Transform {
   let style: Style = null;
   const paragraphsWithStyle: Node[] = [];
   const otherParagraphs: Node[] = [];
-  const slice = selection instanceof TextSelection ? selection.content().content : null;
+  const slice =
+    selection instanceof TextSelection ? selection.content().content : null;
   if (slice?.childCount > 1) {
-
-    slice.content.forEach(node => {
+    slice.content.forEach((node) => {
       extractParagraphs(node, paragraphsWithStyle, otherParagraphs);
     });
 
@@ -82,25 +82,26 @@ export function clearMarks(tr: Transform, schema: Schema): Transform {
   doc.nodesBetween(from, to, (node, pos) => {
     if (node.type.name === 'paragraph' && node.attrs.styleName) {
       style = getStyleByName(node.attrs.styleName);
-
     }
     if (node?.marks.length) {
       node.marks.some((mark) => {
         if (mark?.type?.name === MarkNames.MARK_OVERRIDE) {
-          overrideMarkstoRemove.push({ node, from: pos, to: pos + node.nodeSize, mark });
+          overrideMarkstoRemove.push({
+            node,
+            from: pos,
+            to: pos + node.nodeSize,
+            mark,
+          });
           addOverrideMarksToNode(mark, marksToAdd, pos, node, schema);
-
         } else if (comapreMarks(style, mark, marksToAdd, pos, node, schema)) {
           if (markTypesToRemove.has(mark.type)) {
             tasks.push({ node, pos, mark });
           }
         }
       });
-
     }
     return true;
   });
-
 
   tasks.forEach((job) => {
     const { mark } = job;
@@ -112,12 +113,14 @@ export function clearMarks(tr: Transform, schema: Schema): Transform {
   overrideMarkstoRemove.forEach((overridenMarkType) => {
     const { mark } = overridenMarkType;
     tr = tr.removeMark(from, to, mark);
-
   });
   marksToAdd.forEach((marks) => {
     const { markType, attrs } = marks;
-    tr = tr.addMark(from, to, attrs ? markType.create(attrs) : markType.create());
-
+    tr = tr.addMark(
+      from,
+      to,
+      attrs ? markType.create(attrs) : markType.create()
+    );
   });
   return tr;
 }
@@ -125,7 +128,11 @@ export function clearMarks(tr: Transform, schema: Schema): Transform {
 /**
  * Recursively extracts paragraphs with styleName='Normal' from a given node.
  */
-export function extractParagraphs(node: Node, normalParagraphs: Node[], otherParagraphs: Node[]) {
+export function extractParagraphs(
+  node: Node,
+  normalParagraphs: Node[],
+  otherParagraphs: Node[]
+) {
   if (node.type.name === 'paragraph') {
     if (node.attrs.styleName === 'Normal' || node.attrs.styleName === null) {
       normalParagraphs.push(node);
@@ -133,11 +140,19 @@ export function extractParagraphs(node: Node, normalParagraphs: Node[], otherPar
       otherParagraphs.push(node);
     }
   } else if (node.content) {
-    node.content.forEach(child => extractParagraphs(child, normalParagraphs, otherParagraphs));
+    node.content.forEach((child) =>
+      extractParagraphs(child, normalParagraphs, otherParagraphs)
+    );
   }
 }
-export function comapreMarks(style: Style, mark: Mark, marksToAdd, pos: number, node: Node, schema: Schema): boolean {
-
+export function comapreMarks(
+  style: Style,
+  mark: Mark,
+  marksToAdd,
+  pos: number,
+  node: Node,
+  schema: Schema
+): boolean {
   let markType: MarkType = null;
   let attrs = {};
 
@@ -153,28 +168,57 @@ export function comapreMarks(style: Style, mark: Mark, marksToAdd, pos: number, 
       }
       return true;
     case MarkNames.MARK_TEXT_COLOR:
-      if ((style?.styles[COLOR] && mark.attrs[COLOR] === style?.styles[COLOR]) || !mark.attrs.overridden) {
+      if (
+        (style?.styles[COLOR] && mark.attrs[COLOR] === style?.styles[COLOR]) ||
+        !mark.attrs.overridden
+      ) {
         return false;
       }
       markType = schema.marks[MarkNames.MARK_TEXT_COLOR];
       attrs = { color: style?.styles[COLOR] ?? '#000000' };
-      marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
+      marksToAdd.push({
+        node,
+        from: pos,
+        to: pos + node.nodeSize,
+        markType,
+        attrs,
+      });
       return true;
     case MarkNames.MARK_FONT_SIZE:
-      if ((style?.styles[FONTSIZE] && mark.attrs['pt'] === style?.styles[FONTSIZE]) || !mark.attrs.overridden) {
+      if (
+        (style?.styles[FONTSIZE] &&
+          mark.attrs['pt'] === style?.styles[FONTSIZE]) ||
+        !mark.attrs.overridden
+      ) {
         return false;
       }
       markType = schema.marks[MarkNames.MARK_FONT_SIZE];
       attrs = { pt: style?.styles[FONTSIZE] };
-      marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
+      marksToAdd.push({
+        node,
+        from: pos,
+        to: pos + node.nodeSize,
+        markType,
+        attrs,
+      });
       return true;
     case MarkNames.MARK_FONT_TYPE:
-      if ((style?.styles[FONTNAME] && mark.attrs['name'] === style?.styles[FONTNAME]) || !mark.attrs.overridden) {
+      if (
+        (style?.styles[FONTNAME] &&
+          mark.attrs['name'] === style?.styles[FONTNAME]) ||
+        !mark.attrs.overridden
+      ) {
         return false;
       }
       markType = schema.marks[MarkNames.MARK_FONT_TYPE];
       attrs = { name: style?.styles[FONTNAME] };
-      marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
+      marksToAdd.push({
+        node,
+        from: pos,
+        to: pos + node.nodeSize,
+        markType,
+        attrs,
+      });
       return true;
     case MarkNames.MARK_STRIKE:
       if (style?.styles[STRIKE] || !mark.attrs.overridden) {
@@ -188,12 +232,22 @@ export function comapreMarks(style: Style, mark: Mark, marksToAdd, pos: number, 
       }
       return true;
     case MarkNames.MARK_TEXT_HIGHLIGHT:
-      if ((style?.styles['textHighlight'] && mark.attrs['highlightColor'] === style?.styles['textHighlight']) || !mark.attrs.overridden) {
+      if (
+        (style?.styles['textHighlight'] &&
+          mark.attrs['highlightColor'] === style?.styles['textHighlight']) ||
+        !mark.attrs.overridden
+      ) {
         return false;
       }
       markType = schema.marks[MarkNames.MARK_TEXT_HIGHLIGHT];
       attrs = { highlightColor: style?.styles['textHighlight'] ?? '#ffffff' };
-      marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
+      marksToAdd.push({
+        node,
+        from: pos,
+        to: pos + node.nodeSize,
+        markType,
+        attrs,
+      });
       return true;
     case MarkNames.MARK_UNDERLINE:
       if (style?.styles[UNDERLINE] || !mark.attrs.overridden) {
@@ -205,14 +259,19 @@ export function comapreMarks(style: Style, mark: Mark, marksToAdd, pos: number, 
   }
 }
 
-function addOverrideMarksToNode(mark: Mark, marksToAdd, pos: number, node: Node, schema: Schema) {
+function addOverrideMarksToNode(
+  mark: Mark,
+  marksToAdd,
+  pos: number,
+  node: Node,
+  schema: Schema
+) {
   for (const key in mark.attrs) {
     if (mark.attrs[key]) {
       const markType = schema.marks[key];
       marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType });
     }
   }
-
 }
 
 // [FS] IRAD-948 2020-05-22

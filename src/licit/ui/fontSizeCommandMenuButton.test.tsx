@@ -1,5 +1,7 @@
-import { EditorState } from 'prosemirror-state';
-import FontSizeCommandMenuButton, { FONT_PT_SIZES } from './fontSizeCommandMenuButton';
+import { EditorState } from '@tiptap/pm/state';
+import FontSizeCommandMenuButton, {
+  FONT_PT_SIZES,
+} from './fontSizeCommandMenuButton';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import findActiveFontSize from '../findActiveFontSize';
 import React from 'react';

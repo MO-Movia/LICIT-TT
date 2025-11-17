@@ -1,11 +1,13 @@
 import { VignetteView, VignetteMenuPlugin } from './VignetteMenuPlugin';
-import { PluginKey } from 'prosemirror-state';
+import { PluginKey } from '@tiptap/pm/state';
 import { TABLE } from './Constants';
 
-jest.mock('prosemirror-tables', () => ({
+jest.mock('@tiptap/pm/tables', () => ({
   CellSelection: class {
     constructor() {
-      this.$anchorCell = { node: jest.fn(() => ({ attrs: { vignette: true } })) };
+      this.$anchorCell = {
+        node: jest.fn(() => ({ attrs: { vignette: true } })),
+      };
     }
   },
   deleteTable: jest.fn(),
@@ -18,10 +20,16 @@ jest.mock('prosemirror-tables', () => ({
 }));
 
 jest.mock('./TableBackgroundColorCommand', () => ({
-  TableBackgroundColorCommand: jest.fn(() => ({ name: 'bgCmd', isEnabled: jest.fn(() => true) })),
+  TableBackgroundColorCommand: jest.fn(() => ({
+    name: 'bgCmd',
+    isEnabled: jest.fn(() => true),
+  })),
 }));
 jest.mock('./TableBorderColorCommand', () => ({
-  TableBorderColorCommand: jest.fn(() => ({ name: 'borderCmd', isEnabled: jest.fn(() => true) })),
+  TableBorderColorCommand: jest.fn(() => ({
+    name: 'borderCmd',
+    isEnabled: jest.fn(() => true),
+  })),
 }));
 jest.mock('./CreateCommand', () => ({
   createCommand: jest.fn(() => jest.fn()),
@@ -73,7 +81,10 @@ describe('VignetteView', () => {
 
   test('constructor should call both setup methods', () => {
     const spyMenu = jest.spyOn(VignetteView.prototype, 'setCustomMenu');
-    const spyUpdate = jest.spyOn(VignetteView.prototype, 'setCustomTableNodeViewUpdate');
+    const spyUpdate = jest.spyOn(
+      VignetteView.prototype,
+      'setCustomTableNodeViewUpdate'
+    );
     new VignetteView(editorView);
     expect(spyMenu).toHaveBeenCalledWith(editorView);
     expect(spyUpdate).toHaveBeenCalledWith(editorView);
@@ -104,7 +115,11 @@ describe('VignetteView', () => {
     const node = { attrs: { vignette: true } };
     const base = { update: jest.fn(), table: { style: {} } };
     const spyUpdateBorder = jest.spyOn(view, 'updateBorder');
-    const result = view.tableNodeViewEx(() => base as any, node as any, {} as any);
+    const result = view.tableNodeViewEx(
+      () => base as any,
+      node as any,
+      {} as any
+    );
     expect(spyUpdateBorder).toHaveBeenCalled();
     expect(result).toBe(base);
   });
@@ -113,7 +128,11 @@ describe('VignetteView', () => {
     const view = new VignetteView(editorView);
     const node = { attrs: { vignette: false } };
     const base = { update: jest.fn() };
-    const result = view.tableNodeViewEx(() => base as any, node as any, {} as any);
+    const result = view.tableNodeViewEx(
+      () => base as any,
+      node as any,
+      {} as any
+    );
     expect(result).toBe(base);
   });
 
@@ -122,7 +141,12 @@ describe('VignetteView', () => {
     const mockUpdate = jest.fn(() => true);
     const mockSelf = { updateBorder: jest.fn() };
     const tableView = { table: { style: {} } };
-    const result = view.updateEx.call(tableView, mockUpdate, mockSelf as any, { node: 'x' } as any);
+    const result = view.updateEx.call(
+      tableView,
+      mockUpdate,
+      mockSelf as any,
+      { node: 'x' } as any
+    );
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSelf.updateBorder).toHaveBeenCalled();
     expect(result).toBe(true);
@@ -132,7 +156,12 @@ describe('VignetteView', () => {
     const view = new VignetteView(editorView);
     const mockUpdate = jest.fn(() => false);
     const mockSelf = { updateBorder: jest.fn() };
-    const result = view.updateEx.call({}, mockUpdate, mockSelf as any, {} as any);
+    const result = view.updateEx.call(
+      {},
+      mockUpdate,
+      mockSelf as any,
+      {} as any
+    );
     expect(mockSelf.updateBorder).not.toHaveBeenCalled();
     expect(result).toBe(false);
   });
@@ -150,22 +179,28 @@ describe('VignetteView', () => {
   });
 
   test('isVignette detects vignette in multiple locations', () => {
-    const CellSelection = require('prosemirror-tables').CellSelection;
+    const CellSelection = require('@tiptap/pm/tables').CellSelection;
     const selection = new CellSelection();
     const node = { attrs: { vignette: true } };
     const state = {
       selection,
       selectionType: 'cell',
-      selectionMock: { $anchor: { node: jest.fn(() => ({ attrs: { vignette: false } })) } },
+      selectionMock: {
+        $anchor: { node: jest.fn(() => ({ attrs: { vignette: false } })) },
+      },
     };
     expect(VignetteView.isVignette(state as any, node as any)).toBe(true);
   });
 
   test('isVignette returns true if $anchor node vignette', () => {
     const state = {
-      selection: { $anchor: { node: jest.fn(() => ({ attrs: { vignette: true } })) } },
+      selection: {
+        $anchor: { node: jest.fn(() => ({ attrs: { vignette: true } })) },
+      },
     };
-    expect(VignetteView.isVignette(state as any, { attrs: {} } as any)).toBe(true);
+    expect(VignetteView.isVignette(state as any, { attrs: {} } as any)).toBe(
+      true
+    );
   });
 
   test('getMenu patches command isEnabled and returns vignette group if vignette', () => {
@@ -173,7 +208,11 @@ describe('VignetteView', () => {
     jest.spyOn(VignetteView, 'isVignette').mockReturnValue(true);
     const cmd = { isEnabled: jest.fn(() => true) };
     const cmdGroups = [{ cmdA: cmd }];
-    const result = view.getMenu(mockState, { attrs: { vignette: true } } as any, cmdGroups as any);
+    const result = view.getMenu(
+      mockState,
+      { attrs: { vignette: true } } as any,
+      cmdGroups as any
+    );
     expect(result).toBeInstanceOf(Array);
     expect(result[0]).toBeDefined();
   });
@@ -183,7 +222,11 @@ describe('VignetteView', () => {
     jest.spyOn(VignetteView, 'isVignette').mockReturnValue(false);
     const cmd = { isEnabled: jest.fn(() => true) };
     const cmdGroups = [{ cmdA: cmd }];
-    const result = view.getMenu(mockState, { attrs: {} } as any, cmdGroups as any);
+    const result = view.getMenu(
+      mockState,
+      { attrs: {} } as any,
+      cmdGroups as any
+    );
     expect(result).toBe(cmdGroups);
   });
 
@@ -203,5 +246,4 @@ describe('VignetteView', () => {
     const view = new VignetteView(editorView);
     expect(view.destroy()).toBeUndefined();
   });
-
 });

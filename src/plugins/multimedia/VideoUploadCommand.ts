@@ -1,11 +1,11 @@
-import {EditorState} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import React from 'react';
 
-import {VideoSourceCommand} from './VideoSourceCommand';
-import {VideoUploadEditor} from './ui/VideoUploadEditor';
-import type {EditorVideoRuntime} from './Types';
-import {Transform} from 'prosemirror-transform';
+import { VideoSourceCommand } from './VideoSourceCommand';
+import { VideoUploadEditor } from './ui/VideoUploadEditor';
+import type { EditorVideoRuntime } from './Types';
+import { Transform } from '@tiptap/pm/transform';
 
 export class VideoUploadCommand extends VideoSourceCommand {
   runtime: EditorVideoRuntime;
@@ -19,7 +19,7 @@ export class VideoUploadCommand extends VideoSourceCommand {
       return false;
     }
 
-    const {canUploadVideo, uploadVideo} = this.runtime;
+    const { canUploadVideo, uploadVideo } = this.runtime;
     if (!canUploadVideo || !uploadVideo) {
       return false;
     }
@@ -34,10 +34,7 @@ export class VideoUploadCommand extends VideoSourceCommand {
     return VideoUploadEditor;
   }
 
-  executeCustomStyleForTable(
-    _state: EditorState,
-    tr: Transform,
-  ): Transform {
+  executeCustomStyleForTable(_state: EditorState, tr: Transform): Transform {
     return tr;
   }
 }

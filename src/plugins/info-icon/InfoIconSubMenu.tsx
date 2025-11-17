@@ -1,8 +1,7 @@
 import * as React from 'react';
-import {EditorView} from 'prosemirror-view';
-import {InfoToolButton} from './ui/InfoToolButton';
-import {InfoSubMenuIcon} from './ui/InfoSubMenuIcon';
-import './ui/infoicon-note.css';
+import { EditorView } from '@tiptap/pm/view';
+import { InfoToolButton } from './ui/InfoToolButton';
+import { InfoSubMenuIcon } from './ui/InfoSubMenuIcon';
 
 type CustomButtonProps = {
   editorView: EditorView;
@@ -19,11 +18,16 @@ export class InfoIconSubMenu extends React.PureComponent {
   };
 
   render() {
-    const {onEdit, onRemove, editorView, onMouseOut} = this.props;
+    const { onEdit, onRemove, editorView, onMouseOut } = this.props;
     const disabled = editorView['readOnly'];
 
     return (
-      <div className="molcit-infoicon-submenu" onMouseLeave={onMouseOut} role='menu' tabIndex={0}>
+      <div
+        className="molcit-infoicon-submenu"
+        onMouseLeave={onMouseOut}
+        role="menu"
+        tabIndex={0}
+      >
         <div className="molcit-infoicon-submenu-body">
           <div className="molcit-infoicon-submenu-row">
             <InfoToolButton

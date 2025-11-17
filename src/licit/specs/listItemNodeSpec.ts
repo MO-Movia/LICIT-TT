@@ -1,4 +1,4 @@
-import { Node, NodeSpec, DOMOutputSpec } from 'prosemirror-model';
+import { Node, NodeSpec, DOMOutputSpec } from '@tiptap/pm/model';
 import { AttrType } from './paragraphNodeSpec';
 
 export const ATTRIBUTE_LIST_STYLE_TYPE = 'data-list-style-type';

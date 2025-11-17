@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { Extension, Editor } from '@tiptap/core';
 import { EditorEvents, getSchema, JSONContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import './styles/licit.css';
 import Underline from '@tiptap/extension-underline';
 import { v4 as uuidv4 } from 'uuid';
 import Collaboration from '@tiptap/extension-collaboration';
@@ -12,17 +11,21 @@ import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import RichTextEditor from './ui/richTextEditor';
 import DefaultEditorPlugins from './defaultEditorPlugins';
-import { Plugin, TextSelection } from 'prosemirror-state';
+import { Plugin, TextSelection } from '@tiptap/pm/state';
 import { getEffectiveSchema } from './convertFromJSON';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { Schema, NodeSpec } from 'prosemirror-model';
+import { Schema, NodeSpec } from '@tiptap/pm/model';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import TextAlign from '@tiptap/extension-text-align';
-import { HEADING, noop, PARAGRAPH, ThemeProvider } from '@modusoperandi/licit-ui-commands';
+import {
+  HEADING,
+  noop,
+  PARAGRAPH,
+  ThemeProvider,
+} from '@modusoperandi/licit-ui-commands';
 import { updateEditorMarks } from './editorMarks';
 import { updateEditorNodes } from './editorNodes';
-import OrderedMap from 'orderedmap';
 import { Indent } from './extensions/indent';
 import { WebrtcProvider } from 'y-webrtc';
 import { EditorRuntime, ToolbarMenuConfig } from './types';
@@ -35,7 +38,7 @@ import ParagraphNodeSpec from './specs/paragraphNodeSpec';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as math from 'lib0/math';
 import * as random from 'lib0/random';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import cx from 'classnames';
 
 /**
@@ -115,7 +118,7 @@ export const configCollab = (
             peerOpts: {},
           });
           useDefaultProvider = false;
-        } catch { }
+        } catch {}
       }
 
       if (useDefaultProvider) {
@@ -159,7 +162,7 @@ const prepareEffectiveSchema = (
     const schema = getSchema(defaultExtensions);
 
     const updateNodeAttrs = (nodeName: string, licitNode: NodeSpec): void => {
-      const tiptapNode = (schema.spec.nodes as OrderedMap).get(nodeName);
+      const tiptapNode = schema.spec.nodes.get(nodeName);
       const keys = Object.keys(licitNode.attrs);
       keys.forEach((key) => {
         if (!tiptapNode.attrs[key]) {
@@ -169,8 +172,8 @@ const prepareEffectiveSchema = (
     };
     updateNodeAttrs(PARAGRAPH, ParagraphNodeSpec);
 
-    const nodes = updateEditorNodes(schema.spec.nodes as OrderedMap);
-    const marks = updateEditorMarks(schema.spec.marks as OrderedMap);
+    const nodes = updateEditorNodes(schema.spec.nodes);
+    const marks = updateEditorMarks(schema.spec.marks);
 
     const defaultEditorSchema = new Schema({
       nodes: nodes,
@@ -339,14 +342,14 @@ const getCollabExtensions = (
 ): Extension[] => {
   return collaboration
     ? [
-      Collaboration.configure({
-        document: ydoc,
-      }),
-      CollaborationCursor.configure({
-        provider: provider,
-        user: currentUser,
-      }),
-    ]
+        Collaboration.configure({
+          document: ydoc,
+        }),
+        CollaborationCursor.configure({
+          provider: provider,
+          user: currentUser,
+        }),
+      ]
     : [];
 };
 
@@ -365,7 +368,7 @@ export const Licit = ({
   onChange,
   onReady,
   theme,
-  toolbarConfig
+  toolbarConfig,
 }: LicitProps): ReactElement => {
   const instanceID = uuidv4();
 
@@ -439,14 +442,12 @@ export const Licit = ({
   });
 
   const goToEnd = (): void => {
-
     const view = editor.view;
     const tr = view.state.tr;
     view.dispatch(
       tr.setSelection(TextSelection.atEnd(view.state.doc)).scrollIntoView()
     );
     view.focus();
-
   };
   if (editor) {
     editor.on('create', (props: EditorEvents['create']) => {
@@ -491,5 +492,3 @@ export const Licit = ({
     return <div></div>;
   }
 };
-
-

@@ -1,12 +1,11 @@
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { ExportPDF } from './exportPdf';
 import React from 'react';
 
 export class ExportPDFCommand extends UICommand {
-
   private static isPreviewFormOpen = false;
 
   public exportPdf: ExportPDF;
@@ -55,7 +54,6 @@ export class ExportPDFCommand extends UICommand {
     return this.exportPdf.exportPdf(view, doc);
   };
 
-
   public renderLabel() {
     return null;
   }
@@ -68,7 +66,10 @@ export class ExportPDFCommand extends UICommand {
     return tr;
   }
 
-  public executeCustomStyleForTable(_state: EditorState, tr: Transform): Transform {
+  public executeCustomStyleForTable(
+    _state: EditorState,
+    tr: Transform
+  ): Transform {
     return tr;
   }
 

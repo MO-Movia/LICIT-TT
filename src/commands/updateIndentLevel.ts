@@ -4,12 +4,17 @@ import { consolidateListNodes } from './consolidateListNodes';
 import { isListNode } from './isListNode';
 import { transformAndPreserveTextSelection } from './transformAndPreserveTextSelection';
 
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction } from '@tiptap/pm/state';
 import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
-import { Fragment, Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
-import { getSelectionRange, isColumnCellSelected, getSelectedCellPositions, findParagraphsInNode } from './isNodeSelectionForNodeType';
+import { Fragment, Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
+import {
+  getSelectionRange,
+  isColumnCellSelected,
+  getSelectedCellPositions,
+  findParagraphsInNode,
+} from './isNodeSelectionForNodeType';
 
 const MIN_INDENT_LEVEL = 0;
 const MAX_INDENT_LEVEL = 7;
@@ -40,7 +45,7 @@ export function updateIndentLevel(
   if (isColumnCellSelected(selection)) {
     const positions = getSelectedCellPositions(selection);
     if (positions.length > 0) {
-      positions.forEach(pos => {
+      positions.forEach((pos) => {
         const node = tr.doc.nodeAt(pos);
         if (!node) return;
         findParagraphsInNode(node, pos, (paraNode, paraPos) => {
@@ -53,8 +58,7 @@ export function updateIndentLevel(
         });
       });
     }
-  }
-  else {
+  } else {
     const { from, to } = getSelectionRange(selection);
     doc.nodesBetween(from, to, (node, pos) => {
       const nodeType = node.type;
@@ -69,7 +73,6 @@ export function updateIndentLevel(
       return true;
     });
   }
-
 
   if (!listNodePoses.length) {
     return { tr, docChanged: true };
@@ -104,10 +107,12 @@ export function setListNodeIndent(
     return tr;
   }
 
-  const indentNew = String(clamp(
-    MIN_INDENT_LEVEL,
-    Number(listNode.attrs.indent) + delta,
-    MAX_INDENT_LEVEL)
+  const indentNew = String(
+    clamp(
+      MIN_INDENT_LEVEL,
+      Number(listNode.attrs.indent) + delta,
+      MAX_INDENT_LEVEL
+    )
   );
   if (indentNew === listNode.attrs.indent) {
     return tr;
@@ -198,10 +203,12 @@ export function setNodeIndentMarkup(
   if (!node) {
     return { tr, docChanged: retVal };
   }
-  const indent = String(clamp(
-    MIN_INDENT_LEVEL,
-    Number(node.attrs.indent || 0) + delta,
-    MAX_INDENT_LEVEL)
+  const indent = String(
+    clamp(
+      MIN_INDENT_LEVEL,
+      Number(node.attrs.indent || 0) + delta,
+      MAX_INDENT_LEVEL
+    )
   );
 
   if (indent === node.attrs.indent) {
@@ -211,7 +218,7 @@ export function setNodeIndentMarkup(
     ...node.attrs,
     indent,
     overriddenIndent: indent != node.attrs.indent,
-    overriddenIndentValue: (indent != node.attrs.indent) ? indent : null
+    overriddenIndentValue: indent != node.attrs.indent ? indent : null,
   };
   tr = tr.setNodeMarkup(pos, node.type, nodeAttrs, node.marks);
   return { tr, docChanged: true };

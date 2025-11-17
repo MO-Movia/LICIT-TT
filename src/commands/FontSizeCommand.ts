@@ -1,14 +1,20 @@
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { applyMark, updateMarksAttrs } from './applyMark';
 import { isTextStyleMarkCommandEnabled } from './isTextStyleMarkCommandEnabled';
-import { Transaction, EditorState, TextSelection } from 'prosemirror-state';
+import { Transaction, EditorState, TextSelection } from '@tiptap/pm/state';
 import { MARK_FONT_SIZE } from './MarkNames';
-import { Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import * as React from 'react';
 
-function setFontSize(tr: Transform, state: EditorState, schema: Schema, pt: number, isCustomStyleApplied?: boolean): Transform {
+function setFontSize(
+  tr: Transform,
+  state: EditorState,
+  schema: Schema,
+  pt: number,
+  isCustomStyleApplied?: boolean
+): Transform {
   const markType = schema.marks[MARK_FONT_SIZE];
   if (!markType) {
     return tr;

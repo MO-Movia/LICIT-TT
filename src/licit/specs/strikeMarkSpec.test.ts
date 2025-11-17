@@ -1,5 +1,5 @@
 import StrikeMarkSpec from './strikeMarkSpec';
-import {Attrs, Mark, MarkType} from 'prosemirror-model';
+import { Attrs, Mark, MarkType } from '@tiptap/pm/model';
 
 describe('StrikeMarkSpec', () => {
   describe('parseDOM', () => {
@@ -14,7 +14,7 @@ describe('StrikeMarkSpec', () => {
       const result = rule.getAttrs!(
         mockElement as unknown as HTMLElement & string
       );
-      expect(result).toEqual({overridden: true});
+      expect(result).toEqual({ overridden: true });
     });
 
     it('should return { overridden: false } when overridden="false"', () => {
@@ -28,7 +28,7 @@ describe('StrikeMarkSpec', () => {
       const result = rule.getAttrs!(
         mockElement as unknown as HTMLElement & string
       );
-      expect(result).toEqual({overridden: false});
+      expect(result).toEqual({ overridden: false });
     });
 
     it('should return { overridden: false } when overridden attribute is missing', () => {
@@ -41,7 +41,7 @@ describe('StrikeMarkSpec', () => {
       const result = rule.getAttrs!(
         mockElement as unknown as HTMLElement & string
       );
-      expect(result).toEqual({overridden: false});
+      expect(result).toEqual({ overridden: false });
     });
   });
 
@@ -50,12 +50,12 @@ describe('StrikeMarkSpec', () => {
       const mockMarkType = {} as MarkType;
       return {
         type: mockMarkType,
-        attrs: {overridden: true} as Attrs,
+        attrs: { overridden: true } as Attrs,
         addToSet: (marks: readonly Mark[]) => [...marks],
         removeFromSet: () => [],
         isInSet: () => false,
         eq: () => true,
-        toJSON: () => ({attrs: {overridden: true}, type: 'strike'}),
+        toJSON: () => ({ attrs: { overridden: true }, type: 'strike' }),
       };
     };
 
@@ -66,7 +66,7 @@ describe('StrikeMarkSpec', () => {
       const result = StrikeMarkSpec.toDOM!(mockMark, false);
 
       // Match what your editor actually outputs
-      expect(result).toEqual(['strike', {overridden: true}, 0]);
+      expect(result).toEqual(['strike', { overridden: true }, 0]);
     });
   });
 });

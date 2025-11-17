@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import EditorToolbar from './editorToolbar';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { EditorViewEx } from '../constants';
 
@@ -20,15 +20,18 @@ class MockUICommand extends UICommand {
     return;
   }
 
-  executeCustom(state: EditorState, tr: Transform, from: number, to: number): Transform {
+  executeCustom(
+    state: EditorState,
+    tr: Transform,
+    from: number,
+    to: number
+  ): Transform {
     return tr;
   }
 
-isEnabled = () => true;
+  isEnabled = () => true;
 
-execute = () => true;
-
-  
+  execute = () => true;
 }
 
 //  Mock toolbar config with proper typing
@@ -82,30 +85,26 @@ describe('EditorToolbar (pure Jest)', () => {
   });
 
   it('should toggle expanded state from true to false', () => {
-        const toolbarInstance = new EditorToolbar({
+    const toolbarInstance = new EditorToolbar({
       editorState: mockEditorState,
       editorView: mockEditorView,
       toolbarConfig: mockToolbarConfig,
     });
-  toolbarInstance.setState = jest.fn();
-  toolbarInstance._toggleExpansion(true);
-  expect(toolbarInstance.setState).toHaveBeenCalledWith({ expanded: false });
-});
+    toolbarInstance.setState = jest.fn();
+    toolbarInstance._toggleExpansion(true);
+    expect(toolbarInstance.setState).toHaveBeenCalledWith({ expanded: false });
+  });
 
-it('should toggle expanded state from false to true', () => {
-      const toolbarInstance = new EditorToolbar({
+  it('should toggle expanded state from false to true', () => {
+    const toolbarInstance = new EditorToolbar({
       editorState: mockEditorState,
       editorView: mockEditorView,
       toolbarConfig: mockToolbarConfig,
     });
-  toolbarInstance.setState = jest.fn();
-  toolbarInstance._toggleExpansion(false);
-  expect(toolbarInstance.setState).toHaveBeenCalledWith({ expanded: true });
-});
-
-
-
-
+    toolbarInstance.setState = jest.fn();
+    toolbarInstance._toggleExpansion(false);
+    expect(toolbarInstance.setState).toHaveBeenCalledWith({ expanded: true });
+  });
 
   it('handles dispatchTransaction correctly', () => {
     const dispatchMock = jest.fn();
@@ -121,30 +120,30 @@ it('should toggle expanded state from false to true', () => {
     expect(dispatchMock).toHaveBeenCalledWith(tr);
   });
 
- it('should cover expanded && !wrapped condition in render()', () => {
-  // ✅ Subclass to safely provide context (no "any" used)
-  class TestableEditorToolbar extends EditorToolbar {
-    context = 'dark'; // mock the ThemeContext value
-  }
+  it('should cover expanded && !wrapped condition in render()', () => {
+    // ✅ Subclass to safely provide context (no "any" used)
+    class TestableEditorToolbar extends EditorToolbar {
+      context = 'dark'; // mock the ThemeContext value
+    }
 
-  const toolbarInstance = new TestableEditorToolbar({
-    editorState: mockEditorState,
-    editorView: mockEditorView,
-    toolbarConfig: mockToolbarConfig,
+    const toolbarInstance = new TestableEditorToolbar({
+      editorState: mockEditorState,
+      editorView: mockEditorView,
+      toolbarConfig: mockToolbarConfig,
+    });
+
+    // Force the condition
+    toolbarInstance.state = { expanded: true, wrapped: false };
+
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = toolbarInstance.render();
+
+    expect(React.isValidElement(result)).toBe(true);
+    expect(result).toBeDefined();
+
+    logSpy.mockRestore();
   });
-
-  // Force the condition
-  toolbarInstance.state = { expanded: true, wrapped: false };
-
-  const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-
-  const result = toolbarInstance.render();
-
-  expect(React.isValidElement(result)).toBe(true);
-  expect(result).toBeDefined();
-
-  logSpy.mockRestore();
-});
 
   it('merges pluginObjects into toolbarConfig when plugin exists (branch coverage)', () => {
     class TestableEditorToolbar extends EditorToolbar {
@@ -186,7 +185,7 @@ it('should toggle expanded state from false to true', () => {
       toolbarConfig: toolbarConfigForTest as any,
     });
 
-    instance.state = { expanded: true, wrapped: true }; 
+    instance.state = { expanded: true, wrapped: true };
     const result = instance.render();
 
     expect(React.isValidElement(result)).toBe(true);
@@ -194,5 +193,4 @@ it('should toggle expanded state from false to true', () => {
     expect(toolbarConfigForTest[0].key).toBe('pluginA');
     expect(matchingPlugin.initButtonCommands).toHaveBeenCalledWith('dark');
   });
-
 });

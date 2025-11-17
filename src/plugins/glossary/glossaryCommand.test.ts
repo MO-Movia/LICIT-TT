@@ -1,10 +1,10 @@
-import {GlossaryCommand} from './glossaryCommand';
-import {GlossaryPlugin, IndexItem} from './index';
-import {schema, builders} from 'prosemirror-test-builder';
-import {EditorState, TextSelection, NodeSelection} from 'prosemirror-state';
-import {Schema} from 'prosemirror-model';
-import {EditorView} from 'prosemirror-view';
-import {Transform} from 'prosemirror-transform';
+import { GlossaryCommand } from './glossaryCommand';
+import { GlossaryPlugin, IndexItem } from './index';
+import { schema, builders } from 'prosemirror-test-builder';
+import { EditorState, TextSelection, NodeSelection } from '@tiptap/pm/state';
+import { Schema } from '@tiptap/pm/model';
+import { EditorView } from '@tiptap/pm/view';
+import { Transform } from '@tiptap/pm/transform';
 
 describe('GlossaryPlugin', () => {
   let plugin: GlossaryPlugin;
@@ -34,7 +34,7 @@ describe('GlossaryPlugin', () => {
     };
 
     const effSchema = plugin.getEffectiveSchema(modSchema);
-    const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+    const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
     const state = EditorState.create({
       doc: doc(p(glossaryObj)),
       schema: effSchema,
@@ -44,7 +44,7 @@ describe('GlossaryPlugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -70,7 +70,7 @@ describe('GlossaryPlugin', () => {
     };
 
     const effSchema = plugin.getEffectiveSchema(modSchema);
-    const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+    const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
     const state = EditorState.create({
       doc: doc(p(glossaryObj)),
       schema: effSchema,
@@ -80,7 +80,7 @@ describe('GlossaryPlugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -112,7 +112,7 @@ describe('GlossaryPlugin', () => {
       description: 'Test description',
       term: 'term',
     };
-    const {doc, p} = builders(mySchema, {p: {nodeType: 'paragraph'}});
+    const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
     const effSchema = plugin.getEffectiveSchema(mySchema);
     const newGlossaryNode = effSchema.node(effSchema.nodes.glossary, glossary);
     const state = EditorState.create({
@@ -122,7 +122,7 @@ describe('GlossaryPlugin', () => {
     });
     const dom = document.createElement('div');
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -174,8 +174,8 @@ describe('GlossaryPlugin', () => {
       marks: schema.spec.marks,
     });
 
-    const {doc} = builders(modSchema, {
-      image: {nodeType: 'image'},
+    const { doc } = builders(modSchema, {
+      image: { nodeType: 'image' },
     });
     const imageNode = modSchema.nodes.image.create({
       src: 'test.jpg',

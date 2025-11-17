@@ -4,8 +4,8 @@ import {
   PluginKey,
   TextSelection,
   Transaction,
-} from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+} from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import {
   MARK_LINK,
   applyMark,
@@ -18,7 +18,6 @@ import lookUpElement from '../lookUpElement';
 import LinkTooltip from '../ui/linkTooltip';
 import LinkURLEditor from '../ui/linkURLEditor';
 
-import '../styles/czi-pop-up.css';
 import { EditorViewEx } from '../constants';
 
 // https://prosemirror.net/examples/tooltip/

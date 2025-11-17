@@ -1,5 +1,5 @@
 import TextSubMarkSpec from './textSubMarkSpec'; // Adjust the import path as needed
-import {Mark} from 'prosemirror-model';
+import { Mark } from '@tiptap/pm/model';
 
 describe('TextSubMarkSpec', () => {
   describe('parseDOM', () => {
@@ -14,7 +14,7 @@ describe('TextSubMarkSpec', () => {
       const result = rule!.getAttrs!(
         mockElement as unknown as HTMLElement & string
       );
-      expect(result).toEqual({overridden: true});
+      expect(result).toEqual({ overridden: true });
     });
 
     it('should return { overridden: false } for <sub overridden="false">', () => {
@@ -28,7 +28,7 @@ describe('TextSubMarkSpec', () => {
       const result = rule!.getAttrs!(
         mockElement as unknown as HTMLElement & string
       );
-      expect(result).toEqual({overridden: false});
+      expect(result).toEqual({ overridden: false });
     });
 
     it('should return { overridden: false } if overridden attribute is missing', () => {
@@ -41,7 +41,7 @@ describe('TextSubMarkSpec', () => {
       const result = rule!.getAttrs!(
         mockElement as unknown as HTMLElement & string
       );
-      expect(result).toEqual({overridden: false});
+      expect(result).toEqual({ overridden: false });
     });
 
     it('should return { overridden: true } when style is "vertical-align: sub"', () => {
@@ -52,7 +52,7 @@ describe('TextSubMarkSpec', () => {
       expect(rule).toBeTruthy();
 
       const result = rule!.getAttrs!('sub' as unknown as HTMLElement & string);
-      expect(result).toEqual({overridden: true});
+      expect(result).toEqual({ overridden: true });
     });
 
     it('should return null when style is not "sub"', () => {
@@ -72,7 +72,7 @@ describe('TextSubMarkSpec', () => {
   describe('toDOM', () => {
     it('should return correct DOM structure when overridden is true', () => {
       const mockMark = {
-        attrs: {overridden: true},
+        attrs: { overridden: true },
       } as unknown as Mark;
 
       if (!TextSubMarkSpec.toDOM) {
@@ -80,12 +80,12 @@ describe('TextSubMarkSpec', () => {
       }
 
       const result = TextSubMarkSpec.toDOM(mockMark, false);
-      expect(result).toEqual(['sub', {overridden: true}, 0]);
+      expect(result).toEqual(['sub', { overridden: true }, 0]);
     });
 
     it('should return correct DOM structure when overridden is false', () => {
       const mockMark = {
-        attrs: {overridden: false},
+        attrs: { overridden: false },
       } as unknown as Mark;
 
       if (!TextSubMarkSpec.toDOM) {
@@ -93,7 +93,7 @@ describe('TextSubMarkSpec', () => {
       }
 
       const result = TextSubMarkSpec.toDOM(mockMark, false);
-      expect(result).toEqual(['sub', {overridden: false}, 0]);
+      expect(result).toEqual(['sub', { overridden: false }, 0]);
     });
   });
 });

@@ -21,63 +21,63 @@
       "types": "./licit/index.d.js",
       "default": "./licit/index.js"
     },
-    "./licit-core": {
+    "./core": {
       "types": "./core/index.d.js",
       "default": "./core/index.js"
     },
-    "./licit-commands": {
+    "./commands": {
       "types": "./commands/index.d.js",
       "default": "./commands/index.js"
     },
-    "./plugin-block-control": {
+    "./plugins/block-control": {
       "types": "./plugins/block-control/index.d.js",
       "default": "./plugins/block-control/index.js"
     },
-    "./plugin-change-case": {
+    "./plugins/change-case": {
       "types": "./plugins/change-case/index.d.js",
       "default": "./plugins/change-case/index.js"
     },
-    "./plugin-citation": {
+    "./plugins/citation": {
       "types": "./plugins/citation/index.d.js",
       "default": "./plugins/citation/index.js"
     },
-    "./plugin-copy-images": {
+    "./plugins/copy-images": {
       "types": "./plugins/copy-images/index.d.js",
       "default": "./plugins/copy-images/index.js"
     },
-    "./plugin-custom-styles": {
+    "./plugins/custom-styles": {
       "types": "./plugins/custom-styles/index.d.js",
       "default": "./plugins/custom-styles/index.js"
     },
-    "./plugin-export-pdf": {
+    "./plugins/export-pdf": {
       "types": "./plugins/export-pdf/index.d.js",
       "default": "./plugins/export-pdf/index.js"
     },
-    "./plugin-glossary": {
+    "./plugins/glossary": {
       "types": "./plugins/glossary/index.d.js",
       "default": "./plugins/glossary/index.js"
     },
-    "./plugin-highlight": {
+    "./plugins/highlight": {
       "types": "./plugins/highlight/index.d.js",
       "default": "./plugins/highlight/index.js"
     },
-    "./plugin-info-icon": {
+    "./plugins/info-icon": {
       "types": "./plugins/info-icon/index.d.js",
       "default": "./plugins/info-icon/index.js"
     },
-    "./plugin-multimedia": {
+    "./plugins/multimedia": {
       "types": "./plugins/multimedia/index.d.js",
       "default": "./plugins/multimedia/index.js"
     },
-    "./plugin-object-id": {
+    "./plugins/object-id": {
       "types": "./plugins/object-id/index.d.js",
       "default": "./plugins/object-id/index.js"
     },
-    "./plugin-paste-json": {
+    "./plugins/paste-json": {
       "types": "./plugins/paste-json/index.d.js",
       "default": "./plugins/paste-json/index.js"
     },
-    "./plugin-vignette": {
+    "./plugins/vignette": {
       "types": "./plugins/vignette/index.d.js",
       "default": "./plugins/vignette/index.js"
     }
@@ -90,7 +90,8 @@
     "build:fonts": "mkdirp ./dist/fonts && cp -r fonts/* dist/fonts",
     "build:assets": "mkdirp ./dist/assets && cp -r assets/* dist/assets",
     "build:esm": "node build.mjs",
-    "build:ts": "tsc -p tsconfig.prod.json --emitDeclarationOnly --declaration",
+    "build:esbuild:test": "tsc -p tsconfig.prod.json --emitDeclarationOnly --declaration",
+    "build:ts": "tsc -p tsconfig.prod.json && npx tsc-alias -p tsconfig.json",
     "ci:build": "npm run build:esm && npm run build:ts && npm run build:css && npm run build:fonts && npm run build:assets && copyfiles package.json README.md LICENSE dist",
     "webpack": "webpack",
     "start": "cross-env NODE_ENV=development webpack serve --config tools/webpack/webpack.config.dev.js",
@@ -104,11 +105,10 @@
     "verify": "npm run lint -- --fix && npm run ci:build && npm run test:coverage && echo 'All Tests Passed!'"
   },
   "peerDependencies": {
-    "@tiptap/core": "^2.9.1",
-    "@modusoperandi/color-picker": "^1.0.7"
+    "@modusoperandi/color-picker": "^1.0.7",
+    "@tiptap/core": "^2.9.1"
   },
   "dependencies": {
-    "axios": "^1.13.2",
     "@tiptap/core": "^2.9.1",
     "@tiptap/extension-collaboration": "^2.1.0",
     "@tiptap/extension-collaboration-cursor": "^2.1.0",
@@ -127,25 +127,27 @@
     "@tiptap/extension-underline": "^2.1.0",
     "@tiptap/react": "^2.0.0",
     "@tiptap/starter-kit": "^2.1.0",
+    "axios": "^1.13.2",
     "browserkeymap": "2.0.2",
     "classnames": "2.2.6",
     "color": "^3.1.2",
-    "pagedjs": "^0.4.3",
     "nullthrows": "1.1.1",
+    "pagedjs": "^0.4.3",
+    "prop-types": "^15.8.1",
     "prosemirror-commands": "^1.0.0",
+    "prosemirror-dev-tools": "^4.2.0",
     "prosemirror-history": "^1.0.0",
-    "prosemirror-keymap": "^1.0.0",
-    "prosemirror-state": "^1.0.0",
-    "prosemirror-model": "^1.0.0",
-    "prosemirror-menu": "^1.0.0",
-    "prosemirror-view": "^1.0.0",
-    "prosemirror-transform": "^1.0.0",
     "prosemirror-inputrules": "^1.1.3",
-    "prosemirror-tables": "^1.2.5",
+    "prosemirror-keymap": "^1.0.0",
+    "prosemirror-menu": "^1.0.0",
+    "prosemirror-model": "^1.0.0",
     "prosemirror-schema-basic": "^1.2.4",
     "prosemirror-schema-list": "^1.2.4",
-    "prosemirror-dev-tools": "^4.2.0",
+    "prosemirror-state": "^1.0.0",
+    "prosemirror-tables": "^1.2.5",
+    "prosemirror-transform": "^1.0.0",
     "prosemirror-utils": "^1.0.0-0",
+    "prosemirror-view": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-image-crop": "^11.0.10",
@@ -159,12 +161,12 @@
     "yjs": "^13.5.24"
   },
   "devDependencies": {
-    "@types/prosemirror-state": "^1.2.8",
+    "@modusoperandi/eslint-config": "^3.0.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^18.11.5",
+    "@types/prosemirror-state": "^1.2.8",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "@modusoperandi/eslint-config": "^3.0.2",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
     "esbuild": "^0.27.0",
@@ -188,6 +190,7 @@
     "ts-jest": "^29.4.1",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-transform-paths": "^3.5.5"
   }
 }

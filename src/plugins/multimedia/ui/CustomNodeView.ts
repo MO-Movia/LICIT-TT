@@ -1,10 +1,10 @@
-import {Node} from 'prosemirror-model';
-import {Decoration, EditorView, NodeView} from 'prosemirror-view';
+import { Node } from '@tiptap/pm/model';
+import { Decoration, EditorView, NodeView } from '@tiptap/pm/view';
 import React from 'react';
-import {EditorRuntime, EditorVideoRuntime} from '../Types';
+import { EditorRuntime, EditorVideoRuntime } from '../Types';
 
-import {SelectionObserver} from './SelectionObserver';
-import {createRoot, Root} from 'react-dom/client';
+import { SelectionObserver } from './SelectionObserver';
+import { createRoot, Root } from 'react-dom/client';
 
 export type EditorFocused = EditorView & {
   focused: boolean;
@@ -194,10 +194,10 @@ export class CustomNodeView implements NodeView {
   }
 
   __renderReactComponent(): void {
-    const {editorView, getPos} = this.props;
+    const { editorView, getPos } = this.props;
 
     if (editorView?.state?.selection) {
-      const {from} = editorView.state.selection;
+      const { from } = editorView.state.selection;
       const pos = getPos();
       this.props.selected = this._selected;
       this.props.focused = editorView.focused && pos === from;

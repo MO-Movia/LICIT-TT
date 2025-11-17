@@ -10,7 +10,7 @@ import {
   Plugin,
   PluginKey,
   Transaction,
-} from 'prosemirror-state';
+} from '@tiptap/pm/state';
 import {
   AddCitationCommand,
   addTexthighlightMark,
@@ -26,9 +26,9 @@ import {
   ParseRule,
   Schema,
   Slice,
-} from 'prosemirror-model';
-import { EditorView } from 'prosemirror-view';
-import { Transform } from 'prosemirror-transform';
+} from '@tiptap/pm/model';
+import { EditorView } from '@tiptap/pm/view';
+import { Transform } from '@tiptap/pm/transform';
 import { CitationView, Style } from './CitationView';
 import { CitationRuntime } from './CitationRuntime';
 import { isTransparent, toCSSColor } from './toCSSColor';

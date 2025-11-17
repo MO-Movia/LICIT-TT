@@ -1,6 +1,6 @@
-import {DOMSerializer, Node} from 'prosemirror-model';
-import {EditorView, NodeView} from 'prosemirror-view';
-import {CacheInput, getGlossaryRuntime, GLOSSARY, IndexItem} from './types';
+import { DOMSerializer, Node } from '@tiptap/pm/model';
+import { EditorView, NodeView } from '@tiptap/pm/view';
+import { CacheInput, getGlossaryRuntime, GLOSSARY, IndexItem } from './types';
 import tippy from 'tippy.js';
 
 export const cache: Record<

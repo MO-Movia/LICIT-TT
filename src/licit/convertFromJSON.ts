@@ -1,5 +1,5 @@
-import { Schema } from 'prosemirror-model';
-import { Plugin } from 'prosemirror-state';
+import { Schema } from '@tiptap/pm/model';
+import { Plugin } from '@tiptap/pm/state';
 
 export interface LicitPlugin extends Plugin {
   getEffectiveSchema: (schema: Schema) => Schema;

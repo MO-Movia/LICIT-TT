@@ -1,9 +1,9 @@
-import {GlossaryPlugin} from './index';
-import {schema, builders} from 'prosemirror-test-builder';
-import {EditorState} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {Schema} from 'prosemirror-model';
-import {GlossaryView} from './glossaryView';
+import { GlossaryPlugin } from './index';
+import { schema, builders } from 'prosemirror-test-builder';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { Schema } from '@tiptap/pm/model';
+import { GlossaryView } from './glossaryView';
 
 describe('Glossary Plugin Extended', () => {
   const glossary = {
@@ -29,7 +29,7 @@ describe('Glossary Plugin Extended', () => {
   const effSchema = plugin.getEffectiveSchema(mySchema);
 
   const newGlossaryNode = effSchema.node(effSchema.nodes.glossary, glossary);
-  const {doc, p} = builders(mySchema, {p: {nodeType: 'paragraph'}});
+  const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
   let gView: GlossaryView;
   beforeEach(() => {
     const before = 'hello';
@@ -43,7 +43,7 @@ describe('Glossary Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -71,7 +71,7 @@ describe('Glossary Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -94,7 +94,7 @@ describe('Glossary Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }

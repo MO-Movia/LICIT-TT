@@ -1,7 +1,7 @@
-import { EditorState, Transaction } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { ContentNodeWithPos } from 'prosemirror-utils';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import { ListToggleCommand, hasImageNode } from './listToggleCommand';
 import {
   toggleList,

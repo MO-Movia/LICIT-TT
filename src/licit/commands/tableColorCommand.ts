@@ -1,8 +1,8 @@
 import * as React from 'react';
 import nullthrows from 'nullthrows';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 
 import {
   atAnchorRight,
@@ -67,7 +67,7 @@ class TableColorCommand extends UICommand {
     return new Promise((resolve) => {
       this._popUp = createPopUp(
         ColorEditor,
-        {hex: null, runtime: RuntimeService.Runtime, Textcolor: null},
+        { hex: null, runtime: RuntimeService.Runtime, Textcolor: null },
         {
           anchor,
           popUpId: 'mo-menuList-child',

@@ -1,13 +1,13 @@
-import {EditorState, Plugin, PluginKey} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {Node} from 'prosemirror-model';
+import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { Node } from '@tiptap/pm/model';
 
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {TableBackgroundColorCommand} from './TableBackgroundColorCommand';
-import {TableBorderColorCommand} from './TableBorderColorCommand';
-import {createCommand} from './CreateCommand';
-import {CellSelection, deleteTable, TableView} from 'prosemirror-tables';
-import {TABLE} from './Constants';
+import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { TableBackgroundColorCommand } from './TableBackgroundColorCommand';
+import { TableBorderColorCommand } from './TableBorderColorCommand';
+import { createCommand } from './CreateCommand';
+import { CellSelection, deleteTable, TableView } from '@tiptap/pm/tables';
+import { TABLE } from './Constants';
 
 const TABLE_BACKGROUND_COLOR = new TableBackgroundColorCommand();
 const TABLE_BORDER_COLOR = new TableBorderColorCommand();
@@ -107,8 +107,8 @@ export class VignetteView {
   getMenu(
     state: EditorState,
     actionNode: Node,
-    cmdGrps: Array<{[key: string]: UICommand}>
-  ): Array<{[key: string]: UICommand}> {
+    cmdGrps: Array<{ [key: string]: UICommand }>
+  ): Array<{ [key: string]: UICommand }> {
     const vignette = VignetteView.isVignette(state, actionNode);
 
     cmdGrps.forEach((cmdGrp) => {

@@ -1,5 +1,5 @@
-import {Mark, ParseRule} from 'prosemirror-model';
-import FontTypeMarkSpec, {FONT_TYPE_NAMES} from './fontTypeMarkSpec';
+import { Mark, ParseRule } from '@tiptap/pm/model';
+import FontTypeMarkSpec, { FONT_TYPE_NAMES } from './fontTypeMarkSpec';
 
 interface FontAttrs {
   name: string;
@@ -92,25 +92,25 @@ describe('FontTypeMarkSpec', () => {
 
   describe('toDOM', () => {
     it('should return correct DOM structure when name is provided', () => {
-      const mark = {attrs: {name: 'Tahoma'}} as unknown as Mark;
+      const mark = { attrs: { name: 'Tahoma' } } as unknown as Mark;
       if (!FontTypeMarkSpec.toDOM) {
         throw new Error('SubMarkSpec.toDOM is not defined');
       }
       expect(FontTypeMarkSpec.toDOM(mark, false)).toEqual([
         'span',
-        {style: 'font-family: Tahoma'},
+        { style: 'font-family: Tahoma' },
         0,
       ]);
     });
 
     it('should return correct DOM structure when name is empty', () => {
-      const mark = {attrs: {name: ''}} as unknown as Mark;
+      const mark = { attrs: { name: '' } } as unknown as Mark;
       if (!FontTypeMarkSpec.toDOM) {
         throw new Error('SubMarkSpec.toDOM is not defined');
       }
       expect(FontTypeMarkSpec.toDOM(mark, false)).toEqual([
         'span',
-        {style: ''},
+        { style: '' },
         0,
       ]);
     });

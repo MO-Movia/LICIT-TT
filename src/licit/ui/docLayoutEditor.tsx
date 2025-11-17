@@ -7,9 +7,6 @@ import {
 } from '@modusoperandi/licit-ui-commands';
 import CustomRadioButton from './customRadioButton';
 
-import '../styles/czi-body-layout-editor.css';
-import '../styles/czi-form.css';
-
 export type DocLayoutEditorValue = {
   layout?: string;
   width?: number;

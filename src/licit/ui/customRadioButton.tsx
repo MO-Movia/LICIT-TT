@@ -1,4 +1,3 @@
-import '../styles/czi-custom-radio-button.css';
 import {
   PointerSurface,
   PointerSurfaceProps,

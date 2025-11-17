@@ -1,14 +1,18 @@
-import { updateIndentLevel, setNodeIndentMarkup, setListNodeIndent } from './updateIndentLevel';
-import { Mark, Node, Schema } from 'prosemirror-model';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import {
+  updateIndentLevel,
+  setNodeIndentMarkup,
+  setListNodeIndent,
+} from './updateIndentLevel';
+import { Mark, Node, Schema } from '@tiptap/pm/model';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
 import * as consolidateListNodes from './consolidateListNodes';
 import * as isListNode from './isListNode';
 import * as clamp from './ui/clamp';
-import { EditorView } from 'prosemirror-view';
-import { CellSelection,tableNodes } from 'prosemirror-tables';
-require('prosemirror-schema-basic');
+import { EditorView } from '@tiptap/pm/view';
+import { CellSelection, tableNodes } from '@tiptap/pm/tables';
+require('@tiptap/pm/schema-basic');
 
 declare let require;
 
@@ -105,7 +109,7 @@ describe('updateIndentLevel', () => {
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
   });
-    it('should handle updateIndentLevel when selection instance of cellselection', () => {
+  it('should handle updateIndentLevel when selection instance of cellselection', () => {
     const schema = new Schema({
       nodes: {
         doc: { content: 'block+' },
@@ -119,7 +123,7 @@ describe('updateIndentLevel', () => {
         ...tableNodes({
           tableGroup: 'block',
           cellContent: 'paragraph',
-          cellAttributes: {}
+          cellAttributes: {},
         }),
       },
     });
@@ -138,38 +142,60 @@ describe('updateIndentLevel', () => {
     ]);
 
     const selection = CellSelection.create(doc, 2, 2);
-    const test = updateIndentLevel( {} as unknown as EditorState,
-      { selection: selection, doc: doc } as unknown as Transform,{ nodes: { 'blockquote': null, 'heading': null, 'paragraph': null } } as unknown as Schema
-      ,1,{} as unknown as EditorView
-      );
+    const test = updateIndentLevel(
+      {} as unknown as EditorState,
+      { selection: selection, doc: doc } as unknown as Transform,
+      {
+        nodes: { blockquote: null, heading: null, paragraph: null },
+      } as unknown as Schema,
+      1,
+      {} as unknown as EditorView
+    );
     expect(test).toBeDefined();
   });
   it('should check the condition inside setListNodeIndent function() !listItem', () => {
     const state = {} as unknown as EditorState;
     const tr = {
-      doc: { nodeAt: () => { return { attrs: { indent: '2' } }; } },
+      doc: {
+        nodeAt: () => {
+          return { attrs: { indent: '2' } };
+        },
+      },
       selection: { from: 1, to: 2 },
       getMeta: () => {
         return 'dryrun';
       },
     } as unknown as Transform;
     const sc = {
-      nodes: { paragraph: PARAGRAPH, heading: HEADING, blockquote: BLOCKQUOTE, 'list_item': 'list_item' },
+      nodes: {
+        paragraph: PARAGRAPH,
+        heading: HEADING,
+        blockquote: BLOCKQUOTE,
+        list_item: 'list_item',
+      },
     } as unknown as Schema;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     const test = setListNodeIndent(state, tr, sc, 0, 0);
     expect(test).toBeTruthy();
   });
   it('should check the condition inside setNodeIndentMarkup function() !listItem', () => {
     const state = {} as unknown as EditorState;
     const tr = {
-      doc: { nodeAt: () => { return { attrs: { indent: '2' } }; } },
+      doc: {
+        nodeAt: () => {
+          return { attrs: { indent: '2' } };
+        },
+      },
       selection: { from: 1, to: 2 },
       getMeta: () => {
         return 'dryrun';
       },
     } as unknown as Transform;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     const test = setNodeIndentMarkup(state, tr, 0, 0);
     expect(test).toBeTruthy();
   });
@@ -187,7 +213,7 @@ describe('updateIndentLevel', () => {
     const tr = {
       doc: dummyDoc,
       selection: { from: 1, to: 2 },
-      getMeta: () => { }
+      getMeta: () => {},
     } as unknown as Transform;
     const sc = {
       nodes: { paragraph: PARAGRAPH, heading: HEADING, blockquote: BLOCKQUOTE },
@@ -211,7 +237,9 @@ describe('updateIndentLevel', () => {
       nodes: { paragraph: PARAGRAPH, heading: HEADING, blockquote: BLOCKQUOTE },
     } as unknown as Schema;
     const view = {} as unknown as EditorView;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
   });
@@ -237,7 +265,9 @@ describe('updateIndentLevel', () => {
       },
     } as unknown as Schema;
     const view = {} as unknown as EditorView;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
       .mockReturnValue(tr as unknown as Transform);
@@ -296,7 +326,9 @@ describe('updateIndentLevel', () => {
       },
     } as unknown as Schema;
     const view = {} as unknown as EditorView;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
       .mockReturnValue(tr as unknown as Transform);
@@ -388,7 +420,9 @@ describe('updateIndentLevel', () => {
       },
     } as unknown as Schema;
     const view = {} as unknown as EditorView;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
       .mockReturnValue(tr as unknown as Transform);
@@ -480,7 +514,9 @@ describe('updateIndentLevel', () => {
       },
     } as unknown as Schema;
     const view = {} as unknown as EditorView;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
       .mockReturnValue(tr as unknown as Transform);
@@ -550,7 +586,9 @@ describe('updateIndentLevel', () => {
       },
     } as unknown as Schema;
     const view = {} as unknown as EditorView;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
       .mockReturnValue(tr as unknown as Transform);
@@ -571,7 +609,9 @@ describe('updateIndentLevel', () => {
       nodes: { paragraph: PARAGRAPH, heading: HEADING, blockquote: BLOCKQUOTE },
     } as unknown as Schema;
     const view = {} as unknown as EditorView;
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
   });
@@ -655,7 +695,7 @@ describe('updateIndentLevel', () => {
           ],
           marks: [{ type: 'link', attrs: { ['overridden']: true } }],
         },
-                {
+        {
           type: 'list_item',
           attrs: { level: 1, styleName: 'Normal' },
           content: [
@@ -669,15 +709,22 @@ describe('updateIndentLevel', () => {
       ],
     });
     const tr1 = {
-      delete:()=>{return {};},
+      delete: () => {
+        return {};
+      },
       doc: mockdoc,
       selection: { from: 1, to: 2 },
       getMeta: () => {
         return 'dryrun';
       },
     } as unknown as Transform;
-    jest.spyOn(tr1.doc, 'nodeAt').mockReturnValue({ type: 'test',attrs:{indent:'1'} } as unknown as Node);
-    jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
+    jest.spyOn(tr1.doc, 'nodeAt').mockReturnValue({
+      type: 'test',
+      attrs: { indent: '1' },
+    } as unknown as Node);
+    jest
+      .spyOn(isListNode, 'isListNode')
+      .mockReturnValue(true) as unknown as Node;
     const test = setListNodeIndent(state, tr1, mockschema, 0, 1);
     expect(test).toBeTruthy();
   });

@@ -1,9 +1,8 @@
-import {Node, NodeSpec,TagParseRule} from 'prosemirror-model';
-import {TABLE, VIGNETTE} from './Constants';
+import { Node, NodeSpec, TagParseRule } from '@tiptap/pm/model';
+import { TABLE, VIGNETTE } from './Constants';
 
 // Override the default table node spec to support custom attributes.
-export const VignetteTableNodeSpec = (nodespec: NodeSpec): NodeSpec => (
-  {
+export const VignetteTableNodeSpec = (nodespec: NodeSpec): NodeSpec => ({
   ...nodespec,
   attrs: {
     marginLeft: { default: null },
@@ -67,7 +66,7 @@ export const VignetteTableCellNodeSpec = (nodespec: NodeSpec): NodeSpec => ({
       base[1].style
     ) {
       base[1].style +=
-      '; border-radius: 10px; border:none!important; box-shadow: inset 0 0 0 1px #36598d;';
+        '; border-radius: 10px; border:none!important; box-shadow: inset 0 0 0 1px #36598d;';
     }
 
     base[1].vignette = node.attrs.vignette;

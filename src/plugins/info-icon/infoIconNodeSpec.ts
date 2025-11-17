@@ -1,4 +1,4 @@
-import {DOMOutputSpec, Node, NodeSpec} from 'prosemirror-model';
+import { DOMOutputSpec, Node, NodeSpec } from '@tiptap/pm/model';
 
 export const InfoIconNodeSpec: NodeSpec = {
   group: 'inline',
@@ -7,10 +7,10 @@ export const InfoIconNodeSpec: NodeSpec = {
   selectable: false,
   // added new attributes to this spec.
   attrs: {
-    from: {default: null},
-    to: {default: null},
-    description: {default: null},
-    infoIcon: {default: null},
+    from: { default: null },
+    to: { default: null },
+    description: { default: null },
+    infoIcon: { default: null },
   },
   toDOM,
   parseDOM: [
@@ -39,7 +39,7 @@ function getAttrs(dom: HTMLElement): Record<string, unknown> {
 }
 
 function toDOM(node: Node): DOMOutputSpec {
-  const {from, to, description, infoIcon} = node.attrs;
+  const { from, to, description, infoIcon } = node.attrs;
   const attrs = {
     from,
     to,

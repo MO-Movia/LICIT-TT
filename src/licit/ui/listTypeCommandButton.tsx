@@ -2,8 +2,8 @@
 // Command button to handle different type of list types
 // Need to add Icons instead of label
 import * as React from 'react';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { ListToggleCommand, hasImageNode } from '../commands/listToggleCommand';
 import ListTypeButton from './listTypeButton';
 import { EditorViewEx } from '../constants';
@@ -51,7 +51,7 @@ const COMMAND_GROUPS = [LIST_TYPE_COMMANDS];
 
 class ListTypeCommandButton extends React.PureComponent {
   static contextType = ThemeContext;
- declare props: {
+  declare props: {
     dispatch: (tr: Transform) => void;
     editorState: EditorState;
     editorView?: EditorViewEx;

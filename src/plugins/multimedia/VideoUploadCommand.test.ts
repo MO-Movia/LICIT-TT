@@ -1,11 +1,11 @@
-import {VideoUploadCommand} from './VideoUploadCommand';
-import {EditorState} from 'prosemirror-state';
-import {schema} from 'prosemirror-schema-basic';
-import {EditorView} from 'prosemirror-view';
-import {Transform} from 'prosemirror-transform';
+import { VideoUploadCommand } from './VideoUploadCommand';
+import { EditorState } from '@tiptap/pm/state';
+import { schema } from '@tiptap/pm/schema-basic';
+import { EditorView } from '@tiptap/pm/view';
+import { Transform } from '@tiptap/pm/transform';
 
-import {MultimediaPlugin} from './index';
-import {createEditor, doc, p} from 'jest-prosemirror';
+import { MultimediaPlugin } from './index';
+import { createEditor, doc, p } from 'jest-prosemirror';
 // Mock data
 const plugin = new MultimediaPlugin();
 const editor = createEditor(doc(p('<cursor>')), {
@@ -69,7 +69,7 @@ describe('video upload command', () => {
   it('should handle isEnabled when  !uploadVideo ', () => {
     const dummyEditorview = {
       focused: true,
-      runtime: {canUploadVideo: () => undefined},
+      runtime: { canUploadVideo: () => undefined },
       readOnly: false,
       state: editorState,
       dispatch: jest.fn(),
@@ -88,7 +88,7 @@ describe('video upload command', () => {
   it('should handle isEnabled when !canUploadVideo and uploadVideo ', () => {
     const dummyEditorview = {
       focused: true,
-      runtime: {uploadVideo: () => undefined},
+      runtime: { uploadVideo: () => undefined },
       readOnly: false,
       state: editorState,
       dispatch: jest.fn(),
@@ -107,7 +107,10 @@ describe('video upload command', () => {
   it('should handle isEnabled when !canUploadVideo and uploadVideo ', () => {
     const dummyEditorview = {
       focused: true,
-      runtime: {uploadVideo: () => undefined, canUploadVideo: () => undefined},
+      runtime: {
+        uploadVideo: () => undefined,
+        canUploadVideo: () => undefined,
+      },
       readOnly: false,
       state: editorState,
       dispatch: jest.fn(),
@@ -126,7 +129,7 @@ describe('video upload command', () => {
   it('should handle isEnabled when canUploadVideo and uploadVideo ', () => {
     const dummyEditorview = {
       focused: true,
-      runtime: {uploadVideo: () => true, canUploadVideo: () => true},
+      runtime: { uploadVideo: () => true, canUploadVideo: () => true },
       readOnly: false,
       state: editorState,
       dispatch: jest.fn(),
@@ -155,14 +158,14 @@ describe('video upload command', () => {
       mockTransform
     );
   });
-    it('should noop executeCustom', () => {
-      const tr = {} as Transform;
-      const command = new VideoUploadCommand();
-      expect(command.executeCustom(null!, tr)).toBe(tr);
-    });
-    it('should noop executeCustomStyleForTable', () => {
-      const tr = {} as Transform;
-      const command = new VideoUploadCommand();
-      expect(command.executeCustomStyleForTable(null!, tr)).toBe(tr);
-    });
+  it('should noop executeCustom', () => {
+    const tr = {} as Transform;
+    const command = new VideoUploadCommand();
+    expect(command.executeCustom(null!, tr)).toBe(tr);
+  });
+  it('should noop executeCustomStyleForTable', () => {
+    const tr = {} as Transform;
+    const command = new VideoUploadCommand();
+    expect(command.executeCustomStyleForTable(null!, tr)).toBe(tr);
+  });
 });

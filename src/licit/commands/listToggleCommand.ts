@@ -1,7 +1,7 @@
-import { EditorState, Transaction } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { ContentNodeWithPos, findParentNodeOfType } from 'prosemirror-utils';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 
 import {
   ORDERED_LIST,
@@ -89,9 +89,9 @@ export class ListToggleCommand extends UICommand {
     dispatch?: (tr: Transform) => void,
     _view?: EditorView
   ): Transaction | boolean => {
-    const {selection, schema} = state;
+    const { selection, schema } = state;
     const nodeType = schema.nodes[this._ordered ? ORDERED_LIST : BULLET_LIST];
-    let {tr} = state;
+    let { tr } = state;
     tr = tr.setSelection(selection);
     if (!nodeType) {
       return tr;
@@ -106,7 +106,7 @@ export class ListToggleCommand extends UICommand {
   };
 
   _findList(state: EditorState, type: string): ContentNodeWithPos | void {
-    const {nodes} = state.schema;
+    const { nodes } = state.schema;
     const list = nodes[type];
     const findList = list ? findParentNodeOfType(list) : noop;
     return findList(state.selection);

@@ -1,13 +1,13 @@
 import * as React from 'react';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {EditorState} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
-import {InfoIconDialog} from './infoIconDialog';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
-import type {PopUpHandle} from '@modusoperandi/licit-ui-commands';
-import {getNode} from './constants';
-import {DOMSerializer, Fragment} from 'prosemirror-model';
+import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
+import { InfoIconDialog } from './infoIconDialog';
+import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import type { PopUpHandle } from '@modusoperandi/licit-ui-commands';
+import { getNode } from './constants';
+import { DOMSerializer, Fragment } from '@tiptap/pm/model';
 
 export class InfoIconCommand extends UICommand {
   _popUp: PopUpHandle | null = null;

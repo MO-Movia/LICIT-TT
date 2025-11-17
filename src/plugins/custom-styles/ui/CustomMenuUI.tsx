@@ -1,7 +1,7 @@
 import React, { SyntheticEvent } from 'react';
-import { EditorState } from 'prosemirror-state';
-import { Schema, Node } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Schema, Node } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { uuid } from './Uuid';
 import { CustomStyleItem } from './CustomStyleItem';

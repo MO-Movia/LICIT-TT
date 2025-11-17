@@ -1,9 +1,17 @@
-import { Fragment } from 'prosemirror-model';
-import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { Fragment } from '@tiptap/pm/model';
+import { EditorState, TextSelection, Transaction } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { Transform } from 'prosemirror-transform';
-import { PARAGRAPH, TABLE, TABLE_CELL, TABLE_ROW, ENHANCED_TABLE_FIGURE_BODY, ENHANCED_TABLE_FIGURE_NOTES, ENHANCED_TABLE_FIGURE } from './Constants';
+import { Transform } from '@tiptap/pm/transform';
+import {
+  PARAGRAPH,
+  TABLE,
+  TABLE_CELL,
+  TABLE_ROW,
+  ENHANCED_TABLE_FIGURE_BODY,
+  ENHANCED_TABLE_FIGURE_NOTES,
+  ENHANCED_TABLE_FIGURE,
+} from './Constants';
 
 export class EnhancedTableCommands extends UICommand {
   // image,table
@@ -13,11 +21,21 @@ export class EnhancedTableCommands extends UICommand {
     super();
     this._nodeType = type;
   }
-  executeCustom(_state: EditorState, tr: Transform, _from: number, _to: number): Transform {
+  executeCustom(
+    _state: EditorState,
+    tr: Transform,
+    _from: number,
+    _to: number
+  ): Transform {
     return tr;
   }
 
-  executeCustomStyleForTable(_state: EditorState, tr: Transform, _from: number, _to: number): Transform {
+  executeCustomStyleForTable(
+    _state: EditorState,
+    tr: Transform,
+    _from: number,
+    _to: number
+  ): Transform {
     return tr;
   }
 
@@ -35,7 +53,6 @@ export class EnhancedTableCommands extends UICommand {
       let { tr } = state;
       if (this._nodeType === 'table') {
         tr = this.insertEnhancedTableFigure(tr, schema);
-
       }
 
       dispatch(tr);
@@ -98,11 +115,13 @@ export class EnhancedTableCommands extends UICommand {
 
     // Assemble the composite in the order: [body, (notes optional), capco]
     const content = Fragment.fromArray([bodyNode, capcoNode]);
-    const figureNode = figureNodeType.create({ figureType: 'table', orientation: 'landscape' }, content);
+    const figureNode = figureNodeType.create(
+      { figureType: 'table', orientation: 'landscape' },
+      content
+    );
 
     // Insert the figure node at the current selection.
     tr = tr.insert(from, figureNode);
-
 
     const para = schema.nodes.paragraph.createAndFill();
     if (para) {
@@ -113,7 +132,6 @@ export class EnhancedTableCommands extends UICommand {
 
     return tr;
   }
-
 
   createBlueTable(schema, rows, cols) {
     const { nodes } = schema;
@@ -130,7 +148,8 @@ export class EnhancedTableCommands extends UICommand {
       const cellNodes = [];
       for (let cc = 0; cc < cols; cc++) {
         // For the first row, first 3 cells get a yellow background.
-        const attrs = rr === 0 && cc < 3 ? { background: '#abdbe3' } : undefined;
+        const attrs =
+          rr === 0 && cc < 3 ? { background: '#abdbe3' } : undefined;
         const cellNode = cell.create(
           attrs,
           Fragment.fromArray([paragraph.create()])
@@ -143,7 +162,6 @@ export class EnhancedTableCommands extends UICommand {
     const tableNode = table.create({}, Fragment.from(rowNodes));
     return tableNode;
   }
-
 }
 
 export function addNotesCommand(tr, schema, pos) {

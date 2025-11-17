@@ -1,10 +1,10 @@
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import DocLayoutCommand from './docLayoutCommand';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import type { DocLayoutEditorValue } from '../ui/docLayoutEditor';
 import { Editor } from '@tiptap/react';
-import { Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
+import { Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 
 describe('DocLayoutCommand', () => {

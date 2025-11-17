@@ -1,12 +1,12 @@
-import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-import { Transform } from 'prosemirror-transform';
+import { EditorState, NodeSelection, Transaction } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { Transform } from '@tiptap/pm/transform';
 import {
   AddCitationCommand,
   ShowTexteHighLightMark,
 } from './AddCitationCommand';
 import { PopUpHandle } from '@modusoperandi/licit-ui-commands';
-import { Node, ResolvedPos, Schema } from 'prosemirror-model';
+import { Node, ResolvedPos, Schema } from '@tiptap/pm/model';
 import { AddCitationCommandOptions } from './Types';
 
 type CitationProps = {

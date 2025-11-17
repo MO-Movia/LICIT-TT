@@ -1,5 +1,5 @@
-import {EditorState} from 'prosemirror-state';
-import {isTextStyleMarkCommandEnabled} from './isTextStyleMarkCommandEnabled';
+import { EditorState } from '@tiptap/pm/state';
+import { isTextStyleMarkCommandEnabled } from './isTextStyleMarkCommandEnabled';
 import * as isNodeSelectionForNodeType from './isNodeSelectionForNodeType';
 
 describe('isTextStyleMarkCommandEnabled', () => {
@@ -9,7 +9,7 @@ describe('isTextStyleMarkCommandEnabled', () => {
       .mockReturnValue(true);
     const state = {
       selection: {},
-      schema: {marks: {'mark-font-size': 'bold'}, nodes: {math: '1'}},
+      schema: { marks: { 'mark-font-size': 'bold' }, nodes: { math: '1' } },
       tr: {},
     } as unknown as EditorState;
     const markName = 'mark-font-size';

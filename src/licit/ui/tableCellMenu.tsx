@@ -1,18 +1,16 @@
-import { EditorState, PluginView } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorState, PluginView } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import * as React from 'react';
 
 import CommandMenuButton from './commandMenuButton';
 import { TABLE_COMMANDS_GROUP } from './editorToolbarConfig';
 import Icon from './icon';
 
-import '../styles/czi-table-cell-menu.css';
-
 type TableCellMenuProps = {
   editorState: EditorState;
   editorView: EditorView;
-  pluginView: PluginView,
-  actionNode: Node,
+  pluginView: PluginView;
+  actionNode: Node;
 };
 
 class TableCellMenu extends React.PureComponent<TableCellMenuProps> {
@@ -26,7 +24,11 @@ class TableCellMenu extends React.PureComponent<TableCellMenuProps> {
     let cmdGrps = null;
 
     if (pluginView['_menu']) {
-      cmdGrps = pluginView['_menu'](editorState, actionNode, TABLE_COMMANDS_GROUP);
+      cmdGrps = pluginView['_menu'](
+        editorState,
+        actionNode,
+        TABLE_COMMANDS_GROUP
+      );
     }
 
     if (!cmdGrps) {

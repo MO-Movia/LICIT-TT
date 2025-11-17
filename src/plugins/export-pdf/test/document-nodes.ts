@@ -1,5 +1,8 @@
-import { Node } from 'prosemirror-model';
-import { FlatSectionNodeStructure, SectionNodeStructure } from '../utils/document-section-utils';
+import { Node } from '@tiptap/pm/model';
+import {
+  FlatSectionNodeStructure,
+  SectionNodeStructure,
+} from '../utils/document-section-utils';
 
 export const sampleNodeList = [
   {
@@ -8,10 +11,12 @@ export const sampleNodeList = [
       objectId: '1',
     },
     content: {
-      content: [{
-        text: 'H1-1'
-      }]
-    }
+      content: [
+        {
+          text: 'H1-1',
+        },
+      ],
+    },
   },
   {
     attrs: {
@@ -19,10 +24,12 @@ export const sampleNodeList = [
       objectId: '2',
     },
     content: {
-      content: [{
-        text: 'H2-1'
-      }]
-    }
+      content: [
+        {
+          text: 'H2-1',
+        },
+      ],
+    },
   },
   {
     attrs: {
@@ -30,10 +37,12 @@ export const sampleNodeList = [
       objectId: '3',
     },
     content: {
-      content: [{
-        text: 'H3-1'
-      }]
-    }
+      content: [
+        {
+          text: 'H3-1',
+        },
+      ],
+    },
   },
   {
     attrs: {
@@ -41,10 +50,12 @@ export const sampleNodeList = [
       objectId: '4',
     },
     content: {
-      content: [{
-        text: 'H2-2'
-      }]
-    }
+      content: [
+        {
+          text: 'H2-2',
+        },
+      ],
+    },
   },
   {
     attrs: {
@@ -52,10 +63,12 @@ export const sampleNodeList = [
       objectId: '5',
     },
     content: {
-      content: [{
-        text: 'H1-2'
-      }]
-    }
+      content: [
+        {
+          text: 'H1-2',
+        },
+      ],
+    },
   },
 ] as unknown as Node[];
 
@@ -80,9 +93,9 @@ export const sampleSectionNodeStructure: SectionNodeStructure[] = [
             style: 'H3',
             level: 3,
             isChecked: true,
-            children: []
+            children: [],
           },
-        ]
+        ],
       },
       {
         id: '4',
@@ -90,9 +103,9 @@ export const sampleSectionNodeStructure: SectionNodeStructure[] = [
         style: 'H2',
         level: 2,
         isChecked: true,
-        children: []
+        children: [],
       },
-    ]
+    ],
   },
   {
     id: '5',
@@ -100,8 +113,8 @@ export const sampleSectionNodeStructure: SectionNodeStructure[] = [
     style: 'H1',
     level: 1,
     isChecked: true,
-    children: []
-  }
+    children: [],
+  },
 ];
 
 export const sampleFlattenedStructure: FlatSectionNodeStructure[] = [
@@ -111,7 +124,7 @@ export const sampleFlattenedStructure: FlatSectionNodeStructure[] = [
     style: 'H1',
     level: 1,
     isChecked: true,
-    childrenIds: ['2', '4']
+    childrenIds: ['2', '4'],
   },
   {
     id: '2',
@@ -119,7 +132,7 @@ export const sampleFlattenedStructure: FlatSectionNodeStructure[] = [
     style: 'H2',
     level: 2,
     isChecked: true,
-    childrenIds: ['3']
+    childrenIds: ['3'],
   },
   {
     id: '3',
@@ -127,7 +140,7 @@ export const sampleFlattenedStructure: FlatSectionNodeStructure[] = [
     style: 'H3',
     level: 3,
     isChecked: true,
-    childrenIds: []
+    childrenIds: [],
   },
   {
     id: '4',
@@ -135,7 +148,7 @@ export const sampleFlattenedStructure: FlatSectionNodeStructure[] = [
     style: 'H2',
     level: 2,
     isChecked: true,
-    childrenIds: []
+    childrenIds: [],
   },
   {
     id: '5',
@@ -143,8 +156,8 @@ export const sampleFlattenedStructure: FlatSectionNodeStructure[] = [
     style: 'H1',
     level: 1,
     isChecked: true,
-    childrenIds: []
-  }
+    childrenIds: [],
+  },
 ];
 
 export const sampleNodeListWithInvalidStyle = [
@@ -154,11 +167,13 @@ export const sampleNodeListWithInvalidStyle = [
       objectId: '1',
     },
     content: {
-      content: [{
-        text: 'H1-1'
-      }]
-    }
-  }
+      content: [
+        {
+          text: 'H1-1',
+        },
+      ],
+    },
+  },
 ] as unknown as Node[];
 
 export const sampleNodeListWithoutTextContent = [
@@ -168,11 +183,13 @@ export const sampleNodeListWithoutTextContent = [
       objectId: '1',
     },
     content: {
-      content: [{
-        description: 'foobar'
-      }]
-    }
-  }
+      content: [
+        {
+          description: 'foobar',
+        },
+      ],
+    },
+  },
 ] as unknown as Node[];
 
 export const sampleNodeListWithoutContent = [
@@ -181,6 +198,6 @@ export const sampleNodeListWithoutContent = [
       styleName: 'H1',
       objectId: '1',
     },
-    content: {}
-  }
+    content: {},
+  },
 ] as unknown as Node[];

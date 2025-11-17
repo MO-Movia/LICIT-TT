@@ -1,11 +1,16 @@
-import {cache, GlossaryPlugin, IndexItem} from './index';
-import {schema, builders} from 'prosemirror-test-builder';
-import {Schema} from 'prosemirror-model';
-import {EditorState, TextSelection, Plugin, PluginKey} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {GlossaryCommand} from './glossaryCommand';
-import {Transform} from 'prosemirror-transform';
-import {createEditor} from 'jest-prosemirror';
+import { cache, GlossaryPlugin, IndexItem } from './index';
+import { schema, builders } from 'prosemirror-test-builder';
+import { Schema } from '@tiptap/pm/model';
+import {
+  EditorState,
+  TextSelection,
+  Plugin,
+  PluginKey,
+} from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { GlossaryCommand } from './glossaryCommand';
+import { Transform } from '@tiptap/pm/transform';
+import { createEditor } from 'jest-prosemirror';
 
 class TestPlugin extends Plugin {
   constructor() {
@@ -45,7 +50,7 @@ describe('GlossaryPlugin', () => {
     expect(cache[id]).toBeUndefined();
     const p = new GlossaryPlugin({
       ...runtime,
-      cache: [{id, term: id, definition: id}],
+      cache: [{ id, term: id, definition: id }],
     });
     expect(p).toBeTruthy();
     expect(cache[id]).toBeDefined();
@@ -53,7 +58,7 @@ describe('GlossaryPlugin', () => {
   it('should init cache from promise', async () => {
     const id = 'cacheP';
     expect(cache[id]).toBeUndefined();
-    const promise = Promise.resolve([{id, term: id, definition: id}]);
+    const promise = Promise.resolve([{ id, term: id, definition: id }]);
     const p = new GlossaryPlugin({
       ...runtime,
       cache: promise,
@@ -77,7 +82,7 @@ describe('GlossaryPlugin', () => {
         term: 'term',
       };
       const effSchema = plugin.getEffectiveSchema(modSchema);
-      const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+      const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
 
       const state = EditorState.create({
         doc: doc(p(glossary)),
@@ -88,7 +93,7 @@ describe('GlossaryPlugin', () => {
       // Set up our document body
       document.body.innerHTML = '<div></div>';
       const view = new EditorView(
-        {mount: dom},
+        { mount: dom },
         {
           state: state,
         }
@@ -97,7 +102,7 @@ describe('GlossaryPlugin', () => {
       const selection = TextSelection.create(view.state.doc, 1, 2);
       const tr = view.state.tr.setSelection(selection);
       view.updateState(
-        view.state.reconfigure({plugins: [plugin, new TestPlugin()]})
+        view.state.reconfigure({ plugins: [plugin, new TestPlugin()] })
       );
 
       view.dispatch(tr);
@@ -140,7 +145,7 @@ describe('GlossaryPlugin', () => {
       };
 
       const effSchema = plugin.getEffectiveSchema(modSchema);
-      const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+      const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
       const state = EditorState.create({
         doc: doc(p(glossaryObj)),
         schema: effSchema,
@@ -149,7 +154,7 @@ describe('GlossaryPlugin', () => {
       const dom = document.createElement('div');
       document.body.appendChild(dom);
       const view = new EditorView(
-        {mount: dom},
+        { mount: dom },
         {
           state: state,
         }
@@ -170,7 +175,7 @@ describe('GlossaryPlugin', () => {
         marks: schema.spec.marks,
       });
       const effSchema = plugin.getEffectiveSchema(modSchema);
-      const {doc} = builders(effSchema, {});
+      const { doc } = builders(effSchema, {});
       const state = EditorState.create({
         doc: doc(),
       });

@@ -1,10 +1,10 @@
 import { CitationDialog, CitationDialogProps } from './CitationDialog';
 import React from 'react';
-import { DOMOutputSpec, Mark, MarkSpec, Schema } from 'prosemirror-model';
+import { DOMOutputSpec, Mark, MarkSpec, Schema } from '@tiptap/pm/model';
 import { CitationPlugin, defaultCitationText } from './index';
 import { schema, builders } from 'prosemirror-test-builder';
-import { EditorState } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import { Citation } from './Types';
 
 describe('CitationDialog', () => {

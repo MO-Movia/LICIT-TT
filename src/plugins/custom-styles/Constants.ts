@@ -1,5 +1,5 @@
-import { Node } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
+import { Node } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 export const MARK_UNDERLINE = 'underline';
 export const MARK_TEXT_HIGHLIGHT = 'mark-text-highlight';
 export const MARKFROM = 'markFrom';
@@ -32,7 +32,10 @@ export const DEFAULT_NORMAL_STYLE = {
 export function getNode(from: number, to: number, tr: Transform): Node {
   let selectedNode = null;
   tr.doc.nodesBetween(from, to, (node) => {
-    if (node.type.name === 'paragraph' || node.type.name === 'enhanced_table_figure_notes') {
+    if (
+      node.type.name === 'paragraph' ||
+      node.type.name === 'enhanced_table_figure_notes'
+    ) {
       if (null === selectedNode) {
         selectedNode = node;
       }

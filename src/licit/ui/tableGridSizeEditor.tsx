@@ -10,8 +10,6 @@ import {
   clamp,
 } from '@modusoperandi/licit-ui-commands';
 
-import '../styles/czi-table-grid-size-editor.css';
-
 type TableGridSizeEditorProps = {
   close?: (val: TableGridSizeEditorState) => void;
   x?;

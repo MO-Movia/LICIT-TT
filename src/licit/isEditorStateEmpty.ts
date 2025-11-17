@@ -1,4 +1,4 @@
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 
 const ZERO_WIDTH_SPACE_CHAR = '\u200b';
 

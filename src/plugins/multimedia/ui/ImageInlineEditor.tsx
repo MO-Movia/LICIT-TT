@@ -4,9 +4,9 @@ import {
   atAnchorTopCenter,
 } from '@modusoperandi/licit-ui-commands';
 import React from 'react';
-import {Icon} from './Icon';
-import {EditorView} from 'prosemirror-view';
-import {CropImagePopup, CropDataPropValue} from './CropImagePopup';
+import { Icon } from './Icon';
+import { EditorView } from '@tiptap/pm/view';
+import { CropImagePopup, CropDataPropValue } from './CropImagePopup';
 
 export type PropValue = {
   value?: string;
@@ -24,7 +24,7 @@ type parseLabeltype = {
 type AlignKey = 'LEFT' | 'CENTER' | 'RIGHT';
 type FloatKey = 'FLOAT_LEFT' | 'FLOAT_RIGHT';
 type AlterKey = 'EDIT' | 'DELETE' | 'CROP';
-const ImageAlignValues: {[key in AlignKey]: PropValue} = {
+const ImageAlignValues: { [key in AlignKey]: PropValue } = {
   LEFT: {
     value: 'left',
     text: 'Left',
@@ -41,7 +41,7 @@ const ImageAlignValues: {[key in AlignKey]: PropValue} = {
     label: '[format_align_right] Right Align',
   },
 };
-const ImageFloatValues: {[key in FloatKey]: PropValue} = {
+const ImageFloatValues: { [key in FloatKey]: PropValue } = {
   FLOAT_LEFT: {
     value: 'float-left',
     text: 'Float left',
@@ -54,7 +54,7 @@ const ImageFloatValues: {[key in FloatKey]: PropValue} = {
     label: '[format_textdirection_l_to_r] Right Align',
   },
 };
-const ImageAlterValues: {[key in AlterKey]: PropValue} = {
+const ImageAlterValues: { [key in AlterKey]: PropValue } = {
   EDIT: {
     value: 'edit',
     text: 'Edit',
@@ -105,15 +105,15 @@ export class ImageInlineEditor extends React.PureComponent {
     let buttons;
     const align = this.props.value ? this.props.value.align : null;
     const onClick = this._onClick;
-    const {editorView} = this.props;
-    this.setState({srcc: this.props.value?.src});
+    const { editorView } = this.props;
+    this.setState({ srcc: this.props.value?.src });
     if (ImgValues === ImageAlterValues) {
       const onAlter = this._onAlter;
       const onRemove = this._onRemove;
       const onCrop = this._onCrop;
       buttons = Object.keys(ImageAlterValues).map((key) => {
-        const {text, label} = ImageAlterValues[key];
-        const {icon} = this.parseLabel(label);
+        const { text, label } = ImageAlterValues[key];
+        const { icon } = this.parseLabel(label);
         const handler =
           {
             EDIT: onAlter,
@@ -131,8 +131,8 @@ export class ImageInlineEditor extends React.PureComponent {
       });
     } else {
       buttons = Object.keys(ImgValues).map((key) => {
-        const {value, text, label} = ImgValues[key];
-        const {icon} = this.parseLabel(label, value);
+        const { value, text, label } = ImgValues[key];
+        const { icon } = this.parseLabel(label, value);
 
         return (
           <CustomButton
@@ -173,21 +173,21 @@ export class ImageInlineEditor extends React.PureComponent {
   }
 
   _onClick = (align?: string) => {
-    this.props.onSelect({align: align});
+    this.props.onSelect({ align: align });
   };
 
   _onAlter = (): void => {
     //Handle Edit
   };
   _onRemove = (view: EditorView): void => {
-    const {dispatch} = view;
+    const { dispatch } = view;
     let tr = view.state.tr;
     tr = tr.deleteSelection();
     dispatch(tr);
   };
   _onCrop = (view: EditorView): void => {
     const state = view.state;
-    const {from} = state.selection;
+    const { from } = state.selection;
 
     const pos = from;
     const node = state.doc.nodeAt(pos);

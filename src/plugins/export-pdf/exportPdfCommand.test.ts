@@ -1,7 +1,7 @@
 import { ExportPDFCommand } from './exportPdfCommand';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import { ExportPDF } from './exportPdf';
 
 describe('Export PDF Command', () => {
@@ -36,7 +36,9 @@ describe('Export PDF Command', () => {
           content: [
             {
               type: 'text',
-              marks: [{ type: 'mark-font-type', attrs: { name: 'Arial Black' } }],
+              marks: [
+                { type: 'mark-font-type', attrs: { name: 'Arial Black' } },
+              ],
               text: 'First line Arial black',
             },
           ],
@@ -174,7 +176,10 @@ describe('Export PDF Command', () => {
             {
               type: 'text',
               marks: [
-                { type: 'mark-text-highlight', attrs: { highlightColor: '#e5e5e5' } },
+                {
+                  type: 'mark-text-highlight',
+                  attrs: { highlightColor: '#e5e5e5' },
+                },
               ],
               text: 'Color ',
             },
@@ -196,14 +201,21 @@ describe('Export PDF Command', () => {
               text: 'Link to google',
             },
             { type: 'text', marks: [{ type: 'em' }], text: ' ' },
-            { type: 'text', marks: [{ type: 'underline' }], text: 'underline ' },
+            {
+              type: 'text',
+              marks: [{ type: 'underline' }],
+              text: 'underline ',
+            },
             {
               type: 'text',
               marks: [
                 { type: 'em' },
                 { type: 'strong' },
                 { type: 'mark-text-color', attrs: { color: '#e5e5e5' } },
-                { type: 'mark-text-highlight', attrs: { highlightColor: '#979797' } },
+                {
+                  type: 'mark-text-highlight',
+                  attrs: { highlightColor: '#979797' },
+                },
                 { type: 'underline' },
               ],
               text: 'combined',
@@ -265,7 +277,11 @@ describe('Export PDF Command', () => {
                         paddingTop: null,
                       },
                       content: [
-                        { type: 'text', marks: [{ type: 'strong' }], text: 'Cell 1' },
+                        {
+                          type: 'text',
+                          marks: [{ type: 'strong' }],
+                          text: 'Cell 1',
+                        },
                       ],
                     },
                   ],
@@ -334,9 +350,13 @@ describe('Export PDF Command', () => {
       () => {
         return null;
       },
-      mockEditorView, docJSON
+      mockEditorView,
+      docJSON
     );
-    expect(mockExportPDF.exportPdf).toHaveBeenCalledWith(mockEditorView, docJSON);
+    expect(mockExportPDF.exportPdf).toHaveBeenCalledWith(
+      mockEditorView,
+      docJSON
+    );
     expect(result).toBe(true);
   });
 
@@ -378,9 +398,23 @@ describe('Export PDF Command', () => {
       )
     ).toBeNull();
   });
-  it('should handle execute',()=>{
-       const command = new ExportPDFCommand();
-       expect(command.execute({} as unknown as EditorState,()=>{},{} as unknown as EditorView,{})).toBeFalsy();
-         expect(command.execute({} as unknown as EditorState,()=>{},{} as unknown as EditorView,{})).toBeFalsy();
+  it('should handle execute', () => {
+    const command = new ExportPDFCommand();
+    expect(
+      command.execute(
+        {} as unknown as EditorState,
+        () => {},
+        {} as unknown as EditorView,
+        {}
+      )
+    ).toBeFalsy();
+    expect(
+      command.execute(
+        {} as unknown as EditorState,
+        () => {},
+        {} as unknown as EditorView,
+        {}
+      )
+    ).toBeFalsy();
   });
 });

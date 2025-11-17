@@ -1,13 +1,13 @@
 import { MARK_TEXT_COLOR, MARK_TEXT_HIGHLIGHT } from './MarkNames';
 import { TextHighlightCommand } from './TextHighlightCommand';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import * as applymark from './applyMark';
-import { EditorState, TextSelection } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import * as ismarkcommandenabled from './isTextStyleMarkCommandEnabled';
 import * as isNodeSelectionForNodeType from './isNodeSelectionForNodeType';
 import { MATH } from './NodeNames';
-import { Mark, Node } from 'prosemirror-model';
+import { Mark, Node } from '@tiptap/pm/model';
 import * as findNodesWithSameMark from './findNodesWithSameMark';
 
 describe('TextHighlightCommand', () => {
@@ -58,7 +58,7 @@ describe('TextHighlightCommand', () => {
         resolve: () => {
           return { pos: 0 };
         },
-        selection: { from: 0, to: 1 }
+        selection: { from: 0, to: 1 },
       },
     } as unknown as EditorState;
 
@@ -247,8 +247,8 @@ describe('TextHighlightCommand', () => {
           nodeAt: (_x) => {
             return { isAtom: true, isLeaf: true, isText: false, marks: [] };
           },
-        }
-      }
+        },
+      },
     } as unknown as EditorState;
 
     const _dispatch = jest.fn();
@@ -282,8 +282,8 @@ describe('TextHighlightCommand', () => {
           nodeAt: (_x) => {
             return { isAtom: true, isLeaf: true, isText: false, marks: [] };
           },
-        }
-      }
+        },
+      },
     } as unknown as EditorState;
 
     const _dispatch = jest.fn();
@@ -302,7 +302,6 @@ describe('TextHighlightCommand', () => {
 
     expect(result).toBeDefined();
   });
-
 
   it('should resolve with undefined when event is not defined or currentTarget is not an HTMLElement', async () => {
     const state = {
@@ -362,8 +361,8 @@ describe('TextHighlightCommand', () => {
           nodeAt: (_x) => {
             return { isAtom: true, isLeaf: true, isText: false, marks: [] };
           },
-        }
-      }
+        },
+      },
     } as unknown as EditorState;
 
     const _dispatch = jest.fn();
@@ -395,7 +394,7 @@ describe('TextHighlightCommand', () => {
 
     expect(result).toBeDefined();
   });
-    it('executeWithUserInput function() should be return true, If storedMarksSet = false', () => {
+  it('executeWithUserInput function() should be return true, If storedMarksSet = false', () => {
     const state = {
       plugins: [],
       schema: { marks: null },

@@ -1,8 +1,8 @@
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import { AddCitationCommand } from './AddCitationCommand';
 import { CitationFooterView } from './CitationFooterView';
-import { EditorState, Transaction } from 'prosemirror-state';
-import { Node as ProseMirrorNode } from 'prosemirror-model';
+import { EditorState, Transaction } from '@tiptap/pm/state';
+import { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { pluginKey } from './Types';
 import * as CitationBuilder from './CitationBuilder';
 

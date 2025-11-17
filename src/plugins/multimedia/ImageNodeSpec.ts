@@ -1,11 +1,11 @@
-import type {NodeSpec} from 'prosemirror-model';
+import type { NodeSpec } from '@tiptap/pm/model';
 
 const CSS_ROTATE_PATTERN = /rotate\(([0-9.]+)rad\)/i;
 const EMPTY_CSS_VALUE = new Set(['0%', '0pt', '0px']);
 
 function getAlignment(dom: HTMLElement) {
   const align = dom.getAttribute('data-align') ?? dom.getAttribute('align');
-  const {cssFloat, display} = dom.style;
+  const { cssFloat, display } = dom.style;
   if (align) {
     return /(left|right|center)/.test(align) ? align : null;
   } else if (cssFloat === 'left' && !display) {
@@ -22,8 +22,8 @@ export function getAttrs(dom: string | HTMLElement) {
   if (typeof dom === 'string') {
     return false;
   }
-  const {marginTop, marginLeft} = dom.style;
-  let {width, height} = dom.style;
+  const { marginTop, marginLeft } = dom.style;
+  let { width, height } = dom.style;
   const align = getAlignment(dom);
   const capco = dom.getAttribute('capco');
   width = width || (dom.getAttribute('width') ?? '');
@@ -38,7 +38,7 @@ export function getAttrs(dom: string | HTMLElement) {
   let crop = null;
   let rotate = null;
   let cropData = null;
-  const {parentElement} = dom;
+  const { parentElement } = dom;
   if (parentElement instanceof HTMLElement) {
     // Special case for Google doc's image.
     const ps = parentElement.style;
@@ -84,21 +84,21 @@ export function getAttrs(dom: string | HTMLElement) {
 export const ImageNodeSpec: NodeSpec = {
   inline: true,
   attrs: {
-    align: {default: null},
-    capco: {default: null},
-    alt: {default: ''},
-    crop: {default: null},
-    cropData: {default: null},
-    height: {default: null},
-    rotate: {default: null},
-    src: {default: null},
-    title: {default: ''},
-    width: {default: null},
-    fitToParent: {default: 0},
+    align: { default: null },
+    capco: { default: null },
+    alt: { default: '' },
+    crop: { default: null },
+    cropData: { default: null },
+    height: { default: null },
+    rotate: { default: null },
+    src: { default: null },
+    title: { default: '' },
+    width: { default: null },
+    fitToParent: { default: 0 },
   },
   group: 'inline',
   draggable: true,
-  parseDOM: [{tag: 'img[src]', getAttrs}],
+  parseDOM: [{ tag: 'img[src]', getAttrs }],
   toDOM(node) {
     return ['img', node.attrs];
   },

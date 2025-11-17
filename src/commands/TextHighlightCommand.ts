@@ -3,10 +3,10 @@ import { applyMark, updateMarksAttrs } from './applyMark';
 import { createPopUp } from './ui/createPopUp';
 import { findNodesWithSameMark } from './findNodesWithSameMark';
 import { isTextStyleMarkCommandEnabled } from './isTextStyleMarkCommandEnabled';
-import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorState, TextSelection, Transaction } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import { MARK_TEXT_HIGHLIGHT } from './MarkNames';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 import { RuntimeService } from './runtime.service';
 import { ColorEditor } from '@modusoperandi/color-picker';
 
@@ -43,7 +43,7 @@ export class TextHighlightCommand extends UICommand {
     const hex = result ? result.mark.attrs.highlightColor : null;
     const anchor = event?.currentTarget;
     const node = state.tr.doc.nodeAt(from);
-    const Textmark = node?.marks.find(mark => mark?.attrs?.highlightColor);
+    const Textmark = node?.marks.find((mark) => mark?.attrs?.highlightColor);
     const Textcolor = Textmark?.attrs?.highlightColor;
 
     return new Promise((resolve) => {
@@ -69,7 +69,7 @@ export class TextHighlightCommand extends UICommand {
     state: EditorState,
     dispatch?: (tr: Transform) => void,
     _view?: EditorView,
-    color?: { color, selectedOption }
+    color?: { color; selectedOption }
   ): boolean => {
     if (dispatch && color?.color !== undefined) {
       const { schema } = state;
@@ -103,7 +103,8 @@ export class TextHighlightCommand extends UICommand {
       (tr as Transaction).setSelection(TextSelection.create(tr.doc, from, to)),
       schema,
       markType,
-      attrs, true
+      attrs,
+      true
     );
     return tr;
   };
@@ -114,14 +115,15 @@ export class TextHighlightCommand extends UICommand {
     from: number,
     to: number
   ): Transform => {
-        const { schema } = state;
+    const { schema } = state;
     const markType = schema.marks[MARK_TEXT_HIGHLIGHT];
     const attrs = { highlightColor: this._color };
     tr = applyMark(
       (tr as Transaction).setSelection(TextSelection.create(tr.doc, from, to)),
       schema,
       markType,
-      attrs, true
+      attrs,
+      true
     );
     return tr;
   };

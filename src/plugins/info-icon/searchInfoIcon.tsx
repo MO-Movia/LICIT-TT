@@ -4,7 +4,6 @@ import { createPopUp, atViewportCenter } from '@modusoperandi/licit-ui-commands'
 import * as React from 'react';
 import { SELECTEDINFOICON } from './constants';
 import { FaIcons, FONTAWESOMEICONS } from './ui/FaIcon';
-import './ui/infoicon-note.css';
 import { AlertInfo } from './ui/AlertInfo';
 
 type SearchInfoProps = {

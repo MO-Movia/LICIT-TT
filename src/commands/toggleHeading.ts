@@ -1,21 +1,21 @@
-import {Transaction} from 'prosemirror-state';
-import {Schema} from 'prosemirror-model';
-import {Transform} from 'prosemirror-transform';
+import { Transaction } from '@tiptap/pm/state';
+import { Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 
-import {BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH} from './NodeNames';
-import {compareNumber} from './compareNumber';
-import {isInsideListItem} from './isInsideListItem';
-import {isListNode} from './isListNode';
-import {clearMarks} from './clearMarks';
-import {unwrapNodesFromList} from './toggleList';
+import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
+import { compareNumber } from './compareNumber';
+import { isInsideListItem } from './isInsideListItem';
+import { isListNode } from './isListNode';
+import { clearMarks } from './clearMarks';
+import { unwrapNodesFromList } from './toggleList';
 
 export function toggleHeading(
   tr: Transform,
   schema: Schema,
   level: number
 ): Transform {
-  const {nodes} = schema;
-  const {selection, doc} = tr as Transaction;
+  const { nodes } = schema;
+  const { selection, doc } = tr as Transaction;
 
   const blockquote = nodes[BLOCKQUOTE];
   const heading = nodes[HEADING];
@@ -33,7 +33,7 @@ export function toggleHeading(
     return tr;
   }
 
-  const {from, to} = (tr as Transaction).selection;
+  const { from, to } = (tr as Transaction).selection;
   let startWithHeadingBlock = null;
   const poses = [];
   doc.nodesBetween(from, to, (node, pos, parentNode) => {
@@ -71,7 +71,7 @@ export function setHeadingNode(
   pos: number,
   level?: number
 ): Transform {
-  const {nodes} = schema;
+  const { nodes } = schema;
   const heading = nodes[HEADING];
   const paragraph = nodes[PARAGRAPH];
   const blockquote = nodes[BLOCKQUOTE];
@@ -90,8 +90,8 @@ export function setHeadingNode(
     // Toggle list
     if (level !== null) {
       tr = unwrapNodesFromList(tr, schema, pos, (paragraphNode) => {
-        const {content, marks, attrs} = paragraphNode;
-        const headingAttrs = {...attrs, level};
+        const { content, marks, attrs } = paragraphNode;
+        const headingAttrs = { ...attrs, level };
         return heading.create(headingAttrs, content, marks);
       });
     }
@@ -100,13 +100,13 @@ export function setHeadingNode(
     if (level === null) {
       tr = tr.setNodeMarkup(pos, paragraph, node.attrs, node.marks);
     } else {
-      tr = tr.setNodeMarkup(pos, heading, {...node.attrs, level}, node.marks);
+      tr = tr.setNodeMarkup(pos, heading, { ...node.attrs, level }, node.marks);
     }
   } else if ((level && nodeType === paragraph) || nodeType === blockquote) {
     // [FS] IRAD-948 2020-05-22
     // Clear Header formatting
     tr = clearMarks(tr, schema);
-    tr = tr.setNodeMarkup(pos, heading, {...node.attrs, level}, node.marks);
+    tr = tr.setNodeMarkup(pos, heading, { ...node.attrs, level }, node.marks);
   }
   return tr;
 }

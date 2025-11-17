@@ -1,7 +1,6 @@
-import { EditorState, Plugin, PluginKey } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { Decoration, DecorationSet } from 'prosemirror-view';
-
+import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 const PLACE_HOLDER_ID = { name: 'CursorPlaceholderPlugin' };
 
@@ -73,8 +72,7 @@ export function findCursorPlaceholderPos(state: EditorState): number | null {
 export function isPlugin(plugin, tr): boolean {
   if (!plugin || !tr.selection) {
     return true;
-  }
-  else {
+  } else {
     return false;
   }
 }
@@ -120,4 +118,3 @@ export function hideCursorPlaceholder(state: EditorState): Transform {
 export function getSingletonInstance(): CursorPlaceholderPlugin | null {
   return singletonInstance;
 }
-

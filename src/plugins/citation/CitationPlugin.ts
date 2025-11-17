@@ -1,8 +1,8 @@
 // Plugin to handle Citation.
-import { Plugin, Transaction, EditorState } from 'prosemirror-state';
-import { EditorView, Decoration, DecorationSet } from 'prosemirror-view';
-import { Mark, Node, Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
+import { Plugin, Transaction, EditorState } from '@tiptap/pm/state';
+import { EditorView, Decoration, DecorationSet } from '@tiptap/pm/view';
+import { Mark, Node, Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 import { CitationView } from './CitationView';
 import { CitationFooterView } from './CitationFooterView';
 import {
@@ -315,15 +315,15 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     return newCitationTag;
   }
 
-  initButtonCommands(theme: string):unknown {
-     let image = null;
-      if ('light' == theme) {
-        image = LightThemeIcon;
-      } else {
-        image = DarkThemeIcon;
-      }
+  initButtonCommands(theme: string): unknown {
+    let image = null;
+    if ('light' == theme) {
+      image = LightThemeIcon;
+    } else {
+      image = DarkThemeIcon;
+    }
     return {
-     [`[${image}] Add citation`]: this.addCitationCmd,
+      [`[${image}] Add citation`]: this.addCitationCmd,
     };
   }
 
@@ -331,7 +331,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     state: EditorState,
     dispatch: (tr: Transaction) => void,
     view: EditorView
-  ): boolean| Transform {
+  ): boolean | Transform {
     const plugin = new CitationPlugin();
     return plugin.addCitationCmd.execute(state, dispatch, view);
   }

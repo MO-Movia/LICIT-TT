@@ -1,11 +1,14 @@
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import isEditorStateEmpty from './isEditorStateEmpty';
 
 // Define the Zero-Width Space character
 const ZERO_WIDTH_SPACE_CHAR = '\u200b';
 
 // Helper to create a basic mock EditorState for simple text content
-const createMockEditorState = (docContent: string, nodeSize: number): EditorState => {
+const createMockEditorState = (
+  docContent: string,
+  nodeSize: number
+): EditorState => {
   return {
     doc: {
       nodeSize,
@@ -14,7 +17,11 @@ const createMockEditorState = (docContent: string, nodeSize: number): EditorStat
       // Not used for the nodeSize < 2 branch.
       nodesBetween: jest.fn((from, to, callback) => {
         // If content is present, simulate a single text node for simple cases
-        if (docContent && docContent !== ' ' && docContent !== ZERO_WIDTH_SPACE_CHAR) {
+        if (
+          docContent &&
+          docContent !== ' ' &&
+          docContent !== ZERO_WIDTH_SPACE_CHAR
+        ) {
           callback({ type: { isText: true } }, 0);
         }
       }),
@@ -23,7 +30,6 @@ const createMockEditorState = (docContent: string, nodeSize: number): EditorStat
 };
 
 describe('isEditorStateEmpty', () => {
-
   // --- Branch 1: nodeSize < 2 (Explicitly Covered) ---
 
   it('should return true when nodeSize is 1 and textContent is empty', () => {

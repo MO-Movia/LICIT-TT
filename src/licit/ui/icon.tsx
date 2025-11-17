@@ -5,9 +5,6 @@ import canUseCSSFont from '../canUseCSSFont';
 import {ThemeContext} from '@modusoperandi/licit-ui-commands';
 // import { ReactComponent as UndoIcon } from '../../images/dark/undo.svg';
 
-import '../styles/czi-icon.css';
-
-import '../styles/icon-font.css';
 
 const VALID_CHARS = /[a-z_]+/;
 const cached = {};

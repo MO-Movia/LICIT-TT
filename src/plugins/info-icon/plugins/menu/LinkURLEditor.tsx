@@ -1,12 +1,13 @@
 // @flow
 
 import * as React from 'react';
-import {EditorView} from 'prosemirror-view';
-import {sanitizeURL} from './sanitizeURL';
-import {toggleMark} from 'prosemirror-commands';
-import {preventEventDefault,CustomButton} from '@modusoperandi/licit-ui-commands';
-import './czi-form.css';
-import './czi-image-url-editor.css';
+import { EditorView } from '@tiptap/pm/view';
+import { sanitizeURL } from './sanitizeURL';
+import { toggleMark } from '@tiptap/pm/commands';
+import {
+  preventEventDefault,
+  CustomButton,
+} from '@modusoperandi/licit-ui-commands';
 
 export const ENTER = 13;
 const BAD_CHARACTER_PATTER = /\s/;
@@ -22,8 +23,8 @@ export class LinkURLEditor extends React.PureComponent<LinkProps> {
   };
 
   render() {
-    const {href} = this.props;
-    const {url} = this.state;
+    const { href } = this.props;
+    const { url } = this.state;
 
     const error = url ? BAD_CHARACTER_PATTER.test(url) : false;
 
@@ -46,7 +47,7 @@ export class LinkURLEditor extends React.PureComponent<LinkProps> {
             <CustomButton label="Cancel" onClick={this._cancel} />
             <CustomButton
               active={true}
-              disabled={(href ? error : (error || !url))}
+              disabled={href ? error : error || !url}
               label="Apply"
               onClick={this._apply}
             />
@@ -75,7 +76,7 @@ export class LinkURLEditor extends React.PureComponent<LinkProps> {
   };
 
   _apply = () => {
-    const {url} = this.state;
+    const { url } = this.state;
     toggleMark(this.props.view.state.schema.marks.link, {
       href: url,
     })(this.props.view.state, this.props.view.dispatch);

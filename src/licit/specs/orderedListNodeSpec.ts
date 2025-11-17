@@ -1,4 +1,4 @@
-import { Node, DOMOutputSpec } from 'prosemirror-model';
+import { Node, DOMOutputSpec } from '@tiptap/pm/model';
 
 import { ATTRIBUTE_LIST_STYLE_TYPE } from './listItemNodeSpec';
 import { LIST_ITEM } from '@modusoperandi/licit-ui-commands';
@@ -8,7 +8,7 @@ import {
   RESERVED_STYLE_NONE,
 } from './paragraphNodeSpec';
 
-import type { NodeSpec } from 'prosemirror-model';
+import type { NodeSpec } from '@tiptap/pm/model';
 
 export const ATTRIBUTE_COUNTER_RESET = 'data-counter-reset';
 export const ATTRIBUTE_FOLLOWING = 'data-following';
@@ -32,7 +32,7 @@ const OrderedListNodeSpec: NodeSpec = {
     listStyleType: { default: null },
     name: { default: null },
     start: { default: 1 },
-    type: { default: 'decimal' }
+    type: { default: 'decimal' },
   },
   group: 'block',
   content: LIST_ITEM + '+',

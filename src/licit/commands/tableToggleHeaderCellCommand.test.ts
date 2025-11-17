@@ -1,8 +1,8 @@
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { Editor } from '@tiptap/react';
 import tableToggleHeaderCellCommand from './tableToggleHeaderCellCommand';
-import { Schema } from 'prosemirror-model';
+import { Schema } from '@tiptap/pm/model';
 
 // Mock Editor (used by tableToggleHeaderCellCommand)
 jest.mock('@tiptap/react', () => {

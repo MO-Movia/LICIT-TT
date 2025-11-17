@@ -1,4 +1,4 @@
-import {ATTRIBUTE_LIST_STYLE_TYPE} from './listItemNodeSpec';
+import { ATTRIBUTE_LIST_STYLE_TYPE } from './listItemNodeSpec';
 import OrderedListNodeSpec, {
   ATTRIBUTE_COUNTER_RESET,
   ATTRIBUTE_FOLLOWING,
@@ -8,7 +8,7 @@ import {
   MIN_INDENT_LEVEL,
   RESERVED_STYLE_NONE,
 } from './paragraphNodeSpec';
-import {Node} from 'prosemirror-model';
+import { Node } from '@tiptap/pm/model';
 
 type DOMSpecTuple = [
   tag: string,
@@ -157,7 +157,7 @@ describe('OrderedListNodeSpec', () => {
 
   it('should generate correct counter reset styles', () => {
     const node = {
-      attrs: {indent: 2, start: 3},
+      attrs: { indent: 2, start: 3 },
     } as unknown as Node;
 
     const result = OrderedListNodeSpec.toDOM!(node) as DOMSpecTuple;

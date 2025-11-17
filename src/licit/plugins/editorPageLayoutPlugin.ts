@@ -1,4 +1,4 @@
-import { EditorState, Plugin, PluginKey } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state';
 
 import { ATTRIBUTE_LAYOUT, LAYOUT } from '../constants';
 

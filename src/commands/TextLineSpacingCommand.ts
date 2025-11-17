@@ -1,16 +1,20 @@
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { Transaction, EditorState } from 'prosemirror-state';
+import { Transaction, EditorState } from '@tiptap/pm/state';
 import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
-import { EditorView } from 'prosemirror-view';
-import { Node, NodeType, Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
+import { EditorView } from '@tiptap/pm/view';
+import { Node, NodeType, Schema } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
 import {
   DOUBLE_LINE_SPACING,
   SINGLE_LINE_SPACING,
   LINE_SPACING_115,
   LINE_SPACING_150,
 } from './ui/toCSSLineSpacing';
-import { getSelectionRange, isColumnCellSelected, getSelectedCellPositions } from './isNodeSelectionForNodeType';
+import {
+  getSelectionRange,
+  isColumnCellSelected,
+  getSelectedCellPositions,
+} from './isNodeSelectionForNodeType';
 import * as React from 'react';
 
 export function setTextLineSpacing(
@@ -42,7 +46,7 @@ export function setTextLineSpacing(
   if (isColumnCellSelected(selection)) {
     const positions = getSelectedCellPositions(selection);
     if (positions.length > 0) {
-      positions.forEach(originalPos => {
+      positions.forEach((originalPos) => {
         const pos = originalPos + 1;
         const node = tr.doc.nodeAt(pos);
         if (!node) return;
@@ -59,8 +63,7 @@ export function setTextLineSpacing(
         }
       });
     }
-  }
-  else {
+  } else {
     const { from, to } = getSelectionRange(selection);
     doc.nodesBetween(from, to, (node, pos, _parentNode) => {
       const nodeType = node.type;
@@ -91,17 +94,22 @@ export function setTextLineSpacing(
         ...attrs,
         lineSpacing: lineSpacingValue,
         overriddenLineSpacing: true,
-        overriddenLineSpacingValue: lineSpacing
+        overriddenLineSpacingValue: lineSpacing,
       };
     } else {
       const isOverriddenLineSpacing = attrs.overriddenLineSpacing ?? null;
 
       attrs = {
         ...attrs,
-        lineSpacing: isOverriddenLineSpacing ? attrs.lineSpacing : SINGLE_LINE_SPACING,
-        overriddenLineSpacing: isOverriddenLineSpacing ? attrs.overriddenLineSpacing : null,
-        overriddenLineSpacingValue: isOverriddenLineSpacing ? attrs.overriddenLineSpacingValue : null
-
+        lineSpacing: isOverriddenLineSpacing
+          ? attrs.lineSpacing
+          : SINGLE_LINE_SPACING,
+        overriddenLineSpacing: isOverriddenLineSpacing
+          ? attrs.overriddenLineSpacing
+          : null,
+        overriddenLineSpacingValue: isOverriddenLineSpacing
+          ? attrs.overriddenLineSpacingValue
+          : null,
       };
     }
     tr = tr.setNodeMarkup(pos, nodeType, attrs, node.marks);
@@ -191,16 +199,17 @@ export class TextLineSpacingCommand extends UICommand {
     );
     if (tr.docChanged) {
       // set the value of overriddenLineSpacing to true if the user override the line spacing style.
-      if (
-        selection.$head?.parent?.attrs?.lineSpacing !== this._lineSpacing
-      ) {
-        const nodePos = Math.max(0, selection.head - selection.$head.parentOffset - 1);
+      if (selection.$head?.parent?.attrs?.lineSpacing !== this._lineSpacing) {
+        const nodePos = Math.max(
+          0,
+          selection.head - selection.$head.parentOffset - 1
+        );
         const node = tr.doc.nodeAt(nodePos);
         if (node) {
           const newAttrs = {
             ...node.attrs,
             overriddenLineSpacing: true,
-            overriddenLineSpacingValue: this._lineSpacing
+            overriddenLineSpacingValue: this._lineSpacing,
           };
           tr = tr.setNodeMarkup(nodePos, null, newAttrs);
         }

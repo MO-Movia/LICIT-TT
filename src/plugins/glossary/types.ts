@@ -1,5 +1,5 @@
-import {PluginKey} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
+import { PluginKey } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 
 export const GLOSSARY_PLUGIN_KEY = new PluginKey('GlossaryPlugin');
 export const GLOSSARY = 'glossary';

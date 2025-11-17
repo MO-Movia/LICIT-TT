@@ -1,4 +1,4 @@
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import {
   isPreviousLevelExists,
   setStyles,
@@ -11,7 +11,7 @@ import {
   removeStyle,
   addStyleToList,
   setView,
-  saveStyleSet
+  saveStyleSet,
 } from './customStyle';
 import type { Style } from './StyleRuntime';
 
@@ -78,7 +78,14 @@ describe('customstyle', () => {
         return null;
       },
     });
-    expect(saveStyleSet([{ styleName: 'Heading11', description: 'Bold heading' } as unknown as Style])).toBeDefined();
+    expect(
+      saveStyleSet([
+        {
+          styleName: 'Heading11',
+          description: 'Bold heading',
+        } as unknown as Style,
+      ])
+    ).toBeDefined();
   });
 
   it('should handle addStyleToList', () => {
@@ -91,12 +98,16 @@ describe('customstyle', () => {
   });
   it('should handle setStyles', () => {
     setView({
-      dispatch: () => { },
-      state: { tr: { scrollIntoView: () => { } } },
+      dispatch: () => {},
+      state: { tr: { scrollIntoView: () => {} } },
     } as unknown as EditorView);
     expect(
       setStyles([
-        { styleName: 'Normal', docType: 'asd', styles: { strong: true, styleLevel: 2 } },
+        {
+          styleName: 'Normal',
+          docType: 'asd',
+          styles: { strong: true, styleLevel: 2 },
+        },
       ])
     ).toBeUndefined();
   });

@@ -1,7 +1,7 @@
-import { EditorView } from 'prosemirror-view';
-import { EditorState } from 'prosemirror-state';
-import { CellSelection } from 'prosemirror-tables';
-import { Transform } from 'prosemirror-transform';
+import { EditorView } from '@tiptap/pm/view';
+import { EditorState } from '@tiptap/pm/state';
+import { CellSelection } from '@tiptap/pm/tables';
+import { Transform } from '@tiptap/pm/transform';
 
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { Editor } from '@tiptap/react';
@@ -55,7 +55,7 @@ class TableMergeCellsCommand extends UICommand {
     _dispatch?: (tr: Transform) => void,
     _view?: EditorView
   ): boolean => {
-    const {selection} = state;
+    const { selection } = state;
     if (selection instanceof CellSelection) {
       return this.getEditor().commands.mergeCells();
     }

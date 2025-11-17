@@ -3,10 +3,10 @@ import {
   setParagraphSpacing,
 } from './ParagraphSpacingCommand';
 import * as paragraphspacingcommand from './ParagraphSpacingCommand';
-import { schema } from 'prosemirror-schema-basic';
-import { TextSelection, EditorState, Transaction } from 'prosemirror-state';
-import { Node, Schema } from 'prosemirror-model';
-import { Transform, StepResult, Mapping } from 'prosemirror-transform';
+import { schema } from '@tiptap/pm/schema-basic';
+import { TextSelection, EditorState, Transaction } from '@tiptap/pm/state';
+import { Node, Schema } from '@tiptap/pm/model';
+import { Transform, StepResult, Mapping } from '@tiptap/pm/transform';
 
 describe('paragraphspacingcommand', () => {
   it('should handle setParagraphSpacing', () => {
@@ -184,13 +184,13 @@ describe('ParagraphSpacingCommand ', () => {
     );
     expect(psc).toBeDefined();
   });
-    it('should return the same transform', () => {
+  it('should return the same transform', () => {
     const initialState = {} as EditorState;
     const initialTransform = {} as Transform;
-    const resultingTransform = new ParagraphSpacingCommand('', true).executeCustomStyleForTable(
-      initialState,
-      initialTransform
-    );
+    const resultingTransform = new ParagraphSpacingCommand(
+      '',
+      true
+    ).executeCustomStyleForTable(initialState, initialTransform);
     expect(resultingTransform).toBe(initialTransform);
   });
   it('should handle execute when tr.docChanged is true', () => {

@@ -1,6 +1,6 @@
-import {Mark, ParseRule} from 'prosemirror-model';
+import { Mark, ParseRule } from '@tiptap/pm/model';
 import FontSizeMarkSpec from './fontSizeMarkSpec';
-import {toClosestFontPtSize} from '../toClosestFontPtSize';
+import { toClosestFontPtSize } from '../toClosestFontPtSize';
 
 jest.mock('../toClosestFontPtSize', () => ({
   toClosestFontPtSize: jest.fn(),
@@ -114,7 +114,7 @@ describe('FontSizeMarkSpec', () => {
 
     it('should return correct DOM structure when pt is provided', () => {
       const mockMark = {
-        attrs: {pt: 14, overridden: true},
+        attrs: { pt: 14, overridden: true },
       } as unknown as Mark;
 
       const result = toDOM(mockMark, false);
@@ -132,14 +132,14 @@ describe('FontSizeMarkSpec', () => {
 
     it('should return correct DOM structure when pt is not provided', () => {
       const mockMark = {
-        attrs: {pt: '', overridden: false},
+        attrs: { pt: '', overridden: false },
       } as unknown as Mark;
 
       const result = toDOM(mockMark, false);
 
       expect(result).toEqual([
         'span',
-        {overridden: false, style: '', class: ''},
+        { overridden: false, style: '', class: '' },
         0,
       ]);
     });

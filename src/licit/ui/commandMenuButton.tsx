@@ -1,6 +1,6 @@
 import cx from 'classnames';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import * as React from 'react';
 
 import CommandMenu from './commandMenu';
@@ -8,12 +8,11 @@ import {
   CustomButton,
   createPopUp,
   atAnchorRight,
-  ThemeContext
+  ThemeContext,
 } from '@modusoperandi/licit-ui-commands';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import uuid from './uuid';
 import { isExpandButton } from './editorToolbarConfig';
-import '../styles/czi-custom-menu-button.css';
 import { EditorViewEx } from '../constants';
 export interface Arr {
   [key: string]: UICommand;
@@ -57,7 +56,7 @@ class CommandMenuButton extends React.PureComponent<PropsType, StateType> {
       disabled,
       title,
       sub,
-      theme
+      theme,
     } = this.props;
     const enabled =
       !disabled &&
@@ -103,7 +102,7 @@ class CommandMenuButton extends React.PureComponent<PropsType, StateType> {
       <CustomButton
         className={buttonClassName}
         disabled={!enabled}
-        hasChild={(hasChild && !isMaximizeButton)}
+        hasChild={hasChild && !isMaximizeButton}
         icon={icon}
         id={this._id}
         label={label}
@@ -138,7 +137,7 @@ class CommandMenuButton extends React.PureComponent<PropsType, StateType> {
     const menuProps = {
       ...this.props,
       onCommand: this._onCommand,
-      theme: UICommand.theme
+      theme: UICommand.theme,
     };
     if (menu) {
       menu.update(menuProps);

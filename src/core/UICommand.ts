@@ -1,7 +1,7 @@
-import {Editor} from '@tiptap/core';
-import {EditorState, Selection, Transaction} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { Editor } from '@tiptap/core';
+import { EditorState, Selection, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 
 export type IsActiveCall = (state: EditorState) => boolean;
 

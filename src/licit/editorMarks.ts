@@ -1,4 +1,4 @@
-import type { MarkSpec } from 'prosemirror-model';
+import type { MarkSpec } from '@tiptap/pm/model';
 import OrderedMap from 'orderedmap';
 
 import CodeMarkSpec from './specs/codeMarkSpec';

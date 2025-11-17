@@ -1,8 +1,8 @@
-import {isOrderedListNode} from './isOrderedListNode';
-import {isListNode} from './isListNode';
-import {Fragment, Node} from 'prosemirror-model';
-import {Transform} from 'prosemirror-transform';
-import {Transaction} from 'prosemirror-state';
+import { isOrderedListNode } from './isOrderedListNode';
+import { isListNode } from './isListNode';
+import { Fragment, Node } from '@tiptap/pm/model';
+import { Transform } from '@tiptap/pm/transform';
+import { Transaction } from '@tiptap/pm/state';
 
 type JointInfo = {
   content: Fragment;
@@ -47,7 +47,7 @@ export function consolidateListNodes(tr: Transaction): Transform {
   while (continueLoop) {
     const jointInfo = traverseDocAndFindJointInfo(tr.doc, prevJointInfo);
     if (jointInfo) {
-      const {deleteFrom, deleteTo, insertAt, content} = jointInfo;
+      const { deleteFrom, deleteTo, insertAt, content } = jointInfo;
       tr = tr.delete(deleteFrom, deleteTo);
       tr = tr.insert(insertAt, content);
       prevJointInfo = jointInfo;
@@ -103,13 +103,13 @@ function linkOrderedListCounters(tr: Transform): Transform {
       listsBefore = null;
       return true;
     }
-      // List Node can't be nested, no need to traverse its children.
-      const indent = node.attrs.indent || 0;
-      const start = node.attrs.start || 1;
-      const {name, following} = node.attrs;
-      if (name) {
-        namedLists.add(name);
-      }
+    // List Node can't be nested, no need to traverse its children.
+    const indent = node.attrs.indent || 0;
+    const start = node.attrs.start || 1;
+    const { name, following } = node.attrs;
+    if (name) {
+      namedLists.add(name);
+    }
 
     if (listsBefore) {
       if (start === 1 && isOrderedListNode(node)) {
@@ -117,7 +117,10 @@ function linkOrderedListCounters(tr: Transform): Transform {
         // link with.
         let counterIsLinked;
         listsBefore.some(({ node: { type }, indent: listIndent }) => {
-          if (listIndent < indent || (listIndent === indent && type !== node.type)) {
+          if (
+            listIndent < indent ||
+            (listIndent === indent && type !== node.type)
+          ) {
             // Restart counter if:
             // 1. We encounter a list with a lesser indent (moving to a higher level).
             // 2. We encounter a different type of list at the same indent level.
@@ -152,7 +155,7 @@ function linkOrderedListCounters(tr: Transform): Transform {
         tr = setCounterLinked(tr, pos, counterIsLinked);
       }
     }
-    listsBefore.unshift({parentNode, indent, node});
+    listsBefore.unshift({ parentNode, indent, node });
     return false;
   });
   return tr;
@@ -167,7 +170,7 @@ function setCounterLinked(
   const currentValue = node.attrs.counterReset || null;
   const nextValue = linked ? 'none' : null;
   if (nextValue !== currentValue) {
-    const nodeAttrs = {...node.attrs, counterReset: nextValue};
+    const nodeAttrs = { ...node.attrs, counterReset: nextValue };
     tr = tr.setNodeMarkup(pos, node.type, nodeAttrs, node.marks);
   }
   return tr;

@@ -1,6 +1,6 @@
 import { RichCopyEmbedImagePlugin } from './index';
-import { EditorView } from 'prosemirror-view';
-import { EditorState } from 'prosemirror-state';
+import { EditorView } from '@tiptap/pm/view';
+import { EditorState } from '@tiptap/pm/state';
 import { createEditor, p, schema } from 'jest-prosemirror';
 import { EditorRuntime } from './Types';
 

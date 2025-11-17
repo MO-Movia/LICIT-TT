@@ -1,4 +1,4 @@
-import { DOMOutputSpec } from 'prosemirror-model';
+import { DOMOutputSpec } from '@tiptap/pm/model';
 import CodeMarkSpec from './codeMarkSpec';
 
 describe('CodeMarkSpec', () => {

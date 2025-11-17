@@ -1,8 +1,8 @@
 import { ObjectIdPlugin, validateAttr } from './ObjectIdPlugin';
 import { createEditor, doc, p, schema } from 'jest-prosemirror';
-import { EditorView } from 'prosemirror-view';
-import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
-import { Node, ResolvedPos, Schema, Slice } from 'prosemirror-model';
+import { EditorView } from '@tiptap/pm/view';
+import { EditorState, Transaction, TextSelection } from '@tiptap/pm/state';
+import { Node, ResolvedPos, Schema, Slice } from '@tiptap/pm/model';
 
 describe('Object ID plugin', () => {
   it('should return effective schema', () => {

@@ -1,8 +1,8 @@
 import { IndentCommand } from './IndentCommand';
-import { EditorState, TextSelection } from 'prosemirror-state';
-import { Schema } from 'prosemirror-model';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { Schema } from '@tiptap/pm/model';
 import { schema } from 'prosemirror-test-builder';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 import { MARK_EM } from './MarkNames';
 
 describe('IndentCommand', () => {
@@ -32,20 +32,68 @@ describe('IndentCommand', () => {
     expect(test).toBeDefined();
   });
   it('should handle execute when trx.docChanged is false', () => {
-    const test = command.execute({ schema: schema1, selection: {}, tr: { setSelection: () => { return {}; } } } as unknown as EditorState);
+    const test = command.execute({
+      schema: schema1,
+      selection: {},
+      tr: {
+        setSelection: () => {
+          return {};
+        },
+      },
+    } as unknown as EditorState);
     expect(test).toBeDefined();
   });
   it('should handle execute when trx.docChanged is true', () => {
     const test = command.execute({
-      schema: {nodes:{'blockquote':null,'heading':null,'paragraph':null}}, selection: {},
-      tr: { setSelection: () => { return { doc: {nodeAt:()=>{return undefined;},nodesBetween:()=>{return {};}}, selection: {$from:{before:()=>{return 0;}}} }; } }
+      schema: { nodes: { blockquote: null, heading: null, paragraph: null } },
+      selection: {},
+      tr: {
+        setSelection: () => {
+          return {
+            doc: {
+              nodeAt: () => {
+                return undefined;
+              },
+              nodesBetween: () => {
+                return {};
+              },
+            },
+            selection: {
+              $from: {
+                before: () => {
+                  return 0;
+                },
+              },
+            },
+          };
+        },
+      },
     } as unknown as EditorState);
     expect(test).toBeDefined();
-       const test1 = command.execute({
-      schema: {nodes:{'blockquote':null,'heading':null,'paragraph':null}},
-      tr: { setSelection: () => { return { doc: {nodeAt:()=>{return {attrs:{indent:1}};},
-      nodesBetween:()=>{return {};}}, selection: {$from:{before:()=>{return 0;}}} }; } },
-      selection:{$head:{parent:{attrs:{indent:1}}}}
+    const test1 = command.execute({
+      schema: { nodes: { blockquote: null, heading: null, paragraph: null } },
+      tr: {
+        setSelection: () => {
+          return {
+            doc: {
+              nodeAt: () => {
+                return { attrs: { indent: 1 } };
+              },
+              nodesBetween: () => {
+                return {};
+              },
+            },
+            selection: {
+              $from: {
+                before: () => {
+                  return 0;
+                },
+              },
+            },
+          };
+        },
+      },
+      selection: { $head: { parent: { attrs: { indent: 1 } } } },
     } as unknown as EditorState);
     expect(test1).toBeDefined();
   });

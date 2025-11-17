@@ -1,5 +1,4 @@
-import type { MarkSpec } from 'prosemirror-model';
-
+import type { MarkSpec } from '@tiptap/pm/model';
 
 const EMMarkSpec: MarkSpec = {
   attrs: {
@@ -11,7 +10,7 @@ const EMMarkSpec: MarkSpec = {
       getAttrs: (dom: HTMLElement) => {
         const _overridden = dom.getAttribute('overridden');
         return { overridden: _overridden === 'true' };
-      }
+      },
     },
 
     {
@@ -19,14 +18,13 @@ const EMMarkSpec: MarkSpec = {
       getAttrs: (dom: HTMLElement) => {
         const _overridden = dom.getAttribute('overridden');
         return { overridden: _overridden === 'true' };
-      }
+      },
     },
     {
       tag: 'span[style*=font-style]',
       getAttrs: (dom: HTMLElement) => {
         const _overridden = dom.getAttribute('overridden');
         return { overridden: _overridden === 'true' };
-
       },
     },
   ],

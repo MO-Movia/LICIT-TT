@@ -1,9 +1,9 @@
-import {EditorState} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {Editor} from '@tiptap/react';
+import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { Editor } from '@tiptap/react';
 
 class TextAlignCommand extends UICommand {
   executeCustomStyleForTable(

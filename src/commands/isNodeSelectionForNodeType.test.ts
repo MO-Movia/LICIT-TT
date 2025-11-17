@@ -1,7 +1,12 @@
-import { Selection, NodeSelection } from 'prosemirror-state';
-import { Schema } from 'prosemirror-model';
-import { isNodeSelectionForNodeType, getSelectionRange, getSelectedCellPositions, isColumnCellSelected } from './isNodeSelectionForNodeType';
-import { CellSelection, tableNodes } from 'prosemirror-tables';
+import { Selection, NodeSelection } from '@tiptap/pm/state';
+import { Schema } from '@tiptap/pm/model';
+import {
+  isNodeSelectionForNodeType,
+  getSelectionRange,
+  getSelectedCellPositions,
+  isColumnCellSelected,
+} from './isNodeSelectionForNodeType';
+import { CellSelection, tableNodes } from '@tiptap/pm/tables';
 describe('isNodeSelectionForNodeType', () => {
   it('should return true if the selection is a NodeSelection for the provided node type', () => {
     const schema = new Schema({
@@ -62,7 +67,7 @@ describe('isNodeSelectionForNodeType', () => {
         ...tableNodes({
           tableGroup: 'block',
           cellContent: 'paragraph',
-          cellAttributes: {}
+          cellAttributes: {},
         }),
       },
     });
@@ -98,7 +103,7 @@ describe('isNodeSelectionForNodeType', () => {
         ...tableNodes({
           tableGroup: 'block',
           cellContent: 'paragraph',
-          cellAttributes: {}
+          cellAttributes: {},
         }),
       },
     });
@@ -137,7 +142,7 @@ describe('isNodeSelectionForNodeType', () => {
         ...tableNodes({
           tableGroup: 'block',
           cellContent: 'paragraph',
-          cellAttributes: {}
+          cellAttributes: {},
         }),
       },
     });
@@ -154,8 +159,6 @@ describe('isNodeSelectionForNodeType', () => {
         ]),
       ]),
     ]);
-
-
 
     const selection = CellSelection.create(doc, 2, 2);
     const test = isColumnCellSelected(selection);

@@ -1,9 +1,9 @@
-import {FontTypeCommand} from './FontTypeCommand';
-import {EditorState} from 'prosemirror-state';
-import {Schema, Node} from 'prosemirror-model';
-import {schema} from 'prosemirror-test-builder';
+import { FontTypeCommand } from './FontTypeCommand';
+import { EditorState } from '@tiptap/pm/state';
+import { Schema, Node } from '@tiptap/pm/model';
+import { schema } from 'prosemirror-test-builder';
 import * as applymark from './applyMark';
-import {Transform} from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 
 declare let beforeEach: jest.Lifecycle;
 declare let describe: jest.Describe;
@@ -25,20 +25,20 @@ describe('FontTypeCommand', () => {
   });
 
   it('should enable the command when text style mark is enabled', () => {
-    const state = EditorState.create({schema: schema1});
+    const state = EditorState.create({ schema: schema1 });
     const isEnabled = command.isEnabled(state);
     expect(isEnabled).toBe(false);
   });
 
   it('should apply the font size mark to the current selection', () => {
-    const state = EditorState.create({schema: schema1});
+    const state = EditorState.create({ schema: schema1 });
     command.execute(state, dispatch);
     const transform = new Transform(schema as unknown as Node);
     expect(dispatch).not.toHaveBeenCalledWith(expect.any(transform));
   });
 
   it('should apply the font size mark to the current selection', () => {
-    const state = EditorState.create({schema: schema1});
+    const state = EditorState.create({ schema: schema1 });
     command.execute(state, undefined);
     const transform = new Transform(schema as unknown as Node);
     expect(dispatch).not.toHaveBeenCalledWith(expect.any(transform));
@@ -59,17 +59,17 @@ describe('FontTypeCommand', () => {
 
   const MARK_FONT_TYPE = {
     attrs: {
-      fontType: {default: 'Arial'},
+      fontType: { default: 'Arial' },
     },
     parseDOM: [
       {
         style: 'font-family',
-        getAttrs: (value) => ({fontType: value}),
+        getAttrs: (value) => ({ fontType: value }),
       },
     ],
     toDOM: (mark) => [
       'span',
-      {style: `font-family: ${mark.attrs.fontType}`},
+      { style: `font-family: ${mark.attrs.fontType}` },
       0,
     ],
   };
@@ -98,7 +98,7 @@ describe('FontTypeCommand', () => {
         to: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-size': undefined}},
+      schema: { marks: { 'mark-font-size': undefined } },
     } as unknown as EditorState;
 
     const test = plugin.isEnabled(state);
@@ -132,16 +132,15 @@ describe('FontTypeCommand', () => {
       tr: {
         doc: {
           nodeAt: (_x) => {
-            return {isAtom: true, isLeaf: true, isText: false};
+            return { isAtom: true, isLeaf: true, isText: false };
           },
-          resolve:()=>{
-            return {pos:0};
+          resolve: () => {
+            return { pos: 0 };
           },
-          nodesBetween:()=>{}
+          nodesBetween: () => {},
         },
-
       },
-      schema: {marks: {'mark-font-type': MARK_FONT_TYPE}},
+      schema: { marks: { 'mark-font-type': MARK_FONT_TYPE } },
     } as unknown as EditorState;
 
     const test = plugin.isEnabled(state);
@@ -171,7 +170,7 @@ describe('FontTypeCommand', () => {
         head: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-type': MARK_FONT_TYPE}},
+      schema: { marks: { 'mark-font-type': MARK_FONT_TYPE } },
     } as unknown as EditorState;
 
     const test = plugin.isEnabled(state);
@@ -200,18 +199,17 @@ describe('FontTypeCommand', () => {
         head: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-type': MARK_FONT_TYPE}},
+      schema: { marks: { 'mark-font-type': MARK_FONT_TYPE } },
       tr: {
         doc: {
           nodeAt: (_x) => {
-            return {isAtom: true, isLeaf: true, isText: false};
+            return { isAtom: true, isLeaf: true, isText: false };
           },
-          resolve:()=>{
-            return {pos:0};
+          resolve: () => {
+            return { pos: 0 };
           },
-          nodesBetween:()=>{}
+          nodesBetween: () => {},
         },
-
       },
     } as unknown as EditorState;
 
@@ -224,7 +222,7 @@ describe('FontTypeCommand', () => {
   it('should call when execute function return true', () => {
     jest
       .spyOn(applymark, 'applyMark')
-      .mockReturnValue({docChanged: true} as unknown as Transform);
+      .mockReturnValue({ docChanged: true } as unknown as Transform);
     const state = {
       selection: {
         node: null,
@@ -232,16 +230,16 @@ describe('FontTypeCommand', () => {
         head: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-type': MARK_FONT_TYPE}},
+      schema: { marks: { 'mark-font-type': MARK_FONT_TYPE } },
       tr: {
         doc: {
           nodeAt: (_x) => {
-            return {isAtom: true, isLeaf: true, isText: false};
+            return { isAtom: true, isLeaf: true, isText: false };
           },
         },
-        resolve:()=>{
-          return {pos:0};
-        }
+        resolve: () => {
+          return { pos: 0 };
+        },
       },
     } as unknown as EditorState;
 
@@ -253,7 +251,7 @@ describe('FontTypeCommand', () => {
   it('should call when execute function return true', () => {
     jest
       .spyOn(applymark, 'applyMark')
-      .mockReturnValue({docChanged: true} as unknown as Transform);
+      .mockReturnValue({ docChanged: true } as unknown as Transform);
     const state = {
       selection: {
         node: null,
@@ -261,16 +259,16 @@ describe('FontTypeCommand', () => {
         head: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-type': MARK_FONT_TYPE}},
+      schema: { marks: { 'mark-font-type': MARK_FONT_TYPE } },
       tr: {
         doc: {
           nodeAt: (_x) => {
-            return {isAtom: true, isLeaf: true, isText: false};
+            return { isAtom: true, isLeaf: true, isText: false };
           },
         },
-        resolve:()=>{
-          return {pos:0};
-        }
+        resolve: () => {
+          return { pos: 0 };
+        },
       },
     } as unknown as EditorState;
     plugin = new FontTypeCommand(null as unknown as string);
@@ -292,15 +290,15 @@ describe('FontTypeCommand', () => {
         head: 0,
       },
       plugins: [],
-      schema: {marks: {'mark-font-type': MARK_FONT_TYPE}},
+      schema: { marks: { 'mark-font-type': MARK_FONT_TYPE } },
       tr: {
         doc: {
           nodeAt: (_x) => {
-            return {isAtom: true, isLeaf: true, isText: false};
+            return { isAtom: true, isLeaf: true, isText: false };
           },
-          resolve:()=>{
-            return {pos:0};
-          }
+          resolve: () => {
+            return { pos: 0 };
+          },
         },
       },
     } as unknown as EditorState;
@@ -314,10 +312,10 @@ describe('FontTypeCommand', () => {
   it('should be active', () => {
     expect(plugin.isActive()).toBeTruthy();
   });
-  it('should handle cancel',()=>{
+  it('should handle cancel', () => {
     expect(plugin.cancel()).toBeNull();
   });
-  it('should handle renderLabel ',()=>{
+  it('should handle renderLabel ', () => {
     expect(plugin.renderLabel({} as unknown as EditorState)).toBeDefined();
   });
 });

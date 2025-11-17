@@ -1,17 +1,17 @@
 import LinkMarkSpec from './linkMarkSpec';
-import {Attrs, Mark} from 'prosemirror-model';
+import { Attrs, Mark } from '@tiptap/pm/model';
 
 describe('LinkMarkSpec', () => {
   describe('Structure and Defaults', () => {
     it('should have the correct default attributes', () => {
       expect(LinkMarkSpec.attrs).toEqual({
-        href: {default: null},
-        rel: {default: 'noopener noreferrer nofollow'},
+        href: { default: null },
+        rel: { default: 'noopener noreferrer nofollow' },
         selectionId: {
           default: null,
         },
-        target: {default: 'blank'},
-        title: {default: null},
+        target: { default: 'blank' },
+        title: { default: null },
       });
     });
 
@@ -84,13 +84,13 @@ describe('LinkMarkSpec', () => {
       const result = LinkMarkSpec.toDOM?.(mockMark, false);
       expect(result).toEqual([
         'a',
-        {href: 'https://example.com', title: 'Example Link'},
+        { href: 'https://example.com', title: 'Example Link' },
         0,
       ]);
     });
 
     it('should return correct DOM structure even if attributes are empty', () => {
-      const mockMark = {attrs: {}} as unknown as Mark;
+      const mockMark = { attrs: {} } as unknown as Mark;
 
       const result = LinkMarkSpec.toDOM?.(mockMark, false);
       expect(result).toEqual(['a', {}, 0]);

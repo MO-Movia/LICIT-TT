@@ -1,4 +1,4 @@
-import type { NodeSpec } from 'prosemirror-model';
+import type { NodeSpec } from '@tiptap/pm/model';
 // Body spec – where the table (or multimedia) is inserted.
 export const enhancedTableFigureBodyNodeSpec: NodeSpec = {
   group: 'block',
@@ -23,11 +23,14 @@ export const enhancedTableFigureNotesNodeSpec: NodeSpec = {
   attrs: {
     styleName: { default: 'Normal' },
   },
-  parseDOM: [{ tag: "div[data-type='enhanced-table-figure-notes']",
+  parseDOM: [
+    {
+      tag: "div[data-type='enhanced-table-figure-notes']",
       getAttrs: (dom: HTMLElement) => ({
         styleName: dom.getAttribute('data-styleName') || 'Normal',
       }),
-   }],
+    },
+  ],
   toDOM(node) {
     return [
       'div',
@@ -54,7 +57,10 @@ export const enhancedTableFigureCapcoNodeSpec: NodeSpec = {
     {
       tag: "div[data-type='enhanced-table-figure-capco']",
       getAttrs(dom) {
-        return { form: dom.getAttribute('data-form') || 'long', capco: dom.getAttribute('data-capco') || null };
+        return {
+          form: dom.getAttribute('data-form') || 'long',
+          capco: dom.getAttribute('data-capco') || null,
+        };
       },
     },
   ],

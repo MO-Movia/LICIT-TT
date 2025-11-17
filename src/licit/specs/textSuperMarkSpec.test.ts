@@ -1,5 +1,5 @@
 import TextSuperMarkSpec from './textSuperMarkSpec'; // Adjust the import path as needed
-import {Mark} from 'prosemirror-model';
+import { Mark } from '@tiptap/pm/model';
 
 describe('TextSuperMarkSpec', () => {
   describe('parseDOM', () => {
@@ -10,8 +10,8 @@ describe('TextSuperMarkSpec', () => {
           r
         ): r is {
           tag: string;
-          getAttrs: (dom: HTMLElement) => {overridden: boolean};
-        } => (r as {tag?: string}).tag === 'sup'
+          getAttrs: (dom: HTMLElement) => { overridden: boolean };
+        } => (r as { tag?: string }).tag === 'sup'
       );
 
       expect(rule).toBeDefined();
@@ -20,11 +20,11 @@ describe('TextSuperMarkSpec', () => {
       mockElement.setAttribute('overridden', 'true');
 
       const attrsTrue = rule!.getAttrs(mockElement);
-      expect(attrsTrue).toEqual({overridden: true});
+      expect(attrsTrue).toEqual({ overridden: true });
 
       mockElement.setAttribute('overridden', 'false');
       const attrsFalse = rule!.getAttrs(mockElement);
-      expect(attrsFalse).toEqual({overridden: false});
+      expect(attrsFalse).toEqual({ overridden: false });
     });
 
     it('should handle vertical-align style rule for sup', () => {
@@ -34,14 +34,14 @@ describe('TextSuperMarkSpec', () => {
           r
         ): r is {
           style: string;
-          getAttrs: (value: string) => {overridden: boolean} | null;
-        } => (r as {style?: string}).style === 'vertical-align'
+          getAttrs: (value: string) => { overridden: boolean } | null;
+        } => (r as { style?: string }).style === 'vertical-align'
       );
 
       expect(rule).toBeDefined();
 
       const attrsSup = rule!.getAttrs('sup');
-      expect(attrsSup).toEqual({overridden: true});
+      expect(attrsSup).toEqual({ overridden: true });
 
       const attrsOther = rule!.getAttrs('baseline');
       expect(attrsOther).toBeNull();
@@ -51,7 +51,7 @@ describe('TextSuperMarkSpec', () => {
   describe('toDOM', () => {
     it('should return correct DOM structure when overridden is true', () => {
       const mockMark = {
-        attrs: {overridden: true},
+        attrs: { overridden: true },
       } as unknown as Mark;
 
       if (!TextSuperMarkSpec.toDOM) {
@@ -59,12 +59,12 @@ describe('TextSuperMarkSpec', () => {
       }
 
       const result = TextSuperMarkSpec.toDOM(mockMark, false);
-      expect(result).toEqual(['sup', {overridden: true}, 0]);
+      expect(result).toEqual(['sup', { overridden: true }, 0]);
     });
 
     it('should return correct DOM structure when overridden is false', () => {
       const mockMark = {
-        attrs: {overridden: false},
+        attrs: { overridden: false },
       } as unknown as Mark;
 
       if (!TextSuperMarkSpec.toDOM) {
@@ -72,7 +72,7 @@ describe('TextSuperMarkSpec', () => {
       }
 
       const result = TextSuperMarkSpec.toDOM(mockMark, false);
-      expect(result).toEqual(['sup', {overridden: false}, 0]);
+      expect(result).toEqual(['sup', { overridden: false }, 0]);
     });
   });
 });

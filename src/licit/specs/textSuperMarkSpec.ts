@@ -1,4 +1,4 @@
-import type { MarkSpec } from 'prosemirror-model';
+import type { MarkSpec } from '@tiptap/pm/model';
 
 const TextSuperMarkSpec: MarkSpec = {
   attrs: {
@@ -10,7 +10,7 @@ const TextSuperMarkSpec: MarkSpec = {
       getAttrs: (dom: HTMLElement) => {
         const _overridden = dom.getAttribute('overridden');
         return { overridden: _overridden === 'true' };
-      }
+      },
     },
 
     {

@@ -1,6 +1,6 @@
-import {p} from 'jest-prosemirror';
-import {DOMOutputSpec} from 'prosemirror-model';
-import {toMarkDOM, getMarkAttrs} from './CitationHighlightMarkSpec';
+import { p } from 'jest-prosemirror';
+import { DOMOutputSpec } from '@tiptap/pm/model';
+import { toMarkDOM, getMarkAttrs } from './CitationHighlightMarkSpec';
 
 describe('CommentHighlightMarkSpec', () => {
   it('toMarkDOM with properties', () => {

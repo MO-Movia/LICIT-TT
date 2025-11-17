@@ -1,7 +1,7 @@
 import { CustomstyleDropDownCommand } from './CustomstyleDropDownCommand';
 import { TestEditorView, createEditor, doc, p } from 'jest-prosemirror';
-import { EditorState } from 'prosemirror-state';
-import { Schema, Node } from 'prosemirror-model';
+import { EditorState } from '@tiptap/pm/state';
+import { Schema, Node } from '@tiptap/pm/model';
 import * as cusstyles from '../customStyle';
 
 describe('customstyledropdowncommand', () => {
@@ -457,7 +457,7 @@ describe('customstyledropdowncommand', () => {
       customstyledropdowncommand.isAllowedNode(node as unknown as Node)
     ).toBe(true);
   });
-    it('should handle isAllowedNode', () => {
+  it('should handle isAllowedNode', () => {
     const node = { type: { name: 'enhanced_table_figure_notes' } };
     expect(
       customstyledropdowncommand.isAllowedNode(node as unknown as Node)

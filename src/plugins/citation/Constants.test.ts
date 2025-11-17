@@ -1,5 +1,5 @@
 import { getNode } from './Constants';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 
 const createMockTransform = (nodes) => ({
   doc: {

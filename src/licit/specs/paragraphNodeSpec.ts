@@ -1,7 +1,6 @@
-
 import toCSSLineSpacing from '../toCSSLineSpacing';
 import convertToCSSPTValue from '../convertToCSSPTValue';
-import { Node, NodeSpec, DOMOutputSpec } from 'prosemirror-model';
+import { Node, NodeSpec, DOMOutputSpec } from '@tiptap/pm/model';
 
 // This assumes that every 36pt maps to one indent level.
 export const INDENT_MARGIN_PT_SIZE = 36;

@@ -1,4 +1,4 @@
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
 import { findParentNodeOfType } from 'prosemirror-utils';
 
 import { MARK_FONT_SIZE, HEADING } from '@modusoperandi/licit-ui-commands';

@@ -1,6 +1,6 @@
 // [FS] IRAD-1085 2020-10-09
 import type { Style, CSSStyle, StyleRuntime } from './StyleRuntime';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import {
   RESERVED_STYLE_NONE,
   RESERVED_STYLE_NONE_NUMBERING,

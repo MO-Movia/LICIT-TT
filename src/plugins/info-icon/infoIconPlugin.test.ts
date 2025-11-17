@@ -1,16 +1,21 @@
 /* eslint-disable */
 
-import {InfoIconPlugin, InfoIconDialog} from './index';
-import MenuPlugin, {markActive, getLink} from './plugins/menu/index';
-import {Transform} from 'prosemirror-transform';
-import {schema, builders} from 'prosemirror-test-builder';
-import {Plugin, PluginKey, EditorState, TextSelection} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {Schema} from 'prosemirror-model';
-import {InfoIconView} from './infoIconView';
-import {InfoIconCommand} from './infoIconCommand';
-import {createEditor} from 'jest-prosemirror';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { InfoIconPlugin, InfoIconDialog } from './index';
+import MenuPlugin, { markActive, getLink } from './plugins/menu/index';
+import { Transform } from '@tiptap/pm/transform';
+import { schema, builders } from 'prosemirror-test-builder';
+import {
+  Plugin,
+  PluginKey,
+  EditorState,
+  TextSelection,
+} from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { Schema } from '@tiptap/pm/model';
+import { InfoIconView } from './infoIconView';
+import { InfoIconCommand } from './infoIconCommand';
+import { createEditor } from 'jest-prosemirror';
+import { createPopUp } from '@modusoperandi/licit-ui-commands';
 
 class TestPlugin extends Plugin {
   constructor() {
@@ -37,7 +42,7 @@ describe('Info Plugin Extended', () => {
 
   const newInfoIconNode = effSchema.node(effSchema.nodes.infoicon, info);
   plugin.initButtonCommands();
-  const {doc, p} = builders(mySchema, {p: {nodeType: 'paragraph'}});
+  const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
 
   it('Infoiconview call createInfoIconTooltip', () => {
     const before = 'hello';
@@ -51,7 +56,7 @@ describe('Info Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -96,7 +101,7 @@ describe('Info Plugin', () => {
 
   const newInfoIconNode = effSchema.node(effSchema.nodes.infoicon, info);
   plugin.initButtonCommands();
-  const {doc, p} = builders(mySchema, {p: {nodeType: 'paragraph'}});
+  const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
 
   it('should create infoplugin', () => {
     const state = EditorState.create({
@@ -108,7 +113,7 @@ describe('Info Plugin', () => {
     document.body.appendChild(dom);
 
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -128,7 +133,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -181,7 +186,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -220,7 +225,7 @@ describe('Info Plugin', () => {
     document.body.appendChild(dom);
 
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -228,7 +233,7 @@ describe('Info Plugin', () => {
     const selection = TextSelection.create(view.state.doc, 7, 12);
     const tr = view.state.tr.setSelection(selection);
     view.updateState(
-      view.state.reconfigure({plugins: [plugin, new TestPlugin()]})
+      view.state.reconfigure({ plugins: [plugin, new TestPlugin()] })
     );
 
     view.dispatch(tr);
@@ -255,7 +260,7 @@ describe('Info Plugin', () => {
     };
     const plugin = new InfoIconPlugin();
     const effSchema = plugin.getEffectiveSchema(modSchema);
-    const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+    const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
 
     const state = EditorState.create({
       doc: doc(p(infoIconObj)),
@@ -266,7 +271,7 @@ describe('Info Plugin', () => {
     // Set up our document body
     document.body.innerHTML = '<div></div>';
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -283,7 +288,7 @@ describe('Info Plugin', () => {
     const selection = TextSelection.create(view.state.doc, 1, 2);
     const tr = view.state.tr.setSelection(selection);
     view.updateState(
-      view.state.reconfigure({plugins: [plugin, new TestPlugin()]})
+      view.state.reconfigure({ plugins: [plugin, new TestPlugin()] })
     );
 
     view.dispatch(tr);
@@ -329,7 +334,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -361,7 +366,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -394,7 +399,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -430,7 +435,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -445,7 +450,7 @@ describe('Info Plugin', () => {
     };
 
     const cView = new InfoIconView(view.state.doc.nodeAt(0), view, undefined);
-    const e = new MouseEvent('mouseenter', {clientX: 281, clientY: 125});
+    const e = new MouseEvent('mouseenter', { clientX: 281, clientY: 125 });
     const clickEvent = new MouseEvent('mouseclick', {
       clientX: 281,
       clientY: 125,
@@ -505,7 +510,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -541,7 +546,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -551,7 +556,7 @@ describe('Info Plugin', () => {
     const selection = TextSelection.create(view.state.doc, 6, 10);
     const tr = view.state.tr.setSelection(selection);
     view.updateState(
-      view.state.reconfigure({plugins: [plugin, new TestPlugin()]})
+      view.state.reconfigure({ plugins: [plugin, new TestPlugin()] })
     );
     view.dispatch(tr);
     cView.parentNodeType(view.state.doc.nodeAt(0));
@@ -569,7 +574,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -591,7 +596,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -615,7 +620,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -644,12 +649,12 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
     );
-    const {marks} = view.state.schema;
+    const { marks } = view.state.schema;
 
     markActive(view.state, marks.strong);
     getLink(view);
@@ -665,7 +670,7 @@ describe('Info Plugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -674,10 +679,10 @@ describe('Info Plugin', () => {
     const selection = TextSelection.create(view.state.doc, 6, 10);
     const tr = view.state.tr.setSelection(selection);
     view.updateState(
-      view.state.reconfigure({plugins: [plugin, new TestPlugin()]})
+      view.state.reconfigure({ plugins: [plugin, new TestPlugin()] })
     );
     view.dispatch(tr);
-    const {marks} = view.state.schema;
+    const { marks } = view.state.schema;
 
     markActive(view.state, marks.strong);
     getLink(view);

@@ -1,7 +1,7 @@
 import { CustomButton } from '@modusoperandi/licit-ui-commands';
 import React from 'react';
 import { Icon } from './Icon';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 export type PropValue = {
   value?: string;
   text?: string;
@@ -50,7 +50,6 @@ const ImageFloatValues: { [key in FloatKey]: PropValue } = {
   },
 };
 const ImageAlterValues: { [key in AlterKey]: PropValue } = {
-
   DELETE: {
     value: 'delete',
     text: 'Delete',

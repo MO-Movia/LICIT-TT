@@ -1,9 +1,9 @@
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { Editor } from '@tiptap/react';
 import TableMergeCellsCommand from './tableMergeCellsCommand';
-import { ResolvedPos, Schema } from 'prosemirror-model';
-import { CellSelection } from 'prosemirror-tables';
+import { ResolvedPos, Schema } from '@tiptap/pm/model';
+import { CellSelection } from '@tiptap/pm/tables';
 
 // Mock Editor (used by TableMergeCellsCommand)
 jest.mock('@tiptap/react', () => {
@@ -16,13 +16,13 @@ jest.mock('@tiptap/react', () => {
   };
 });
 
-jest.mock('prosemirror-tables', () => ({
-  ...jest.requireActual('prosemirror-tables'),
+jest.mock('@tiptap/pm/tables', () => ({
+  ...jest.requireActual('@tiptap/pm/tables'),
   CellSelection: jest.fn(),
 }));
 
-jest.mock('prosemirror-model', () => ({
-  ...jest.requireActual('prosemirror-model'),
+jest.mock('@tiptap/pm/model', () => ({
+  ...jest.requireActual('@tiptap/pm/model'),
   ResolvedPos: jest.fn().mockImplementation((pos: number) => ({
     pos,
     node: jest.fn(() => ({ type: { name: 'cell' } })), // Mocked `node` method with a `type` property

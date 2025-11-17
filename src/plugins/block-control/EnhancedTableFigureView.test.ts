@@ -1,13 +1,13 @@
 import { EnhancedTableFigureView } from './EnhancedTableFigureView';
-import { Node as ProseMirrorNode } from 'prosemirror-model';
-import { EditorView } from 'prosemirror-view';
-import { NodeSelection, TextSelection } from 'prosemirror-state';
+import { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import { EditorView } from '@tiptap/pm/view';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { ImageInlineEditor } from './ui/ImageInlineEditor';
 
 // Mock dependencies
-jest.mock('prosemirror-model');
-jest.mock('prosemirror-view');
-jest.mock('prosemirror-state');
+jest.mock('@tiptap/pm/model');
+jest.mock('@tiptap/pm/view');
+jest.mock('@tiptap/pm/state');
 jest.mock('./EnhancedTableCommands');
 jest.mock('@modusoperandi/licit-ui-commands');
 jest.mock('./ui/ImageInlineEditor');
@@ -83,7 +83,11 @@ describe('EnhancedTableFigureView', () => {
           orientation: 'landscape',
         },
       };
-      const landscapeView = new EnhancedTableFigureView(landscapeNode, mockView, mockGetPos);
+      const landscapeView = new EnhancedTableFigureView(
+        landscapeNode,
+        mockView,
+        mockGetPos
+      );
 
       expect(landscapeView.dom.style.width).toBe('624px');
       expect(landscapeView.dom.style.maxWidth).toBe('624px');
@@ -161,7 +165,11 @@ describe('EnhancedTableFigureView', () => {
           figureType: 'other',
         },
       };
-      const otherView = new EnhancedTableFigureView(otherNode as ProseMirrorNode, mockView, mockGetPos);
+      const otherView = new EnhancedTableFigureView(
+        otherNode as ProseMirrorNode,
+        mockView,
+        mockGetPos
+      );
       otherView.updateNotesTrigger();
       expect(otherView.addNotesButton.style.display).toBe('none');
     });
@@ -170,14 +178,18 @@ describe('EnhancedTableFigureView', () => {
   describe('selection handling', () => {
     it('should add selected class on selectNode', () => {
       view.selectNode();
-      expect(view.dom.classList.contains('ProseMirror-selectednode')).toBe(true);
+      expect(view.dom.classList.contains('ProseMirror-selectednode')).toBe(
+        true
+      );
       expect(view.dom.getAttribute('data-active')).toBe('true');
     });
 
     it('should remove selected class on deselectNode', () => {
       view.selectNode();
       view.deselectNode();
-      expect(view.dom.classList.contains('ProseMirror-selectednode')).toBe(false);
+      expect(view.dom.classList.contains('ProseMirror-selectednode')).toBe(
+        false
+      );
       expect(view.dom.getAttribute('data-active')).toBeDefined();
     });
   });

@@ -1,6 +1,6 @@
-import { Plugin } from 'prosemirror-state';
-import { columnResizing } from 'prosemirror-tables';
-import { EditorView } from 'prosemirror-view';
+import { Plugin } from '@tiptap/pm/state';
+import { columnResizing } from '@tiptap/pm/tables';
+import { EditorView } from '@tiptap/pm/view';
 
 const TABLE_HANDLE_WIDTH = 10;
 const TABLE_CELL_MINWIDTH = 25;

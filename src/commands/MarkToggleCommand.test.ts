@@ -1,7 +1,7 @@
-import { Mark, Schema } from 'prosemirror-model';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { Mark, Schema } from '@tiptap/pm/model';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import React from 'react';
 import { MarkToggleCommand, toggleCustomStyle } from './MarkToggleCommand';
 
@@ -46,7 +46,7 @@ describe('MarkToggleCommand', () => {
     expect(test).toBe(false);
   });
 
-   it('should call when executeCustom function return first false', () => {
+  it('should call when executeCustom function return first false', () => {
     const state = {
       selection: {
         node: null,
@@ -282,12 +282,23 @@ describe('MarkToggleCommand', () => {
         ranges: [{ $from: { depth: 1, pos: 0 }, $to: { pos: 1 } }],
       },
       plugins: [],
-      tr: { doc: { resolve: () => { return { parent: { type: {} } }; }, nodesBetween: () => { } } },
+      tr: {
+        doc: {
+          resolve: () => {
+            return { parent: { type: {} } };
+          },
+          nodesBetween: () => {},
+        },
+      },
       schema: { marks: 'value' },
       doc: dummyDoc,
     } as unknown as EditorState;
     plugin.doUpdate = true;
-    const test = plugin.execute(state, null as unknown as ((tr: Transform) => void) | undefined, { dispatch: () => { } } as unknown as EditorView);
+    const test = plugin.execute(
+      state,
+      null as unknown as ((tr: Transform) => void) | undefined,
+      { dispatch: () => {} } as unknown as EditorView
+    );
     expect(test).toBe(true);
   });
   it('executeWithUserInput function() should be return false', () => {
@@ -469,7 +480,9 @@ describe('MarkToggleCommand', () => {
       },
       plugins: [],
       tr: {
-        doc: { nodeAt: (_x) => ({ isAtom: true, isLeaf: true, isText: false }) },
+        doc: {
+          nodeAt: (_x) => ({ isAtom: true, isLeaf: true, isText: false }),
+        },
       },
       schema: { marks: 'value' },
     } as unknown as EditorState;
@@ -543,7 +556,7 @@ describe('MarkToggleCommand', () => {
             isAtom: true,
             isLeaf: true,
             isText: false,
-            descendants: () => { },
+            descendants: () => {},
           };
         },
         rangeHasMark: (_X) => {

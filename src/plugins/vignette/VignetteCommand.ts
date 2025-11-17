@@ -1,10 +1,10 @@
-import {Fragment, Schema} from 'prosemirror-model';
-import {EditorState, Transaction, TextSelection} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {DEF_BORDER_COLOR, PARAGRAPH, TABLE, TABLE_CELL} from './Constants';
+import { Fragment, Schema } from '@tiptap/pm/model';
+import { EditorState, Transaction, TextSelection } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { DEF_BORDER_COLOR, PARAGRAPH, TABLE, TABLE_CELL } from './Constants';
 import * as React from 'react';
-import {Transform} from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 
 export class VignetteCommand extends UICommand {
   executeCustomStyleForTable(
@@ -26,8 +26,8 @@ export class VignetteCommand extends UICommand {
     view?: EditorView
   ): boolean => {
     if (dispatch) {
-      const {schema} = state;
-      let {tr} = state;
+      const { schema } = state;
+      let { tr } = state;
       tr = this.insertTable(tr, schema, 1, 1);
       tr = this.insertParagraph(state, tr);
       dispatch(tr);
@@ -72,12 +72,12 @@ export class VignetteCommand extends UICommand {
     if (!tr.selection || !tr.doc) {
       return tr;
     }
-    const {from, to} = tr.selection;
+    const { from, to } = tr.selection;
     if (from !== to) {
       return tr;
     }
 
-    const {nodes} = schema;
+    const { nodes } = schema;
     const cell = nodes[TABLE_CELL];
     const paragraph = nodes[PARAGRAPH];
     const row = nodes['tableRow'];
@@ -105,7 +105,7 @@ export class VignetteCommand extends UICommand {
       const rowNode = row.create({}, Fragment.from(cellNodes));
       rowNodes.push(rowNode);
     }
-    const tableNode = table.create({vignette: true}, Fragment.from(rowNodes));
+    const tableNode = table.create({ vignette: true }, Fragment.from(rowNodes));
     tr = tr.insert(from, Fragment.from(tableNode));
 
     const selection = TextSelection.create(tr.doc, from, from + 5);
@@ -120,7 +120,7 @@ export class VignetteCommand extends UICommand {
   insertParagraph(state: EditorState, tr: Transaction) {
     const paragraph = state.schema.nodes[PARAGRAPH];
     const textNode = state.schema.text(' ');
-    const {from, to} = tr.selection;
+    const { from, to } = tr.selection;
     if (from !== to) {
       return tr;
     }

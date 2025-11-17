@@ -1,4 +1,4 @@
-import { NodeSpec } from 'prosemirror-model';
+import { NodeSpec } from '@tiptap/pm/model';
 import ListItemNodeSpec from './specs/listItemNodeSpec';
 import {
   BULLET_LIST,

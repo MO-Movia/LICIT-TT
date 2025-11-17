@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { EditorState, TextSelection } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import TableInsertCommand from './tableInsertCommand';
-import { Schema } from 'prosemirror-model';
+import { Schema } from '@tiptap/pm/model';
 import { Editor } from '@tiptap/react';
 
 jest.mock('../ui/tableGridSizeEditor', () => {

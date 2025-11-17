@@ -1,27 +1,27 @@
-import {Fragment, Schema} from 'prosemirror-model';
-import {EditorState, Transaction, TextSelection} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { Fragment, Schema } from '@tiptap/pm/model';
+import { EditorState, Transaction, TextSelection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import React from 'react';
 import {
   hideCursorPlaceholder,
   showCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
-import {VIDEO} from './Constants';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
-import {VideoEditorState} from './ui/VideoEditor';
+import { VIDEO } from './Constants';
+import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { VideoEditorState } from './ui/VideoEditor';
 
 export function insertIFrame(
   tr: Transform,
   schema: Schema,
   config?: VideoEditorState
 ): Transform {
-  const {selection} = tr as Transaction;
+  const { selection } = tr as Transaction;
   if (!selection) {
     return tr;
   }
-  const {from, to} = selection;
+  const { from, to } = selection;
   if (from !== to) {
     return tr;
   }
@@ -73,7 +73,7 @@ export class VideoSourceCommand extends UICommand {
     }
 
     return new Promise((resolve) => {
-      const props = {runtime: view['runtime']};
+      const props = { runtime: view['runtime'] };
       this._popUp = createPopUp(this.getEditor(), props, {
         modal: true,
         onClose: (val) => {
@@ -93,8 +93,8 @@ export class VideoSourceCommand extends UICommand {
     config?: VideoEditorState
   ): boolean => {
     if (dispatch) {
-      const {selection, schema} = state;
-      let {tr} = state;
+      const { selection, schema } = state;
+      let { tr } = state;
       tr = (view ? hideCursorPlaceholder(view.state) : tr) as Transaction;
       tr = tr.setSelection(selection);
       if (config) {
@@ -109,7 +109,7 @@ export class VideoSourceCommand extends UICommand {
 
   __isEnabled = (state: EditorState, _view?: EditorView): boolean => {
     const tr = state;
-    const {selection} = tr;
+    const { selection } = tr;
     if (selection instanceof TextSelection) {
       return selection.from === selection.to;
     }

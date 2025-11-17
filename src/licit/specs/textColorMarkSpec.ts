@@ -1,4 +1,4 @@
-import { Mark, MarkSpec, Node } from 'prosemirror-model';
+import { Mark, MarkSpec, Node } from '@tiptap/pm/model';
 
 import toCSSColor from '../toCSSColor';
 
@@ -17,7 +17,7 @@ const TextColorMarkSpec: MarkSpec = {
         const overridden = dom.getAttribute('overridden') === 'true'; // Extract overridden flag
         return {
           color: toCSSColor(color),
-          overridden
+          overridden,
         };
       },
     },

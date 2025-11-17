@@ -5,9 +5,9 @@ import {
   inputRules,
   smartQuotes,
   wrappingInputRule,
-} from 'prosemirror-inputrules';
-import {NodeType, Schema} from 'prosemirror-model';
-import {Plugin} from 'prosemirror-state';
+} from '@tiptap/pm/inputrules';
+import { NodeType, Schema } from '@tiptap/pm/model';
+import { Plugin } from '@tiptap/pm/state';
 
 // This file is forked from
 // // https://github.com/ProseMirror/prosemirror-example-setup/blob/master/src/inputrules.js
@@ -21,7 +21,7 @@ export function orderedListRule(nodeType: NodeType) {
   return wrappingInputRule(
     /^(\d+)\.\s$/,
     nodeType,
-    (match) => ({order: +match[1]}),
+    (match) => ({ order: +match[1] }),
     (match, node) => node.childCount + node.attrs.order == +match[1]
   );
 }
@@ -35,5 +35,5 @@ export default function buildInputRules(schema: Schema): Plugin {
   if (type) {
     rules.push(orderedListRule(type));
   }
-  return inputRules({rules});
+  return inputRules({ rules });
 }

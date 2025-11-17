@@ -1,5 +1,5 @@
-import {Transform} from 'prosemirror-transform';
-import {ImageUploadCommand} from './ImageUploadCommand';
+import { Transform } from '@tiptap/pm/transform';
+import { ImageUploadCommand } from './ImageUploadCommand';
 
 describe('ImageUploadCommand', () => {
   it('should noop executeCustom', () => {

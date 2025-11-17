@@ -1,14 +1,16 @@
 import { TableColorCommand } from './TableColorCommand';
-import { setCellAttr } from 'prosemirror-tables';
+import { setCellAttr } from '@tiptap/pm/tables';
 import { createPopUp } from '@modusoperandi/licit-ui-commands';
 import { ColorEditor } from '@modusoperandi/color-picker';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 
-jest.mock('prosemirror-tables', () => ({
-  setCellAttr: jest.fn(() => jest.fn((state, dispatch) => {
-    dispatch(state.tr);
-    return true;
-  })),
+jest.mock('@tiptap/pm/tables', () => ({
+  setCellAttr: jest.fn(() =>
+    jest.fn((state, dispatch) => {
+      dispatch(state.tr);
+      return true;
+    })
+  ),
 }));
 
 jest.mock('@modusoperandi/licit-ui-commands', () => ({
@@ -40,7 +42,13 @@ describe('TableColorCommand', () => {
       doc: {},
       schema: { marks: { textColor: {} } },
       selection: { from: 1, to: 2 },
-      tr: { doc: { nodeAt: jest.fn().mockReturnValue({ marks: [{ attrs: { color: '#abcdef' } }] }) } },
+      tr: {
+        doc: {
+          nodeAt: jest
+            .fn()
+            .mockReturnValue({ marks: [{ attrs: { color: '#abcdef' } }] }),
+        },
+      },
     };
     mockView = { dom: document.createElement('div') };
   });
@@ -54,8 +62,12 @@ describe('TableColorCommand', () => {
   });
 
   test('shouldRespondToUIEvent returns true only for mouseenter', () => {
-    expect(cmd.shouldRespondToUIEvent({ type: 'mouseenter' } as unknown )).toBe(true);
-    expect(cmd.shouldRespondToUIEvent({ type: 'click' }as unknown )).toBe(false);
+    expect(cmd.shouldRespondToUIEvent({ type: 'mouseenter' } as unknown)).toBe(
+      true
+    );
+    expect(cmd.shouldRespondToUIEvent({ type: 'click' } as unknown)).toBe(
+      false
+    );
   });
 
   test('waitForUserInput returns undefined if popup exists', async () => {
@@ -65,7 +77,12 @@ describe('TableColorCommand', () => {
   });
 
   test('waitForUserInput resolves immediately if target not HTMLElement', async () => {
-    const result = await cmd.waitForUserInput(mockState, mockDispatch, mockView, { currentTarget: null } as unknown);
+    const result = await cmd.waitForUserInput(
+      mockState,
+      mockDispatch,
+      mockView,
+      { currentTarget: null } as unknown
+    );
     expect(result).toBeUndefined();
   });
 
@@ -77,10 +94,16 @@ describe('TableColorCommand', () => {
       return { id: 'popup' };
     });
 
-    const promise = cmd.waitForUserInput(mockState, mockDispatch, mockView, { currentTarget: mockAnchor } as unknown);
+    const promise = cmd.waitForUserInput(mockState, mockDispatch, mockView, {
+      currentTarget: mockAnchor,
+    } as unknown);
     expect(createPopUp).toHaveBeenCalledWith(
       ColorEditor,
-      expect.objectContaining({ hex: '#112233', runtime: 'mockRuntime', Textcolor: '#abcdef' }),
+      expect.objectContaining({
+        hex: '#112233',
+        runtime: 'mockRuntime',
+        Textcolor: '#abcdef',
+      }),
       expect.objectContaining({
         anchor: mockAnchor,
         position: 'mockAnchorRight',
@@ -101,14 +124,24 @@ describe('TableColorCommand', () => {
 
   test('executeWithUserInput calls setCellAttr when color provided', () => {
     const mockColor = { color: '#00ff00', selectedOption: 'solid' };
-    const result = cmd.executeWithUserInput(mockState, mockDispatch, mockView, mockColor);
+    const result = cmd.executeWithUserInput(
+      mockState,
+      mockDispatch,
+      mockView,
+      mockColor
+    );
     expect(setCellAttr).toHaveBeenCalledWith('', '#00ff00');
     expect(mockDispatch).toHaveBeenCalled();
     expect(result).toBe(true);
   });
 
   test('executeWithUserInput returns false when no color', () => {
-    const result = cmd.executeWithUserInput(mockState, mockDispatch, mockView, undefined);
+    const result = cmd.executeWithUserInput(
+      mockState,
+      mockDispatch,
+      mockView,
+      undefined
+    );
     expect(result).toBe(false);
   });
 

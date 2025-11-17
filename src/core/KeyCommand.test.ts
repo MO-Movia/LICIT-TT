@@ -1,5 +1,5 @@
-import {Plugin, PluginKey} from 'prosemirror-state';
-import {keymap} from 'prosemirror-keymap';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { keymap } from '@tiptap/pm/keymap';
 import {
   makeKeyMap,
   makeKeyMapWithCommon,
@@ -7,8 +7,8 @@ import {
   createKeyMapPlugin,
 } from './KeyCommand';
 
-jest.mock('prosemirror-keymap', () => ({
-  keymap: jest.fn((map) => ({spec: {map}, keymapCreated: true})),
+jest.mock('@tiptap/pm/keymap', () => ({
+  keymap: jest.fn((map) => ({ spec: { map }, keymapCreated: true })),
 }));
 
 describe('keymap-utils', () => {
@@ -62,7 +62,7 @@ describe('keymap-utils', () => {
 
   describe('setPluginKey', () => {
     it('should set PluginKey on plugin.spec and return the plugin', () => {
-      const plugin = {spec: {}} as unknown as Plugin;
+      const plugin = { spec: {} } as unknown as Plugin;
       const result = setPluginKey(plugin, 'testKey');
 
       expect(result).toBe(plugin);
@@ -79,7 +79,7 @@ describe('keymap-utils', () => {
 
   describe('createKeyMapPlugin', () => {
     it('should create keymap plugin and set PluginKey', () => {
-      const fakeMap = {'Mod-b': jest.fn()};
+      const fakeMap = { 'Mod-b': jest.fn() };
       const result = createKeyMapPlugin(fakeMap, 'bold');
 
       // ensure keymap() was called

@@ -1,15 +1,15 @@
 // Plugin to handle Citation.
-import {Plugin, PluginKey} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {Node, Schema} from 'prosemirror-model';
-import {VideoNodeView} from './ui/VideoNodeView';
-import {VIDEO} from './Constants';
-import {VideoNodeSpec} from './VideoNodeSpec';
-import {EditorFocused} from './ui/CustomNodeView';
-import {ImageUploadCommand} from './ImageUploadCommand';
-import {ImageNodeView} from './ui/ImageNodeView';
-import {ImageNodeSpec} from './ImageNodeSpec';
-import {DarkThemeIcon, LightThemeIcon} from './images';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { Node, Schema } from '@tiptap/pm/model';
+import { VideoNodeView } from './ui/VideoNodeView';
+import { VIDEO } from './Constants';
+import { VideoNodeSpec } from './VideoNodeSpec';
+import { EditorFocused } from './ui/CustomNodeView';
+import { ImageUploadCommand } from './ImageUploadCommand';
+import { ImageNodeView } from './ui/ImageNodeView';
+import { ImageNodeSpec } from './ImageNodeSpec';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 const IMAGE = 'image';
 
 export class MultimediaPlugin extends Plugin {
@@ -47,15 +47,15 @@ export class MultimediaPlugin extends Plugin {
     });
   }
 
-    initButtonCommands(theme: string): unknown {
-       let image = null;
-        if ('light' == theme) {
-          image = LightThemeIcon;
-        } else {
-          image = DarkThemeIcon;
-        }
+  initButtonCommands(theme: string): unknown {
+    let image = null;
+    if ('light' == theme) {
+      image = LightThemeIcon;
+    } else {
+      image = DarkThemeIcon;
+    }
     return {
-      [`[${image}] Insert MultiMedia`] : [
+      [`[${image}] Insert MultiMedia`]: [
         {
           // 'Insert image by URL': new ImageFromURLCommand(),
           'Upload image from computer': new ImageUploadCommand(),

@@ -1,8 +1,8 @@
 import { HeadingCommand } from './HeadingCommand';
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import { MARK_FONT_TYPE } from './MarkNames';
-import { Transform } from 'prosemirror-transform';
-import { Schema } from 'prosemirror-model';
+import { Transform } from '@tiptap/pm/transform';
+import { Schema } from '@tiptap/pm/model';
 import { schema } from 'prosemirror-test-builder';
 import * as toggleHeading from './toggleHeading';
 describe('HeadingCommand', () => {
@@ -86,7 +86,7 @@ describe('HeadingCommand', () => {
     expect(
       command.executeCustom(
         null as unknown as EditorState,
-        null as unknown as Transform,
+        null as unknown as Transform
       )
     ).toBeNull();
   });

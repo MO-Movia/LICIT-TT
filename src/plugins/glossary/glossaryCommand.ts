@@ -1,7 +1,7 @@
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {EditorState, TextSelection, Transaction} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { EditorState, TextSelection, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import {
   AcronymItem,
   GlossaryItem,
@@ -67,8 +67,8 @@ export class GlossaryCommand extends UICommand {
       return false;
     }
     try {
-      const {selection} = state;
-      const {from, to} = selection;
+      const { selection } = state;
+      const { from, to } = selection;
 
       // Validate positions
       if (

@@ -1,7 +1,7 @@
 import cx from 'classnames';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import * as React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -14,7 +14,6 @@ import ResizeObserver from '../resizeObserver';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import isReactClass from '../isReactClass';
 
-import '../styles/czi-editor-toolbar.css';
 import { LicitPlugin } from '../convertFromJSON';
 import { EditorViewEx } from '../constants';
 import { ToolbarMenuConfig } from '../types';

@@ -1,12 +1,12 @@
-import {Fragment, Schema, Slice} from 'prosemirror-model';
+import { Fragment, Schema, Slice } from '@tiptap/pm/model';
 import {
   EditorState,
   Plugin,
   PluginKey,
   TextSelection,
   Transaction,
-} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
+} from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 export class PasteJSONPlugin extends Plugin {
   schema!: Schema;
   slice?: Slice;
@@ -49,7 +49,7 @@ export class PasteJSONPlugin extends Plugin {
     });
   }
 
-  getSlice(json: {[key: string]: unknown}): Slice {
+  getSlice(json: { [key: string]: unknown }): Slice {
     return new Slice(Fragment.from(this.schema.nodeFromJSON(json)), 0, 0);
   }
 
@@ -58,9 +58,9 @@ export class PasteJSONPlugin extends Plugin {
     return schema;
   }
 
-  insert(json: {[key: string]: unknown}, view: EditorView): void {
-    const {from} = view.state.selection;
-    const jsonEx = {...json};
+  insert(json: { [key: string]: unknown }, view: EditorView): void {
+    const { from } = view.state.selection;
+    const jsonEx = { ...json };
     if ('fragment' === json.type) {
       jsonEx.type = 'reference';
     }
@@ -77,7 +77,7 @@ export class PasteJSONPlugin extends Plugin {
   insertParagraph(state: EditorState, tr: Transaction) {
     const paragraph = state.schema.nodes['paragraph'];
     const textNode = state.schema.text(' ');
-    const {from, to} = tr.selection;
+    const { from, to } = tr.selection;
     if (from !== to) {
       return tr;
     }

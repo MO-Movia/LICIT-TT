@@ -1,9 +1,9 @@
 /* eslint-disable */
-import {CitationPlugin} from './CitationPlugin';
-import {schema, builders} from 'prosemirror-test-builder';
-import {EditorState} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {SearchCitation, SearchCitationProps} from './SearchCitation';
+import { CitationPlugin } from './CitationPlugin';
+import { schema, builders } from 'prosemirror-test-builder';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { SearchCitation, SearchCitationProps } from './SearchCitation';
 
 const citation = {
   overallDocumentCapco: 'TBD',
@@ -46,7 +46,7 @@ const SearchProps = {
 
 describe('Search Citation   ', () => {
   it('should render the component', () => {
-    expect(new SearchCitation({...SearchProps}).render()).toBeDefined();
+    expect(new SearchCitation({ ...SearchProps }).render()).toBeDefined();
   });
 
   it('should call onSearch Citations ', () => {
@@ -147,7 +147,7 @@ describe('Search Citation   ', () => {
 describe('Search Citation - Get Custom Capco    ', () => {
   it('should not filter citations when there are no filter criteria', () => {
     const searchCitation = new SearchCitation(SearchProps);
-    searchCitation.setState({citations: [citation, citation]});
+    searchCitation.setState({ citations: [citation, citation] });
     searchCitation.onSearchCitations();
 
     expect(searchCitation.state.citations.length).toBe(2);

@@ -1,4 +1,4 @@
-import { Schema } from 'prosemirror-model';
+import { Schema } from '@tiptap/pm/model';
 import { toCustomStyleDOM, getCustomStyleAttrs } from './CustomStyleNodeSpec';
 import { toMarkDOM, getMarkAttrs } from './CustomStyleMarkSpec';
 import { STYLEKEY, PARAGRAPH } from './Constants';

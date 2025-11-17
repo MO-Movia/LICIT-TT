@@ -1,5 +1,5 @@
-import {isListNode} from './isListNode';
-import {Node, Schema} from 'prosemirror-model';
+import { isListNode } from './isListNode';
+import { Node, Schema } from '@tiptap/pm/model';
 describe('isListNode', () => {
   it('should return true if the node is bullet_list', () => {
     const blockNodeType = {
@@ -8,7 +8,7 @@ describe('isListNode', () => {
     };
     const schema = new Schema({
       nodes: {
-        doc: {content: 'paragraph+'},
+        doc: { content: 'paragraph+' },
         paragraph: {
           content: 'text*',
           toDOM() {
@@ -33,7 +33,7 @@ describe('isListNode', () => {
     };
     const schema = new Schema({
       nodes: {
-        doc: {content: 'paragraph+'},
+        doc: { content: 'paragraph+' },
         paragraph: {
           content: 'text*',
           toDOM() {

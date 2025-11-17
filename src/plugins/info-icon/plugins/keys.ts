@@ -1,7 +1,7 @@
-import {baseKeymap, toggleMark} from 'prosemirror-commands';
-import {undo, redo} from 'prosemirror-history';
-import {keymap} from 'prosemirror-keymap';
-import {MarkSpec, MarkType} from 'prosemirror-model';
+import { baseKeymap, toggleMark } from '@tiptap/pm/commands';
+import { undo, redo } from '@tiptap/pm/history';
+import { keymap } from '@tiptap/pm/keymap';
+import { MarkSpec, MarkType } from '@tiptap/pm/model';
 
 export default () =>
   keymap({
@@ -14,15 +14,14 @@ export default () =>
 
 export type Marks = 'em' | 'strong';
 
-export const marks: {em: MarkSpec; strong: MarkSpec } = {
+export const marks: { em: MarkSpec; strong: MarkSpec } = {
   em: {
-    parseDOM: [{tag: 'em'}, {tag: 'i'}, {style: 'font-style=italic'}],
+    parseDOM: [{ tag: 'em' }, { tag: 'i' }, { style: 'font-style=italic' }],
     toDOM: () => ['em', 0],
   },
 
   strong: {
-    parseDOM: [{tag: 'strong'}, {tag: 'b'}, {style: 'font-weight=bold'}],
+    parseDOM: [{ tag: 'strong' }, { tag: 'b' }, { style: 'font-weight=bold' }],
     toDOM: () => ['strong', 0],
   },
 };
-

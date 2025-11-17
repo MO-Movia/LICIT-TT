@@ -1,6 +1,6 @@
 // UI for Citation dialog
 import React from 'react';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import {
   createPopUp,
   atAnchorBottomCenter,

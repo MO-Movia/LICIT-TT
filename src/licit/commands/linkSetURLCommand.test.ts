@@ -1,7 +1,7 @@
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
 import LinkSetURLCommand from './linkSetURLCommand';
-import { Transform } from 'prosemirror-transform';
-import { Schema } from 'prosemirror-model';
+import { Transform } from '@tiptap/pm/transform';
+import { Schema } from '@tiptap/pm/model';
 import { findNodesWithSameMark } from '@modusoperandi/licit-ui-commands';
 import { EditorViewEx } from '@src/constants';
 import { hideSelectionPlaceholder } from '../plugins/selectionPlaceholderPlugin';

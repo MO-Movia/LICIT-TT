@@ -1,10 +1,10 @@
 import { TextColorCommand } from './TextColorCommand';
-import { EditorState, TextSelection } from 'prosemirror-state';
-import { Schema, Mark, Node } from 'prosemirror-model';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { Schema, Mark, Node } from '@tiptap/pm/model';
 import { schema } from 'prosemirror-test-builder';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 import { MARK_TEXT_COLOR } from './MarkNames';
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import * as applymark from './applyMark';
 import * as findNodesWithSameMark from './findNodesWithSameMark';
 

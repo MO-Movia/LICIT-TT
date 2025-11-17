@@ -1,16 +1,16 @@
-import {Fragment, Schema} from 'prosemirror-model';
-import {EditorState, Transaction, TextSelection} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { Fragment, Schema } from '@tiptap/pm/model';
+import { EditorState, Transaction, TextSelection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import React from 'react';
 import {
   hideCursorPlaceholder,
   showCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {createPopUp, PopUpHandle} from '@modusoperandi/licit-ui-commands';
+import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { createPopUp, PopUpHandle } from '@modusoperandi/licit-ui-commands';
 
-import type {ImageLike} from './Types';
+import type { ImageLike } from './Types';
 
 interface ImageAttrs {
   src: string;
@@ -27,9 +27,9 @@ export function insertImage(
   width?: number,
   height?: number
 ): Transform {
-  const {selection} = tr as Transaction;
+  const { selection } = tr as Transaction;
   if (!selection) return tr;
-  const {from, to} = selection;
+  const { from, to } = selection;
   if (from !== to) return tr;
 
   const image = schema.nodes['image'];
@@ -53,11 +53,11 @@ export function insertImage(
 
 export function getImageSize(
   src: string
-): Promise<{width: number; height: number}> {
+): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
-      resolve({width: img.width, height: img.height});
+      resolve({ width: img.width, height: img.height });
     };
     img.onerror = reject;
     img.src = src;
@@ -90,7 +90,7 @@ export class ImageSourceCommand extends UICommand {
     }
 
     return new Promise((resolve) => {
-      const props = {runtime: view ? view['runtime'] : null};
+      const props = { runtime: view ? view['runtime'] : null };
       this._popUp = createPopUp(this.getEditor(), props, {
         modal: true,
         onClose: (val) => {
@@ -110,9 +110,9 @@ export class ImageSourceCommand extends UICommand {
     inputs: ImageLike
   ): boolean => {
     if (dispatch && inputs?.src) {
-      getImageSize(inputs.src).then(({width, height}) => {
-        const {selection, schema} = state;
-        let {tr} = state;
+      getImageSize(inputs.src).then(({ width, height }) => {
+        const { selection, schema } = state;
+        let { tr } = state;
         tr = view ? (hideCursorPlaceholder(view.state) as Transaction) : tr;
         tr = tr.setSelection(selection);
 
@@ -127,7 +127,7 @@ export class ImageSourceCommand extends UICommand {
 
   __isEnabled = (state: EditorState, _view: EditorView): boolean => {
     const tr = state;
-    const {selection} = tr;
+    const { selection } = tr;
     if (selection instanceof TextSelection) {
       return selection.from === selection.to;
     }

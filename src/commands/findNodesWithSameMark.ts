@@ -1,4 +1,4 @@
-import {Mark, MarkType, Node} from 'prosemirror-model';
+import { Mark, MarkType, Node } from '@tiptap/pm/model';
 
 interface Result {
   mark: Mark;
@@ -38,7 +38,7 @@ function findFirstMark(
     toNode = node;
   }
 
-  return {firstMark, fromNode, toNode};
+  return { firstMark, fromNode, toNode };
 }
 
 function extendMarkRange(
@@ -72,7 +72,7 @@ function extendMarkRange(
     toPos = ii;
   }
 
-  return {fromPos, toPos};
+  return { fromPos, toPos };
 }
 
 export function findNodesWithSameMark(
@@ -86,8 +86,14 @@ export function findNodesWithSameMark(
     return null;
   }
 
-  const {firstMark, fromNode, toNode} = firstMarkResult;
-  const {fromPos, toPos} = extendMarkRange(doc, from, to, markType, firstMark);
+  const { firstMark, fromNode, toNode } = firstMarkResult;
+  const { fromPos, toPos } = extendMarkRange(
+    doc,
+    from,
+    to,
+    markType,
+    firstMark
+  );
 
   return {
     mark: firstMark,

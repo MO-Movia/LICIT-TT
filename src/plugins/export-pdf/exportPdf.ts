@@ -1,7 +1,7 @@
-import {EditorView} from 'prosemirror-view';
-import {EditorState} from 'prosemirror-state';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
-import {PreviewForm} from './preview';
+import { EditorView } from '@tiptap/pm/view';
+import { EditorState } from '@tiptap/pm/state';
+import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { PreviewForm } from './preview';
 
 // [FS] IRAD-1893 2022-07-25
 // Export to PDF file.

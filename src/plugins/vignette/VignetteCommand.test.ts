@@ -1,17 +1,17 @@
 import { VignetteCommand } from './VignetteCommand';
-import { Fragment } from 'prosemirror-model';
-import { TextSelection } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { Fragment } from '@tiptap/pm/model';
+import { TextSelection } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { DEF_BORDER_COLOR, TABLE, TABLE_CELL, PARAGRAPH } from './Constants';
 
-jest.mock('prosemirror-model', () => ({
+jest.mock('@tiptap/pm/model', () => ({
   Fragment: {
     fromArray: jest.fn((arr) => arr),
     from: jest.fn((obj) => obj),
   },
 }));
 
-jest.mock('prosemirror-state', () => ({
+jest.mock('@tiptap/pm/state', () => ({
   TextSelection: {
     create: jest.fn((_doc, from, to) => ({ from, to })),
   },
@@ -29,10 +29,16 @@ describe('VignetteCommand', () => {
     jest.clearAllMocks();
 
     schemaNodes = {
-      [TABLE_CELL]: { create: jest.fn((attrs, content) => ({ type: 'cell', attrs, content })) },
+      [TABLE_CELL]: {
+        create: jest.fn((attrs, content) => ({ type: 'cell', attrs, content })),
+      },
       [PARAGRAPH]: { create: jest.fn(() => ({ type: 'paragraph' })) },
-      tableRow: { create: jest.fn((_attrs, content) => ({ type: 'row', content })) },
-      [TABLE]: { create: jest.fn((_attrs, content) => ({ type: 'table', content })) },
+      tableRow: {
+        create: jest.fn((_attrs, content) => ({ type: 'row', content })),
+      },
+      [TABLE]: {
+        create: jest.fn((_attrs, content) => ({ type: 'table', content })),
+      },
       text: jest.fn((t: string) => ({ type: 'text', text: t })),
     };
 
@@ -63,8 +69,12 @@ describe('VignetteCommand', () => {
   });
 
   test('execute should insert table and paragraph and call dispatch + view.focus', () => {
-    const insertTableSpy = jest.spyOn(cmd, 'insertTable').mockReturnValue(mockTr);
-    const insertParagraphSpy = jest.spyOn(cmd, 'insertParagraph').mockReturnValue(mockTr);
+    const insertTableSpy = jest
+      .spyOn(cmd, 'insertTable')
+      .mockReturnValue(mockTr);
+    const insertParagraphSpy = jest
+      .spyOn(cmd, 'insertParagraph')
+      .mockReturnValue(mockTr);
 
     const result = cmd.execute(mockState, mockDispatch, mockView);
     expect(result).toBe(true);
@@ -80,12 +90,19 @@ describe('VignetteCommand', () => {
   });
 
   test('waitForUserInput should resolve undefined', async () => {
-    const result = await cmd.waitForUserInput(mockState, mockDispatch, mockView, {} as any);
+    const result = await cmd.waitForUserInput(
+      mockState,
+      mockDispatch,
+      mockView,
+      {} as any
+    );
     expect(result).toBeUndefined();
   });
 
   test('executeWithUserInput should return false', () => {
-    expect(cmd.executeWithUserInput(mockState, mockDispatch, mockView, 'input')).toBe(false);
+    expect(
+      cmd.executeWithUserInput(mockState, mockDispatch, mockView, 'input')
+    ).toBe(false);
   });
 
   test('cancel should return null', () => {

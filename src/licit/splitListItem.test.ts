@@ -1,11 +1,11 @@
-import {Schema, Node as PMNode} from 'prosemirror-model';
-import {Transform, canSplit} from 'prosemirror-transform';
-import {TextSelection} from 'prosemirror-state';
-import splitListItem, {splitEmptyListItem} from './splitListItem';
-import {findParentNodeOfType} from 'prosemirror-utils';
+import { Schema, Node as PMNode } from '@tiptap/pm/model';
+import { Transform, canSplit } from '@tiptap/pm/transform';
+import { TextSelection } from '@tiptap/pm/state';
+import splitListItem, { splitEmptyListItem } from './splitListItem';
+import { findParentNodeOfType } from 'prosemirror-utils';
 
-jest.mock('prosemirror-transform', () => {
-  const actual = jest.requireActual('prosemirror-transform');
+jest.mock('@tiptap/pm/transform', () => {
+  const actual = jest.requireActual('@tiptap/pm/transform');
   return {
     ...actual,
     canSplit: jest.fn(() => true),
@@ -20,24 +20,24 @@ jest.mock('prosemirror-utils', () => ({
 describe('splitListItem', () => {
   const schema = new Schema({
     nodes: {
-      doc: {content: 'block+'},
+      doc: { content: 'block+' },
       paragraph: {
         content: 'text*',
         group: 'block',
         toDOM: () => ['p', 0],
-        parseDOM: [{tag: 'p'}],
+        parseDOM: [{ tag: 'p' }],
       },
-      text: {group: 'inline'},
+      text: { group: 'inline' },
       bullet_list: {
         content: 'list_item+',
         group: 'block',
         toDOM: () => ['ul', 0],
-        parseDOM: [{tag: 'ul'}],
+        parseDOM: [{ tag: 'ul' }],
       },
       list_item: {
         content: 'paragraph block*',
         toDOM: () => ['li', 0],
-        parseDOM: [{tag: 'li'}],
+        parseDOM: [{ tag: 'li' }],
       },
     },
     marks: {},
@@ -52,7 +52,7 @@ describe('splitListItem', () => {
 
     // Create a real selection (no casting)
     const selection = TextSelection.create(tr.doc, 2, 2);
-    (tr as Transform & {selection: TextSelection}).selection = selection;
+    (tr as Transform & { selection: TextSelection }).selection = selection;
 
     return tr;
   };
@@ -86,7 +86,7 @@ describe('splitListItem', () => {
     const doc = schema.topNodeType.createAndFill() as PMNode;
     const tr = new Transform(doc);
     const selection = TextSelection.create(tr.doc, 1, 1);
-    (tr as Transform & {selection: TextSelection}).selection = selection;
+    (tr as Transform & { selection: TextSelection }).selection = selection;
     const result = splitListItem(tr, schema);
     expect(result).toBe(tr);
   });
@@ -97,37 +97,35 @@ describe('splitListItem', () => {
     const result = splitListItem(tr, schema);
     expect(result).toBeInstanceOf(Transform);
   });
-
-
 });
 
 describe('splitEmptyListItem', () => {
   const schema = new Schema({
     nodes: {
-      doc: {content: 'block+'},
+      doc: { content: 'block+' },
       paragraph: {
         content: 'text*',
         group: 'block',
         toDOM: () => ['p', 0],
-        parseDOM: [{tag: 'p'}],
+        parseDOM: [{ tag: 'p' }],
       },
-      text: {group: 'inline'},
+      text: { group: 'inline' },
       bullet_list: {
         content: 'list_item+',
         group: 'block',
         toDOM: () => ['ul', 0],
-        parseDOM: [{tag: 'ul'}],
+        parseDOM: [{ tag: 'ul' }],
       },
       ordered_list: {
         content: 'list_item+',
         group: 'block',
         toDOM: () => ['ol', 0],
-        parseDOM: [{tag: 'ol'}],
+        parseDOM: [{ tag: 'ol' }],
       },
       list_item: {
         content: 'paragraph block*',
         toDOM: () => ['li', 0],
-        parseDOM: [{tag: 'li'}],
+        parseDOM: [{ tag: 'li' }],
       },
     },
     marks: {},
@@ -140,7 +138,7 @@ describe('splitEmptyListItem', () => {
     const doc = schema.nodes.doc.create(null, bulletList);
     const tr = new Transform(doc);
     const selection = TextSelection.create(tr.doc, 2);
-    (tr as Transform & {selection: TextSelection}).selection = selection;
+    (tr as Transform & { selection: TextSelection }).selection = selection;
     return tr;
   };
 
@@ -149,12 +147,12 @@ describe('splitEmptyListItem', () => {
   it('returns same transform if required node types missing', () => {
     const fakeSchema = new Schema({
       nodes: {
-        doc: {content: 'block+'},
-        paragraph: {content: 'text*', group: 'block'},
+        doc: { content: 'block+' },
+        paragraph: { content: 'text*', group: 'block' },
         text: {}, // ✅ Required by ProseMirror
-        bullet_list: {content: 'list_item+', group: 'block'},
-        ordered_list: {content: 'list_item+', group: 'block'},
-        list_item: {content: 'paragraph block*'},
+        bullet_list: { content: 'list_item+', group: 'block' },
+        ordered_list: { content: 'list_item+', group: 'block' },
+        list_item: { content: 'paragraph block*' },
       },
     });
     const tr = createTr();
@@ -172,7 +170,7 @@ describe('splitEmptyListItem', () => {
   it('returns same transform if list item not empty', () => {
     const tr = createTr();
     (findParentNodeOfType as jest.Mock).mockReturnValueOnce(() => ({
-      node: {textContent: 'not empty'},
+      node: { textContent: 'not empty' },
     }));
     const result = splitEmptyListItem(tr, schema);
     expect(result).toBe(tr);
@@ -181,7 +179,7 @@ describe('splitEmptyListItem', () => {
   it('returns same transform if list not found', () => {
     const tr = createTr();
     (findParentNodeOfType as jest.Mock)
-      .mockReturnValueOnce(() => ({node: {textContent: ''}}))
+      .mockReturnValueOnce(() => ({ node: { textContent: '' } }))
       .mockReturnValueOnce(() => null)
       .mockReturnValueOnce(() => null);
 
@@ -192,7 +190,7 @@ describe('splitEmptyListItem', () => {
   it('performs split and inserts paragraph when valid', () => {
     const tr = createTr();
 
-    const listItemFound = {node: {textContent: '', nodeSize: 4}, pos: 2};
+    const listItemFound = { node: { textContent: '', nodeSize: 4 }, pos: 2 };
     const listFound = {
       node: {
         attrs: {},
@@ -217,26 +215,22 @@ describe('splitEmptyListItem', () => {
   });
 
   it('returns same transform if list_item or paragraph type is missing', () => {
-  // Create a schema missing the paragraph node
-  const incompleteSchema = new Schema({
-    nodes: {
-      doc: { content: 'block+' },
-      text: { group: 'inline' },
-      // deliberately omit 'paragraph' and 'list_item'
-      bullet_list: { content: 'block+', group: 'block' },
-      ordered_list: { content: 'block+', group: 'block' },
-    },
-    marks: {},
+    // Create a schema missing the paragraph node
+    const incompleteSchema = new Schema({
+      nodes: {
+        doc: { content: 'block+' },
+        text: { group: 'inline' },
+        // deliberately omit 'paragraph' and 'list_item'
+        bullet_list: { content: 'block+', group: 'block' },
+        ordered_list: { content: 'block+', group: 'block' },
+      },
+      marks: {},
+    });
+
+    const tr = createTr();
+    const result = splitEmptyListItem(tr, incompleteSchema);
+
+    // ✅ It should just return the same transform (no modifications)
+    expect(result).toBe(tr);
   });
-
-  const tr = createTr();
-  const result = splitEmptyListItem(tr, incompleteSchema);
-
-  // ✅ It should just return the same transform (no modifications)
-  expect(result).toBe(tr);
-});
-
-
-
-
 });

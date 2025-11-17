@@ -1,5 +1,3 @@
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import '../styles/czi-custom-menu-item.css';
 import {
   CustomButton,
   PointerSurfaceProps,

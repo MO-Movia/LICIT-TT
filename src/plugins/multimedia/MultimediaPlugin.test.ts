@@ -1,26 +1,26 @@
-import {createEditor, doc, p} from 'jest-prosemirror';
+import { createEditor, doc, p } from 'jest-prosemirror';
 import {
   EditorState,
   TextSelection,
   Transaction,
   Plugin,
   PluginKey,
-} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {MultimediaPlugin, bindImageView, bindVideoView} from './index';
-import {VideoEditorState} from './ui/VideoEditor';
-import {VideoSourceCommand, insertIFrame} from './VideoSourceCommand';
-import {ImageUploadCommand} from './ImageUploadCommand';
-import {VideoUploadCommand} from './VideoUploadCommand';
-import {isOffline} from './ui/isOffline';
-import {ImageNodeView} from './ui/ImageNodeView';
-import {EditorView} from 'prosemirror-view';
-import {VideoFromURLCommand} from './VideoFromURLCommand';
-import {SelectionObserver} from './ui/SelectionObserver';
-import {uuid} from './ui/uuid';
-import {CustomNodeView, EditorFocused} from './ui/CustomNodeView';
+} from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { MultimediaPlugin, bindImageView, bindVideoView } from './index';
+import { VideoEditorState } from './ui/VideoEditor';
+import { VideoSourceCommand, insertIFrame } from './VideoSourceCommand';
+import { ImageUploadCommand } from './ImageUploadCommand';
+import { VideoUploadCommand } from './VideoUploadCommand';
+import { isOffline } from './ui/isOffline';
+import { ImageNodeView } from './ui/ImageNodeView';
+import { EditorView } from '@tiptap/pm/view';
+import { VideoFromURLCommand } from './VideoFromURLCommand';
+import { SelectionObserver } from './ui/SelectionObserver';
+import { uuid } from './ui/uuid';
+import { CustomNodeView, EditorFocused } from './ui/CustomNodeView';
 import ImageFromURLCommand from './ImageFromURLCommand';
-import {EditorRuntime, ImageLike} from './Types';
+import { EditorRuntime, ImageLike } from './Types';
 
 class TestPlugin extends Plugin {
   constructor() {
@@ -48,7 +48,7 @@ describe('MultimediaPlugin', () => {
   const selection = TextSelection.create(view.state.doc, 0, 0);
   const tr = view.state.tr.setSelection(selection);
   view.updateState(
-    view.state.reconfigure({plugins: [plugin, new TestPlugin()]})
+    view.state.reconfigure({ plugins: [plugin, new TestPlugin()] })
   );
 
   view.dispatch(tr);
@@ -221,7 +221,7 @@ describe('MultimediaPlugin', () => {
     const dom = document.createElement('div');
 
     const editorView = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -257,7 +257,7 @@ describe('MultimediaPlugin', () => {
     const dom = document.createElement('div');
 
     const editorView = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -280,7 +280,7 @@ describe('MultimediaPlugin', () => {
     const dom = document.createElement('div');
 
     const editorView = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -298,7 +298,7 @@ describe('MultimediaPlugin', () => {
     const dom = document.createElement('div');
 
     const editorView = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -338,7 +338,7 @@ describe('MultimediaPlugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -362,7 +362,7 @@ describe('MultimediaPlugin', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }

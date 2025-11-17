@@ -1,6 +1,6 @@
 import { RichCopyEmbedImagePlugin } from './embedImages';
-import { EditorView } from 'prosemirror-view';
-import { EditorState } from 'prosemirror-state';
+import { EditorView } from '@tiptap/pm/view';
+import { EditorState } from '@tiptap/pm/state';
 import { createEditor, doc, p, schema } from 'jest-prosemirror';
 import { EditorRuntime } from './Types';
 const writeText = jest.fn();
@@ -11,8 +11,8 @@ Object.assign(navigator, {
   },
 });
 describe('RichCopyEmbedImagePlugin', () => {
-  jest.mock('prosemirror-model', () => {
-    const originalModule = jest.requireActual('prosemirror-model');
+  jest.mock('@tiptap/pm/model', () => {
+    const originalModule = jest.requireActual('@tiptap/pm/model');
     beforeAll(() => {
       navigator.clipboard.writeText('copy').catch(() => undefined);
     });

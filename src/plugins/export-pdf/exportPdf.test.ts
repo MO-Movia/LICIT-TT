@@ -1,10 +1,10 @@
 // exportPDF.test.ts
 import { createTable, ExportPDF } from './exportPdf';
 import { createPopUp } from '@modusoperandi/licit-ui-commands';
-import { Schema } from 'prosemirror-model';
-import { EditorState } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-import { schema as basicSchema } from 'prosemirror-schema-basic';
+import { Schema } from '@tiptap/pm/model';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { schema as basicSchema } from '@tiptap/pm/schema-basic';
 // Mock createPopUp
 jest.mock('@modusoperandi/licit-ui-commands', () => ({
   createPopUp: jest.fn(),
@@ -14,7 +14,6 @@ describe('ExportPDF', () => {
   let mockPopUp: unknown;
 
   beforeEach(() => {
-
     // Mock PopUp
     mockPopUp = {
       close: jest.fn(),
@@ -26,7 +25,6 @@ describe('ExportPDF', () => {
     jest.clearAllMocks();
     document.body.classList.remove('export-pdf-mode');
   });
-
 
   describe('createToc', () => {
     let content: HTMLElement;
@@ -49,7 +47,6 @@ describe('ExportPDF', () => {
     });
 
     it('should create TOC when no existing TOC', () => {
-
       const p1 = document.createElement('p');
       p1.setAttribute('stylename', 'Heading1');
       p1.textContent = 'Title One';
@@ -94,7 +91,10 @@ describe('ExportPDF', () => {
       existingToc.id = 'list-toc-generated';
       content.querySelector('.toc-container')?.appendChild(existingToc);
 
-      const appendChildSpy = jest.spyOn(existingToc.parentElement!, 'appendChild');
+      const appendChildSpy = jest.spyOn(
+        existingToc.parentElement!,
+        'appendChild'
+      );
 
       createTable({
         content,
@@ -102,13 +102,16 @@ describe('ExportPDF', () => {
         titleElements: ['Heading1'],
       });
 
-      expect(appendChildSpy).not.toHaveBeenCalledWith(expect.any(HTMLDivElement));
+      expect(appendChildSpy).not.toHaveBeenCalledWith(
+        expect.any(HTMLDivElement)
+      );
     });
 
     it('should truncate long text in TOC', () => {
       const p = document.createElement('p');
       p.setAttribute('stylename', 'Heading1');
-      p.textContent = 'A very very very very very very very very very very very very very very very long title that exceeds 70 characters';
+      p.textContent =
+        'A very very very very very very very very very very very very very very very long title that exceeds 70 characters';
       content.appendChild(p);
 
       createTable({
@@ -130,8 +133,8 @@ describe('ExportPDF', () => {
     // Create a simple document node (you can extend this)
     const content = schema.node('doc', null, [
       schema.node('paragraph', null, [
-        schema.text('This is a test paragraph in the mock ProseMirror view.')
-      ])
+        schema.text('This is a test paragraph in the mock ProseMirror view.'),
+      ]),
     ]);
 
     // Create a mock state
@@ -164,7 +167,7 @@ describe('ExportPDF', () => {
     };
 
     const expdf = new ExportPDF();
-    expect(expdf.exportPdf(editorView,doc)).toBeDefined();
-    expect(expdf.exportPdf(editorView,doc)).toBeDefined();
+    expect(expdf.exportPdf(editorView, doc)).toBeDefined();
+    expect(expdf.exportPdf(editorView, doc)).toBeDefined();
   });
 });

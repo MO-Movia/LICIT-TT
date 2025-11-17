@@ -1,6 +1,10 @@
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 import createTableResizingPlugin from './createTableResizingPlugin';
-import { lookUpTableWrapper, calculateMaxClientX, dispatchMouseEvent } from './createTableResizingPlugin';
+import {
+  lookUpTableWrapper,
+  calculateMaxClientX,
+  dispatchMouseEvent,
+} from './createTableResizingPlugin';
 
 describe('createTableResizingPlugin', () => {
   let plugin: any;
@@ -12,8 +16,10 @@ describe('createTableResizingPlugin', () => {
     editorDom = document.createElement('div');
     editorViewMock = {
       dom: editorDom,
-      state: { // Mock the state object
-        tr: { // Mock the transaction object
+      state: {
+        // Mock the state object
+        tr: {
+          // Mock the transaction object
           setMeta: jest.fn(() => ({})), // Mock setMeta
         },
       },
@@ -87,11 +93,22 @@ describe('createTableResizingPlugin', () => {
   });*/
 
   it('should remove event listeners on mouseup', () => {
-    plugin.props.handleDOMEvents.mousedown(editorViewMock, new MouseEvent('mousedown', { clientX: 200 }));
+    plugin.props.handleDOMEvents.mousedown(
+      editorViewMock,
+      new MouseEvent('mousedown', { clientX: 200 })
+    );
     window.dispatchEvent(new MouseEvent('mouseup'));
 
-    expect(window.removeEventListener).toHaveBeenCalledWith('mousemove', expect.any(Function), true);
-    expect(window.removeEventListener).toHaveBeenCalledWith('mouseup', expect.any(Function), true);
+    expect(window.removeEventListener).toHaveBeenCalledWith(
+      'mousemove',
+      expect.any(Function),
+      true
+    );
+    expect(window.removeEventListener).toHaveBeenCalledWith(
+      'mouseup',
+      expect.any(Function),
+      true
+    );
   });
 
   it('should detect colgroup with col elements', () => {
@@ -157,8 +174,6 @@ describe('createTableResizingPlugin', () => {
 
     expect(preventDefaultMock).toHaveBeenCalled();
   });*/
-
-
 });
 
 describe('lookUpTableWrapper', () => {

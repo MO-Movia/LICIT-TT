@@ -1,4 +1,4 @@
-import { EditorView } from 'prosemirror-view';
+import { EditorView } from '@tiptap/pm/view';
 export type EditorViewEx = EditorView & {
   readOnly?: boolean;
   disabled?: boolean;

@@ -1,4 +1,4 @@
-import type { MarkSpec } from 'prosemirror-model';
+import type { MarkSpec } from '@tiptap/pm/model';
 
 // https://bitbucket.org/atlassian/atlaskit/src/34facee3f461/packages/editor-core/src/schema/nodes/?at=master
 const TextUnderlineMarkSpec: MarkSpec = {
@@ -11,7 +11,7 @@ const TextUnderlineMarkSpec: MarkSpec = {
       getAttrs: (dom: HTMLElement) => {
         const _overridden = dom.getAttribute('overridden');
         return { overridden: _overridden === 'true' };
-      }
+      },
     },
   ],
   toDOM(mark) {

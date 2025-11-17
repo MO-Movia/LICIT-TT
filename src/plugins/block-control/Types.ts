@@ -1,26 +1,26 @@
-import {Decoration, EditorView} from 'prosemirror-view';
+import { Decoration, EditorView } from '@tiptap/pm/view';
 export type ImageProps = {
-    height: number;
-    id: string;
-    src: string;
-    width: number;
+  height: number;
+  id: string;
+  src: string;
+  width: number;
 };
 export type ImageInlineEditorValue = {
   align?: string;
   src?;
 };
-  export type ImageInlineProps = {
-    onSelect: (val: ImageInlineEditorValue) => void;
-    value: ImageInlineEditorValue;
-    editorView: EditorView;
-  };
-export type ImageLike = {
-  height: number,
-  id: string,
-  src: string,
-  width: number,
+export type ImageInlineProps = {
+  onSelect: (val: ImageInlineEditorValue) => void;
+  value: ImageInlineEditorValue;
+  editorView: EditorView;
 };
-  export type EditorFocused = EditorView & {
+export type ImageLike = {
+  height: number;
+  id: string;
+  src: string;
+  width: number;
+};
+export type EditorFocused = EditorView & {
   focused: boolean;
   runtime: EditorRuntime;
   readOnly?: boolean;
@@ -36,12 +36,10 @@ export type NodeViewProps = {
 
 export type EditorRuntime = {
   // Image Proxy
-  canProxyImageSrc?: (src: string) => boolean,
-  getProxyImageSrc?: (src: string) => Promise<string>,
+  canProxyImageSrc?: (src: string) => boolean;
+  getProxyImageSrc?: (src: string) => Promise<string>;
 
   // Image Upload
-  canUploadImage?: () => boolean,
-  uploadImage?: (obj: Blob) => Promise<ImageLike>,
-
-
+  canUploadImage?: () => boolean;
+  uploadImage?: (obj: Blob) => Promise<ImageLike>;
 };

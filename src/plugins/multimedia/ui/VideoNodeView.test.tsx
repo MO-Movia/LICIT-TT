@@ -1,11 +1,11 @@
-import {VideoNodeView, VideoViewBody} from './VideoNodeView';
-import {EditorState} from 'prosemirror-state';
-import {schema} from 'prosemirror-schema-basic';
-import {Schema, Node} from 'prosemirror-model';
-import {EditorFocused} from './CustomNodeView';
-import {MultimediaPlugin} from '../index';
-import {createEditor, doc, p} from 'jest-prosemirror';
-import {PopUpHandle} from '@modusoperandi/licit-ui-commands';
+import { VideoNodeView, VideoViewBody } from './VideoNodeView';
+import { EditorState } from '@tiptap/pm/state';
+import { schema } from '@tiptap/pm/schema-basic';
+import { Schema, Node } from '@tiptap/pm/model';
+import { EditorFocused } from './CustomNodeView';
+import { MultimediaPlugin } from '../index';
+import { createEditor, doc, p } from 'jest-prosemirror';
+import { PopUpHandle } from '@modusoperandi/licit-ui-commands';
 // Mock data
 
 const plugin = new MultimediaPlugin();
@@ -37,8 +37,8 @@ const dummyNodeWithImage = {
     name: 'image',
     spec: {
       attrs: {
-        src: {default: null},
-        alt: {default: null},
+        src: { default: null },
+        alt: { default: null },
       },
       inline: true,
       group: 'inline',
@@ -52,7 +52,7 @@ const dummyNodeWithImage = {
           }),
         },
       ],
-      toDOM: (node) => ['img', {src: node.attrs.src, alt: node.attrs.alt}],
+      toDOM: (node) => ['img', { src: node.attrs.src, alt: node.attrs.alt }],
     },
     create: (attrs) => ({
       type: 'image',
@@ -101,7 +101,7 @@ describe('Video view body', () => {
     selected: true,
     focused: true,
   };
-  videoviewbody._inlineEditor = {close: () => null} as unknown as PopUpHandle;
+  videoviewbody._inlineEditor = { close: () => null } as unknown as PopUpHandle;
   it('should handle video view body', () => {
     expect(videoviewbody).toBeDefined();
   });
@@ -123,8 +123,8 @@ describe('Video view body', () => {
         name: 'image',
         spec: {
           attrs: {
-            src: {default: null},
-            alt: {default: null},
+            src: { default: null },
+            alt: { default: null },
           },
           inline: true,
           group: 'inline',
@@ -138,7 +138,10 @@ describe('Video view body', () => {
               }),
             },
           ],
-          toDOM: (node) => ['img', {src: node.attrs.src, alt: node.attrs.alt}],
+          toDOM: (node) => [
+            'img',
+            { src: node.attrs.src, alt: node.attrs.alt },
+          ],
         },
         create: (attrs) => ({
           type: 'image',
@@ -169,8 +172,8 @@ describe('Video view body', () => {
         name: 'image',
         spec: {
           attrs: {
-            src: {default: null},
-            alt: {default: null},
+            src: { default: null },
+            alt: { default: null },
           },
           inline: true,
           group: 'inline',
@@ -184,7 +187,10 @@ describe('Video view body', () => {
               }),
             },
           ],
-          toDOM: (node) => ['img', {src: node.attrs.src, alt: node.attrs.alt}],
+          toDOM: (node) => [
+            'img',
+            { src: node.attrs.src, alt: node.attrs.alt },
+          ],
         },
         create: (attrs) => ({
           type: 'image',
@@ -215,8 +221,8 @@ describe('Video view body', () => {
         name: 'image',
         spec: {
           attrs: {
-            src: {default: null},
-            alt: {default: null},
+            src: { default: null },
+            alt: { default: null },
           },
           inline: true,
           group: 'inline',
@@ -230,7 +236,10 @@ describe('Video view body', () => {
               }),
             },
           ],
-          toDOM: (node) => ['img', {src: node.attrs.src, alt: node.attrs.alt}],
+          toDOM: (node) => [
+            'img',
+            { src: node.attrs.src, alt: node.attrs.alt },
+          ],
         },
         create: (attrs) => ({
           type: 'image',
@@ -269,9 +278,9 @@ describe('Video view body', () => {
         name: 'image',
         spec: {
           attrs: {
-            src: {default: null},
-            alt: {default: null},
-            width: {default: null},
+            src: { default: null },
+            alt: { default: null },
+            width: { default: null },
           },
           inline: true,
           group: 'inline',
@@ -288,7 +297,11 @@ describe('Video view body', () => {
           ],
           toDOM: (node) => [
             'img',
-            {src: node.attrs.src, alt: node.attrs.alt, width: node.attrs.width},
+            {
+              src: node.attrs.src,
+              alt: node.attrs.alt,
+              width: node.attrs.width,
+            },
           ],
         },
         create: (attrs) => ({
@@ -343,9 +356,9 @@ describe('Video view body', () => {
         name: 'image',
         spec: {
           attrs: {
-            src: {default: null},
-            alt: {default: null},
-            height: {default: null},
+            src: { default: null },
+            alt: { default: null },
+            height: { default: null },
           },
           inline: true,
           group: 'inline',
@@ -421,8 +434,8 @@ describe('Video view body', () => {
         name: 'image',
         spec: {
           attrs: {
-            src: {default: null},
-            alt: {default: null},
+            src: { default: null },
+            alt: { default: null },
           },
           inline: true,
           group: 'inline',
@@ -436,7 +449,10 @@ describe('Video view body', () => {
               }),
             },
           ],
-          toDOM: (node) => ['img', {src: node.attrs.src, alt: node.attrs.alt}],
+          toDOM: (node) => [
+            'img',
+            { src: node.attrs.src, alt: node.attrs.alt },
+          ],
         },
         create: (attrs) => ({
           type: 'image',
@@ -489,9 +505,9 @@ describe('Video view body', () => {
         name: 'image',
         spec: {
           attrs: {
-            src: {default: null},
-            alt: {default: null},
-            width: {default: null},
+            src: { default: null },
+            alt: { default: null },
+            width: { default: null },
           },
           inline: true,
           group: 'inline',
@@ -508,7 +524,11 @@ describe('Video view body', () => {
           ],
           toDOM: (node) => [
             'img',
-            {src: node.attrs.src, alt: node.attrs.alt, width: node.attrs.width},
+            {
+              src: node.attrs.src,
+              alt: node.attrs.alt,
+              width: node.attrs.width,
+            },
           ],
         },
         create: (attrs) => ({
@@ -563,7 +583,7 @@ describe('Video view body', () => {
       10,
       20,
       30,
-      {width: 15, height: 25, left: 35, top: 45},
+      { width: 15, height: 25, left: 35, top: 45 },
       50,
       {
         width: 20,
@@ -598,8 +618,8 @@ describe('Video view body', () => {
         name: 'image',
         spec: {
           attrs: {
-            src: {default: null},
-            alt: {default: null},
+            src: { default: null },
+            alt: { default: null },
           },
           inline: true,
           group: 'inline',
@@ -613,7 +633,10 @@ describe('Video view body', () => {
               }),
             },
           ],
-          toDOM: (node) => ['img', {src: node.attrs.src, alt: node.attrs.alt}],
+          toDOM: (node) => [
+            'img',
+            { src: node.attrs.src, alt: node.attrs.alt },
+          ],
         },
         create: (attrs) => ({
           type: 'image',
@@ -727,7 +750,7 @@ describe('Video view body', () => {
         attrs: {
           src: 'test',
           align: 'left',
-          crop: {width: 100001},
+          crop: { width: 100001 },
           rotate: 'left',
           width: 100001,
           height: 10,
@@ -762,7 +785,7 @@ describe('Video view body', () => {
         attrs: {
           src: 'test',
           align: 'left',
-          crop: {width: 100001, heigt: 10, left: 10, top: 10},
+          crop: { width: 100001, heigt: 10, left: 10, top: 10 },
           rotate: 'left',
           width: 100001,
           height: 10,
@@ -805,12 +828,12 @@ describe('Video view body', () => {
   it('should handle _onResizeEnd ', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'block+'},
-        paragraph: {content: 'inline*', group: 'block'},
-        text: {group: 'inline'},
+        doc: { content: 'block+' },
+        paragraph: { content: 'inline*', group: 'block' },
+        text: { group: 'inline' },
         image: {
           inline: true,
-          attrs: {align: {default: null}, fitToParent: {default: null}},
+          attrs: { align: { default: null }, fitToParent: { default: null } },
           group: 'inline',
         }, // Define your custom node type
       },
@@ -867,7 +890,7 @@ describe('Video view body', () => {
       decorations: [],
       editorView: editorfocused,
       getPos: () => 1,
-      node: {attrs: {align: 'left', fitToParent: 'fit'}} as unknown as Node,
+      node: { attrs: { align: 'left', fitToParent: 'fit' } } as unknown as Node,
       dom: document.createElement('img'),
       selected: true,
       focused: true,
@@ -881,12 +904,12 @@ describe('Video view body', () => {
   it('should handle _onChange  ', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'block+'},
-        paragraph: {content: 'inline*', group: 'block'},
-        text: {group: 'inline'},
+        doc: { content: 'block+' },
+        paragraph: { content: 'inline*', group: 'block' },
+        text: { group: 'inline' },
         image: {
           inline: true,
-          attrs: {align: {default: null}, fitToParent: {default: null}},
+          attrs: { align: { default: null }, fitToParent: { default: null } },
           group: 'inline',
         }, // Define your custom node type
       },
@@ -944,7 +967,7 @@ describe('Video view body', () => {
       decorations: [],
       editorView: editorfocused,
       getPos: () => 1,
-      node: {attrs: {align: 'left', fitToParent: 'fit'}} as unknown as Node,
+      node: { attrs: { align: 'left', fitToParent: 'fit' } } as unknown as Node,
       dom: document.createElement('img'),
       selected: true,
       focused: true,
@@ -952,9 +975,9 @@ describe('Video view body', () => {
     videoviewbody._inlineEditor = {
       close: () => undefined,
     } as unknown as PopUpHandle;
-    expect(videoviewbody._onChange({align: 'left'})).toBeUndefined();
+    expect(videoviewbody._onChange({ align: 'left' })).toBeUndefined();
     videoviewbody._mounted = true;
-    expect(videoviewbody._onChange({align: 'left'})).toBeUndefined();
+    expect(videoviewbody._onChange({ align: 'left' })).toBeUndefined();
     expect(videoviewbody._onChange(undefined)).toBeUndefined();
   });
 });

@@ -1,6 +1,6 @@
 // Plugin to handle Citation.
-import { Plugin, PluginKey } from 'prosemirror-state';
-import { Schema } from 'prosemirror-model';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Schema } from '@tiptap/pm/model';
 import { EnhancedTableCommands } from './EnhancedTableCommands';
 import {
   enhancedTableFigureNodeSpec,
@@ -9,8 +9,10 @@ import {
   enhancedTableFigureCapcoNodeSpec,
 } from './EnhancedTableNodeSpec';
 import {
-  ENHANCED_TABLE_FIGURE_BODY, ENHANCED_TABLE_FIGURE, ENHANCED_TABLE_FIGURE_CAPCO,
-  ENHANCED_TABLE_FIGURE_NOTES
+  ENHANCED_TABLE_FIGURE_BODY,
+  ENHANCED_TABLE_FIGURE,
+  ENHANCED_TABLE_FIGURE_CAPCO,
+  ENHANCED_TABLE_FIGURE_NOTES,
 } from './Constants';
 import { ImageUploadCommand } from './ImageUploadCommand';
 import { EnhancedTableFigureView } from './EnhancedTableFigureView';
@@ -42,7 +44,6 @@ export class EnhancedTableFigure extends Plugin {
       [ENHANCED_TABLE_FIGURE_BODY]: enhancedTableFigureBodyNodeSpec,
       [ENHANCED_TABLE_FIGURE_NOTES]: enhancedTableFigureNotesNodeSpec,
       [ENHANCED_TABLE_FIGURE_CAPCO]: enhancedTableFigureCapcoNodeSpec,
-
     });
     const marks = schema.spec.marks;
 
@@ -53,15 +54,13 @@ export class EnhancedTableFigure extends Plugin {
   }
 
   initButtonCommands() {
-
     return {
       '[exposure] Insert Enhanced Table-Figure': [
         {
           ' Table': new EnhancedTableCommands('table'),
-          ' Insert image from computer': new ImageUploadCommand()
+          ' Insert image from computer': new ImageUploadCommand(),
         },
       ],
     };
   }
-
 }

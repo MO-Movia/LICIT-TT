@@ -1,5 +1,5 @@
-import {Mark} from 'prosemirror-model';
-import {marks} from './keys';
+import { Mark } from '@tiptap/pm/model';
+import { marks } from './keys';
 
 describe('ProseMirror marks', () => {
   test('serializes to em tag', () => {

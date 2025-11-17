@@ -1,12 +1,12 @@
 import CommandMenuButton from './commandMenuButton';
 import { FontTypeCommand } from '@modusoperandi/licit-ui-commands';
 import * as React from 'react';
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import { FONT_TYPE_NAMES } from '../specs/fontTypeMarkSpec';
 import findActiveFontType, {
   FONT_TYPE_NAME_DEFAULT,
 } from '../findActiveFontType';
-import { Transform } from 'prosemirror-transform';
+import { Transform } from '@tiptap/pm/transform';
 import { editorType } from './fontSizeCommandMenuButton';
 type PropsType = {
   dispatch: (tr: Transform) => void;
@@ -31,7 +31,8 @@ class FontTypeCommandMenuButton extends React.PureComponent<PropsType> {
     const fontType = findActiveFontType(editorState);
     return (
       // <CommandMenuButton  className="width-100"
-      <CommandMenuButton  className="width-100 czi-dropdown-border"
+      <CommandMenuButton
+        className="width-100 czi-dropdown-border"
         // [FS] IRAD-1008 2020-07-16
         // Disable font type menu on editor disable state
         commandGroups={COMMAND_GROUPS}

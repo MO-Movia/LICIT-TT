@@ -1,7 +1,7 @@
 import { SetDocAttrStep } from './index';
-import { AddMarkStep } from 'prosemirror-transform';
+import { AddMarkStep } from '@tiptap/pm/transform';
 import { em } from 'jest-prosemirror';
-import { Mark } from 'prosemirror-model';
+import { Mark } from '@tiptap/pm/model';
 
 describe('SetDocAttrStep', () => {
   const KEY = 'uniqueKey';
@@ -23,37 +23,41 @@ describe('SetDocAttrStep', () => {
       const result = sdaStep.merge(markStep as unknown as SetDocAttrStep);
       expect(result).toBeNull();
     });
- it('should handle apply', () => {
-  const key = 'exampleKey';
-  const value = 'newValue';
-  const defaultValue = 'defaultValue';
-  const sharedAttrs = {
-    [key]: defaultValue,
-  };
+    it('should handle apply', () => {
+      const key = 'exampleKey';
+      const value = 'newValue';
+      const defaultValue = 'defaultValue';
+      const sharedAttrs = {
+        [key]: defaultValue,
+      };
 
-  // Define a minimal type that matches what SetDocAttrStep.apply expects
-  type DocType = {
-    attrs: Record<string, unknown>;
-    type: {
-      create: (attrs: Record<string, unknown>, content: unknown, marks: unknown) => DocType;
-    };
-    content: unknown;
-    marks: unknown;
-  };
+      // Define a minimal type that matches what SetDocAttrStep.apply expects
+      type DocType = {
+        attrs: Record<string, unknown>;
+        type: {
+          create: (
+            attrs: Record<string, unknown>,
+            content: unknown,
+            marks: unknown
+          ) => DocType;
+        };
+        content: unknown;
+        marks: unknown;
+      };
 
-  const doc: DocType = {
-    attrs: { ...sharedAttrs },
-    type: {
-      create: (attrs, content, marks) => ({
-        attrs,
-        content,
-        marks,
-        type: doc.type, // safe reference
-      }),
-    },
-    content: null,
-    marks: [],
-  };
+      const doc: DocType = {
+        attrs: { ...sharedAttrs },
+        type: {
+          create: (attrs, content, marks) => ({
+            attrs,
+            content,
+            marks,
+            type: doc.type, // safe reference
+          }),
+        },
+        content: null,
+        marks: [],
+      };
 
       const sdaStep = new SetDocAttrStep(key, value);
       const result = sdaStep.apply(doc);

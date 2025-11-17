@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { EditorView } from '@tiptap/pm/view';
 import { Editor } from '@tiptap/react';
 import TableColorCommand from './tableColorCommand';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
@@ -10,7 +10,9 @@ import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 jest.mock('@modusoperandi/licit-ui-commands', () => ({
   createPopUp: jest.fn().mockImplementation((_Component, _props, options) => {
     // Simulate popup object with a working close()
-    return { close: jest.fn(() => options?.onClose && options.onClose('mocked value')) };
+    return {
+      close: jest.fn(() => options?.onClose && options.onClose('mocked value')),
+    };
   }),
   atAnchorRight: jest.fn(),
   RuntimeService: { Runtime: 'mockRuntime' },
@@ -70,30 +72,43 @@ describe('TableColorCommand', () => {
   });
 
   it('should return false when hex is undefined', () => {
-    const result = command.executeWithUserInput(mockState, dispatchMock, viewMock, undefined);
+    const result = command.executeWithUserInput(
+      mockState,
+      dispatchMock,
+      viewMock,
+      undefined
+    );
     expect(result).toBe(false);
   });
 
   it('should handle invalid event target gracefully', async () => {
     const badEvent = { currentTarget: null } as unknown as React.SyntheticEvent;
-    const result = await command.waitForUserInput(mockState, dispatchMock, viewMock, badEvent);
+    const result = await command.waitForUserInput(
+      mockState,
+      dispatchMock,
+      viewMock,
+      badEvent
+    );
     expect(result).toBeUndefined();
   });
 
   it('should return editor from UICommand.prototype', () => {
-  // Define a minimal mock editor object consistent with the Editor type
-  const mockEditor: Editor = {
-    view: { focus: jest.fn(), dispatch: jest.fn() } as unknown as Editor['view'],
-    commands: {} as Editor['commands'],
-  } as Editor;
+    // Define a minimal mock editor object consistent with the Editor type
+    const mockEditor: Editor = {
+      view: {
+        focus: jest.fn(),
+        dispatch: jest.fn(),
+      } as unknown as Editor['view'],
+      commands: {} as Editor['commands'],
+    } as Editor;
 
-  Object.defineProperty(UICommand.prototype, 'editor', {
-    value: mockEditor,
-    writable: true,
+    Object.defineProperty(UICommand.prototype, 'editor', {
+      value: mockEditor,
+      writable: true,
+    });
+
+    const result = command.getEditor();
+
+    expect(result).toBe(mockEditor);
   });
-
-  const result = command.getEditor();
-
-  expect(result).toBe(mockEditor);
-});
 });

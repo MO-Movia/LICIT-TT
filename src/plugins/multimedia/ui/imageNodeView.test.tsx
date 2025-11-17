@@ -1,20 +1,20 @@
-import {ImageNodeView, ImageViewBody} from './ImageNodeView';
-import {Schema, Node} from 'prosemirror-model';
-import {EditorState} from 'prosemirror-state';
-import {EditorFocused, NodeViewProps} from './CustomNodeView';
+import { ImageNodeView, ImageViewBody } from './ImageNodeView';
+import { Schema, Node } from '@tiptap/pm/model';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorFocused, NodeViewProps } from './CustomNodeView';
 import ResizeObserver from './ResizeObserver';
-import {PopUpHandle} from '@modusoperandi/licit-ui-commands';
+import { PopUpHandle } from '@modusoperandi/licit-ui-commands';
 
 describe('ImageNodeView', () => {
   const mockSchema = new Schema({
     nodes: {
-      doc: {content: 'image'},
+      doc: { content: 'image' },
       text: {},
       image: {
         inline: true,
         attrs: {
-          align: {default: 'left'},
-          fitToParent: {default: true},
+          align: { default: 'left' },
+          fitToParent: { default: true },
         },
         group: 'inline',
         draggable: true,
@@ -33,7 +33,10 @@ describe('ImageNodeView', () => {
           },
         ],
         toDOM(node) {
-          return ['img', {src: node.attrs.src, align: node.attrs.align || ''}];
+          return [
+            'img',
+            { src: node.attrs.src, align: node.attrs.align || '' },
+          ];
         },
       },
     },
@@ -79,7 +82,7 @@ describe('ImageNodeView', () => {
     decorations: [],
     editorView: editorfocused,
     getPos: () => 1,
-    node: {attrs: {align: 'left', fitToParent: 'fit'}} as unknown as Node,
+    node: { attrs: { align: 'left', fitToParent: 'fit' } } as unknown as Node,
     dom: document.createElement('img'),
     selected: true,
     focused: true,
@@ -91,13 +94,13 @@ describe('ImageNodeView', () => {
 describe('Image view body', () => {
   const mockSchema = new Schema({
     nodes: {
-      doc: {content: 'image'},
+      doc: { content: 'image' },
       text: {},
       image: {
         inline: true,
         attrs: {
-          align: {default: 'left'},
-          fitToParent: {default: true},
+          align: { default: 'left' },
+          fitToParent: { default: true },
         },
         group: 'inline',
         draggable: true,
@@ -116,7 +119,10 @@ describe('Image view body', () => {
           },
         ],
         toDOM(node) {
-          return ['img', {src: node.attrs.src, align: node.attrs.align || ''}];
+          return [
+            'img',
+            { src: node.attrs.src, align: node.attrs.align || '' },
+          ];
         },
       },
     },
@@ -166,7 +172,7 @@ describe('Image view body', () => {
     decorations: [],
     editorView: editorfocused,
     getPos: () => 1,
-    node: {attrs: {align: 'left', fitToParent: 'fit'}} as unknown as Node,
+    node: { attrs: { align: 'left', fitToParent: 'fit' } } as unknown as Node,
     dom: document.createElement('img'),
     selected: true,
     focused: true,
@@ -191,7 +197,7 @@ describe('Image view body', () => {
       decorations: [],
       editorView: editorfocused,
       getPos: () => 1,
-      node: {attrs: {src: 'test'}} as unknown as Node,
+      node: { attrs: { src: 'test' } } as unknown as Node,
       dom: document.createElement('img'),
       selected: true,
       focused: true,
@@ -220,7 +226,7 @@ describe('Image view body', () => {
         attrs: {
           src: 'test',
           align: 'left',
-          crop: {width: 100001},
+          crop: { width: 100001 },
           rotate: 'left',
           width: 100001,
           height: 10,
@@ -255,7 +261,7 @@ describe('Image view body', () => {
         attrs: {
           src: 'test',
           align: 'left',
-          crop: {width: 100001, heigt: 10, left: 10, top: 10},
+          crop: { width: 100001, heigt: 10, left: 10, top: 10 },
           rotate: 'left',
           width: 100001,
           height: 10,
@@ -280,7 +286,7 @@ describe('Image view body', () => {
         height: 2,
         src: 'mock.com',
       })
-    ).toStrictEqual({width: 10, height: 2});
+    ).toStrictEqual({ width: 10, height: 2 });
   });
   it('should handle calcWidthAndHeight when !height', () => {
     expect(
@@ -289,7 +295,7 @@ describe('Image view body', () => {
         height: 2,
         src: 'mock.com',
       })
-    ).toStrictEqual({width: 50, height: 10});
+    ).toStrictEqual({ width: 50, height: 10 });
   });
 
   it('should handle _renderInlineEditor', () => {
@@ -321,12 +327,12 @@ describe('Image view body', () => {
   it('should handle _onResizeEnd ', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'block+'},
-        paragraph: {content: 'inline*', group: 'block'},
-        text: {group: 'inline'},
+        doc: { content: 'block+' },
+        paragraph: { content: 'inline*', group: 'block' },
+        text: { group: 'inline' },
         image: {
           inline: true,
-          attrs: {align: {default: null}, fitToParent: {default: null}},
+          attrs: { align: { default: null }, fitToParent: { default: null } },
           group: 'inline',
         }, // Define your custom node type
       },
@@ -384,7 +390,7 @@ describe('Image view body', () => {
       decorations: [],
       editorView: editorfocused,
       getPos: () => 1,
-      node: {attrs: {align: 'left', fitToParent: 'fit'}} as unknown as Node,
+      node: { attrs: { align: 'left', fitToParent: 'fit' } } as unknown as Node,
       dom: document.createElement('img'),
       selected: true,
       focused: true,
@@ -396,12 +402,12 @@ describe('Image view body', () => {
   it('should handle _onChange  ', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'block+'},
-        paragraph: {content: 'inline*', group: 'block'},
-        text: {group: 'inline'},
+        doc: { content: 'block+' },
+        paragraph: { content: 'inline*', group: 'block' },
+        text: { group: 'inline' },
         image: {
           inline: true,
-          attrs: {align: {default: null}, fitToParent: {default: null}},
+          attrs: { align: { default: null }, fitToParent: { default: null } },
           group: 'inline',
         }, // Define your custom node type
       },
@@ -459,15 +465,15 @@ describe('Image view body', () => {
       decorations: [],
       editorView: editorfocused,
       getPos: () => 1,
-      node: {attrs: {align: 'left', fitToParent: 'fit'}} as unknown as Node,
+      node: { attrs: { align: 'left', fitToParent: 'fit' } } as unknown as Node,
       dom: document.createElement('img'),
       selected: true,
       focused: true,
     };
     imageviewbody._inlineEditor = mockPopupHandle;
-    expect(imageviewbody._onChange({align: 'left'})).toBeUndefined();
+    expect(imageviewbody._onChange({ align: 'left' })).toBeUndefined();
     imageviewbody._mounted = true;
-    expect(imageviewbody._onChange({align: 'left'})).toBeUndefined();
+    expect(imageviewbody._onChange({ align: 'left' })).toBeUndefined();
     expect(imageviewbody._onChange()).toBeUndefined();
   });
 
@@ -545,7 +551,7 @@ describe('Image view body', () => {
       editorView: editorfocused,
       getPos: () => 1,
       node: {
-        attrs: {align: 'left', fitToParent: 'fit', src: 'test'},
+        attrs: { align: 'left', fitToParent: 'fit', src: 'test' },
       } as unknown as Node,
       dom: document.createElement('img'),
       selected: true,
@@ -577,7 +583,7 @@ describe('Image view body', () => {
       editorView: editorfocused,
       getPos: () => 1,
       node: {
-        attrs: {align: 'left', fitToParent: 'fit', src: 'test'},
+        attrs: { align: 'left', fitToParent: 'fit', src: 'test' },
       } as unknown as Node,
       dom: document.createElement('img'),
       selected: true,
@@ -611,7 +617,7 @@ describe('Image view body', () => {
       editorView: editorfocused,
       getPos: () => 1,
       node: {
-        attrs: {align: 'left', fitToParent: 'fit', src: 'test'},
+        attrs: { align: 'left', fitToParent: 'fit', src: 'test' },
       } as unknown as Node,
       dom: document.createElement('img'),
       selected: true,
@@ -640,7 +646,7 @@ describe('Image view body', () => {
         null as unknown as number,
         null as unknown as number,
         1,
-        {width: 1, height: 1, src: ''}
+        { width: 1, height: 1, src: '' }
       )
     ).toBeDefined();
   });

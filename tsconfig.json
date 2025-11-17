@@ -88,7 +88,18 @@
         "@tiptap/pm/commands"
       ]
       */
-    }
+    },
+    "plugins": [
+      // Transform paths in output .js files
+      {
+        "transform": "typescript-transform-paths"
+      },
+      // Transform paths in output .d.ts files (include this line if you output declarations files)
+      {
+        "transform": "typescript-transform-paths",
+        "afterDeclarations": true
+      },
+    ],
   },
   "typeAcquisition": {
     "enable": true

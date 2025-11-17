@@ -1,11 +1,11 @@
-import {createEditor, doc, p} from 'jest-prosemirror';
-import {ImageResizeBox, ImageResizeBoxControl} from './ImageResizeBox';
+import { createEditor, doc, p } from 'jest-prosemirror';
+import { ImageResizeBox, ImageResizeBoxControl } from './ImageResizeBox';
 import React from 'react';
 
-import {EditorState} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {schema} from 'prosemirror-schema-basic';
-import {MultimediaPlugin} from '../index';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { schema } from '@tiptap/pm/schema-basic';
+import { MultimediaPlugin } from '../index';
 
 describe('Image Resize Box', () => {
   it('should render Image Resize Box', () => {
@@ -16,7 +16,7 @@ describe('Image Resize Box', () => {
       width: 180,
       fitToParent: false,
     };
-    const wrapper = new ImageResizeBox({...ImageResizeProps});
+    const wrapper = new ImageResizeBox({ ...ImageResizeProps });
     expect(wrapper.render()).toBeDefined();
   });
 });
@@ -48,9 +48,9 @@ describe('Node attribute update', () => {
   });
 
   it('should update node attributes', () => {
-    const {tr} = editorView.state;
+    const { tr } = editorView.state;
     const nodeType = schema.nodes.heading;
-    const attrs = {active: true, crop: null, rotate: null};
+    const attrs = { active: true, crop: null, rotate: null };
     const node = nodeType.create(attrs);
     const pos = 0;
 
@@ -270,7 +270,7 @@ describe('image resizebox control', () => {
     );
     expect(spy1).toHaveBeenCalled();
   });
-  it('should handle render',()=>{
+  it('should handle render', () => {
     const irb = new ImageResizeBox({
       height: 150,
       onResizeEnd: () => undefined,

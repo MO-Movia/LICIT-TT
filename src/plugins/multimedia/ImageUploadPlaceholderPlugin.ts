@@ -1,6 +1,11 @@
-import {Plugin, PluginKey, EditorState, TextSelection} from 'prosemirror-state';
-import {Decoration, DecorationSet, EditorView} from 'prosemirror-view';
-import {uuid} from './ui/uuid';
+import {
+  Plugin,
+  PluginKey,
+  EditorState,
+  TextSelection,
+} from '@tiptap/pm/state';
+import { Decoration, DecorationSet, EditorView } from '@tiptap/pm/view';
+import { uuid } from './ui/uuid';
 
 const IMAGE = 'image';
 const IMAGE_FILE_TYLES = new Set([
@@ -44,12 +49,12 @@ function defer(fn: () => void) {
 export function uploadImageFiles(
   view: customEditorView,
   files: Array<File>,
-  coords: {x: number; y: number}
+  coords: { x: number; y: number }
 ): boolean {
-  const {runtime, state, readOnly, disabled} = view;
-  const {schema, plugins} = state;
+  const { runtime, state, readOnly, disabled } = view;
+  const { schema, plugins } = state;
   const imageType = schema?.nodes?.[IMAGE];
-  const {uploadImage, canUploadImage} = runtime;
+  const { uploadImage, canUploadImage } = runtime;
   const imageFiles = Array.from(files).filter(isImageFileType);
   const placeholderPlugin = plugins.find(isImageUploadPlaceholderPlugin);
   if (
@@ -71,7 +76,7 @@ export function uploadImageFiles(
   };
 
   const uploadNext = defer(() => {
-    const done = (imageInfo: {src: string}) => {
+    const done = (imageInfo: { src: string }) => {
       const pos = findImageUploadPlaceholder(placeholderPlugin, view.state, id);
       let trNext = view.state.tr;
       if (pos && !view.readOnly && !view.disabled) {
@@ -85,7 +90,7 @@ export function uploadImageFiles(
         uploadNext();
       } else {
         // Remove the placeholder.
-        trNext = trNext.setMeta(placeholderPlugin, {remove: {id}});
+        trNext = trNext.setMeta(placeholderPlugin, { remove: { id } });
       }
       view.dispatch(trNext);
     };
@@ -95,12 +100,12 @@ export function uploadImageFiles(
     }
     uploadImage(ff)
       .then(done)
-      .catch(done.bind(null, {src: null}));
+      .catch(done.bind(null, { src: null }));
   });
 
   uploadNext();
 
-  let {tr} = state;
+  let { tr } = state;
 
   // Replace the selection with a placeholder
   let from = 0;

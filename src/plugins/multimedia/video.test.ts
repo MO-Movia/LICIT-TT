@@ -1,13 +1,13 @@
-import {createEditor, doc, p} from 'jest-prosemirror';
-import {EditorState, Transaction} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {MultimediaPlugin} from './index';
+import { createEditor, doc, p } from 'jest-prosemirror';
+import { EditorState, Transaction } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
+import { MultimediaPlugin } from './index';
 import {
   VideoEditor,
   VideoEditorState,
   VideoEditorProps,
 } from './ui/VideoEditor';
-import {VideoSourceCommand, insertIFrame} from './VideoSourceCommand';
+import { VideoSourceCommand, insertIFrame } from './VideoSourceCommand';
 import {
   CursorPlaceholderPlugin,
   showCursorPlaceholder,
@@ -16,18 +16,18 @@ import {
   isPlugin,
   resetInstance,
 } from './CursorPlaceholderPlugin';
-import {resolveVideo} from './ui/resolveVideo';
+import { resolveVideo } from './ui/resolveVideo';
 import axios from 'axios';
-import {VideoResizeBox} from './ui/VideoResizeBox';
-import {VideoNodeView, VideoViewBody} from './ui/VideoNodeView';
-import {EditorView} from 'prosemirror-view';
-import {Node} from 'prosemirror-model';
-import {EditorFocused} from './ui/CustomNodeView';
+import { VideoResizeBox } from './ui/VideoResizeBox';
+import { VideoNodeView, VideoViewBody } from './ui/VideoNodeView';
+import { EditorView } from '@tiptap/pm/view';
+import { Node } from '@tiptap/pm/model';
+import { EditorFocused } from './ui/CustomNodeView';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const srcevent = {
-  target: {value: 'https://www.youtube.com/embed/ru60J99ojJw'},
+  target: { value: 'https://www.youtube.com/embed/ru60J99ojJw' },
 } as React.ChangeEvent<HTMLInputElement>;
 const resp = {
   data: {
@@ -71,7 +71,7 @@ const resp = {
     maxContentLength: -1,
     maxBodyLength: -1,
     env: {},
-    headers: {Accept: 'application/json, text/plain, */*'},
+    headers: { Accept: 'application/json, text/plain, */*' },
     method: 'get',
     url: 'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=ru60J99ojJw&format=json',
   },
@@ -137,7 +137,7 @@ describe('Video Plugin - Test', () => {
     const dom = document.createElement('div');
 
     const editorView = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state1,
       }
@@ -162,7 +162,7 @@ describe('Video Plugin - Test', () => {
     const dom = document.createElement('div');
 
     const editorView = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state2,
       }
@@ -188,21 +188,21 @@ describe('Video Plugin - Test', () => {
   it('should change on Width Change Event ', () => {
     const width = 113;
     const event = {
-      target: {value: width} as unknown as HTMLInputElement,
+      target: { value: width } as unknown as HTMLInputElement,
     } as React.ChangeEvent<HTMLInputElement>;
     const spy = jest.spyOn(VideoeditorIns, 'setState');
     VideoeditorIns._onWidthChange(event);
-    expect(spy).toBeCalledWith({width, validValue: true});
+    expect(spy).toBeCalledWith({ width, validValue: true });
   });
 
   it('should change on Height Change Event ', () => {
     const height = 202;
     const event = {
-      target: {value: height} as unknown as HTMLInputElement,
+      target: { value: height } as unknown as HTMLInputElement,
     } as React.ChangeEvent<HTMLInputElement>;
     const spy = jest.spyOn(VideoeditorIns, 'setState');
     VideoeditorIns._onHeightChange(event);
-    expect(spy).toBeCalledWith({height, validValue: true});
+    expect(spy).toBeCalledWith({ height, validValue: true });
   });
 
   it('should showCursorPlaceholder', () => {
@@ -277,7 +277,7 @@ describe('Video Plugin - Test', () => {
     VdoViewBody._renderInlineEditor();
     VdoViewBody._resolveOriginalSize();
     VdoViewBody._onResizeEnd(250, 500);
-    VdoViewBody._onChange({align: 'right'});
+    VdoViewBody._onChange({ align: 'right' });
     VdoViewBody.getClipStyle(
       200,
       500,
@@ -377,7 +377,7 @@ describe('Video Plugin - Test', () => {
       selection: editor.selection,
       plugins: [new CursorPlaceholderPlugin()],
     });
-    const tr = specFinder(state.schema as unknown as {id: {name: string}});
+    const tr = specFinder(state.schema as unknown as { id: { name: string } });
     expect(tr).toBeFalsy();
   });
 });

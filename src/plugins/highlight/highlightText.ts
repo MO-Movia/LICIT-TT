@@ -1,6 +1,6 @@
-import { Node } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
-import { Decoration, DecorationSet, EditorView } from 'prosemirror-view';
+import { Node } from '@tiptap/pm/model';
+import { EditorState, Plugin, PluginKey, Transaction } from '@tiptap/pm/state';
+import { Decoration, DecorationSet, EditorView } from '@tiptap/pm/view';
 
 export interface HighlightDocProperties {
   liveUpdates?: boolean;
@@ -382,7 +382,7 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
   }
 
   static getPluginState(state: EditorState): PluginState | undefined {
-    return highlightPluginKey.get(state) as PluginState | undefined;
+    return highlightPluginKey.get(state).getState(state);
   }
 }
 

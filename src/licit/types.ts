@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState } from '@tiptap/pm/state';
+import { Transform } from '@tiptap/pm/transform';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 
 export type NodeSpec = {
@@ -66,11 +66,10 @@ export type ToolbarMenuConfig = {
   menuCommand: any;
   isPlugin?: boolean;
   group: string;
-
-}
+};
 export type RecentColor = {
-  id: number,
-  color: string
+  id: number;
+  color: string;
 };
 
 export type EditorRuntime = {

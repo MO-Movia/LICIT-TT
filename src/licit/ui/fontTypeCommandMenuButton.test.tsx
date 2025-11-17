@@ -1,4 +1,4 @@
-import { EditorState } from 'prosemirror-state';
+import { EditorState } from '@tiptap/pm/state';
 import FontTypeCommandMenuButton from './fontTypeCommandMenuButton';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 

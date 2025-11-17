@@ -1,4 +1,4 @@
-import { Schema } from 'prosemirror-model';
+import { Schema } from '@tiptap/pm/model';
 import {
   toMarkDOM,
   getMarkAttrs,
@@ -6,7 +6,7 @@ import {
   toDOMFn,
 } from './CitationHighlightMarkSpec';
 import { MARK_TEXT_HIGHLIGHT, HASCITATION, MARKFROM } from './Constants';
-import type { DOMOutputSpec, Node, NodeSpec } from 'prosemirror-model';
+import type { DOMOutputSpec, Node, NodeSpec } from '@tiptap/pm/model';
 
 const CONTENT = 'content';
 const ATTRS = 'getAttrs';

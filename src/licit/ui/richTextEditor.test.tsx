@@ -1,7 +1,7 @@
 import * as React from 'react';
 import RichTextEditor from './richTextEditor';
-import { Transform } from 'prosemirror-transform';
-import { Transaction } from 'prosemirror-state';
+import { Transform } from '@tiptap/pm/transform';
+import { Transaction } from '@tiptap/pm/state';
 
 // ? Define the props interface same as used by RichTextEditor
 interface MockEditorFramesetProps {
@@ -60,7 +60,7 @@ describe('RichTextEditor (pure Jest tests)', () => {
     };
   });
 
- it('should dispatch transaction when _dispatchTransaction is called', () => {
+  it('should dispatch transaction when _dispatchTransaction is called', () => {
     const instance = new RichTextEditor(mockProps, {});
     const mockTransform = new Transform(null as any);
     instance._dispatchTransaction(mockTransform);
@@ -77,5 +77,4 @@ describe('RichTextEditor (pure Jest tests)', () => {
     expect(instance.state.editorView).toBe(null);
     expect(onReady).toHaveBeenCalledWith(mockEditorView);
   });
-  
 });

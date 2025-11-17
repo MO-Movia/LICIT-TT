@@ -3,10 +3,10 @@ import { HeadingCommand } from '@modusoperandi/licit-ui-commands';
 import { CustomStyleCommand } from '../CustomStyleCommand';
 
 import React from 'react';
-import { EditorState } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-import { Transform } from 'prosemirror-transform';
-import { Node } from 'prosemirror-model';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
+import { Transform } from '@tiptap/pm/transform';
+import { Node } from '@tiptap/pm/model';
 import {
   RESERVED_STYLE_NONE,
   RESERVED_STYLE_NONE_NUMBERING,
@@ -16,7 +16,7 @@ import {
   getStylesAsync,
   hasStyleRuntime,
   isCustomStyleExists,
-  getStyleRuntime
+  getStyleRuntime,
 } from '../customStyle';
 
 // [FS] IRAD-1042 2020-09-09
@@ -88,10 +88,7 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
         customStyleName
       );
 
-      MENU_COMMANDS['editall'] = new CustomStyleCommand(
-        'editall',
-        'Edit All'
-      );
+      MENU_COMMANDS['editall'] = new CustomStyleCommand('editall', 'Edit All');
     }
 
     MENU_COMMANDS['clearstyle'] = new CustomStyleCommand(
@@ -107,7 +104,11 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
     return [MENU_COMMANDS];
   }
   isAllowedNode(node: Node) {
-    return node.type.name === 'paragraph' || node.type.name === 'ordered_list' || node.type.name === 'enhanced_table_figure_notes';
+    return (
+      node.type.name === 'paragraph' ||
+      node.type.name === 'ordered_list' ||
+      node.type.name === 'enhanced_table_figure_notes'
+    );
   }
 
   render(): React.ReactElement {

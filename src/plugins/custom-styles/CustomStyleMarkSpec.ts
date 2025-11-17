@@ -1,4 +1,4 @@
-import { Node } from 'prosemirror-model';
+import { Node } from '@tiptap/pm/model';
 import type { KeyValuePair } from './Constants';
 
 // Always append to base calls.

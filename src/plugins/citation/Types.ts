@@ -1,6 +1,6 @@
-import { DecorationSet, EditorView } from 'prosemirror-view';
+import { DecorationSet, EditorView } from '@tiptap/pm/view';
 import { CapcoService, Marking } from './Constants';
-import { PluginKey } from 'prosemirror-state';
+import { PluginKey } from '@tiptap/pm/state';
 
 export type NodeSpec = {
   attrs?: { [key: string]: unknown };

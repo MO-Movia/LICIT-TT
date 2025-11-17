@@ -1,7 +1,7 @@
-import {Transform} from 'prosemirror-transform';
-import {Schema} from 'prosemirror-model';
-import {insertIFrame} from './VideoSourceCommand';
-import {ImageUploadCommand} from './ImageUploadCommand';
+import { Transform } from '@tiptap/pm/transform';
+import { Schema } from '@tiptap/pm/model';
+import { insertIFrame } from './VideoSourceCommand';
+import { ImageUploadCommand } from './ImageUploadCommand';
 
 describe('ImageUploadCommand', () => {
   it('should noop executeCustom', () => {
@@ -20,13 +20,13 @@ describe('insertIFrame', () => {
   it('should handle !selection', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'image'},
+        doc: { content: 'image' },
         text: {},
         image: {
           inline: true,
           attrs: {
-            src: {default: ''},
-            alt: {default: null},
+            src: { default: '' },
+            alt: { default: null },
           },
           group: 'inline',
           draggable: true,
@@ -45,7 +45,7 @@ describe('insertIFrame', () => {
             },
           ],
           toDOM(node) {
-            return ['img', {src: node.attrs.src, alt: node.attrs.alt || ''}];
+            return ['img', { src: node.attrs.src, alt: node.attrs.alt || '' }];
           },
         },
       },
@@ -65,7 +65,7 @@ describe('insertIFrame', () => {
   it('should handle !image', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'paragraph+'},
+        doc: { content: 'paragraph+' },
         text: {},
         paragraph: {
           content: 'text*',
@@ -90,7 +90,7 @@ describe('insertIFrame', () => {
   it('should handle insertIFrame when from!=to', () => {
     const mockSchema = new Schema({
       nodes: {
-        doc: {content: 'paragraph+'},
+        doc: { content: 'paragraph+' },
         text: {},
         paragraph: {
           content: 'text*',
@@ -103,7 +103,7 @@ describe('insertIFrame', () => {
     });
     const mockTransaction = {
       // Define any properties or methods that your function requires.
-      selection: {from: 1, to: 2},
+      selection: { from: 1, to: 2 },
       tr: {
         selection: {},
       },

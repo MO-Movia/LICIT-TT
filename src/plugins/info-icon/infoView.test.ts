@@ -1,14 +1,14 @@
 /* eslint-disable */
 
-import {InfoIconPlugin} from './index';
+import { InfoIconPlugin } from './index';
 
-import {schema, builders} from 'prosemirror-test-builder';
-import {EditorState} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
-import {Schema, Node} from 'prosemirror-model';
-import {InfoIconView} from './infoIconView';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
-import {InfoIconDialog} from './infoIconDialog';
+import { schema, builders } from 'prosemirror-test-builder';
+import { EditorState } fro'@tiptap/pm/state'e';
+import { EditorView } from '@tiptap/pm/view';
+import { Schema, Node } from '@tiptap/pm/model';
+import { InfoIconView } from './infoIconView';
+import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { InfoIconDialog } from './infoIconDialog';
 
 describe('Info Plugin Extended', () => {
   const info = {
@@ -27,7 +27,7 @@ describe('Info Plugin Extended', () => {
 
   const newInfoIconNode = effSchema.node(effSchema.nodes.infoicon, info);
   plugin.initButtonCommands();
-  const {doc, p} = builders(mySchema, {p: {nodeType: 'paragraph'}});
+  const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
 
   it('Infoiconview call createInfoIconTooltip', () => {
     const before = 'hello';
@@ -41,7 +41,7 @@ describe('Info Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -87,7 +87,7 @@ describe('Info Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -129,7 +129,7 @@ describe('Info Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -144,14 +144,14 @@ describe('Info Plugin Extended', () => {
       bubbles: true,
       cancelable: true,
     });
-  
+
     cView.dom = null as unknown as globalThis.Node;
     const targetElement = document.createElement('div');
     targetElement.className = 'fa';
-      const eventWithCustomData = {
+    const eventWithCustomData = {
       ...mockEvent,
       currentTarget: null, // Add custom data
-      target: targetElement
+      target: targetElement,
     };
     cView.selectNode(eventWithCustomData);
 
@@ -171,7 +171,7 @@ describe('Info Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -182,13 +182,13 @@ describe('Info Plugin Extended', () => {
       undefined as any
     );
     const node = new Node();
-    
+
     expect(cView.update(node)).toBe(false);
   });
   it('should return true if sameMarkup returns true', () => {
     const before = 'hello';
     const after = ' world';
-  
+
     const state = EditorState.create({
       doc: doc(p(before, newInfoIconNode, after)),
       schema: effSchema,
@@ -197,7 +197,7 @@ describe('Info Plugin Extended', () => {
     const dom = document.createElement('div');
     document.body.appendChild(dom);
     const view = new EditorView(
-      {mount: dom},
+      { mount: dom },
       {
         state: state,
       }
@@ -207,10 +207,9 @@ describe('Info Plugin Extended', () => {
       view,
       undefined as any
     );
-    
+
     // Simulate a node with the same markup
     const node = cView.node.copy(); // This creates a new node with the same markup
     expect(cView.update(node)).toBe(true);
   });
-  
 });

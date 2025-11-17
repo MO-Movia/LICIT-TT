@@ -1,5 +1,5 @@
 import StrongMarkSpec from './strongMarkSpec';
-import {Mark, ParseRule} from 'prosemirror-model';
+import { Mark, ParseRule } from '@tiptap/pm/model';
 interface StrongAttrs {
   overridden: boolean;
 }
@@ -19,7 +19,7 @@ describe('StrongMarkSpec', () => {
 
       const getAttrs = rule.getAttrs as (dom: HTMLElement) => StrongAttrs;
       const attrs = getAttrs(strongEl);
-      expect(attrs).toEqual({overridden: true});
+      expect(attrs).toEqual({ overridden: true });
     });
 
     it('should correctly parse <b> tag', () => {
@@ -29,7 +29,7 @@ describe('StrongMarkSpec', () => {
 
       const getAttrs = rule.getAttrs as (dom: HTMLElement) => StrongAttrs;
       const attrs = getAttrs(boldEl);
-      expect(attrs).toEqual({overridden: false});
+      expect(attrs).toEqual({ overridden: false });
     });
 
     it('should correctly parse <span style="font-weight: bold">', () => {
@@ -40,14 +40,14 @@ describe('StrongMarkSpec', () => {
 
       const getAttrs = rule.getAttrs as (dom: HTMLElement) => StrongAttrs;
       const attrs = getAttrs(spanEl);
-      expect(attrs).toEqual({overridden: true});
+      expect(attrs).toEqual({ overridden: true });
     });
   });
 
   describe('toDOM', () => {
     it('should return correct DOM structure when overridden is true', () => {
       const mockMark = {
-        attrs: {overridden: true},
+        attrs: { overridden: true },
       } as unknown as Mark;
 
       if (!StrongMarkSpec.toDOM) {
@@ -55,12 +55,12 @@ describe('StrongMarkSpec', () => {
       }
 
       const result = StrongMarkSpec.toDOM(mockMark, false);
-      expect(result).toEqual(['strong', {overridden: true}, 0]);
+      expect(result).toEqual(['strong', { overridden: true }, 0]);
     });
 
     it('should return correct DOM structure when overridden is false', () => {
       const mockMark = {
-        attrs: {overridden: false},
+        attrs: { overridden: false },
       } as unknown as Mark;
 
       if (!StrongMarkSpec.toDOM) {
@@ -68,7 +68,7 @@ describe('StrongMarkSpec', () => {
       }
 
       const result = StrongMarkSpec.toDOM(mockMark, false);
-      expect(result).toEqual(['strong', {overridden: false}, 0]);
+      expect(result).toEqual(['strong', { overridden: false }, 0]);
     });
   });
 });

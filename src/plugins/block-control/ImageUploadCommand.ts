@@ -1,5 +1,5 @@
-import { EditorState } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorState } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import React from 'react';
 
 import { ImageSourceCommand } from './ImageSourceCommand';
