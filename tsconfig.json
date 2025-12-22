@@ -15,55 +15,54 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "declaration": true,
-    "tsBuildInfoFile": "./node_modules/build.tsbuildinfo",
     "paths": {
       "@modusoperandi/licit": [
-        "./src/licit"
+        "./src/licit/src"
       ],
       "@modusoperandi/licit-doc-attrs-step": [
-        "./src/core"
+        "./src/core/src"
       ],
       "@modusoperandi/licit-ui-commands": [
-        "./src/commands"
+        "./src/commands/src"
       ],
       "@modusoperandi/licit-contrib-plugin-block-control": [
-        "./src/plugins/block-control"
+        "./src/plugins/block-control/src"
       ],
       "@modusoperandi/licit-changecase": [
-        "./src/plugins/change-case"
+        "./src/plugins/change-case/src"
       ],
       "@modusoperandi/licit-citation": [
-        "./src/plugins/citation"
+        "./src/plugins/citation/src"
       ],
       "@modusoperandi/licit-rich-copy-embed-images": [
-        "./src/plugins/copy-images"
+        "./src/plugins/copy-images/src"
       ],
       "@modusoperandi/licit-custom-styles": [
-        "./src/plugins/custom-styles"
+        "./src/plugins/custom-styles/src"
       ],
       "@modusoperandi/licit-export-pdf": [
-        "./src/plugins/export-pdf"
+        "./src/plugins/export-pdf/src"
       ],
       "@modusoperandi/licit-glossary": [
-        "./src/plugins/glossary"
+        "./src/plugins/glossary/src"
       ],
       "@modusoperandi/licit-plugin-highlight": [
-        "./src/plugins/highlight"
+        "./src/plugins/highlight/src"
       ],
       "@modusoperandi/licit-info-icon": [
-        "./src/plugins/info-icon"
+        "./src/plugins/info-icon/src"
       ],
       "@modusoperandi/licit-multimedia": [
-        "./src/plugins/multimedia"
+        "./src/plugins/multimedia/src"
       ],
       "@modusoperandi/licit-object-id": [
-        "./src/plugins/object-id"
+        "./src/plugins/object-id/src"
       ],
       "@modusoperandi/licit-paste-json": [
-        "./src/plugins/paste-json"
+        "./src/plugins/paste-json/src"
       ],
       "@modusoperandi/licit-vignette": [
-        "./src/plugins/vignette"
+        "./src/plugins/vignette/src"
       ],
       /** These need to be swapped in code
       "prosemirror-state": [

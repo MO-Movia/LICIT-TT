@@ -14,85 +14,87 @@
       "default": "./package.json"
     },
     ".": {
-      "types": "./licit/index.d.js",
-      "default": "./licit/index.js"
+      "types": "./licit/src/index.d.js",
+      "default": "./licit/src/index.js"
     },
     "./licit": {
-      "types": "./licit/index.d.js",
-      "default": "./licit/index.js"
+      "types": "./licit/src/index.d.js",
+      "default": "./licit/src/index.js"
     },
     "./core": {
-      "types": "./core/index.d.js",
-      "default": "./core/index.js"
+      "types": "./core/src/index.d.js",
+      "default": "./core/src/index.js"
     },
     "./commands": {
-      "types": "./commands/index.d.js",
-      "default": "./commands/index.js"
+      "types": "./commands/src/index.d.js",
+      "default": "./commands/src/index.js"
     },
     "./plugins/block-control": {
-      "types": "./plugins/block-control/index.d.js",
-      "default": "./plugins/block-control/index.js"
+      "types": "./plugins/block-control/src/index.d.js",
+      "default": "./plugins/block-control/src/index.js"
     },
     "./plugins/change-case": {
-      "types": "./plugins/change-case/index.d.js",
-      "default": "./plugins/change-case/index.js"
+      "types": "./plugins/change-case/src/index.d.js",
+      "default": "./plugins/change-case/src/index.js"
     },
     "./plugins/citation": {
-      "types": "./plugins/citation/index.d.js",
-      "default": "./plugins/citation/index.js"
+      "types": "./plugins/citation/src/index.d.js",
+      "default": "./plugins/citation/src/index.js"
     },
     "./plugins/copy-images": {
-      "types": "./plugins/copy-images/index.d.js",
-      "default": "./plugins/copy-images/index.js"
+      "types": "./plugins/copy-images/src/index.d.js",
+      "default": "./plugins/copy-images/src/index.js"
     },
     "./plugins/custom-styles": {
-      "types": "./plugins/custom-styles/index.d.js",
-      "default": "./plugins/custom-styles/index.js"
+      "types": "./plugins/custom-styles/src/index.d.js",
+      "default": "./plugins/custom-styles/src/index.js"
     },
     "./plugins/export-pdf": {
-      "types": "./plugins/export-pdf/index.d.js",
-      "default": "./plugins/export-pdf/index.js"
+      "types": "./plugins/export-pdf/src/index.d.js",
+      "default": "./plugins/export-pdf/src/index.js"
     },
     "./plugins/glossary": {
-      "types": "./plugins/glossary/index.d.js",
-      "default": "./plugins/glossary/index.js"
+      "types": "./plugins/glossary/src/index.d.js",
+      "default": "./plugins/glossary/src/index.js"
     },
     "./plugins/highlight": {
-      "types": "./plugins/highlight/index.d.js",
-      "default": "./plugins/highlight/index.js"
+      "types": "./plugins/highlight/src/index.d.js",
+      "default": "./plugins/highlight/src/index.js"
     },
     "./plugins/info-icon": {
-      "types": "./plugins/info-icon/index.d.js",
-      "default": "./plugins/info-icon/index.js"
+      "types": "./plugins/info-icon/src/index.d.js",
+      "default": "./plugins/info-icon/src/index.js"
     },
     "./plugins/multimedia": {
-      "types": "./plugins/multimedia/index.d.js",
-      "default": "./plugins/multimedia/index.js"
+      "types": "./plugins/multimedia/src/index.d.js",
+      "default": "./plugins/multimedia/src/index.js"
     },
     "./plugins/object-id": {
-      "types": "./plugins/object-id/index.d.js",
-      "default": "./plugins/object-id/index.js"
+      "types": "./plugins/object-id/src/index.d.js",
+      "default": "./plugins/object-id/src/index.js"
     },
     "./plugins/paste-json": {
-      "types": "./plugins/paste-json/index.d.js",
-      "default": "./plugins/paste-json/index.js"
+      "types": "./plugins/paste-json/src/index.d.js",
+      "default": "./plugins/paste-json/src/index.js"
     },
     "./plugins/vignette": {
-      "types": "./plugins/vignette/index.d.js",
-      "default": "./plugins/vignette/index.js"
+      "types": "./plugins/vignette/src/index.d.js",
+      "default": "./plugins/vignette/src/index.js"
     }
   },
   "scripts": {
+    "update:modules": "git -C . submodule update --recursive --remote",
     "test": "jest --coverage",
     "build:bom": "npx @cyclonedx/cyclonedx-bom -o dist/bom.xml",
     "build:clean": "rm -rf dist/ && rm -f modusoperandi-licit-tiptap-*.*.*.tgz",
-    "build:css": "mkdirp ./dist/styles && cp src/licit/styles/* dist/styles",
+    "build:css": "mkdirp ./dist/styles && cp src/licit/src/styles/* dist/styles",
     "build:fonts": "mkdirp ./dist/fonts && cp -r fonts/* dist/fonts",
     "build:assets": "mkdirp ./dist/assets && cp -r assets/* dist/assets",
     "build:esm": "node build.mjs",
     "build:esbuild:test": "tsc -p tsconfig.prod.json --emitDeclarationOnly --declaration",
     "build:ts": "tsc -p tsconfig.prod.json && npx tsc-alias -p tsconfig.json",
-    "ci:build": "npm run build:esm && npm run build:ts && npm run build:css && npm run build:fonts && npm run build:assets && copyfiles package.json README.md LICENSE dist",
+    "ci:build": "npm run build:clean && npm run build:ts && npm run build:css && npm run build:fonts && npm run build:assets && npx copyfiles package.json README.md LICENSE dist",
+    "pack:build": "npm run ci:build && cd dist && npm pack --pack-destination ../.",
     "webpack": "webpack",
     "start": "cross-env NODE_ENV=development webpack serve --config tools/webpack/webpack.config.dev.js",
     "build:bin": "cross-env NODE_ENV=production webpack --config tools/webpack/webpack.config.prod.js",
@@ -106,9 +108,6 @@
   },
   "peerDependencies": {
     "@modusoperandi/color-picker": "^1.0.7",
-    "@tiptap/core": "^2.9.1"
-  },
-  "dependencies": {
     "@tiptap/core": "^2.9.1",
     "@tiptap/extension-collaboration": "^2.1.0",
     "@tiptap/extension-collaboration-cursor": "^2.1.0",
@@ -167,7 +166,6 @@
     "@types/prosemirror-state": "^1.2.8",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
     "esbuild": "^0.27.0",
     "eslint": "^9.39.1",
