@@ -62,3 +62,7 @@
 	path = src/plugins/vignette
 	url = https://github.com/MO-Movia/licit-plugin-contrib-vignette.git
 	branch = breaking_changes_tiptap
+[submodule "src/plugins/table-mods"]
+	path = src/plugins/table-mods
+	url = https://github.com/MO-Movia/MO-Movia-licit-plugin-contrib-table-mods.git
+	branch = breaking_changes_tiptap

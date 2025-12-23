@@ -61,6 +61,9 @@
       "@modusoperandi/licit-paste-json": [
         "./src/plugins/paste-json/src"
       ],
+      "@modusoperandi/licit-table-mods": [
+        "./src/plugins/table-mods/src"
+      ],
       "@modusoperandi/licit-vignette": [
         "./src/plugins/vignette/src"
       ],

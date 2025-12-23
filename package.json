@@ -10,9 +10,9 @@
   },
   "style": "styles/styles.css",
   "exports": {
-    "./package.json": {
-      "default": "./package.json"
-    },
+    "./package.json": "./package.json",
+    "./style.css": "./styles/stylesAll.css",
+    "./styles/stylesAll.css": "./styles/stylesAll.css",
     ".": {
       "types": "./licit/src/index.d.js",
       "default": "./licit/src/index.js"
@@ -77,6 +77,10 @@
       "types": "./plugins/paste-json/src/index.d.js",
       "default": "./plugins/paste-json/src/index.js"
     },
+    "./plugins/table-mods": {
+      "types": "./plugins/table-mods/src/index.d.js",
+      "default": "./plugins/table-mods/src/index.js"
+    },
     "./plugins/vignette": {
       "types": "./plugins/vignette/src/index.d.js",
       "default": "./plugins/vignette/src/index.js"
@@ -87,9 +91,9 @@
     "test": "jest --coverage",
     "build:bom": "npx @cyclonedx/cyclonedx-bom -o dist/bom.xml",
     "build:clean": "rm -rf dist/ && rm -f modusoperandi-licit-tiptap-*.*.*.tgz",
-    "build:css": "mkdirp ./dist/styles && cp src/licit/src/styles/* dist/styles",
-    "build:fonts": "mkdirp ./dist/fonts && cp -r fonts/* dist/fonts",
-    "build:assets": "mkdirp ./dist/assets && cp -r assets/* dist/assets",
+    "build:css": "npx copyfiles -fs src/**/*.css dist/styles",
+    "build:fonts": "npx copyfiles -u 3 src/licit/fonts/**/*.woff2 dist/fonts",
+    "build:assets": "npx copyfiles -u 3 src/licit/assets/**/*.svg dist/assets && npx copyfiles -u 5 src/plugins/**/src/assets/**/*.svg dist/assets",
     "build:esm": "node build.mjs",
     "build:esbuild:test": "tsc -p tsconfig.prod.json --emitDeclarationOnly --declaration",
     "build:ts": "tsc -p tsconfig.prod.json && npx tsc-alias -p tsconfig.json",
