@@ -27,6 +27,7 @@
 @import url('./czi-image-view.css');
 @import url('./czi-indent.css');
 @import url('./czi-inline-editor.css');
+@import url('./czi-molm-inline-editor.css');
 @import url('./czi-light-theme.css');
 @import url('./czi-link-tooltip.css');
 @import url('./czi-list.css');
@@ -51,3 +52,5 @@
 @import url('./menu.css');
 @import url('./ReactCrop.css');
 @import url('./table-figure.css');
+@import url('../../../prosemirror-menu/style/menu.css');
+@import url('../../../font-awesome/css/font-awesome.min.css');
