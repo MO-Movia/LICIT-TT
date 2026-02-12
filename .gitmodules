@@ -66,3 +66,11 @@
 	path = src/plugins/table-mods
 	url = https://github.com/MO-Movia/MO-Movia-licit-plugin-contrib-table-mods.git
 	branch = breaking_changes_tiptap
+[submodule "src/plugins/floatingmenu"]
+	path = src/plugins/floatingmenu
+	url = https://github.com/MO-Movia/licit-plugin-contrib-floatingmenu.git
+	branch = breaking_changes_tiptap
+[submodule "src/plugins/referencing"]
+	path = src/plugins/referencing
+	url = https://github.com/MO-Movia/licit-referencing.git
+	branch = develop

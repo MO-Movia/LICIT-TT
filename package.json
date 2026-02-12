@@ -53,6 +53,10 @@
       "types": "./plugins/export-pdf/src/index.d.js",
       "default": "./plugins/export-pdf/src/index.js"
     },
+    "./plugins/floatingmenu": {
+      "types": "./plugins/floatingmenu/src/index.d.js",
+      "default": "./plugins/floatingmenu/src/index.js"
+    },
     "./plugins/glossary": {
       "types": "./plugins/glossary/src/index.d.js",
       "default": "./plugins/glossary/src/index.js"
@@ -77,6 +81,10 @@
       "types": "./plugins/paste-json/src/index.d.js",
       "default": "./plugins/paste-json/src/index.js"
     },
+    "./plugins/referencing": {
+      "types": "./plugins/referencing/src/index.d.js",
+      "default": "./plugins/referencing/src/index.js"
+    },
     "./plugins/table-mods": {
       "types": "./plugins/table-mods/src/index.d.js",
       "default": "./plugins/table-mods/src/index.js"
@@ -84,7 +92,7 @@
     "./plugins/vignette": {
       "types": "./plugins/vignette/src/index.d.js",
       "default": "./plugins/vignette/src/index.js"
-    }
+    }    
   },
   "scripts": {
     "update:modules": "git -C . submodule update --recursive --remote",

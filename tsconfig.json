@@ -43,6 +43,9 @@
       "@modusoperandi/licit-export-pdf": [
         "./src/plugins/export-pdf/src"
       ],
+      "@modusoperandi/licit-floatingmenu": [
+        "./src/plugins/floatingmenu/src"
+      ],
       "@modusoperandi/licit-glossary": [
         "./src/plugins/glossary/src"
       ],
@@ -61,12 +64,16 @@
       "@modusoperandi/licit-paste-json": [
         "./src/plugins/paste-json/src"
       ],
+      "@modusoperandi/licit-referencing": [
+        "./src/plugins/referencing/src"
+      ],
       "@modusoperandi/licit-table-mods": [
         "./src/plugins/table-mods/src"
       ],
       "@modusoperandi/licit-vignette": [
         "./src/plugins/vignette/src"
-      ],
+      ],     
+      
       /** These need to be swapped in code
       "prosemirror-state": [
         "@tiptap/pm/state"
