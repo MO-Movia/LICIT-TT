@@ -87,6 +87,7 @@
     }
   },
   "scripts": {
+    "pull:modules": "git -C . submodule update --init --recursive",
     "update:modules": "git -C . submodule update --recursive --remote",
     "test": "jest --coverage",
     "build:bom": "npx @cyclonedx/cyclonedx-bom -o dist/bom.xml",
