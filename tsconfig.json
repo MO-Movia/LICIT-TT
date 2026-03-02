@@ -67,6 +67,9 @@
       "@modusoperandi/licit-vignette": [
         "./src/plugins/vignette/src"
       ],
+      "@modusoperandi/licit-referencing": [
+        "./src/plugins/referencing/src"
+      ],
       /** These need to be swapped in code
       "prosemirror-state": [
         "@tiptap/pm/state"

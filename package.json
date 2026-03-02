@@ -105,7 +105,7 @@
     "build:bom": "npx @cyclonedx/cyclonedx-bom -o dist/bom.xml",
     "build:clean": "rm -rf dist/ && rm -f modusoperandi-licit-tiptap-*.*.*.tgz",
     "build:css": "npx copyfiles -fs src/**/*.css dist/styles",
-    "build:fonts": "npx copyfiles -u 3 src/licit/fonts/**/*.woff2 dist/fonts",
+    "build:fonts": "npx copyfiles -u 3 src/licit/fonts/**/*.woff2 dist/fonts && npx copyfiles -u 3 src/licit/fonts/**/*.ttf dist/fonts",
     "build:assets": "npx copyfiles -u 3 src/licit/assets/**/*.svg dist/assets && npx copyfiles -u 5 src/plugins/**/src/assets/**/*.svg dist/assets",
     "build:esm": "node build.mjs",
     "build:esbuild:test": "tsc -p tsconfig.prod.json --emitDeclarationOnly --declaration",
