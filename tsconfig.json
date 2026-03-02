@@ -17,58 +17,58 @@
     "declaration": true,
     "paths": {
       "@modusoperandi/licit": [
-        "./src/licit/src"
+        "./src/licit"
       ],
       "@modusoperandi/licit-doc-attrs-step": [
-        "./src/core/src"
+        "./src/core"
       ],
       "@modusoperandi/licit-ui-commands": [
-        "./src/commands/src"
+        "./src/commands"
       ],
       "@modusoperandi/licit-contrib-plugin-block-control": [
-        "./src/plugins/block-control/src"
+        "./src/plugins/block-control"
       ],
       "@modusoperandi/licit-changecase": [
-        "./src/plugins/change-case/src"
+        "./src/plugins/change-case"
       ],
       "@modusoperandi/licit-citation": [
-        "./src/plugins/citation/src"
+        "./src/plugins/citation"
       ],
       "@modusoperandi/licit-rich-copy-embed-images": [
-        "./src/plugins/copy-images/src"
+        "./src/plugins/copy-images"
       ],
       "@modusoperandi/licit-custom-styles": [
-        "./src/plugins/custom-styles/src"
+        "./src/plugins/custom-styles"
       ],
       "@modusoperandi/licit-export-pdf": [
-        "./src/plugins/export-pdf/src"
+        "./src/plugins/export-pdf"
       ],
       "@modusoperandi/licit-glossary": [
-        "./src/plugins/glossary/src"
+        "./src/plugins/glossary"
       ],
       "@modusoperandi/licit-plugin-highlight": [
-        "./src/plugins/highlight/src"
+        "./src/plugins/highlight"
       ],
       "@modusoperandi/licit-info-icon": [
-        "./src/plugins/info-icon/src"
+        "./src/plugins/info-icon"
       ],
       "@modusoperandi/licit-multimedia": [
-        "./src/plugins/multimedia/src"
+        "./src/plugins/multimedia"
       ],
       "@modusoperandi/licit-object-id": [
-        "./src/plugins/object-id/src"
+        "./src/plugins/object-id"
       ],
       "@modusoperandi/licit-paste-json": [
-        "./src/plugins/paste-json/src"
+        "./src/plugins/paste-json"
       ],
       "@modusoperandi/licit-table-mods": [
-        "./src/plugins/table-mods/src"
+        "./src/plugins/table-mods"
       ],
       "@modusoperandi/licit-vignette": [
-        "./src/plugins/vignette/src"
+        "./src/plugins/vignette"
       ],
       "@modusoperandi/licit-referencing": [
-        "./src/plugins/referencing/src"
+        "./src/plugins/referencing"
       ],
       /** These need to be swapped in code
       "prosemirror-state": [

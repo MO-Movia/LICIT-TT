@@ -1,0 +1,179 @@
+.czi-editor-frameset button::selection {
+  background: olive;
+}
+
+.czi-editor-frameset select:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.czi-editor-frameset textarea:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.czi-editor-frameset .molcit-hr-width {
+  margin-bottom: 5px;
+  margin-top: 5px;
+  width: 100%;
+}
+
+.czi-editor-frameset .molcit-div-display {
+  display: inline-block;
+}
+
+.czi-editor-frameset .molcit-div-dateaccessed {
+  float: right;
+  margin-right: 34px;
+  margin-top: 0;
+}
+
+.czi-editor-frameset .infoicon {
+  cursor: pointer;
+  display: inline-block;
+  line-height: 10px;
+  position: relative;
+  padding-left: 1px;
+  padding-right: 1px;
+}
+
+.czi-editor-frameset .molinfo-editor-container .ProseMirror {
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.czi-editor-frameset .molcit-textborder {
+  border: 1px solid lightgrey !important;
+}
+
+.czi-editor-frameset .molcit-rowselected {
+  background: #eaeaea;
+}
+
+.czi-editor-frameset .molcit-searchdiv {
+  border-color: lightgrey;
+  border-style: solid;
+  border-width: 1px;
+  height: 196px;
+  overflow-x: auto;
+}
+
+.czi-editor-frameset .molcit-infoicon-tooltip-content {
+  background-color: white !important;
+  color: black;
+  display: inline-block;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 100;
+  line-height: 138%;
+  max-width: max-content;
+  padding: 5px !important;
+  text-align: left;
+  text-decoration: none;
+  width: 400px;
+  border: 2px solid #e8b415;
+}
+
+.czi-editor-frameset .molcit-infoicon-tooltip-content strong {
+  font-weight: 700; 
+}
+
+
+.czi-editor-frameset .molcit-infoicon-tooltip {
+  background: transparent !important;
+  cursor: auto;
+  line-height: normal;
+  margin: auto;
+  max-width: max-content;
+  position: absolute;
+  text-align: left;
+  top: 10px;
+  width: 400px;
+  z-index: 9999;
+}
+
+.czi-editor-frameset .molcit-infoicon-tooltip::before {
+  border: 5px solid transparent !important;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-top-width: 0;
+  content: ' ';
+  height: 0;
+  left: 27px;
+  position: absolute;
+  top: -5px;
+  width: 0;
+}
+
+.czi-editor-frameset .molcit-infoicon-alert {
+  background-color: #ff7575;
+  box-sizing: border-box;
+  color: white;
+  padding: 20px;
+  width: 340px;
+}
+
+.czi-editor-frameset .molcit-infoicon-submenu {
+  display: flex;
+  justify-content: center;
+  left: -194px;
+  pointer-events: none;
+  position: absolute;
+  top: -52px;
+  width: 400px;
+}
+
+.czi-editor-frameset .molcit-infoicon-submenu .czi-custom-button {
+  margin: 0 3px;
+  padding: 0 0 0 1px;
+}
+
+.czi-editor-frameset .molcit-infoicon-submenu-href {
+  border: none;
+  color: var(--czi-button-text-color);
+  display: inline-block;
+  flex: 1;
+  margin: 0 6px 0 0;
+  max-width: 200px;
+  overflow: hidden;
+  padding: 6px 0;
+  position: relative;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.czi-editor-frameset .molcit-infoicon-submenu-row {
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  z-index: 2;
+}
+
+.czi-editor-frameset .molcit-infoicon-submenu-body {
+  background: #fff;
+  border-radius: var(--czi-overlay-radius);
+  box-shadow: var(--czi-overlay-shadow);
+  box-sizing: border-box;
+  display: inline-block;
+  font-family: var(--czi-font-family);
+  font-size: var(--czi-font-size);
+  max-width: 95px;
+  padding: 10px;
+  pointer-events: auto;
+}
+
+.czi-editor-frameset .molcit-infoicon-submenu-body::after {
+  background-color: #fff;
+  box-shadow: 2px 2px 2px rgb(0 0 0 / 26%);
+  content: "";
+  height: 20px;
+  left: 48%;
+  position: absolute;
+  top: 33px;
+  transform: rotate(45deg);
+  width: 14px;
+  z-index: 1;
+}

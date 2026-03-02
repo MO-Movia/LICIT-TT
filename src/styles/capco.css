@@ -1,0 +1,188 @@
+.ProseMirror.czi-prosemirror-editor[contenteditable="true"] .capco.ProseMirror-widget:hover {
+  cursor: pointer;
+}
+
+.ProseMirror.czi-prosemirror-editor[contenteditable="false"] .capco.ProseMirror-widget:hover {
+  cursor: text;
+}
+
+.capco.ProseMirror-widget {
+  font-weight: initial;
+  font-style: initial;
+  text-decoration: initial;
+  background-color: initial;
+  font-size: initial;
+  font-family: initial;
+}
+
+.czi-editor-frameset .molcap-context-menu {
+  font-family: calibri, serif;
+  font-size: 16px;
+  background: white;
+  border: 1px solid #a9a5a5;
+  border-radius: 1px;
+  box-shadow: 0 5px 5px #c3c3c3;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  max-width: 260px;
+  display: flex;
+  justify-content: space-between;
+  position: fixed;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.czi-editor-frameset .molcap-context-menu ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  width: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.czi-editor-frameset .molcap-context-menu li {
+  position: relative;
+  padding-left: 14px;
+  padding-right: 10px;
+  cursor: default;
+  font-size: 14px;
+  max-width: 215px;
+  height: 21px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.czi-editor-frameset .molcap-context-menu li:hover {
+  background: #c3c3c3;
+}
+
+.czi-editor-frameset .molcap-context-menu li span.arrow {
+  position: absolute;
+  font-size: 0.8em;
+  right: 10px;
+  top: 2px;
+}
+
+.czi-editor-frameset .molcap-context-menu hr {
+  width: auto;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  border-top: 1px solid rgba(0 0 0 40%);
+}
+
+.czi-editor-frameset .molcap-context-menu li div.context-menu {
+  position: absolute;
+  left: 100%;
+  top: -10px;
+}
+
+.czi-editor-frameset .molcap-del-btn {
+  height: fit-content;
+  margin-top: 9px;
+  font-size: 12px;
+  background-color: #be5757;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  opacity: 0;
+
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.czi-editor-frameset .molcap-context-menu li:hover img {
+  width: 20px;
+  height: 21px;
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 101;
+  cursor: pointer;
+  background: #c3c3c3;
+}
+
+.czi-editor-frameset .molcap-custom-capco li:hover img {
+  width: 20px;
+  height: 21px;
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 101;
+  cursor: pointer;
+  background: #c3c3c3;
+}
+
+/* [FS] IRAD-1368 2021-06-10
+   Show ellipsis at the end for lengthy text */
+.czi-editor-frameset .molcap-context-menu-item-name {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+
+.czi-editor-frameset .molcap-selected-mode-show {
+  position: absolute;
+  font-size: 1em;
+  left: 10px;
+  margin-left: -9px;
+  visibility: visible;
+}
+
+.czi-editor-frameset .molcap-selected-mode-hide {
+  visibility: hidden;
+}
+
+.czi-editor-frameset .molcap-dot-capco {
+  height: 5px;
+  width: 5px;
+  background-color: black;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.czi-editor-frameset .molcap-marker-value {
+  width: 23%;
+  float: left;
+}
+
+.czi-editor-frameset .molcap-ulmarker {
+  margin-bottom: 0;
+  padding-left: 10px;
+}
+
+.ProseMirror .lint-icon {
+  display: inline-block;
+  position: absolute;
+  left: 9mm;
+  cursor: pointer;
+  width: 1.5em;
+  height: 1.1em;
+  padding-left: 0.5px;
+  line-height: 1em;
+}
+
+.ProseMirror .lint-iconinner {
+  position: absolute;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid grey;
+  text-align: center;
+  color: black;
+  font-family: times, georgia, serif;
+  font-size: 15px;
+  font-weight: bold;
+  width: 1.1em;
+  height: 1em;
+}
+
+.ProseMirror .lint-iconinner::before {
+  content: "+";
+}

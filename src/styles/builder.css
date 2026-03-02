@@ -1,0 +1,315 @@
+/* CAPCO marking mode set to manual
+ Right click on canvas
+ Open context menu on right click
+ Select new Capco Marking option
+ Open ngb-modal-window for create classification marking
+ Modal header save andf cancel button */
+.czi-editor-frameset .molcap-marker-btn {
+  float: right;
+  margin-top: 5px;
+  margin-right: 10px;
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+  width: 68px;
+  height: 33px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* CAPCO marking mode set to manual
+ Right click on canvas
+ Open context menu on right click
+ Select new Capco Marking option
+ Open ngb-modal-window for create classification marking
+ Contains classifications */
+.czi-editor-frameset .molcap-tab-item {
+  padding: 10px;
+  display: inline-grid;
+}
+
+/* CAPCO marking mode set to manual
+ Right click on canvas
+ Open context menu on right click
+ Select new Capco Marking option
+ Open ngb-modal-window for create classification marking
+ Input tag enter classification style */
+.czi-editor-frameset .molcap-marker-input-container {
+  background-color: #8e8e8e;
+  margin-top: 110px;
+}
+
+/* CAPCO marking mode set to manual
+ Right click on canvas
+ Open context menu on right click
+ Select new Capco Marking option
+ Open ngb-modal-window for create classification marking
+ Marker name style */
+.czi-editor-frameset .molcap-marker-name {
+  float: left;
+  width: 77%;
+  white-space: pre-wrap;
+}
+
+.czi-editor-frameset .molcap-ulmarker {
+  margin-bottom: 0;
+  padding-left: 10px;
+}
+
+.czi-editor-frameset .molcap-builder-list-unstyled {
+  list-style: none;
+  font-size: 12px;
+}
+
+/* Single & Double Slash button style */
+.czi-editor-frameset .molcap-btn-sslash,
+.czi-editor-frameset .molcap-btn-dslash {
+  box-sizing: border-box;
+  padding: 0.375rem 0.75rem;
+  line-height: 1.4;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border-color: #ced4da;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 0.25rem;
+}
+
+.czi-editor-frameset .molcap-builder-header-border h2 {
+  margin: 6px;
+}
+
+.czi-editor-frameset .molcap-btnslash {
+  width: 36px;
+  padding-bottom: 3px;
+  font-weight: bold;
+  margin: 2px;
+}
+
+.czi-editor-frameset .molcap-compartment-height {
+  min-height: 180px;
+  overflow: auto;
+  max-height: 400px;
+  padding-left: 1px;
+  padding-right: 1px;
+  width: 365px;
+  margin: 1px;
+  color: black;
+}
+
+.czi-editor-frameset .molcap-capco-input {
+  width: 81%;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  margin: 2px;
+}
+
+.czi-editor-frameset .molcap-builder-card {
+  position: relative;
+  display: flex;
+  /* stylelint-disable */
+  display: -ms-flexbox;
+  -ms-flex-direction: column;
+  /*stylelint-enable */
+  flex-direction: column;
+  min-width: 0;
+  word-wrap: break-word;
+  background-color: #fff;
+  background-clip: border-box;
+  border: 1px solid rgba(0 0 0 12.5%);
+  border-radius: 0.25rem;
+}
+
+.czi-editor-frameset .molcap-marker-body {
+  min-height: 100px;
+  max-height: 195px;
+  overflow-y: auto;
+}
+
+.czi-editor-frameset .molcap-header {
+  background-color: lightslategray !important;
+}
+
+.czi-editor-frameset .molcap-builder-header-border {
+  border-bottom: 1px solid darkgray;
+  background-color: #565555;
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: auto auto;
+  height: 45px;
+  color: white;
+}
+
+.czi-editor-frameset .molcap-builder-card-header {
+  padding: 0 !important;
+  margin-bottom: 0;
+  background-color: #eaeaea !important;
+  border-bottom: 1px solid rgba(0 0 0 12.5%);
+}
+
+.czi-editor-frameset .molcap-builder-card-header h6 {
+  margin-left: 5px;
+  margin-top: 6px;
+}
+
+.czi-editor-frameset .molcap-builder-card-header h2 {
+  margin: 6px 4px;
+}
+
+.czi-editor-frameset .molcap-builder-body-grid {
+  display: grid;
+  grid-gap: 5px;
+  grid-template-columns: auto auto;
+  padding: 5px;
+  color: white;
+}
+
+.czi-editor-frameset .molcap-builder-card-body {
+  flex: 1 1 auto;
+  min-height: 1px;
+  width: 365px;
+}
+
+.czi-editor-frameset .molcap-builder-text-break {
+  cursor: default;
+  word-break: break-word !important;
+  word-wrap: break-word !important;
+  padding: 0.5rem !important;
+}
+
+.czi-editor-frameset .molcap-errorspan {
+  font-style: italic;
+  position: absolute;
+  z-index: 10;
+  width: 99.5%;
+  border-top: 1px solid lightgray;
+  color: rgb(255 206 191);
+}
+
+.czi-editor-frameset .molcap-default-marker-value {
+  width: 100%;
+  float: left;
+  font-family: calibri, serif;
+  font-size: 13px;
+}
+
+.czi-editor-frameset .molcap-capco-list {
+  height: 143px;
+  padding-left: 1px;
+  padding-right: 1px;
+  min-width: 320px;
+  margin: 1px;
+}
+
+.czi-editor-frameset .molcap-customcapco-body {
+  height: 143px;
+  overflow: auto;
+}
+
+.czi-editor-frameset #builderBody {
+  min-height: 300px;
+  margin-left: 36px;
+  margin-right: 36px;
+}
+
+.czi-editor-frameset #DisseminationMarkingsCompartment {
+  height: 205px;
+}
+
+.czi-editor-frameset .molcap-labels {
+  font-size: 15px;
+  color: gray;
+  padding: 1px;
+}
+
+.czi-editor-frameset .molcab-options {
+  padding-top: 1px;
+  z-index: 150;
+}
+
+.czi-editor-frameset .molcab-options .relto {
+  position: absolute;
+}
+
+.czi-editor-frameset .molcap-select {
+  border: none;
+  border-bottom: solid thin grey;
+  font-size: 16px;
+  color: grey;
+  width: 400px;
+  min-height: 20px;
+  max-height: 25px;
+}
+
+.czi-editor-frameset .molcap-select-width {
+  width: 34%;
+}
+
+.czi-editor-frameset .molcap-classif {
+  border: none;
+  border-bottom: solid thin grey;
+  font-size: 20px;
+  color: grey;
+}
+
+.czi-editor-frameset .molcap-btn {
+  align-items: normal;
+  display: flex;
+  flex-direction: column;
+  margin-left: 14px;
+  margin-right: 14px;
+  margin-top: -7px;
+  padding-bottom: 7px;
+}
+
+.czi-editor-frameset .molcap-btn-text {
+  padding-top: 3px;
+  color: grey;
+  font-size: 20px;
+  border-radius: 20px;
+  border-color: grey;
+  background-color: white;
+  font-weight: 600;
+  width: 341px;
+  height: 45px;
+}
+
+.molcap-input {
+  border: none;
+  border-bottom: solid thin grey;
+  font-size: 15px;
+  color: grey;
+  width: 400px;
+  outline-color: grey;
+}
+
+.molcap-cancel-btn {
+  height: fit-content;
+  margin-top: 9px;
+  margin-right: 32px;
+  font-size: 12px;
+  background-color: grey;
+  border: none;
+  color: white;
+  border-radius: 8px;
+}
+
+.molcapHeaderTitle {
+  align-items: center;
+  display: flex;
+  margin-top: 15px;
+}
+
+.molcap-title {
+  font-size: 36px;
+  color: grey;
+  flex: 1;
+  font-family: inherit;
+  padding-left: 37px;
+}

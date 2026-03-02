@@ -1,0 +1,16 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
+import {Node} from 'prosemirror-model';
+
+import {LIST_ITEM} from './NodeNames';
+
+export function isInsideListItem(doc: Node, pos: number): boolean {
+  if (doc.nodeSize < 2 || pos < 2) {
+    return false;
+  }
+  const prevNode = doc.nodeAt(pos - 1);
+  return prevNode && prevNode.type.name === LIST_ITEM;
+}

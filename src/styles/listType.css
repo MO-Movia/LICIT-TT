@@ -1,0 +1,31 @@
+.ol-container {
+  background: var(--czi-bg); /* #fffefe; */
+  border: var(--czi-ol-container-border); /* 1px solid #bdb5b5; */
+  display: grid;
+  gap: 5px;
+  grid-template-columns: auto auto auto;
+  padding: 5px;
+}
+
+.buttonsize {
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  cursor: pointer;
+  background: var(--czi-bg);
+  border: var(--czi-list-type-btn-border);
+  color: var(--czi-text-color);
+}
+
+.buttonsize:focus,
+.buttonsize:hover {
+  background-color: var(--czi-button-hover-background-color);
+}
+
+/* [FS] IRAD-1076 2020-10-15
+ Style for paste popup menu */
+
+.pastemenu {
+  height: 35px;
+  width: 72px;
+}

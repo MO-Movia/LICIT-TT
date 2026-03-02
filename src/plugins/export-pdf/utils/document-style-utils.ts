@@ -1,0 +1,15 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
+import { StoredStyle } from './table-of-contents-utils';
+
+export function getStyleLevel(styleName: string, styles: StoredStyle[]): number | null {
+  const style = styles.find(style => style.name === styleName);
+
+  if (!style?.level) return null;
+
+  const level = Number(style.level);
+  return Number.isNaN(level) ? 1 : level;
+}

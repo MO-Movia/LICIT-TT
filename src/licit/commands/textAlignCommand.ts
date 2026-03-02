@@ -1,0 +1,79 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
+import { EditorState } from 'prosemirror-state';
+import { Transform } from 'prosemirror-transform';
+import { EditorView } from 'prosemirror-view';
+
+import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import {Editor} from '@tiptap/react';
+
+class TextAlignCommand extends UICommand {
+  waitForUserInput(
+    _state: EditorState,
+    _dispatch?: (tr: Transform) => void,
+    _view?: EditorView,
+    _event?: React.SyntheticEvent
+  ): Promise<PromiseConstructor> {
+    return Promise.resolve(null);
+  }
+  executeWithUserInput(
+    _state: EditorState,
+    _dispatch?: (tr: Transform) => void,
+    _view?: EditorView,
+    _inputs?: string
+  ): boolean {
+    return false;
+  }
+  cancel(): void {
+    return null;
+  }
+  executeCustom(
+    _state: EditorState,
+    tr: Transform,
+    _from: number,
+    _to: number
+  ): Transform {
+    return tr;
+  }
+  executeCustomStyleForTable(_state: EditorState, tr: Transform): Transform {
+    return tr;
+  }
+  alignment = null;
+
+  constructor(alignment: string) {
+    super();
+    this.alignment = alignment;
+  }
+
+  getEditor = (): Editor => {
+    return UICommand.prototype.editor;
+  };
+
+  isEnabled = (_state: EditorState): boolean => {
+    return true;
+  };
+
+  execute = (
+    _state: EditorState,
+    _dispatch?: (tr: Transform) => void,
+    _view?: EditorView
+  ): boolean => {
+    const editor = this.getEditor();
+    const success = editor.commands.setTextAlign(this.alignment);
+    // set the overridden align attributes to preserve the alignment
+    if (success) {
+      editor.commands.updateAttributes('paragraph', {
+        overriddenAlign: 'true',
+        overriddenAlignValue: this.alignment,
+        align: this.alignment,
+      });
+    }
+
+    return success;
+  };
+}
+
+export default TextAlignCommand;

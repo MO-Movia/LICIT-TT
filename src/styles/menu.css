@@ -1,0 +1,54 @@
+/* Wrapper for each paragraph hamburger */
+.pm-hamburger-wrapper {
+  position: relative;
+  float: right;
+}
+
+/* Icon hidden by default */
+.float-icon {
+  position: absolute;
+  top: 0;
+  cursor: pointer;
+  margin-right: 6px;
+  color: #555;
+  font-size: 16px;
+  user-select: none;
+  opacity: 0; /* hidden initially */
+  transition: opacity 0.18s ease-in-out;
+}
+
+/* Show icon only when hovering over the paragraph */
+.ProseMirror p:hover .float-icon {
+  opacity: 1;
+}
+
+.context-menu {   
+  background: #d8d6d6;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 10000;
+
+  display: flex;
+  flex-direction: column;
+
+  /* 👇 important fix */
+  min-width: 180px;
+  min-height: 40px;
+  padding-top:5px;
+  padding-bottom:5px;
+
+}
+
+.context-menu.dark{
+  background: #444
+}
+
+.context-menu__items {
+  display: flex;
+  flex-direction: column;
+}
+
+.ProseMirror[contenteditable="false"] .pm-hamburger-wrapper {
+  display: none !important;
+}

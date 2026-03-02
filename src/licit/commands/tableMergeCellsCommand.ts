@@ -1,0 +1,63 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
+import { EditorView } from 'prosemirror-view';
+import { EditorState } from 'prosemirror-state';
+import { CellSelection } from 'prosemirror-tables';
+import { Transform } from 'prosemirror-transform';
+
+import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { Editor } from '@tiptap/react';
+
+class TableMergeCellsCommand extends UICommand {
+  waitForUserInput(_state: EditorState, _dispatch?: (tr: Transform) => void, _view?: EditorView, _event?: React.SyntheticEvent): Promise<PromiseConstructor> {
+    return Promise.resolve(null);
+  }
+  executeWithUserInput(_state: EditorState, _dispatch?: (tr: Transform) => void, _view?: EditorView, _inputs?: string): boolean {
+    return false;
+  }
+  cancel(): void {
+    return null;
+  }
+  executeCustom(_state: EditorState, tr: Transform, _from: number, _to: number): Transform {
+    return tr;
+  }
+  executeCustomStyleForTable(_state: EditorState, tr: Transform): Transform {
+    return tr;
+  }
+  isEnabled = (state: EditorState): boolean => {
+    const {$from} = state.selection;
+
+    for (let depth = $from.depth; depth > 0; depth--) {
+      if ($from.node(depth).type.name === 'table') {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  getEditor = (): Editor => {
+    return UICommand.prototype.editor;
+  };
+
+  isActive = (_state: EditorState): boolean => {
+    return false;
+  };
+
+  execute = (
+    state: EditorState,
+    _dispatch?: (tr: Transform) => void,
+    _view?: EditorView
+  ): boolean => {
+    const { selection } = state;
+    if (selection instanceof CellSelection) {
+      return this.getEditor().commands.mergeCells();
+    }
+    return false;
+  };
+}
+
+export default TableMergeCellsCommand;

@@ -1,0 +1,83 @@
+.ref-background {
+  background-color: #eff3f3;
+  display: inherit;
+  border: 1px solid transparent;
+  border-radius: 1px;
+}
+
+.ref-background:hover {
+  border-color: black;
+}
+
+.ref-icon {
+  position: absolute;
+  display: inline-block;
+  font-size: 16px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  z-index: 999;
+}
+
+.popup-container {
+  padding-bottom: 19px;
+  margin-left: 15px;
+}
+
+.mo-licit-referencing-hidden {
+  display: none;
+}
+
+.mo-licit-referencing-show {
+  display: inherit;
+}
+
+.tt-content {
+  background-color: white !important;
+  color: black;
+  display: inline-block;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 100;
+  line-height: 138%;
+  max-width: max-content;
+  padding: 5px !important;
+  text-align: left;
+  text-decoration: none;
+  width: 400px;
+  border: 2px solid #e8b415;
+  cursor: pointer;
+}
+
+.molcit-reference-tooltip {
+  background: transparent !important;
+  line-height: normal;
+  margin: auto;
+  max-width: max-content;
+  position: absolute;
+  text-align: left;
+  width: 400px;
+  z-index: 9999;
+}
+
+.molcit-reference-tooltip::before {
+  border: 5px solid transparent !important;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-top-width: 0;
+  content: " ";
+  height: 0;
+  position: absolute;
+  width: 0;
+}

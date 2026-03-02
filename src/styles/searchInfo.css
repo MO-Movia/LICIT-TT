@@ -1,0 +1,27 @@
+.addinfo-popup{
+  width: 285px;
+  border: 1px solid lightgray;
+  box-shadow: 1px 1px;
+}
+
+.search-info{
+padding: 15px;
+height: 300px
+}
+
+.czi-form input.search-input {
+  width: 50%;
+  height: 27px;
+}
+
+.icons-container {
+  height: 16rem;
+  overflow-y: auto;
+  width: 255px;
+}
+
+.savebtn{
+  border-radius: 5px;
+  height: 27px;
+}
+

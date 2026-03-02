@@ -1,0 +1,242 @@
+.czi-editor-frameset .molcit-citation-label {
+  display: unset !important;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.czi-editor-frameset button::selection {
+  background: olive;
+}
+
+.czi-editor-frameset select:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.czi-editor-frameset textarea:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.czi-editor-frameset .molcit-hr-width {
+  margin-bottom: 5px;
+  margin-top: 5px;
+  width: 100%;
+}
+
+.czi-editor-frameset .molcit-div-display {
+  display: inline-block;
+}
+
+.czi-editor-frameset .molcit-div-dateaccessed {
+  float: right;
+  margin-right: 34px;
+  margin-top: 0;
+}
+
+.czi-editor-frameset .citationnote {
+  cursor: pointer;
+  display: inline-block;
+  line-height: 10px;
+  position: relative;
+}
+
+.czi-editor-frameset .citationnote::after {
+  content: "[" counter(prosemirror-citationnote) "]";
+  counter-increment: prosemirror-citationnote;
+  font-size: 56%;
+  vertical-align: super;
+}
+
+.czi-editor-frameset .molcit-citation-submenu {
+  display: flex;
+  justify-content: center;
+  left: -194px;
+  pointer-events: none;
+  position: absolute;
+  top: -52px;
+  width: 400px;
+}
+
+.czi-editor-frameset .molcit-citation-submenu .czi-custom-button {
+  margin: 0 3px;
+  padding: 0 0 0 1px;
+}
+
+.czi-editor-frameset .molcit-citation-submenu-href {
+  border: none;
+  color: var(--czi-button-text-color);
+  display: inline-block;
+  flex: 1;
+  margin: 0 6px 0 0;
+  max-width: 200px;
+  overflow: hidden;
+  padding: 6px 0;
+  position: relative;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.czi-editor-frameset .molcit-citation-submenu-row {
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  z-index: 2;
+}
+
+.czi-editor-frameset .molcit-citation-submenu-body {
+  background: #fff;
+  border-radius: var(--czi-overlay-radius);
+  box-shadow: var(--czi-overlay-shadow);
+  box-sizing: border-box;
+  display: inline-block;
+  font-family: var(--czi-font-family);
+  font-size: var(--czi-font-size);
+  max-width: 95px;
+  padding: 10px;
+  pointer-events: auto;
+}
+
+.czi-editor-frameset .molcit-citation-submenu-body::after {
+  background-color: #fff;
+  box-shadow: 2px 2px 2px rgba(0 0 0 / 26%);
+  content: "";
+  height: 20px;
+  left: 48%;
+  position: absolute;
+  top: 33px;
+  transform: rotate(45deg);
+  width: 14px;
+  z-index: 1;
+}
+
+.czi-editor-frameset .molcit-tablecitations {
+  border-bottom: none;
+  border-collapse: collapse;
+  border-color: lightgrey;
+  border-style: solid;
+  border-width: 1px;
+  font-family: Arial, sans-serif;
+  width: 100%;
+}
+
+.czi-editor-frameset .molcit-citationsheader {
+  border-color: #8e8e8e;
+  border-style: solid;
+  border-width: 1px;
+  padding: 8px;
+  text-align: left;
+}
+
+.czi-editor-frameset .molcit-citationbody {
+  line-height: 1.8;
+  overflow: hidden auto;
+}
+
+.czi-editor-frameset .molcit-citationrow.hover {
+  background-color: gray;
+  cursor: pointer;
+}
+
+.czi-editor-frameset .molcit-textborder {
+  border: 1px solid lightgrey !important;
+}
+
+.czi-editor-frameset .molcit-rowselected {
+  background: #eaeaea;
+}
+
+.czi-editor-frameset .molcit-citationrow.selected {
+  background: #eaeaea;
+}
+
+.czi-editor-frameset .molcit-searchdiv {
+  border-color: lightgrey;
+  border-style: solid;
+  border-width: 1px;
+  height: 196px;
+  overflow-x: auto;
+}
+
+.czi-editor-frameset .molcit-citation-tooltip-content {
+  background-color: white !important;
+  color: black;
+  display: inline-block;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 100;
+  line-height: 138%;
+  max-width: 400px;
+  padding: 5px;
+  text-align: left;
+  text-decoration: none;
+  width: 400px;
+}
+
+.czi-editor-frameset .molcit-citationnote-tooltip {
+  background: transparent;
+  box-shadow: 0 3px 6px rgba(0 0 0 / 16%), 0 3px 6px rgba(0 0 0 / 23%);
+  border-radius: 2px;
+  box-sizing: border-box;
+  cursor: auto;
+  left: -30px;
+  line-height: normal;
+  margin: auto;
+  max-width: 400px;
+  padding: 3px;
+  position: absolute;
+  text-align: left;
+  top: calc(100% + 10px);
+  width: 400px;
+  z-index: 9999;
+}
+
+.czi-editor-frameset .molcit-citationnote-tooltip::before {
+  border: 5px solid transparent !important;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-top-width: 0;
+  content: ' ';
+  height: 0;
+  left: 27px;
+  position: absolute;
+  top: -5px;
+  width: 0;
+}
+
+.czi-editor-frameset .molcit-alert {
+  background-color: white;
+  box-sizing: border-box;
+  color: darkgray;
+  padding: 20px;
+  width: 340px;
+}
+
+.czi-editor-frameset .ProseMirror {
+  counter-reset: prosemirror-citationnote;
+}
+
+.btnsave {
+  font-size: small;
+  border-radius: 5px
+}
+
+.custom-view {
+  position: absolute;
+  left: 75px;
+  right: 75px;
+  line-height: 3px;
+  color: black;
+  font-size: 7pt;
+  font-family: "Open Sans", Arial, sans-serif;
+  font-style: italic;
+}
+
+.custom-view p{
+  cursor: pointer;
+  line-height: 1;
+}
