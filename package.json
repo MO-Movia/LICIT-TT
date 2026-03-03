@@ -106,7 +106,7 @@
     "build:assets": "npx copyfiles -u 2 src/assets/**/* dist/assets",
     "build:ts": "tsc -p tsconfig.prod.json && npx tsc-alias -p tsconfig.json",
     "ci:build": "npm run build:clean && npm run build:ts && npm run build:css && npm run build:fonts && npm run build:assets && npx copyfiles package.json README.md LICENSE dist",
-    "lint": "eslint src",
+    "lint": "eslint src --max-warnings=759",
     "test": "jest --coverage",
     "test:coverage": "jest --coverage",
     "verify": "npm run lint -- --fix && npm run ci:build && npm run test:coverage && echo 'All Tests Passed!'"
@@ -147,6 +147,7 @@
     "prosemirror-transform": "^1.0.0",
     "prosemirror-utils": "^1.0.0-0",
     "prosemirror-view": "^1.0.0",
+    "orderedmap": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -173,6 +174,7 @@
     "tippy.js": "^6.3.7",
     "url": "^0.11.3",
     "uuid": "11.0.0",
+    "y-protocols": "^1.0.0",
     "y-indexeddb": "^9.0.6",
     "y-webrtc": "^10.2.3",
     "yjs": "^13.5.24"
@@ -197,6 +199,7 @@
     "lint-staged": "^16.1.4",
     "mini-css-extract-plugin": "^2.6.1",
     "mkdirp": "^1.0.4",
+    "pagedjs": "^0.4.3",
     "prettier": "^3.6.2",
     "prosemirror-test-builder": "^1.1.1",
     "prosemirror-dev-tools": "^4.2.0",

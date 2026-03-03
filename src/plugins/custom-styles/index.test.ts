@@ -1939,14 +1939,7 @@ describe('Style Plugin Execute', () => {
 describe('Custom Style Plugin pass', () => {
   const observedElement = document.createElement('div');
 
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'childList' && mutation.addedNodes.length) {
-        // The docChange event has been dispatched
-        console.log('docChange event dispatched!');
-      }
-    });
-  });
+  const observer = new MutationObserver((_mutations) => undefined);
 
   observer.observe(observedElement, { childList: true });
 
@@ -5434,9 +5427,7 @@ describe('applyStyleForPreviousEmptyParagraph', () => {
       return {
         curSelection: { $anchor: { pos: 1 }, $head: { pos: 3 } },
         doc: mockdoc,
-        setNodeMarkup: () => {
-          return {};
-        },
+        setNodeMarkup: () => ({}),
         setSelection: setSelection,
       };
     };

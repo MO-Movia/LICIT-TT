@@ -18,7 +18,7 @@ const CSS_FONT = 'Material Icons';
   // Inject CSS Fonts reuqired for toolbar icons.
   const fontSupported = await canUseCSSFont(CSS_FONT);
   if (!fontSupported) {
-    console.info('Add CSS from ', CSS_CDN_URL);
+    console.warn('Add CSS from ', CSS_CDN_URL);
 
   }
 })();

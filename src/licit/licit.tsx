@@ -54,8 +54,6 @@ import TableHeaderEx from './extensions/tableHeaderEx';
 import ParagraphNodeSpec from './specs/paragraphNodeSpec';
 import docNodeSpec from './specs/docNodeSpec';
 import * as awarenessProtocol from 'y-protocols/awareness';
-import * as math from 'lib0/math';
-import * as random from 'lib0/random';
 import { EditorView } from 'prosemirror-view';
 import cx from 'classnames';
 import DocLayoutCommand from './commands/docLayoutCommand';
@@ -142,7 +140,7 @@ export const configCollab = (
             signaling: [collabServiceURL],
             password: null,
             awareness: new awarenessProtocol.Awareness(ydoc),
-            maxConns: 20 + math.floor(random.rand() * 15),
+            maxConns: 20,
             filterBcConns: true,
             peerOpts: {},
           });

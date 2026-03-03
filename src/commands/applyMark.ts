@@ -3,9 +3,8 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Transaction} from '@remirror/pm/state';
 import {MarkType, Node, ResolvedPos, Schema} from 'prosemirror-model';
-import {EditorState, SelectionRange, TextSelection} from 'prosemirror-state';
+import {EditorState, SelectionRange, TextSelection, type Transaction} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {getStyleByName, Style} from './runtime.service';
 import {MARK_OVERRIDE} from './MarkNames';

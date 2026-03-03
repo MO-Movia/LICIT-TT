@@ -698,7 +698,6 @@ describe('CustomStyleCommand', () => {
     };
 
     const doc = mySchema.nodeFromJSON(jsonDoc);
-    console.log(doc);
     expect(
       customstylecommand.clearCustomStyles(
         {

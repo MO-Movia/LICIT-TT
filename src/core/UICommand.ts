@@ -21,7 +21,7 @@ export const EventType = {
 
 export abstract class UICommand {
   static readonly EventType = EventType;
-  // eslint-disable-next-line sonarjs/public-static-readonly
+   
   static theme: string;
 
   protected _editor: Editor | null = null;

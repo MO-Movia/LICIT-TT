@@ -42,8 +42,6 @@ export type DirectEditorProps = {
   state: EditorState;
   transformPastedHTML: (html: string) => string;
   handleDOMEvents;
-  // TODO: Fill the interface.
-  // https://github.com/ProseMirror/prosemirror-view/blob/master/src/index.js
 };
 
 export type ImageLike = {

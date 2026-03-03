@@ -20,7 +20,7 @@ export function canUseCSSFont(fontName: string): Promise<boolean> {
   ) {
     // Feature is not supported, install the CSS anyway
     // https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/check#Browser_compatibility
-    console.log('FontFaceSet is not supported');
+    console.warn('FontFaceSet is not supported');
     return Promise.resolve(false);
   }
 
