@@ -4,7 +4,7 @@
  */
 
 import { EditorView } from 'prosemirror-view';
-import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 import { PreviewForm } from './preview';
 import { processDocumentTables } from './table-image-helper';
 

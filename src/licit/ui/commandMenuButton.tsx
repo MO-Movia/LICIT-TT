@@ -14,8 +14,8 @@ import {
   createPopUp,
   atAnchorRight,
   ThemeContext,
-} from '@modusoperandi/licit-ui-commands';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+} from '../../commands';
+import { UICommand } from '../../core';
 import uuid from './uuid';
 import {isExpandButton} from './editorToolbarConfig';
 import {EditorViewEx} from '../constants';

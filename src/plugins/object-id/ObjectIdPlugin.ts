@@ -10,7 +10,7 @@ import {
   TextSelection,
   Transaction,
 } from 'prosemirror-state';
-import { SetDocAttrStep } from '@modusoperandi/licit-doc-attrs-step';
+import { SetDocAttrStep } from '../../core';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
 import { createObjectId } from './create-object-id';
 import { EditorView } from 'prosemirror-view';

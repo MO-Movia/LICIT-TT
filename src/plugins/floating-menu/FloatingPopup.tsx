@@ -4,9 +4,9 @@
  */
 
 import React from 'react';
-import { CustomButton } from '@modusoperandi/licit-ui-commands';
+import { CustomButton } from '../../commands';
 import { FloatingMenuItem, FloatingMenuContext } from './model';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 interface FloatingMenuProps {
   context: FloatingMenuContext;

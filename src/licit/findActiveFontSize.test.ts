@@ -5,7 +5,7 @@
 
 import {EditorState, TextSelection} from 'prosemirror-state';
 import {schema} from 'prosemirror-schema-basic';
-import {MARK_FONT_SIZE, HEADING} from '@modusoperandi/licit-ui-commands';
+import { MARK_FONT_SIZE, HEADING } from '../commands';
 import findActiveFontSize from './findActiveFontSize';
 import findActiveMark from './findActiveMark';
 import {findParentNodeOfType} from 'prosemirror-utils';

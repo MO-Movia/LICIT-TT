@@ -4,13 +4,13 @@
  */
 
 import { createTable, ExportPDF } from './exportPdf';
-import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 import { Schema } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { schema as basicSchema } from 'prosemirror-schema-basic';
 // Mock createPopUp
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   createPopUp: jest.fn(),
 }));
 

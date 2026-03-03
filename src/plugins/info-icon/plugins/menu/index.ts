@@ -11,9 +11,9 @@ import {
 import { EditorView } from 'prosemirror-view';
 import { toggleMark } from 'prosemirror-commands';
 import { MarkType } from 'prosemirror-model';
-import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../../../commands';
 import { LinkURLEditor } from './LinkURLEditor';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../../../core';
 
 
 export function markActive(state: EditorState, type: MarkType) {

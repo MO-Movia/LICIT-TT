@@ -10,7 +10,7 @@ import {
   RESERVED_STYLE_NONE_NUMBERING,
 } from './CustomStyleNodeSpec';
 import { DEFAULT_NORMAL_STYLE } from './Constants';
-import { setCustomStyles } from '@modusoperandi/licit-ui-commands';
+import { setCustomStyles } from '../../commands';
 let customStyles = new Array(0);
 let styleRuntime;
 let hideNumbering = false;

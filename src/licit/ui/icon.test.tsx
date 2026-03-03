@@ -14,7 +14,7 @@ jest.mock('../styles/icon-font.css', () => ({}));
 jest.mock('../canUseCSSFont', () => jest.fn(() => Promise.resolve(true)));
 
 //  FIX  wrap React import inside factory to avoid hoisting error
-jest.mock('@modusoperandi/licit-ui-commands', () => {
+jest.mock('../../commands', () => {
   return { ThemeContext: React.createContext('dark') };
 });
 

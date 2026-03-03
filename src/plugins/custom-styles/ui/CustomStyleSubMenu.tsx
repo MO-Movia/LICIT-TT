@@ -6,7 +6,7 @@
 import cx from 'classnames';
 
 import React from 'react';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../../core';
 import { CustomStyleCommand } from '../CustomStyleCommand';
 import {
   RESERVED_STYLE_NONE

@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { CustomButton } from '@modusoperandi/licit-ui-commands';
+import { CustomButton } from '../../../commands';
 import React from 'react';
 import { Icon } from './Icon';
 import { EditorView } from 'prosemirror-view';

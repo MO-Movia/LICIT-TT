@@ -13,7 +13,7 @@ import { Transform } from 'prosemirror-transform';
 import { CellSelection } from 'prosemirror-tables';
 import { EditorView } from 'prosemirror-view';
 import { Node, Fragment, Schema } from 'prosemirror-model';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import {
   atViewportCenter,
   createPopUp,
@@ -29,7 +29,7 @@ import {
   isColumnCellSelected,
   getSelectedCellPositions,
   findParagraphsInNode,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../commands';
 import { AlertInfo } from './ui/AlertInfo';
 import { CustomStyleEditor } from './ui/CustomStyleEditor';
 import { ParagraphSpacingCommand } from './ParagraphSpacingCommand';

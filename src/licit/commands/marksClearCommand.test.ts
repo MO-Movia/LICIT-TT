@@ -5,11 +5,11 @@
 
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
-import { clearMarks, clearHeading } from '@modusoperandi/licit-ui-commands';
+import { clearMarks, clearHeading } from '../../commands';
 import MarksClearCommand from './marksClearCommand';
 import { Schema } from 'prosemirror-model';
 
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   clearMarks: jest.fn(),
   clearHeading: jest.fn(),
 }));

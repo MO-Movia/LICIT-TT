@@ -7,7 +7,7 @@ import {
   CustomButton,
   PointerSurfaceProps,
   ThemeContext,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../commands';
 import * as React from 'react';
 type CustomButtonProps = PointerSurfaceProps & {
   icon?: string | React.ReactElement;

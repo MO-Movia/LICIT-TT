@@ -7,7 +7,7 @@ import {EditorState, Plugin, PluginKey} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 
 import findActionableCell from '../findActionableCell';
-import {atAnchorTopRight, createPopUp} from '@modusoperandi/licit-ui-commands';
+import { atAnchorTopRight, createPopUp } from '../../commands';
 import TableCellMenu from '../ui/tableCellMenu';
 import bindScrollHandler from '../bindScrollHandler';
 import isElementFullyVisible from '../isElementFullyVisible';

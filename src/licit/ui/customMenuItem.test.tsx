@@ -7,10 +7,14 @@ import { ReactElement } from 'react';
 import CustomMenuItem from './customMenuItem';
 
 //  Mock licit-ui-commands module safely
-jest.mock('@modusoperandi/licit-ui-commands', () => {
+jest.mock('../../commands', () => {
   const React = jest.requireActual<typeof import('react')>('react');
   return {
-    CustomButton: (props: { className: string; theme: string; label?: string }) => (
+    CustomButton: (props: {
+      className: string;
+      theme: string;
+      label?: string;
+    }) => (
       <button
         data-testid="mock-custom-button"
         className={props.className}

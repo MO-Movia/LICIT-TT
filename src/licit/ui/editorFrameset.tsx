@@ -5,7 +5,7 @@
 
 import cx from 'classnames';
 import * as React from 'react';
-import {ThemeContext} from '@modusoperandi/licit-ui-commands';
+import { ThemeContext } from '../../commands';
 
 export type EditorFramesetProps = {
   body?: React.ReactElement;

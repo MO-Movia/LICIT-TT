@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import TableGridSizeEditor from './tableGridSizeEditor';
 
 // Mock dependencies
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   fromHTMlElement: jest.fn(() => ({ x: 0, y: 0 })),
   fromXY: jest.fn(() => ({ x: 10, y: 10, width: 10, height: 10 })),
   isIntersected: jest.fn(() => true),

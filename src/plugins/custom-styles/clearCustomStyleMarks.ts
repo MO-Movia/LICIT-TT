@@ -5,10 +5,7 @@
 
 import { Schema, Node } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
-import {
-  setTextAlign,
-  setTextLineSpacing,
-} from '@modusoperandi/licit-ui-commands';
+import { setTextAlign, setTextLineSpacing } from '../../commands';
 import { setParagraphSpacing } from './ParagraphSpacingCommand';
 import { RESERVED_STYLE_NONE } from './CustomStyleNodeSpec';
 

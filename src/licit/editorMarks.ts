@@ -27,7 +27,7 @@ import {
   MARK_TEXT_SELECTION,
   MARK_UNDERLINE,
   MARK_SPACER,
-} from '@modusoperandi/licit-ui-commands';
+} from '../commands';
 import SpacerMarkSpec from './specs/spacerMarkSpec';
 import StrikeMarkSpec from './specs/strikeMarkSpec';
 import StrongMarkSpec from './specs/strongMarkSpec';

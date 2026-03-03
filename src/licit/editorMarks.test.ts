@@ -19,8 +19,8 @@ import {
   MARK_TEXT_COLOR,
   MARK_TEXT_HIGHLIGHT,
   MARK_TEXT_SELECTION,
-  MARK_UNDERLINE
-} from '@modusoperandi/licit-ui-commands';
+  MARK_UNDERLINE,
+} from '../commands';
 import { updateEditorMarks } from './editorMarks';
 import CodeMarkSpec from './specs/codeMarkSpec';
 import EMMarkSpec from './specs/emMarkSpec';

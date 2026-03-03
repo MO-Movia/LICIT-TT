@@ -6,10 +6,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import EditorFrameset, { FRAMESET_BODY_CLASSNAME } from './editorFrameset';
-import { ThemeContext } from '@modusoperandi/licit-ui-commands';
+import { ThemeContext } from '../../commands';
 
 //  Mock ThemeContext to avoid actual dependency
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   ThemeContext: React.createContext('mock-theme'),
 }));
 

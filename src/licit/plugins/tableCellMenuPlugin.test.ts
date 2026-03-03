@@ -9,15 +9,13 @@ import {Schema} from 'prosemirror-model';
 
 import TableCellMenuPlugin from './tableCellMenuPlugin';
 import findActionableCell from '../findActionableCell';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 import isElementFullyVisible from '../isElementFullyVisible';
 
 // Mock dependencies
 jest.mock('../findActionableCell', () => jest.fn());
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
-  ...jest.requireActual<typeof import('@modusoperandi/licit-ui-commands')>(
-    '@modusoperandi/licit-ui-commands'
-  ),
+jest.mock('../../commands', () => ({
+  ...jest.requireActual<typeof import('../../commands')>('../../commands'),
   createPopUp: jest.fn(),
 }));
 jest.mock('../isElementFullyVisible', () => jest.fn());

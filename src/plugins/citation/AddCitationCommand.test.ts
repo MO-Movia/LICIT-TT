@@ -10,7 +10,7 @@ import {
   AddCitationCommand,
   ShowTexteHighLightMark,
 } from './AddCitationCommand';
-import { PopUpHandle } from '@modusoperandi/licit-ui-commands';
+import { PopUpHandle } from '../../commands';
 import { Node, ResolvedPos, Schema } from 'prosemirror-model';
 import { AddCitationCommandOptions } from './Types';
 

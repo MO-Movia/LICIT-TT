@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import {
   AllSelection,
   EditorState,

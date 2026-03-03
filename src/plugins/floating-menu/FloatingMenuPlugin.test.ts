@@ -33,18 +33,18 @@ import {
   createOnCloseHandler,
 } from './FloatingMenuPlugin';
 import { schema as basicSchema } from 'prosemirror-schema-basic';
-import { insertReference } from '@modusoperandi/licit-referencing';
-import * as licitCommands from '@modusoperandi/licit-ui-commands';
+import { insertReference } from '../referencing';
+import * as licitCommands from '../../commands';
 import { FloatRuntime, SliceModel } from './model';
 import type * as FloatingMenuPluginModule from './FloatingMenuPlugin';
 import { createSliceManager } from './slice';
 
 // Mock external dependencies
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   createPopUp: jest.fn((_c, _p, options) => ({ close: jest.fn(), options })),
   atAnchorBottomLeft: jest.fn(),
 }));
-jest.mock('@modusoperandi/licit-referencing', () => ({
+jest.mock('../referencing', () => ({
   insertReference: jest.fn(),
 }));
 

@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import EditorToolbar from './editorToolbar';
 import { EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import { EditorViewEx } from '../constants';
 import { ToolbarMenuConfig } from '@src/types';
 

@@ -5,7 +5,7 @@
 
 import { EditorState } from 'prosemirror-state';
 import FontTypeCommandMenuButton from './fontTypeCommandMenuButton';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 //  Use `var` to prevent hoisting issues
 let _mockFindActiveFontType: jest.Mock;

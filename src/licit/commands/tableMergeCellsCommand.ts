@@ -8,7 +8,7 @@ import { EditorState } from 'prosemirror-state';
 import { CellSelection } from 'prosemirror-tables';
 import { Transform } from 'prosemirror-transform';
 
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import { Editor } from '@tiptap/react';
 
 class TableMergeCellsCommand extends UICommand {

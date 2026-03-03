@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { CustomButton, ViewProps } from '@modusoperandi/licit-ui-commands';
+import { CustomButton, ViewProps } from '../../commands';
 
 export interface HamBurgerIconProps extends ViewProps {
   onMouseOut: () => void;

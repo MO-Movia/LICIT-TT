@@ -5,7 +5,7 @@
 
 import { Node, DOMOutputSpec } from 'prosemirror-model';
 import type { KeyValuePair } from './Constants';
-import { toCSSLineSpacing } from '@modusoperandi/licit-ui-commands';
+import { toCSSLineSpacing } from '../../commands';
 
 import { getCustomStyleByName, getHidenumberingFlag } from './customStyle';
 

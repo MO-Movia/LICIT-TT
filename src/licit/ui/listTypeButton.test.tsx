@@ -6,10 +6,10 @@
 import { EditorState } from 'prosemirror-state';
 import ListTypeButton from './listTypeButton';
 import { EditorView } from 'prosemirror-view';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { UICommand } from '../../core';
+import { createPopUp } from '../../commands';
 // Mock dependencies safely (React is already imported)
-jest.mock('@modusoperandi/licit-ui-commands', () => {
+jest.mock('../../commands', () => {
   const React = jest.requireActual('react');
 
   return {

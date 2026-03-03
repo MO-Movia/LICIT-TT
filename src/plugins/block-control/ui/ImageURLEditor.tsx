@@ -4,10 +4,7 @@
  */
 
 import React from 'react';
-import {
-  preventEventDefault,
-  CustomButton,
-} from '@modusoperandi/licit-ui-commands';
+import { preventEventDefault, CustomButton } from '../../../commands';
 import { resolveImage } from '../ResolveImage';
 export type ImageEditorProps = {
   initialValue;

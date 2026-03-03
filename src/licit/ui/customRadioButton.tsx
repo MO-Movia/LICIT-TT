@@ -7,7 +7,7 @@ import {
   PointerSurface,
   PointerSurfaceProps,
   preventEventDefault,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../commands';
 import * as React from 'react';
 import cx from 'classnames';
 import uuid from './uuid';

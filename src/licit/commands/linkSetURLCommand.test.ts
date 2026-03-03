@@ -9,8 +9,9 @@ import { Transform } from 'prosemirror-transform';
 import { Schema } from 'prosemirror-model';
 import { EditorViewEx } from '@src/constants';
 
-jest.mock('@modusoperandi/licit-ui-commands', () => {
-  const actual = jest.requireActual<typeof import('@modusoperandi/licit-ui-commands')>('@modusoperandi/licit-ui-commands');
+jest.mock('../../commands', () => {
+  const actual =
+    jest.requireActual<typeof import('../../commands')>('../../commands');
   return {
     ...actual,
     findNodesWithSameMark: jest.fn().mockReturnValue({

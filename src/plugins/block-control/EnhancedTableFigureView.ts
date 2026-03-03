@@ -7,7 +7,12 @@ import { Node as ProseMirrorNode } from 'prosemirror-model';
 import { EditorView, NodeView } from 'prosemirror-view';
 import { NodeSelection, TextSelection } from 'prosemirror-state';
 import { addNotesCommand } from './EnhancedTableCommands';
-import { atAnchorBottomCenter, createPopUp, PopUpHandle, uuid } from '@modusoperandi/licit-ui-commands';
+import {
+  atAnchorBottomCenter,
+  createPopUp,
+  PopUpHandle,
+  uuid,
+} from '../../commands';
 import { ImageInlineEditor } from './ui/ImageInlineEditor';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';

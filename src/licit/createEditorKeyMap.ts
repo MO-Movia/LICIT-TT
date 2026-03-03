@@ -3,7 +3,7 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { MarkToggleCommand } from '@modusoperandi/licit-ui-commands';
+import { MarkToggleCommand } from '../commands';
 import * as EditorCommands from './editorCommands';
 import * as EditorKeyMap from './editorKeyMap';
 

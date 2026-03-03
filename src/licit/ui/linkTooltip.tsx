@@ -8,7 +8,7 @@ import * as React from 'react';
 import scrollIntoView from 'smooth-scroll-into-view-if-needed';
 
 import sanitizeURL from '../sanitizeURL';
-import { CustomButton } from '@modusoperandi/licit-ui-commands';
+import { CustomButton } from '../../commands';
 
 function isBookMarkHref(href: string): boolean {
   return !!href && href.indexOf('#') === 0 && href.length >= 2;

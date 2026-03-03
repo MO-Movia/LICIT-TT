@@ -12,7 +12,7 @@ import EditorPageLayoutPlugin from './plugins/editorPageLayoutPlugin';
 import LinkTooltipPlugin from './plugins/linkTooltipPlugin';
 import SelectionPlaceholderPlugin from './plugins/selectionPlaceholderPlugin';
 import buildInputRules from './buildInputRules';
-import {setPluginKey} from '@modusoperandi/licit-doc-attrs-step';
+import { setPluginKey } from '../core';
 import TableCellMenuPlugin from './plugins/tableCellMenuPlugin';
 import createEditorKeyMap from './createEditorKeyMap';
 import { LandscapePlugin } from './plugins/LandscapePlugin';

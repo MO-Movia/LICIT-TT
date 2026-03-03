@@ -16,7 +16,7 @@ import {
   TextHighlightCommand,
   TextLineSpacingCommand,
   TextAlignCommand,
-} from '@modusoperandi/licit-ui-commands';
+} from '../commands';
 import HistoryRedoCommand from './commands/historyRedoCommand';
 import HistoryUndoCommand from './commands/historyUndoCommand';
 import HorizontalRuleCommand from './commands/horizontalRuleCommand';

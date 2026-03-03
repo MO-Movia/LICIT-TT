@@ -5,11 +5,7 @@
 
 import React from 'react';
 import { EditorView } from 'prosemirror-view';
-import {
-  createPopUp,
-  atAnchorBottomCenter,
-  PopUpHandle,
-} from '@modusoperandi/licit-ui-commands';
+import { createPopUp, atAnchorBottomCenter, PopUpHandle } from '../../commands';
 import { SearchCitation } from './SearchCitation';
 import {
   CitableMaterial,

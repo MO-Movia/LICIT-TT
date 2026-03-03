@@ -11,7 +11,7 @@ import * as React from 'react';
 import CustomMenu from './customMenu';
 import CustomMenuItem from './customMenuItem';
 import {parseLabel, isExpandButton} from './editorToolbarConfig';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import CommandMenuButton, {Arr} from './commandMenuButton';
 
 type PropsType = {

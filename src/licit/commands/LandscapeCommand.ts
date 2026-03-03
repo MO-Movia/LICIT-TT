@@ -8,7 +8,7 @@ import { EditorView } from 'prosemirror-view';
 import { wrapIn } from 'prosemirror-commands';
 import { Transform } from 'prosemirror-transform';
 import { NodeType, ResolvedPos } from 'prosemirror-model';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 // Simple SVG icon for Landscape
 const LANDSCAPE_ICON = `

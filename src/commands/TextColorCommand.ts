@@ -4,7 +4,7 @@
  */
 
 import { ColorEditor } from '@modusoperandi/color-picker';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../core';
 import { applyMark, updateMarksAttrs } from './applyMark';
 import { createPopUp } from './ui/createPopUp';
 import { findNodesWithSameMark } from './findNodesWithSameMark';

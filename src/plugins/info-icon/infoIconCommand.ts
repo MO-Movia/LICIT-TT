@@ -4,13 +4,13 @@
  */
 
 import * as React from 'react';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 import {InfoIconDialog} from './infoIconDialog';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
-import type {PopUpHandle} from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
+import type { PopUpHandle } from '../../commands';
 import {getNode} from './constants';
 import {DOMSerializer, Fragment} from 'prosemirror-model';
 

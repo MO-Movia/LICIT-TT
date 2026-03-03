@@ -4,7 +4,7 @@
  */
 
 import ReactDOM from 'react-dom/client';
-import { Licit, LicitProps } from '@modusoperandi/licit';
+import { Licit, LicitProps } from '../../licit';
 import type { Plugin } from '@tiptap/pm/state';
 import type { Node } from '@tiptap/pm/model';
 import React from 'react';

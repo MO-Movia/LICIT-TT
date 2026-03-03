@@ -7,7 +7,7 @@ import React from 'react';
 import { EditorView } from 'prosemirror-view';
 import { Previewer, registerHandlers, registeredHandlers } from 'pagedjs';
 import { PDFHandler } from './handlers';
-import { createPopUp, atViewportCenter } from '@modusoperandi/licit-ui-commands';
+import { createPopUp, atViewportCenter } from '../../commands';
 import { Loader } from './loader';
 import {
   SectionNodeStructure,

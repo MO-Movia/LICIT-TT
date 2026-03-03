@@ -10,7 +10,7 @@ import type { DocLayoutEditorValue } from '../ui/docLayoutEditor';
 import { Editor } from '@tiptap/react';
 import { Schema } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 describe('DocLayoutCommand', () => {
   let mockState;

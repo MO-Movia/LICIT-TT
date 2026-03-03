@@ -7,7 +7,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import { ImageUploadEditor } from './ImageUploadEditor';
 
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../../commands', () => ({
   CustomButton: ({ label, onClick }) => (
     <button onClick={onClick}>{label}</button>
   ),

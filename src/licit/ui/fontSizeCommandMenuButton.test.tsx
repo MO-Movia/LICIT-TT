@@ -5,7 +5,7 @@
 
 import { EditorState } from 'prosemirror-state';
 import FontSizeCommandMenuButton, { FONT_PT_SIZES } from './fontSizeCommandMenuButton';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import findActiveFontSize from '../findActiveFontSize';
 import { EditorView } from 'prosemirror-view';
 

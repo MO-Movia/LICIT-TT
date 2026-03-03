@@ -5,10 +5,9 @@
 
 import * as React from 'react';
 import cx from 'classnames';
-import type {PointerSurfaceProps} from '@modusoperandi/licit-ui-commands';
-import {TooltipSurface,PointerSurface,} from '@modusoperandi/licit-ui-commands';
- import { UICommand
-} from '@modusoperandi/licit-doc-attrs-step';
+import type { PointerSurfaceProps } from '../../../commands';
+import { TooltipSurface, PointerSurface } from '../../../commands';
+import { UICommand } from '../../../core';
 type InfoToolButtonProps = PointerSurfaceProps & {
   icon?: string | React.ReactNode | null;
   label?: string | React.ReactNode | null;

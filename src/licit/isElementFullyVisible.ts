@@ -3,7 +3,7 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { fromHTMlElement } from '@modusoperandi/licit-ui-commands';
+import { fromHTMlElement } from '../commands';
 
 export default function isElementFullyVisible(el: HTMLElement): boolean {
   const { x, y, w, h } = fromHTMlElement(el);

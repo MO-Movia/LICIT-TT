@@ -8,7 +8,7 @@ import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 import * as React from 'react';
 
-import {FontSizeCommand} from '@modusoperandi/licit-ui-commands';
+import { FontSizeCommand } from '../../commands';
 import CommandMenuButton from './commandMenuButton';
 import findActiveFontSize from '../findActiveFontSize';
 

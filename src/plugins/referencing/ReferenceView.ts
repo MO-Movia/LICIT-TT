@@ -6,11 +6,7 @@
 import { DOMSerializer, Fragment, Node } from 'prosemirror-model';
 import { EditorView, NodeView } from 'prosemirror-view';
 import { HamBurgerIcon, HamBurgerIconProps } from './Dropdown';
-import {
-  createPopUp,
-  PopUpHandle,
-  atAnchorTopCenter,
-} from '@modusoperandi/licit-ui-commands';
+import { createPopUp, PopUpHandle, atAnchorTopCenter } from '../../commands';
 import { getFragment } from './Types';
 
 // There should only be one copy of this popup anywhere.

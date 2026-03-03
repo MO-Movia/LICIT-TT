@@ -8,9 +8,9 @@ import nullthrows from 'nullthrows';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
-import { atAnchorRight, createPopUp } from '@modusoperandi/licit-ui-commands';
+import { atAnchorRight, createPopUp } from '../../commands';
 import TableGridSizeEditor from '../ui/tableGridSizeEditor';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import type { TableGridSizeEditorState } from '../ui/tableGridSizeEditor';
 import { Editor } from '@tiptap/react';
 

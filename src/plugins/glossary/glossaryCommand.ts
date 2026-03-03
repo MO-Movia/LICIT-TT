@@ -3,7 +3,7 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import type {EditorState, Transaction} from 'prosemirror-state';
 import {TextSelection} from 'prosemirror-state';
 import type {Transform} from 'prosemirror-transform';

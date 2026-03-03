@@ -18,7 +18,7 @@ import {
   createPopUp,
   atAnchorBottomCenter,
   PopUpHandle,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../../commands';
 import ResizeObserver from './ResizeObserver';
 import {resolveImage} from './resolveImage';
 import {uuid} from './uuid';

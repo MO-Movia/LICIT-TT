@@ -7,12 +7,11 @@ import {EditorState, TextSelection} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {Schema, DOMParser} from 'prosemirror-model';
 import LinkTooltipPlugin from './linkTooltipPlugin';
-import {findNodesWithSameMark,MARK_LINK, createPopUp} from '@modusoperandi/licit-ui-commands';
+import { findNodesWithSameMark, MARK_LINK, createPopUp } from '../../commands';
 
-jest.mock('@modusoperandi/licit-ui-commands', () => {
-  const actual = jest.requireActual<typeof import('@modusoperandi/licit-ui-commands')>(
-    '@modusoperandi/licit-ui-commands'
-  );
+jest.mock('../../commands', () => {
+  const actual =
+    jest.requireActual<typeof import('../../commands')>('../../commands');
   return {
     ...actual,
     findNodesWithSameMark: jest.fn(),

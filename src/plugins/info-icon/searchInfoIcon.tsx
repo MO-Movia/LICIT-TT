@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { createPopUp, atViewportCenter } from '@modusoperandi/licit-ui-commands';
+import { createPopUp, atViewportCenter } from '../../commands';
 import * as React from 'react';
 import { SELECTEDINFOICON } from './constants';
 import { FaIcons, FONTAWESOMEICONS } from './ui/FaIcon';

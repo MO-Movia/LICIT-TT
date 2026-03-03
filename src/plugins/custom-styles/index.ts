@@ -26,7 +26,7 @@ import {
   setCustomStylesOnLoad,
 } from './customStyle';
 import { RESERVED_STYLE_NONE } from './CustomStyleNodeSpec';
-import { getLineSpacingValue } from '@modusoperandi/licit-ui-commands';
+import { getLineSpacingValue } from '../../commands';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
 import { Node, Schema, Slice } from 'prosemirror-model';
 import { CustomstyleDropDownCommand } from './ui/CustomstyleDropDownCommand';

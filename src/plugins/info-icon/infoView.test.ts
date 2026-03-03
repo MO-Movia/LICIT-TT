@@ -7,7 +7,7 @@ import {EditorState} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {Schema, Node} from 'prosemirror-model';
 import {InfoIconView, CBFn} from './infoIconView';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 import {InfoIconDialog} from './infoIconDialog';
 import {sanitizeURL} from './plugins/menu/sanitizeURL';
 

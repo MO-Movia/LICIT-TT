@@ -7,7 +7,7 @@ import { EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
 
-import { UICommand }  from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import { Editor } from '@tiptap/react';
 
 class TableMoveToNextCellCommand extends UICommand {

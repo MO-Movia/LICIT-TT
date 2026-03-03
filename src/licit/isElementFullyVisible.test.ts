@@ -4,11 +4,11 @@
  */
 
 import isElementFullyVisible from './isElementFullyVisible';
-import { fromHTMlElement } from '@modusoperandi/licit-ui-commands';
+import { fromHTMlElement } from '../commands';
 
 // Mock `fromHTMlElement`
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
-    fromHTMlElement: jest.fn(),
+jest.mock('../commands', () => ({
+  fromHTMlElement: jest.fn(),
 }));
 
 describe('isElementFullyVisible', () => {

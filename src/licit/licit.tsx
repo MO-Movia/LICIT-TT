@@ -28,18 +28,12 @@ import RichTextEditor from './ui/richTextEditor';
 import DefaultEditorPlugins from './defaultEditorPlugins';
 import { Plugin, TextSelection } from 'prosemirror-state';
 import { getEffectiveSchema } from './convertFromJSON';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../core';
 import { Schema, NodeSpec, Node } from 'prosemirror-model';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import TextAlign from '@tiptap/extension-text-align';
-import {
-  HEADING,
-  noop,
-  PARAGRAPH,
-  ThemeProvider,
-  DOC,
-} from '@modusoperandi/licit-ui-commands';
+import { HEADING, noop, PARAGRAPH, ThemeProvider, DOC } from '../commands';
 import { updateEditorMarks } from './editorMarks';
 import { updateEditorNodes } from './editorNodes';
 import OrderedMap from 'orderedmap';

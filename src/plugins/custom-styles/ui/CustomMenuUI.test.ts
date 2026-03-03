@@ -10,7 +10,7 @@ import { Schema , Node } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { CustomStyleCommand } from '../CustomStyleCommand';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../../core';
 import { SyntheticEvent } from 'react';
 import { Transform } from 'prosemirror-transform';
 

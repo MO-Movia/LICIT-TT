@@ -5,7 +5,7 @@
 
 import browser from './browser';
 
-import {makeKeyMapWithCommon} from '@modusoperandi/licit-doc-attrs-step';
+import { makeKeyMapWithCommon } from '../core';
 
 interface Keymap {
   mac: string;

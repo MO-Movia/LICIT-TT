@@ -10,11 +10,11 @@ import {DOMSerializer, Schema, DOMParser} from 'prosemirror-model';
 import {schema} from 'prosemirror-schema-basic';
 import {addListNodes} from 'prosemirror-schema-list';
 import {SearchInfoIcon} from './searchInfoIcon';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 import {plugins} from './plugins';
 import {FaIcons, FONTAWESOMEICONS} from './ui/FaIcon';
 import {SELECTEDINFOICON} from './constants';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 type InfoDialogProps = {
   infoIcon: {name; unicode};

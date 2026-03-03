@@ -14,9 +14,9 @@ import {
   createPopUp,
   RuntimeService,
   // ColorEditor
-} from '@modusoperandi/licit-ui-commands';
+} from '../../commands';
 import {ColorEditor} from '@modusoperandi/color-picker';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import {Editor} from '@tiptap/react';
 
 class TableColorCommand extends UICommand {

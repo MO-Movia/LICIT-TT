@@ -5,10 +5,7 @@
 
 import {Schema} from 'prosemirror-model';
 import {Plugin, PluginKey} from 'prosemirror-state';
-import {
-  makeKeyMapWithCommon,
-  createKeyMapPlugin,
-} from '@modusoperandi/licit-doc-attrs-step';
+import { makeKeyMapWithCommon, createKeyMapPlugin } from '../../core';
 
 import {ExportPDFCommand} from './exportPdfCommand';
 import {EditorView} from 'prosemirror-view';

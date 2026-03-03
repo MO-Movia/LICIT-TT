@@ -8,7 +8,7 @@ import * as ReactDOM from 'react-dom';
 import ListTypeMenu from './listTypeMenu';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 //  Mock uuid to return predictable IDs
 jest.mock('./uuid', () => jest.fn(() => 'mock-uuid'));

@@ -11,7 +11,7 @@ import sanitizeURL from '../sanitizeURL';
 // ---- Mock dependencies ----
 jest.mock('smooth-scroll-into-view-if-needed', () => jest.fn(() => Promise.resolve()));
 jest.mock('../sanitizeURL', () => jest.fn((url) => `sanitized:${url}`));
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   CustomButton: jest.fn((props) => ({ type: 'CustomButton', props })),
 }));
 

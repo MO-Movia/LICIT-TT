@@ -5,11 +5,12 @@
 
 import * as React from 'react';
 import { LAYOUT } from '../constants';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import {
   CustomButton,
-  preventEventDefault, ThemeContext
-} from '@modusoperandi/licit-ui-commands';
+  preventEventDefault,
+  ThemeContext,
+} from '../../commands';
 import CustomRadioButton from './customRadioButton';
 export type DocLayoutEditorValue = {
   layout?: string;

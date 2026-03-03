@@ -4,7 +4,7 @@
  */
 
 import React, { PureComponent } from 'react';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 type TableDetailsProps = {
   close?: () => void;
   table: {

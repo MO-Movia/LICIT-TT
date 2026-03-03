@@ -4,7 +4,7 @@
  */
 
 import { CustomMenuButton } from './CustomMenuButton';
-import { HeadingCommand } from '@modusoperandi/licit-ui-commands';
+import { HeadingCommand } from '../../../commands';
 import { CustomStyleCommand } from '../CustomStyleCommand';
 
 import React from 'react';

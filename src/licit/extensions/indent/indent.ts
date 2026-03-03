@@ -10,7 +10,7 @@ import {
   LIST_ITEM,
   MARK_SPACER,
   PARAGRAPH,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../../commands';
 import {HAIR_SPACE_CHAR, SPACER_SIZE_TAB} from '../../specs/spacerMarkSpec';
 import {
   CommandProps,

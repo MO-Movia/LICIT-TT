@@ -5,8 +5,8 @@
 
 import React from 'react';
 import cx from 'classnames';
-import type {PointerSurfaceProps} from '@modusoperandi/licit-ui-commands';
-import {PointerSurface, TooltipSurface} from '@modusoperandi/licit-ui-commands';
+import type { PointerSurfaceProps } from '../../../commands';
+import { PointerSurface, TooltipSurface } from '../../../commands';
 
 export class CitationToolButton extends React.PureComponent {
   declare props: PointerSurfaceProps & {

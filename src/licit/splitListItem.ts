@@ -7,12 +7,7 @@ import uuid from './ui/uuid';
 import { Fragment, Schema } from 'prosemirror-model';
 import { TextSelection, Transaction, NodeSelection } from 'prosemirror-state';
 import { Transform, canSplit } from 'prosemirror-transform';
-import {
-  LIST_ITEM,
-  ORDERED_LIST,
-  BULLET_LIST,
-  PARAGRAPH,
-} from '@modusoperandi/licit-ui-commands';
+import { LIST_ITEM, ORDERED_LIST, BULLET_LIST, PARAGRAPH } from '../commands';
 import { findParentNodeOfType } from 'prosemirror-utils';
 
 // Splits a list item by the current cursor's position.

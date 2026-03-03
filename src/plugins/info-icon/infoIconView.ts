@@ -7,11 +7,7 @@ import {DOMSerializer, Node} from 'prosemirror-model';
 import {Transaction} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
-import {
-  createPopUp,
-  PopUpHandle,
-  atAnchorTopCenter,
-} from '@modusoperandi/licit-ui-commands';
+import { createPopUp, PopUpHandle, atAnchorTopCenter } from '../../commands';
 import {InfoIconSubMenu} from './InfoIconSubMenu';
 import {INFO_ICON} from './constants';
 import {InfoIconDialog} from './infoIconDialog';

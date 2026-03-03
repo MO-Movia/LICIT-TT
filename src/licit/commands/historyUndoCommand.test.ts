@@ -7,7 +7,7 @@ import { EditorState } from 'prosemirror-state';
 import HistoryUndoCommand from './historyUndoCommand';
 import { Editor } from '@tiptap/react';
 import { Transform } from 'prosemirror-transform';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 describe('HistoryRedoCommand', () => {
   const hisrdcommand = new HistoryUndoCommand();

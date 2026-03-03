@@ -9,7 +9,7 @@ import * as React from 'react';
 import {EditorView} from 'prosemirror-view';
 import {sanitizeURL} from './sanitizeURL';
 import {toggleMark} from 'prosemirror-commands';
-import {preventEventDefault,CustomButton} from '@modusoperandi/licit-ui-commands';
+import { preventEventDefault, CustomButton } from '../../../../commands';
 
 export const ENTER = 13;
 const BAD_CHARACTER_PATTER = /\s/;

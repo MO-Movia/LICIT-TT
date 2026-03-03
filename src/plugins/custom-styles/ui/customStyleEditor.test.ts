@@ -6,7 +6,7 @@
 import { CustomStyleEditor } from './CustomStyleEditor';
 import * as customstyle from '../customStyle';
 import { SyntheticEvent } from 'react';
-import { Style } from '@modusoperandi/licit-ui-commands';
+import { Style } from '../../../commands';
 
 describe('CustomStyleEditor', () => {
   jest.spyOn(customstyle, 'getStylesAsync').mockResolvedValue([]);

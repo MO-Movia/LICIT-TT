@@ -9,9 +9,9 @@ import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 
-import {SetDocAttrStep, UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { SetDocAttrStep, UICommand } from '../../core';
 import DocLayoutEditor from '../ui/docLayoutEditor';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 
 import type {DocLayoutEditorValue} from '../ui/docLayoutEditor';
 import {Editor} from '@tiptap/react';

@@ -17,9 +17,9 @@ import {
   findNodesWithSameMark,
   MARK_TEXT_COLOR,
   RuntimeService,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../../commands';
 import {ColorEditor} from '@modusoperandi/color-picker';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../../core';
 
 export class TableColorCommand extends UICommand {
   executeCustomStyleForTable(

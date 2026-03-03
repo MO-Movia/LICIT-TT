@@ -4,17 +4,14 @@
  */
 
 import React from 'react';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import { Attrs, Fragment, ResolvedPos } from 'prosemirror-model';
 import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
 import { CitationDialog } from './CitationDialog';
-import {
-  createPopUp,
-  atViewportCenter,
-} from '@modusoperandi/licit-ui-commands';
-import type { PopUpHandle } from '@modusoperandi/licit-ui-commands';
+import { createPopUp, atViewportCenter } from '../../commands';
+import type { PopUpHandle } from '../../commands';
 import { AlertInfo } from './ui/AlertInfo';
 import {
   MARK_TEXT_HIGHLIGHT,

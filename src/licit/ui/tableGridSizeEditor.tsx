@@ -8,12 +8,7 @@ import * as React from 'react';
 import ReactDOM from 'react-dom';
 
 import htmlElementToRect from '../htmlElementToRect';
-import {
-  fromHTMlElement,
-  fromXY,
-  isIntersected,
-  clamp,
-} from '@modusoperandi/licit-ui-commands';
+import { fromHTMlElement, fromXY, isIntersected, clamp } from '../../commands';
 
 type TableGridSizeEditorProps = {
   close?: (val: TableGridSizeEditorState) => void;

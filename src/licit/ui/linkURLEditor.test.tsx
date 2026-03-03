@@ -9,13 +9,13 @@ import {SyntheticEvent} from 'react';
 
 jest.mock('../sanitizeURL', () => jest.fn((url) => `sanitized:${url}`));
 
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   CustomButton: 'CustomButton',
   preventEventDefault: jest.fn((e?: Event) => e?.preventDefault?.()),
 }));
 
-jest.mock('@modusoperandi/licit-doc-attrs-step', () => ({
-  UICommand: {theme: 'dark'},
+jest.mock('../../core', () => ({
+  UICommand: { theme: 'dark' },
 }));
 
 describe('LinkURLEditor (pure Jest tests)', () => {

@@ -5,11 +5,7 @@
 
 import { NodeSpec } from 'prosemirror-model';
 import ListItemNodeSpec from './specs/listItemNodeSpec';
-import {
-  BULLET_LIST,
-  LIST_ITEM,
-  ORDERED_LIST,
-} from '@modusoperandi/licit-ui-commands';
+import { BULLET_LIST, LIST_ITEM, ORDERED_LIST } from '../commands';
 import OrderedListNodeSpec from './specs/orderedListNodeSpec';
 import OrderedMap from 'orderedmap';
 import BulletListNodeSpec from './specs/bulletListNodeSpec';

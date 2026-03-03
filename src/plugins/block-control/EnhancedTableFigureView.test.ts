@@ -14,7 +14,7 @@ jest.mock('prosemirror-model');
 jest.mock('prosemirror-view');
 jest.mock('prosemirror-state');
 jest.mock('./EnhancedTableCommands');
-jest.mock('@modusoperandi/licit-ui-commands');
+jest.mock('../../commands');
 jest.mock('./ui/ImageInlineEditor');
 
 describe('EnhancedTableFigureView', () => {

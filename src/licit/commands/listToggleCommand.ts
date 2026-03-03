@@ -15,8 +15,8 @@ import {
   toggleList,
   isNodeSelectionForNodeType,
   noop,
-} from '@modusoperandi/licit-ui-commands';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+} from '../../commands';
+import { UICommand } from '../../core';
 import {Editor} from '@tiptap/react';
 
 export class ListToggleCommand extends UICommand {

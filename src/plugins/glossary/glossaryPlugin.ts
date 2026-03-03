@@ -7,10 +7,7 @@ import type {Node} from 'prosemirror-model';
 import {Schema} from 'prosemirror-model';
 import {Plugin} from 'prosemirror-state';
 import type {EditorView} from 'prosemirror-view';
-import {
-  makeKeyMapWithCommon,
-  createKeyMapPlugin,
-} from '@modusoperandi/licit-doc-attrs-step';
+import { makeKeyMapWithCommon, createKeyMapPlugin } from '../../core';
 import {GlossaryNodeSpec} from './glossaryNodeSpec';
 import {GlossaryView, updateCache} from './glossaryView';
 import type {GlossaryRuntime} from './types';

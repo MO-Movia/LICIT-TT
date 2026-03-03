@@ -6,14 +6,14 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import CommandButton from './commandButton';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { CustomButton, ThemeContext } from '@modusoperandi/licit-ui-commands';
+import { UICommand } from '../../core';
+import { CustomButton, ThemeContext } from '../../commands';
 import cx from 'classnames';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 // Mock dependencies
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   CustomButton: jest.fn(() => React.createElement('button')),
   ThemeContext: React.createContext('light'),
 }));

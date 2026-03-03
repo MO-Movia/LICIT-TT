@@ -7,7 +7,7 @@ import React, { SyntheticEvent } from 'react';
 import { EditorState } from 'prosemirror-state';
 import { Schema, Node } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../../core';
 import { uuid } from './Uuid';
 import { CustomStyleItem } from './CustomStyleItem';
 import { CustomStyleSubMenu } from './CustomStyleSubMenu';
@@ -30,7 +30,7 @@ import {
   atViewportCenter,
   createPopUp,
   HeadingCommand,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../../commands';
 import { setParagraphSpacing } from '../ParagraphSpacingCommand';
 import { RESERVED_STYLE_NONE } from '../CustomStyleNodeSpec';
 let HEADING_COMMANDS = {

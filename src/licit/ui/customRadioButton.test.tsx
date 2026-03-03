@@ -7,8 +7,13 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
 //  Mock PointerSurface to simulate click behavior
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
-  PointerSurface: (props: { className?: string; title?: string; onClick?: (value: string, event: React.MouseEvent) => void; children?: React.ReactNode; }) => (
+jest.mock('../../commands', () => ({
+  PointerSurface: (props: {
+    className?: string;
+    title?: string;
+    onClick?: (value: string, event: React.MouseEvent) => void;
+    children?: React.ReactNode;
+  }) => (
     <div
       className={props.className}
       title={props.title}

@@ -6,7 +6,7 @@
 import React from 'react';
 
 import canUseCSSFont from '../canUseCSSFont';
-import {ThemeContext} from '@modusoperandi/licit-ui-commands';
+import { ThemeContext } from '../../commands';
 
 const cached = {};
 

@@ -10,8 +10,8 @@ import { EditorView } from 'prosemirror-view';
 import {
   makeKeyMapWithCommon,
   createKeyMapPlugin,
-  UICommand
-} from '@modusoperandi/licit-doc-attrs-step';
+  UICommand,
+} from '../../core';
 import { InfoIconNodeSpec } from './infoIconNodeSpec';
 import { InfoIconView } from './infoIconView';
 import { InfoIconCommand } from './infoIconCommand';

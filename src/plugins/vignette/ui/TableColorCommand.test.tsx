@@ -5,7 +5,7 @@
 
 import { TableColorCommand } from './TableColorCommand';
 import { setCellAttr } from 'prosemirror-tables';
-import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../../commands';
 import { ColorEditor } from '@modusoperandi/color-picker';
 import { Transform } from 'prosemirror-transform';
 
@@ -16,7 +16,7 @@ jest.mock('prosemirror-tables', () => ({
   })),
 }));
 
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../../commands', () => ({
   createPopUp: jest.fn(),
   atAnchorRight: 'mockAnchorRight',
   findNodesWithSameMark: jest.fn(() => ({

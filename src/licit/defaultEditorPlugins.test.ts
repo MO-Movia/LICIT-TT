@@ -12,7 +12,7 @@ import EditorPageLayoutPlugin from './plugins/editorPageLayoutPlugin';
 import LinkTooltipPlugin from './plugins/linkTooltipPlugin';
 import SelectionPlaceholderPlugin from './plugins/selectionPlaceholderPlugin';
 import buildInputRules from './buildInputRules';
-import { setPluginKey } from '@modusoperandi/licit-doc-attrs-step';
+import { setPluginKey } from '../core';
 import TableCellMenuPlugin from './plugins/tableCellMenuPlugin';
 import { LandscapePlugin } from './plugins/LandscapePlugin';
 
@@ -27,7 +27,7 @@ jest.mock('./plugins/LandscapePlugin', () => ({
 }));
 jest.mock('./buildInputRules', () => jest.fn(() => new Plugin({})));
 jest.mock('./createEditorKeyMap', () => jest.fn(() => ({})));
-jest.mock('@modusoperandi/licit-doc-attrs-step', () => ({
+jest.mock('../core', () => ({
   setPluginKey: jest.fn((plugin: Plugin, _key: string): Plugin => plugin),
   UICommand: class UICommand {},
 }));

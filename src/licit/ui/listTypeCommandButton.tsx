@@ -9,9 +9,9 @@ import { Transform } from 'prosemirror-transform';
 import { ListToggleCommand, hasImageNode } from '../commands/listToggleCommand';
 import ListTypeButton from './listTypeButton';
 import { EditorViewEx } from '../constants';
-import { ThemeContext } from '@modusoperandi/licit-ui-commands';
+import { ThemeContext } from '../../commands';
 import Icon from './icon';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 const LIST_TYPE_NAMES = [
   {
     name: 'decimal',

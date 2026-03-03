@@ -14,7 +14,7 @@ import {
   showCursorPlaceholder,
   hideCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 
 // Mock dependencies
 jest.mock('./CursorPlaceholderPlugin', () => ({
@@ -22,7 +22,7 @@ jest.mock('./CursorPlaceholderPlugin', () => ({
   hideCursorPlaceholder: jest.fn((state) => state.tr),
 }));
 
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   createPopUp: jest.fn(),
 }));
 

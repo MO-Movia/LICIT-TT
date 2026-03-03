@@ -13,13 +13,13 @@ import {
   applyMark,
   findNodesWithSameMark,
   createPopUp,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../commands';
 import {
   hideSelectionPlaceholder,
   showSelectionPlaceholder,
 } from '../plugins/selectionPlaceholderPlugin';
 import LinkURLEditor from '../ui/linkURLEditor';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 class LinkSetURLCommand extends UICommand {
   _popUp = null;

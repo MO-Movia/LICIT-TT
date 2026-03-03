@@ -21,10 +21,7 @@ import {
   AddCitationCommand,
   removeTexthighlightMark,
 } from './AddCitationCommand';
-import {
-  makeKeyMapWithCommon,
-  createKeyMapPlugin,
-} from '@modusoperandi/licit-doc-attrs-step';
+import { makeKeyMapWithCommon, createKeyMapPlugin } from '../../core';
 import {
   citationBuilder,
   CitableMaterial,

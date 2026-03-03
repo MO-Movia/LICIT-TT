@@ -19,7 +19,7 @@ import {
   PopUpHandle,
   atAnchorBottomCenter,
   createPopUp,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../../commands';
 import {v1 as uuid} from 'uuid';
 import ResizeObserver from './ResizeObserver';
 import {resolveVideo, VideoResult} from './resolveVideo';

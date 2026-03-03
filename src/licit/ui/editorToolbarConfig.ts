@@ -10,7 +10,7 @@ import FontTypeCommandMenuButton from './fontTypeCommandMenuButton';
 import ListTypeCommandButton from './listTypeCommandButton';
 import Icon from './icon';
 import { ComponentType } from 'react';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import { EditorView } from 'prosemirror-view';
 import { EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';

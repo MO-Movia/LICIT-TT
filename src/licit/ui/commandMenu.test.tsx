@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import CommandMenu from './commandMenu';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import { EditorState } from 'prosemirror-state';
 import { STRONG, TABLE_INSERT_TABLE } from '../editorCommands';
 import { Arr } from './commandMenuButton';

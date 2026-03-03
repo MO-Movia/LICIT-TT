@@ -7,7 +7,7 @@ import {EditorState, Plugin, PluginKey} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {Node} from 'prosemirror-model';
 
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import {TableBackgroundColorCommand} from './TableBackgroundColorCommand';
 import {TableBorderColorCommand} from './TableBorderColorCommand';
 import {createCommand} from './CreateCommand';

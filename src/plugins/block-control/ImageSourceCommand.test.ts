@@ -8,14 +8,14 @@ import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { ImageSourceCommand, insertEnhancedImageFigure } from './ImageSourceCommand';
 import { showCursorPlaceholder, hideCursorPlaceholder } from './CursorPlaceholderPlugin';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
-import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { UICommand } from '../../core';
+import { createPopUp } from '../../commands';
 
 jest.mock('prosemirror-model');
 jest.mock('prosemirror-state');
 jest.mock('prosemirror-view');
 jest.mock('./CursorPlaceholderPlugin');
-jest.mock('@modusoperandi/licit-ui-commands');
+jest.mock('../../commands');
 
 describe('insertEnhancedImageFigure', () => {
   let mockTr: Transaction;

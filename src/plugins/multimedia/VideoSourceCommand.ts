@@ -13,8 +13,8 @@ import {
   showCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
 import {VIDEO} from './Constants';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { UICommand } from '../../core';
+import { createPopUp } from '../../commands';
 import {VideoEditorState} from './ui/VideoEditor';
 
 export function insertIFrame(

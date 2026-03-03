@@ -6,7 +6,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import ListTypeCommandButton from './listTypeCommandButton';
-import { ThemeContext } from '@modusoperandi/licit-ui-commands';
+import { ThemeContext } from '../../commands';
 import { hasImageNode } from '../commands/listToggleCommand';
 import ListTypeButton from './listTypeButton';
 import { EditorState } from 'prosemirror-state';

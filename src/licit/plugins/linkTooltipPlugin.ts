@@ -17,7 +17,7 @@ import {
   findNodesWithSameMark,
   atAnchorTopCenter,
   createPopUp,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../commands';
 import { hideSelectionPlaceholder } from './selectionPlaceholderPlugin';
 import lookUpElement from '../lookUpElement';
 import LinkTooltip from '../ui/linkTooltip';

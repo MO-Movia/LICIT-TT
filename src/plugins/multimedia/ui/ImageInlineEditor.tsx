@@ -7,7 +7,7 @@ import {
   CustomButton,
   createPopUp,
   atAnchorTopCenter,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../../commands';
 import React from 'react';
 import {Icon} from './Icon';
 import {EditorView} from 'prosemirror-view';

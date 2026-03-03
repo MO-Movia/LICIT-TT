@@ -8,9 +8,9 @@ import { EditorView } from 'prosemirror-view';
 import { Schema } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
 import TableDetailsCommand from './TableDetailsCommand';
-import { createPopUp } from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   createPopUp: jest.fn(),
 }));
 

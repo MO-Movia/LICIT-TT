@@ -8,11 +8,8 @@ import { DOMSerializer, Node, Mark, Attrs } from 'prosemirror-model';
 import { EditorView, Decoration } from 'prosemirror-view';
 import { Transaction, Selection } from 'prosemirror-state';
 import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
-import {
-  createPopUp,
-  atAnchorTopCenter,
-} from '@modusoperandi/licit-ui-commands';
-import type { PopUpHandle } from '@modusoperandi/licit-ui-commands';
+import { createPopUp, atAnchorTopCenter } from '../../commands';
+import type { PopUpHandle } from '../../commands';
 import { CitationRuntime } from './CitationRuntime';
 import {
   MARK_UNDERLINE,

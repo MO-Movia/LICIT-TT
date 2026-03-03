@@ -6,7 +6,7 @@
 import {Node, NodeSpec, DOMOutputSpec} from 'prosemirror-model';
 
 import {ATTRIBUTE_LIST_STYLE_TYPE} from './listItemNodeSpec';
-import {LIST_ITEM} from '@modusoperandi/licit-ui-commands';
+import { LIST_ITEM } from '../../commands';
 import {
   AttrType,
   ATTRIBUTE_INDENT,

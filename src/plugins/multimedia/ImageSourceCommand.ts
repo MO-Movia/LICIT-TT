@@ -12,8 +12,8 @@ import {
   hideCursorPlaceholder,
   showCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {createPopUp, PopUpHandle} from '@modusoperandi/licit-ui-commands';
+import { UICommand } from '../../core';
+import { createPopUp, PopUpHandle } from '../../commands';
 
 import type {ImageLike} from './Types';
 

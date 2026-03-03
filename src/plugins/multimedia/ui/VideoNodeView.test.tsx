@@ -10,7 +10,7 @@ import {Schema, Node} from 'prosemirror-model';
 import {EditorFocused} from './CustomNodeView';
 import {MultimediaPlugin} from '../index';
 import {createEditor, doc, p} from 'jest-prosemirror';
-import {PopUpHandle} from '@modusoperandi/licit-ui-commands';
+import { PopUpHandle } from '../../../commands';
 // Mock data
 
 const plugin = new MultimediaPlugin();

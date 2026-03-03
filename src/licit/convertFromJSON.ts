@@ -5,7 +5,7 @@
 
 import { Schema } from 'prosemirror-model';
 import { Plugin } from 'prosemirror-state';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../core';
 
 export interface LicitPlugin extends Plugin {
   getEffectiveSchema: (schema: Schema) => Schema;

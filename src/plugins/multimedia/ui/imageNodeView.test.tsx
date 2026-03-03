@@ -8,7 +8,7 @@ import {Schema, Node} from 'prosemirror-model';
 import {EditorState} from 'prosemirror-state';
 import {EditorFocused, NodeViewProps} from './CustomNodeView';
 import ResizeObserver from './ResizeObserver';
-import {PopUpHandle} from '@modusoperandi/licit-ui-commands';
+import { PopUpHandle } from '../../../commands';
 
 describe('ImageNodeView', () => {
   const mockSchema = new Schema({

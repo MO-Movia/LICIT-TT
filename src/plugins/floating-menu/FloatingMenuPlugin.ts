@@ -7,17 +7,13 @@
 import { Decoration, DecorationSet, EditorView } from 'prosemirror-view';
 import { Node, Schema, Slice } from 'prosemirror-model';
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
-import {
-  createPopUp,
-  PopUpHandle,
-  Rect
-} from '@modusoperandi/licit-ui-commands';
+import { createPopUp, PopUpHandle, Rect } from '../../commands';
 import { FloatingMenu } from './FloatingPopup';
 import { v4 as uuidv4 } from 'uuid';
-import { insertReference } from '@modusoperandi/licit-referencing';
+import { insertReference } from '../referencing';
 import { createSliceManager } from './slice';
 import { FloatRuntime, FloatingMenuItem } from './model';
-import { createKeyMapPlugin, makeKeyMapWithCommon } from '@modusoperandi/licit-doc-attrs-step';
+import { createKeyMapPlugin, makeKeyMapWithCommon } from '../../core';
 import { getDefaultMenuItems } from './FloatingMenuDefaults';
 
 export const CMPluginKey = new PluginKey<FloatingMenuPlugin>('floating-menu');

@@ -7,15 +7,12 @@ import { EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { ContentNodeWithPos  } from 'prosemirror-utils';
 import { ListToggleCommand, hasImageNode } from './listToggleCommand';
-import {
-  toggleList,
-  isNodeSelectionForNodeType,
-} from '@modusoperandi/licit-ui-commands';
+import { toggleList, isNodeSelectionForNodeType } from '../../commands';
 
 import { Editor } from '@tiptap/react';
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   toggleList: jest.fn(),
   isNodeSelectionForNodeType: jest.fn(),
   noop: jest.fn(),

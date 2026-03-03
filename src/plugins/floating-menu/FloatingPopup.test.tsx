@@ -9,7 +9,7 @@ import { FloatingMenu } from './FloatingPopup';
 import { FloatingMenuItem, FloatingMenuContext } from './model';
 
 // Mock CustomButton → render as native <button>
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   CustomButton: ({ label, onClick, disabled }) => (
     <button disabled={disabled} onClick={onClick}>
       {label}

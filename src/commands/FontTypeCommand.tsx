@@ -12,7 +12,7 @@ import * as React from 'react';
 
 import {MARK_FONT_TYPE} from './MarkNames';
 import {applyMark, updateMarksAttrs} from './applyMark';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../core';
 
 function setFontType(
   tr: Transform,

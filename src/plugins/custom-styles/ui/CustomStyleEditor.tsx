@@ -9,7 +9,7 @@ import {
   ColorEditor,
   createPopUp,
   getLineSpacingValue,
-} from '@modusoperandi/licit-ui-commands';
+} from '../../../commands';
 import {
   isCustomStyleExists,
   setStyles,

@@ -5,8 +5,7 @@
 
 import cx from 'classnames';
 import * as React from 'react';
- import { UICommand
-} from '@modusoperandi/licit-doc-attrs-step';
+ import { UICommand } from '../../../core';
 const VALID_CHARS = /[a-z_]+/;
 const cached = {};
 

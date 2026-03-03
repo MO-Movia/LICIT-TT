@@ -27,7 +27,7 @@ jest.mock('./CursorPlaceholderPlugin', () => ({
 }));
 
 // Mock createPopUp
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
+jest.mock('../../commands', () => ({
   createPopUp: jest.fn(),
 }));
 

@@ -5,7 +5,7 @@
 
 import {EditorState, TextSelection} from 'prosemirror-state';
 import {schema} from 'prosemirror-schema-basic';
-import {HEADING, MARK_FONT_TYPE} from '@modusoperandi/licit-ui-commands';
+import { HEADING, MARK_FONT_TYPE } from '../commands';
 import findActiveFontType from './findActiveFontType';
 import findActiveMark from './findActiveMark';
 import FontTypeMarkSpec from './specs/fontTypeMarkSpec';

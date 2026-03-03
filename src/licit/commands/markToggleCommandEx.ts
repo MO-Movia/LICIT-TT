@@ -5,7 +5,7 @@
 
 import { EditorState } from 'prosemirror-state';
 
-import { MarkToggleCommand } from '@modusoperandi/licit-ui-commands';
+import { MarkToggleCommand } from '../../commands';
 
 class MarkToggleCommandEx extends MarkToggleCommand {
   constructor(markName: string) {

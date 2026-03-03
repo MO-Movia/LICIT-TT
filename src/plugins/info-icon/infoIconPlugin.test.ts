@@ -10,7 +10,7 @@ import {Schema} from 'prosemirror-model';
 import {InfoIconView} from './infoIconView';
 import {InfoIconCommand} from './infoIconCommand';
 import {createEditor} from 'jest-prosemirror';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { createPopUp } from '../../commands';
 
 class TestPlugin extends Plugin {
   constructor() {

@@ -9,11 +9,7 @@ import { updateEditorNodes } from './editorNodes';
 import ListItemNodeSpec from './specs/listItemNodeSpec';
 import OrderedListNodeSpec from './specs/orderedListNodeSpec';
 import BulletListNodeSpec from './specs/bulletListNodeSpec';
-import {
-  BULLET_LIST,
-  LIST_ITEM,
-  ORDERED_LIST,
-} from '@modusoperandi/licit-ui-commands';
+import { BULLET_LIST, LIST_ITEM, ORDERED_LIST } from '../commands';
 
 jest.mock('./specs/listItemNodeSpec', () => ({}));
 jest.mock('./specs/orderedListNodeSpec', () => ({}));

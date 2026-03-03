@@ -8,7 +8,7 @@ import * as React from 'react';
 
 import {preventEventDefault} from './preventEventDefault';
 import {EditorView} from 'prosemirror-view';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 
 export type PointerSurfaceProps = {
   active?: boolean;

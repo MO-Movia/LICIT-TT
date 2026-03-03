@@ -4,7 +4,7 @@
  */
 
 import CommandMenuButton from './commandMenuButton';
-import { FontTypeCommand } from '@modusoperandi/licit-ui-commands';
+import { FontTypeCommand } from '../../commands';
 import * as React from 'react';
 import { EditorState } from 'prosemirror-state';
 import { FONT_TYPE_NAMES } from '../specs/fontTypeMarkSpec';

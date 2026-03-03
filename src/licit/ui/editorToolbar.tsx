@@ -12,11 +12,11 @@ import ReactDOM from 'react-dom';
 
 import CommandButton from './commandButton';
 import CommandMenuButton from './commandMenuButton';
-import {CustomButton, ThemeContext} from '@modusoperandi/licit-ui-commands';
+import { CustomButton, ThemeContext } from '../../commands';
 import {COMMAND_GROUPS, CommandGroup, parseLabel} from './editorToolbarConfig';
 import Icon from './icon';
 import ResizeObserver from '../resizeObserver';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 import isReactClass from '../isReactClass';
 import {LicitPlugin} from '../convertFromJSON';
 import {EditorViewEx} from '../constants';

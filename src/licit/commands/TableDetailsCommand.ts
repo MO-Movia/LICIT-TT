@@ -9,8 +9,8 @@ import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 import TableDetails from '../ui/TableDetails';
 import {findParentNodeOfType} from 'prosemirror-utils';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
+import { createPopUp } from '../../commands';
+import { UICommand } from '../../core';
 
 class TableDetailsCommand extends UICommand {
   _popUp = null;

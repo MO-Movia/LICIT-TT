@@ -9,8 +9,8 @@ import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 import {Editor} from '@tiptap/react';
 import TableColorCommand from './tableColorCommand';
-import {UICommand} from '@modusoperandi/licit-doc-attrs-step';
-import {createPopUp} from '@modusoperandi/licit-ui-commands';
+import { UICommand } from '../../core';
+import { createPopUp } from '../../commands';
 
 // Typed popup mock
 type MockPopup = {close: jest.Mock<void, [unknown]>};
@@ -30,7 +30,7 @@ const createPopUpMock = jest
     }
   );
 
-jest.mock('@modusoperandi/licit-ui-commands', () => {
+jest.mock('../../commands', () => {
   // define inside the factory → safe from hoisting issues
   const createPopUpMock = jest
     .fn()
@@ -38,7 +38,7 @@ jest.mock('@modusoperandi/licit-ui-commands', () => {
       (
         _Component: unknown,
         _props: unknown,
-        opts: {onClose?: (v: string) => void}
+        opts: { onClose?: (v: string) => void }
       ) => {
         return {
           close: jest.fn((_value: unknown) => opts.onClose?.('mocked value')),
@@ -46,15 +46,14 @@ jest.mock('@modusoperandi/licit-ui-commands', () => {
       }
     );
 
-  const actual = jest.requireActual<
-    typeof import('@modusoperandi/licit-ui-commands')
-  >('@modusoperandi/licit-ui-commands');
+  const actual =
+    jest.requireActual<typeof import('../../commands')>('../../commands');
 
   return {
     ...actual,
     createPopUp: createPopUpMock,
     atAnchorRight: jest.fn(),
-    RuntimeService: {Runtime: 'mockRuntime'},
+    RuntimeService: { Runtime: 'mockRuntime' },
   };
 });
 

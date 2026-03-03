@@ -24,10 +24,7 @@ import {
 import { Decoration, DecorationSet, EditorView } from 'prosemirror-view';
 import { CapcoContextMenu } from './capcoContextMenu';
 import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
-import {
-  createPopUp,
-  atViewportCenter,
-} from '@modusoperandi/licit-ui-commands';
+import { createPopUp, atViewportCenter } from '../../commands';
 import { CapcoView } from './capcoView';
 import { CAPCO, CapcoRuntime } from './types';
 import { getBlockControlCapco, getCapcoString } from './utils';

@@ -7,12 +7,9 @@ import * as React from 'react';
 import PropTypes from 'prop-types';
 
 import sanitizeURL from '../sanitizeURL';
-import {
-  CustomButton,
-  preventEventDefault,
-} from '@modusoperandi/licit-ui-commands';
+import { CustomButton, preventEventDefault } from '../../commands';
 
-import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
+import { UICommand } from '../../core';
 type LinkURLEditorProps = {
   href;
   close: (props?, propName?: string) => Error;

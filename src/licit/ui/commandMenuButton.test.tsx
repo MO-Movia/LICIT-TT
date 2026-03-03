@@ -6,18 +6,19 @@
 import * as React from 'react';
 import CommandMenuButton from './commandMenuButton';
 import { EditorState } from 'prosemirror-state';
-import { CustomButton, createPopUp } from '@modusoperandi/licit-ui-commands';
+import { CustomButton, createPopUp } from '../../commands';
 import { EditorView } from 'prosemirror-view';
 
 //  Mock Dependencies
-jest.mock('@modusoperandi/licit-ui-commands', () => ({
-  CustomButton: (props: React.JSX.Element) => React.createElement('button', props),
+jest.mock('../../commands', () => ({
+  CustomButton: (props: React.JSX.Element) =>
+    React.createElement('button', props),
   createPopUp: jest.fn(() => ({ close: jest.fn(), update: jest.fn() })),
   atAnchorRight: jest.fn(),
   ThemeContext: React.createContext('light'),
 }));
 
-jest.mock('@modusoperandi/licit-doc-attrs-step', () => ({
+jest.mock('../../core', () => ({
   UICommand: { theme: 'light' },
 }));
 

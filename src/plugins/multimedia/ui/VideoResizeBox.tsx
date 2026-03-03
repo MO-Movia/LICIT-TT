@@ -6,7 +6,7 @@
 import cx from 'classnames';
 import React from 'react';
 
-import {clamp} from '@modusoperandi/licit-ui-commands';
+import { clamp } from '../../../commands';
 import {v1 as uuid} from 'uuid';
 
 export type VideoResizeProps = {

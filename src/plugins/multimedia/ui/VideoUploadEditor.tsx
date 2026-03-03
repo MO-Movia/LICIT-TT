@@ -6,10 +6,7 @@
 import cx from 'classnames';
 import React from 'react';
 
-import {
-  CustomButton,
-  preventEventDefault,
-} from '@modusoperandi/licit-ui-commands';
+import { CustomButton, preventEventDefault } from '../../../commands';
 import {LoadingIndicator} from './LoadingIndicator';
 import {v1 as uuid} from 'uuid';
 
