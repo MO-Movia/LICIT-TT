@@ -124,7 +124,6 @@ describe('toCustomStyleDOM', () => {
       },
       styleName: '',
     });
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -170,7 +169,6 @@ describe('toCustomStyleDOM', () => {
     ]);
   });
   it('should handle toCustomStyleDOM when styleName includes(RESERVED_STYLE_NONE_NUMBERING)', () => {
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -235,7 +233,6 @@ describe('toCustomStyleDOM', () => {
       },
       styleName: '',
     });
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -300,7 +297,6 @@ describe('toCustomStyleDOM', () => {
       },
       styleName: '',
     });
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -364,7 +360,6 @@ describe('toCustomStyleDOM', () => {
       },
       styleName: '',
     });
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -424,7 +419,6 @@ describe('toCustomStyleDOM', () => {
       },
       styleName: '',
     });
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -469,7 +463,6 @@ describe('toCustomStyleDOM', () => {
     ]);
   });
   it('should handle toCustomStyleDOM when  styleprops null', () => {
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -514,7 +507,6 @@ describe('toCustomStyleDOM', () => {
     ]);
   });
   it('should handle toCustomStyleDOM when  styleprops null and stylename has reservedStylenumbering and no styleLvel', () => {
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -559,7 +551,6 @@ describe('toCustomStyleDOM', () => {
     ]);
   });
   it('should handle toCustomStyleDOM when  styleprops null and stylename has reservedStylenumbering and no styleLvel and 2 not equal to indices.length', () => {
-    // const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -622,7 +613,6 @@ describe('toCustomStyleDOM', () => {
       },
       styleName: '',
     });
-    //const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {
@@ -689,7 +679,6 @@ describe('toCustomStyleDOM', () => {
       },
       styleName: '',
     });
-    // const base = undefined;
     const node = {
       type: 'paragraph',
       attrs: {

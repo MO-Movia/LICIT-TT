@@ -78,7 +78,7 @@ describe('EnhancedTableFigure', () => {
     it('should create plugin with correct key', () => {
       expect(plugin).toBeDefined();
       expect(plugin.spec.key).toBeDefined();
-      expect(plugin.spec.key.key).toBe('EnhancedTableFigure$');
+      expect(plugin.spec.key['key']).toBe('EnhancedTableFigure$');
     });
 
     it('should have state init function', () => {

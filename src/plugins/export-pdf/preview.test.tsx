@@ -10,6 +10,15 @@ import { Schema } from 'prosemirror-model';
 import * as tcUtils from './utils/table-of-contents-utils';
 import { StoredStyle } from './utils/table-of-contents-utils';
 
+type PrivatePreviewFormMethods = {
+  isAfttpDoc: () => boolean;
+  insertSectionHeaders: () => void;
+  replaceInfoIcons: () => void;
+  updateImageWidths: () => void;
+  prepareEditorContent: () => void;
+  updateTableWidths: () => void;
+};
+
 describe('PreviewForm', () => {
 
   it('should call calcLogic when PreviewForm.isToc = true', () => {
@@ -97,6 +106,12 @@ describe('PreviewForm', () => {
 });
 
 describe('PreviewForm component', () => {
+    beforeAll(() => {
+    Object.defineProperty(global, 'structuredClone', {
+      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      writable: true,
+    });
+  });
   let onCloseMock: jest.Mock;
   let printWindowMock: any;
 
@@ -164,15 +179,17 @@ describe('PreviewForm component', () => {
     };
 
     const previewForm = new PreviewForm(props);
-    jest.spyOn(previewForm, 'isAfttpDoc').mockReturnValue(true);
+    const previewProto = PreviewForm.prototype as unknown as PrivatePreviewFormMethods;
+
+    jest.spyOn(previewProto, 'insertSectionHeaders').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'replaceInfoIcons').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'updateImageWidths').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'prepareEditorContent').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'updateTableWidths').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'isAfttpDoc').mockReturnValue(true);
     jest.spyOn(previewForm, 'getDocumentTitle').mockReturnValue('Test Document');
     jest.spyOn(previewForm, 'getToc').mockResolvedValue();
     jest.spyOn(previewForm, 'showAlert').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'insertSectionHeaders').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'replaceInfoIcons').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'updateImageWidths').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'prepareEditorContent').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'updateTableWidths').mockImplementation(() => {});
 
     previewForm.componentDidMount();
 
@@ -181,7 +198,7 @@ describe('PreviewForm component', () => {
       color: 'rgb(255, 0, 0)',
       text: 'CUI//SP-CTI',
     });
-    expect(PreviewForm.isAfttp).toBeUndefined();
+    expect(PreviewForm['isAfttp']).toBeUndefined();
   });
 
   it('should reset AFTTP properties when document is not AFTTP in componentDidMount', () => {
@@ -210,20 +227,21 @@ describe('PreviewForm component', () => {
     };
 
     const previewForm = new PreviewForm(props);
-    jest.spyOn(previewForm, 'isAfttpDoc').mockReturnValue(false);
-    jest.spyOn(previewForm, 'getToc').mockResolvedValue();
-    jest.spyOn(previewForm, 'showAlert').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'insertSectionHeaders').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'replaceInfoIcons').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'updateImageWidths').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'prepareEditorContent').mockImplementation(() => {});
-    jest.spyOn(previewForm, 'updateTableWidths').mockImplementation(() => {});
+    const previewProto = PreviewForm.prototype as unknown as PrivatePreviewFormMethods;
 
+    jest.spyOn(previewProto, 'isAfttpDoc').mockReturnValue(false);
+    jest.spyOn(previewForm, 'getToc').mockResolvedValue();
+    jest.spyOn(previewForm, 'showAlert').mockImplementation(() => {});    
+    jest.spyOn(previewProto, 'insertSectionHeaders').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'replaceInfoIcons').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'updateImageWidths').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'prepareEditorContent').mockImplementation(() => undefined);
+    jest.spyOn(previewProto, 'updateTableWidths').mockImplementation(() => undefined);
     previewForm.componentDidMount();
 
     expect(PreviewForm['documentTitle']).toBeNull();
     expect(PreviewForm['pageBanner']).toBeNull();
-    expect(PreviewForm.isAfttp).toBeUndefined();
+    expect(PreviewForm['isAfttp']).toBeUndefined();
   });
 
   it('should return null when tableWrapper is not found in extractBannerMarkingFromTableWrapper', () => {
@@ -1085,7 +1103,7 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const showAlertSpy = jest
         .spyOn(previewForm, 'showAlert')
         .mockImplementation(() => { });
-      PreviewForm.lastUpdated = true;
+      PreviewForm['lastUpdated'] = true;
       previewForm?.calcLogic();
 
       expect(PreviewForm['formattedDate']).toBeDefined();
@@ -1229,19 +1247,19 @@ describe('YourClassName', () => {
     };
     instance = new PreviewForm(props);
     // reset static flags before each test
-    PreviewForm.isTitle = false;
-    PreviewForm.lastUpdated = false;
+    PreviewForm['isTitle'] = false;
+    PreviewForm['lastUpdated'] = false;
   });
 
   test('documentTitleActive should set isTitle to true', () => {
     instance.documentTitleActive();
-    expect(PreviewForm.isTitle).toBe(true);
+    expect(PreviewForm['isTitle']).toBe(true);
   });
 
   test('documentTitleDeactive should set isTitle to false', () => {
-    PreviewForm.isTitle = true;
+    PreviewForm['isTitle'] = true;
     instance.documentTitleDeactive();
-    expect(PreviewForm.isTitle).toBe(false);
+    expect(PreviewForm['isTitle']).toBe(false);
   });
 });
 
@@ -1729,7 +1747,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
       (previewForm as any).insertTitleSection(data, editorView);
 
-      const spacer = data.querySelector('.forcePageSpacer');
+      const spacer = data.querySelector('.forcePageSpacer') as HTMLElement;
       expect(spacer).toBeTruthy();
       expect(spacer?.innerHTML).toBe('&nbsp;');
       expect(spacer?.style.breakAfter).toBe('page');
@@ -1777,7 +1795,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
       (previewForm as any).insertOptionalSections(data);
 
-      const tocSection = data.querySelector('.tocHead');
+      const tocSection = data.querySelector('.tocHead') as HTMLElement;
       expect(tocSection).toBeTruthy();
       expect(tocSection?.id).toBe('licit-toc-block');
       expect(tocSection?.style.breakBefore).toBe('page');
@@ -1794,7 +1812,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
       (previewForm as any).insertOptionalSections(data);
 
-      const tofSection = data.querySelector('.tofHead');
+      const tofSection = data.querySelector('.tofHead') as HTMLElement;
       expect(tofSection).toBeTruthy();
       expect(tofSection?.id).toBe('licit-tof-block');
       expect(tofSection?.style.breakBefore).toBe('page');
@@ -1809,7 +1827,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
       (previewForm as any).insertOptionalSections(data);
 
-      const totSection = data.querySelector('.totHead');
+      const totSection = data.querySelector('.totHead') as HTMLElement;
       expect(totSection).toBeTruthy();
       expect(totSection?.id).toBe('licit-tot-block');
       expect(totSection?.style.breakBefore).toBe('page');

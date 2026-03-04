@@ -677,7 +677,6 @@ describe('Custom Menu UI', () => {
   });
   it('should handle showsubmenu when popup not null', () => {
     custommenuui._stylePopup = { close: () => {} } as unknown as null;
-    // custommenuui._stylePopup = {close:()=>{}};
     const ui = {
       _customStyleName: 'Normal',
       _customStyle: {

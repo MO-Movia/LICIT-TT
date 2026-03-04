@@ -158,6 +158,9 @@ describe('ParagraphSpacingCommand', () => {
       clearIncompatible: function (): Transform {
         throw new Error('Function not implemented.');
       },
+      changedRange: function (): { from: number; to: number; } | null {
+        throw new Error('Function not implemented.');
+      }
     });
     const doc = schema.node('doc', null, [
       schema.node('paragraph'),
@@ -180,7 +183,6 @@ describe('ParagraphSpacingCommand', () => {
         },
       },
     };
-    // const mockview = {};
     const dispatch = () => undefined;
     const psc = new ParagraphSpacingCommand('', true).execute(
       mockstate as unknown as EditorState,
@@ -199,7 +201,6 @@ describe('ParagraphSpacingCommand', () => {
     expect(resultingTransform).toBe(initialTransform);
   });
   it('should handle execute when tr.docChanged is true', () => {
-    //const spy = jest.spyOn(paragraphspacingcommand,'setParagraphSpacing').mockReturnValue({docChanged:true})
     const doc = schema.node('doc', null, [
       schema.node('paragraph'),
       schema.node('heading'),
@@ -223,7 +224,6 @@ describe('ParagraphSpacingCommand', () => {
         docChanged: true,
       },
     } as unknown as EditorState;
-    // const mockview = {};
     const dispatch = () => {
       return true;
     };

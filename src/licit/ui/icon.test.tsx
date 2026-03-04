@@ -43,8 +43,8 @@ describe('Icon component (pure Jest tests)', () => {
 
     expect(result1).toBe(result2);
     expect(React.isValidElement(result1)).toBe(true);
-    expect(result1.props.type).toBe('undo');
-    expect(result1.props.theme).toBe('dark');
+    expect(result1.props['type']).toBe('undo');
+    expect(result1.props['theme']).toBe('dark');
   });
 
   it('should call componentDidMount and set image1 for known type', () => {

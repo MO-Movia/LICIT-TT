@@ -74,7 +74,7 @@ describe('ListTypeCommandButton', () => {
 
   test('disables button when editorView.disabled is true', () => {
     const theme = 'dark';
-    mockEditorView.disabled = true;
+    mockEditorView['disabled'] = true;
 
     ReactDOM.render(
       <ThemeContext.Provider value={theme}>
@@ -113,7 +113,7 @@ describe('ListTypeCommandButton', () => {
   test('enabled when editorView.disabled is false and hasImageNode is false', () => {
     const theme = 'light';
     (hasImageNode as jest.Mock).mockReturnValue(false);
-    mockEditorView.disabled = false;
+    mockEditorView['disabled'] = false;
 
     ReactDOM.render(
       <ThemeContext.Provider value={theme}>

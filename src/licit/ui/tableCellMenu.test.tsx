@@ -70,7 +70,7 @@ describe('TableCellMenu', () => {
 
   test('uses pluginView._menu return value if defined', () => {
     const mockCmdGroups = [{ label: 'CustomCmd' }];
-    mockPluginView._menu = jest.fn(() => mockCmdGroups);
+    mockPluginView['_menu'] = jest.fn(() => mockCmdGroups);
 
     const element = React.createElement(TableCellMenu, {
       editorState: mockEditorState,
@@ -81,7 +81,7 @@ describe('TableCellMenu', () => {
 
     ReactDOM.render(element, container);
 
-    expect(mockPluginView._menu).toHaveBeenCalledWith(
+    expect(mockPluginView['_menu']).toHaveBeenCalledWith(
       mockEditorState,
       mockActionNode,
       TABLE_COMMANDS_GROUP

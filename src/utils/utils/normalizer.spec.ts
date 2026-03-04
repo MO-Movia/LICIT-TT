@@ -3,7 +3,7 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { Node } from '@tiptap/pm/state';
+import { Node } from '@tiptap/pm/model';
 import type { LicitDocument } from '../models/licit-document';
 import { blankDocument, blankNode } from './licit-gen-json';
 import { normalizeDoc, toSimpleJson } from './normalizer';

@@ -1413,7 +1413,6 @@ describe('createNewSlice', () => {
 
     // Assert
     expect(createSliceViaDialogMock).toHaveBeenCalled();
-    // expect(addSliceToListMock).toHaveBeenCalledWith({ id: 'slice1' });
   });
 });
 describe('openFloatingMenu', () => {

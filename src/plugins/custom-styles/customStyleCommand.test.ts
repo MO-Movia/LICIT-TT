@@ -292,8 +292,7 @@ describe('CustomStyleCommand', () => {
         },
       },
     });
-    //const content = DOMParser.fromSchema(schema).parse(document.createElement('div').appendChild(document.createElement('img')));
-    const editorState = EditorState.create({
+      const editorState = EditorState.create({
       schema: mockSchema,
       plugins: [],
     });
@@ -1198,7 +1197,6 @@ describe('CustomStyleCommand', () => {
       mockdispatch,
       mockdoc
     );
-    // applyStyle(mockval, mockval.styleName, mockstate, mocktr);
     expect(spy2).toHaveBeenCalled();
   });
 
@@ -3190,8 +3188,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
     ).toBeDefined();
   });
   it('should handle getCustomStyles', () => {
-    //const nodeattrs = { 'align': 'left', 'color': null, 'id': null, 'indent': null, 'lineSpacing': '125%', 'paddingBottom': null, 'paddingTop': null, 'capco': null, 'styleName': 'FM_chsubpara1' };
-    const mockschema = new Schema({
+     const mockschema = new Schema({
       nodes: {
         doc: {
           content: 'paragraph+',
@@ -3351,8 +3348,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
     ).toBeUndefined();
   });
   it('should handle getCustomStyles when styleName not equal obj.styleName', () => {
-    //const nodeattrs = { 'align': 'left', 'color': null, 'id': null, 'indent': null, 'lineSpacing': '125%', 'paddingBottom': null, 'paddingTop': null, 'capco': null, 'styleName': 'FM_chsubpara1' };
-    const styl = {
+     const styl = {
       styleName: 'test',
       mode: 1,
       styles: {
@@ -5825,7 +5821,6 @@ describe('handleRemoveMarks', () => {
     expect(testtr).toBeDefined();
   });
   it('should handle handleRemoveMarks when styleProps null', () => {
-    //const doc = new Node();
     const tr = {
       removeMark: () => {
         return {};

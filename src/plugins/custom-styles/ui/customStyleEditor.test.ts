@@ -1109,7 +1109,6 @@ describe('CustomStyleEditor', () => {
       mode: 1,
       close: () => { },
     };
-    // customstyleeditor.props.mode = 1;
     const CustomStyleEditors = new CustomStyleEditor(props);
 
     const dom = document.createElement('div');

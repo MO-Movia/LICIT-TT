@@ -23,6 +23,13 @@ import {
 } from '../test/document-nodes';
 
 describe('document section utilities', () => {
+  beforeAll(() => {
+    Object.defineProperty(global, 'structuredClone', {
+      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      writable: true,
+    });
+  });
+
   describe('buildSectionStructure', () => {
     it('should structure nodes by level', () => {
       const result = buildSectionStructure(sampleNodeList, sampleStoredStyles);

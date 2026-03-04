@@ -132,7 +132,7 @@ describe('EnhancedTableFigureView', () => {
           orientation: 'landscape',
         },
       };
-      view.update(landscapeNode as ProseMirrorNode);
+      view.update(landscapeNode as unknown as ProseMirrorNode);
       expect(view.contentDOM.style.width).toBe('864px');
     });
   });

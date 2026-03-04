@@ -10,7 +10,7 @@ import { EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { UICommand } from '../../core';
 import { EditorViewEx } from '../constants';
-import { ToolbarMenuConfig } from '@src/types';
+import { ToolbarMenuConfig } from '../types';
 
 //  Full mock subclass since UICommand is abstract
 class MockUICommand extends UICommand {

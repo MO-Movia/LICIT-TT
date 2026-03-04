@@ -94,9 +94,9 @@ describe('TableDetails', () => {
 
     const closeButton = container.querySelector('.czi-table-details-close') ;
     expect(closeButton).toBeTruthy();
-    expect(closeButton.title).toBe('Close');
+    expect(closeButton['title']).toBe('Close');
 
-    closeButton.click();
+    closeButton['click']();
     expect(closeMock).toHaveBeenCalledTimes(1);
   });
   

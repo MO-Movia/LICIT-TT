@@ -6,8 +6,14 @@
 import { Fragment } from 'prosemirror-model';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { ImageSourceCommand, insertEnhancedImageFigure } from './ImageSourceCommand';
-import { showCursorPlaceholder, hideCursorPlaceholder } from './CursorPlaceholderPlugin';
+import {
+  ImageSourceCommand,
+  insertEnhancedImageFigure,
+} from './ImageSourceCommand';
+import {
+  showCursorPlaceholder,
+  hideCursorPlaceholder,
+} from './CursorPlaceholderPlugin';
 import { UICommand } from '../../core';
 import { createPopUp } from '../../commands';
 
@@ -58,25 +64,44 @@ describe('insertEnhancedImageFigure', () => {
   });
 
   it('should return unchanged transaction if selection is not collapsed', () => {
-    mockTr.selection.to = 15;
-    const result = insertEnhancedImageFigure(mockTr, mockSchema, imageUrl, altText);
+    mockTr = {
+      ...mockTr,
+      selection: {
+        from: 10,
+        to: 15,
+      },
+    } as unknown as Transaction;
+    const result = insertEnhancedImageFigure(
+      mockTr,
+      mockSchema,
+      imageUrl,
+      altText
+    );
     expect(result).toBe(mockTr);
     expect(mockTr.insert).not.toHaveBeenCalled();
   });
 
   it('should return unchanged transaction if figure node type not found', () => {
     delete mockSchema.nodes.enhanced_table_figure;
-    const result = insertEnhancedImageFigure(mockTr, mockSchema, imageUrl, altText);
+    const result = insertEnhancedImageFigure(
+      mockTr,
+      mockSchema,
+      imageUrl,
+      altText
+    );
     expect(result).toBe(mockTr);
   });
 
   it('should return unchanged transaction if image node type not found', () => {
     delete mockSchema.nodes.simple_image;
-    const result = insertEnhancedImageFigure(mockTr, mockSchema, imageUrl, altText);
+    const result = insertEnhancedImageFigure(
+      mockTr,
+      mockSchema,
+      imageUrl,
+      altText
+    );
     expect(result).toBe(mockTr);
   });
-
-
 });
 
 describe('ImageSourceCommand', () => {
@@ -88,7 +113,10 @@ describe('ImageSourceCommand', () => {
   beforeEach(() => {
     command = new ImageSourceCommand();
     mockState = {
-      selection: new TextSelection(10, 10),
+      selection: {
+        from: 10,
+        to: 10,
+      },
       schema: {},
       tr: {},
     } as unknown as EditorState;
@@ -121,7 +149,11 @@ describe('ImageSourceCommand', () => {
     });
 
     it('should return false for non-collapsed text selection', () => {
-      mockState.selection = new TextSelection(10, 15);
+      Object.assign(mockState.selection, {
+        to: 15,
+        empty: false,
+      });
+
       expect(command.isEnabled(mockState, mockView)).toBe(true);
     });
   });
@@ -129,12 +161,20 @@ describe('ImageSourceCommand', () => {
   describe('waitForUserInput', () => {
     it('should return immediately if popup exists', async () => {
       command._popUp = {} as any;
-      const result = await command.waitForUserInput(mockState, mockDispatch, mockView);
+      const result = await command.waitForUserInput(
+        mockState,
+        mockDispatch,
+        mockView
+      );
       expect(result).toBeUndefined();
     });
 
     it('should show cursor placeholder and create popup', async () => {
-      const promise = command.waitForUserInput(mockState, mockDispatch, mockView);
+      const promise = command.waitForUserInput(
+        mockState,
+        mockDispatch,
+        mockView
+      );
 
       expect(showCursorPlaceholder).toHaveBeenCalledWith(mockState);
       expect(createPopUp).toHaveBeenCalled();
@@ -164,7 +204,9 @@ describe('ImageSourceCommand', () => {
 
     it('executeCustomStyleForTable should return the transaction', () => {
       const mockTr = {} as Transaction;
-      expect(command.executeCustomStyleForTable(mockState, mockTr, 0, 0)).toBe(mockTr);
+      expect(command.executeCustomStyleForTable(mockState, mockTr, 0, 0)).toBe(
+        mockTr
+      );
     });
   });
 });

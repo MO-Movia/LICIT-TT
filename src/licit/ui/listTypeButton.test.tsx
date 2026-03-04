@@ -47,9 +47,9 @@ describe('ListTypeButton (pure Jest test)', () => {
     const instance = new ListTypeButton(mockProps);
     const result = instance.render() as unknown as ListTypeButton;
 
-    expect(result.type).toBe('CustomButton');
+    expect(result['type']).toBe('CustomButton');
     expect(result.props.className).toContain('czi-custom-menu-button');
-    expect(result.props.id).toBe('mock-uuid');
+    expect(result.props['id']).toBe('mock-uuid');
     expect(result.props.label).toBe('List');
     expect(result.props.icon).toBe('icon-test');
     expect(result.props.title).toBe('List Type');

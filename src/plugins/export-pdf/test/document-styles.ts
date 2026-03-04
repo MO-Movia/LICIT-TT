@@ -23,6 +23,8 @@ export const sampleDocumentStyles: DocumentStyle[] = [
       nextLineStyleName: false,
       styleLevel: '1',
       toc: true,
+      tof: false,
+      tot: false
     },
     toc: false
   },
@@ -43,6 +45,8 @@ export const sampleDocumentStyles: DocumentStyle[] = [
       nextLineStyleName: false,
       styleLevel: '2',
       toc: false,
+      tof: false,
+      tot: false
     },
     toc: false
   },

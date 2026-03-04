@@ -360,7 +360,7 @@ describe('PDFHandler', () => {
   });
 
   test('afterPageLayout removes and sets CSS properties when extractedCui exists (AFTTP)', () => {
-    PreviewForm.extractedCui = {
+    PreviewForm['extractedCui'] = {
       text: 'CUI//SP-CTI',
       color: 'rgb(255, 0, 0)'
     };
@@ -686,8 +686,8 @@ describe('patchTocEntries', () => {
 
     (handler as unknown as { patchTocEntries(pages: TestPagedPage[]): void }).patchTocEntries(pages);
 
-    const link1 = pages[0].element.querySelector('.toc-element a');
-    const link2 = pages[1].element.querySelector('.toc-element a');
+    const link1 = pages[0].element.querySelector('.toc-element a') as HTMLElement;
+    const link2 = pages[1].element.querySelector('.toc-element a') as HTMLElement;;
 
     expect(link1.dataset.page).toBe('1');
     expect(link2.dataset.page).toBe('2');
@@ -705,7 +705,7 @@ describe('patchTocEntries', () => {
   });
 
   test('applyPageNumbers assigns AFTTP chapter and attachment numbering', () => {
-  PreviewForm.extractedCui = { text: 'CUI', color: 'red' };
+  PreviewForm['extractedCui'] = { text: 'CUI', color: 'red' };
 
   const pages = [
     createPage('<p stylename="chapterTitle"></p>'), // chapter 1 start
@@ -826,7 +826,7 @@ test('resolveNonAfttpPageNumber returns roman for pre-pages', () => {
 });
 
 test('handleAfttpFooter skips TOC footer when AFTTP', () => {
-  PreviewForm.extractedCui = { text: 'CUI', color: 'red' };
+  PreviewForm['extractedCui'] = { text: 'CUI', color: 'red' };
 
   const frag = document.createElement('div');
   const spy = jest.fn();
@@ -877,7 +877,7 @@ test('applyPageNumbers skips pages without margin content safely', () => {
 });
 
 test('applySingleTocLink sets attachment page number in AFTTP', () => {
-  PreviewForm.extractedCui = { text: 'CUI', color: 'red' };
+  PreviewForm['extractedCui'] = { text: 'CUI', color: 'red' };
 
   const page = createPage(`
     <div class="toc-element">
@@ -945,7 +945,7 @@ test('fixIndent safely handles pages with no indent elements', () => {
 });
 
 test('handleAfttpFooter executes processTocAndFooter when non-AFTTP', () => {
-  PreviewForm.extractedCui = null;
+  PreviewForm['extractedCui'] = null;
 
   const frag = document.createElement('div');
   const spy = jest.fn();

@@ -9,7 +9,7 @@ import RichTextEditor from './richTextEditor';
 import { Transform } from 'prosemirror-transform';
 import { EditorState } from 'prosemirror-state';
 import { Editor } from '@tiptap/core';
-import { ToolbarMenuConfig } from '@src/types';
+import { ToolbarMenuConfig } from '../types';
 
 // ? Define the props interface same as used by RichTextEditor
 interface MockEditorFramesetProps {

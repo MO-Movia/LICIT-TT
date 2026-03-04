@@ -4,8 +4,7 @@
  */
 
 import { CursorPlaceholderPlugin, showCursorPlaceholder, hideCursorPlaceholder, findCursorPlaceholderPos, specFinder, resetInstance, isPlugin, getSingletonInstance } from './CursorPlaceholderPlugin';
-import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { EditorState, Transaction } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 jest.mock('prosemirror-state');
 jest.mock('prosemirror-view');
@@ -17,7 +16,7 @@ jest.spyOn(Decoration, 'widget').mockImplementation((pos, element, spec) => {
 });
 describe('CursorPlaceholderPlugin', () => {
   let mockEditorState: EditorState;
-  let mockTr: Transform;
+  let mockTr: Transaction;
   let mockDecorationSet: DecorationSet;
 
   beforeEach(() => {
@@ -38,7 +37,7 @@ describe('CursorPlaceholderPlugin', () => {
       },
     } as unknown as EditorState;
 
-    mockTr = mockEditorState.tr as unknown as Transform;
+    mockTr = mockEditorState.tr as unknown as Transaction;
 
     // Mock DecorationSet
     mockDecorationSet = {

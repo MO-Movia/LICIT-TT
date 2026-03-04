@@ -7,7 +7,7 @@ import { EditorState, TextSelection } from 'prosemirror-state';
 import LinkSetURLCommand from './linkSetURLCommand';
 import { Transform } from 'prosemirror-transform';
 import { Schema } from 'prosemirror-model';
-import { EditorViewEx } from '@src/constants';
+import { EditorViewEx } from '../constants';
 
 jest.mock('../../commands', () => {
   const actual =

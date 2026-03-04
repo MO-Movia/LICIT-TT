@@ -130,9 +130,9 @@ test('should pass correct theme to CustomButton', () => {
   expect(rendered.type).toBe(CustomButton);
 
   // Props passed to CustomButton should include theme derived from UICommand.theme
-  expect(rendered.props.theme).toBe('light');
-  expect(rendered.props.className).toContain('czi-custom-menu-button');
-  expect(rendered.props.label).toBe('Bold');
+  expect(rendered.props['theme']).toBe('light');
+  expect(rendered.props['className']).toContain('czi-custom-menu-button');
+  expect(rendered.props['label']).toBe('Bold');
 });
 
 
