@@ -118,7 +118,7 @@ describe('TableColorCommand', () => {
     expect((cmd as TableColorCommand & { _popUp?: PopUpHandle | null })._popUp).not.toBeNull();
 
     // simulate user closes popup with a value
-    onCloseFn!({ color: '#ff0000' });
+    onCloseFn({ color: '#ff0000' });
     const result = await promise;
     expect(result).toEqual({ color: '#ff0000' });
     expect((cmd as TableColorCommand & { _popUp?: PopUpHandle | null })._popUp).toBeNull();

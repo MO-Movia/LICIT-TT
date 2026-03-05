@@ -8,7 +8,7 @@ import type { ReactElement, SyntheticEvent } from 'react';
 import { PointerSurface } from './PointerSurface';
 
 function render(props = {}): ReactElement {
-  return new PointerSurface(props).render() as ReactElement;
+  return new PointerSurface(props).render();
 }
 
 function spanProps(props = {}): Record<string, unknown> {
@@ -47,7 +47,7 @@ describe('PointerSurface', () => {
   it('sets aria-pressed from state.pressed', () => {
     const instance = new PointerSurface({});
     instance.state = { pressed: true };
-    expect(((instance.render() as ReactElement).props as Record<string, unknown>)['aria-pressed']).toBe(true);
+    expect(((instance.render()).props as Record<string, unknown>)['aria-pressed']).toBe(true);
   });
 
   it('sets tabIndex=0 when enabled, null when disabled', () => {
@@ -67,16 +67,16 @@ describe('PointerSurface', () => {
   it('adds "pressed" class only when state.pressed=true', () => {
     const on = new PointerSurface({});
     on.state = { pressed: true };
-    expect((on.render() as ReactElement).props.className).toContain('pressed');
+    expect((on.render()).props.className).toContain('pressed');
 
     const off = new PointerSurface({});
     off.state = { pressed: false };
-    expect((off.render() as ReactElement).props.className).not.toContain('pressed');
+    expect((off.render()).props.className).not.toContain('pressed');
   });
 
   it('wires own handlers when enabled', () => {
     const instance = new PointerSurface({});
-    const p = (instance.render() as ReactElement).props as Record<string, unknown>;
+    const p = (instance.render()).props as Record<string, unknown>;
     expect(p.onMouseDown).toBe(instance._onMouseDown);
     expect(p.onMouseUp).toBe(instance._onMouseUp);
     expect(p.onMouseEnter).toBe(instance._onMouseEnter);
@@ -86,7 +86,7 @@ describe('PointerSurface', () => {
 
   it('replaces handlers with preventEventDefault (or null) when disabled', () => {
     const instance = new PointerSurface({ disabled: true });
-    const p = (instance.render() as ReactElement).props as Record<string, unknown>;
+    const p = (instance.render()).props as Record<string, unknown>;
     expect(typeof p.onMouseDown).toBe('function');
     expect(p.onMouseDown).not.toBe(instance._onMouseDown);
     expect(p.onMouseLeave).toBeNull();

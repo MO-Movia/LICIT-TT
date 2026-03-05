@@ -114,7 +114,7 @@ describe('CropImagePopup logic', () => {
       { naturalWidth: 400, naturalHeight: 400, width: 200, height: 200 },
       b64
     );
-    expect(result!.croppedBase64).toBe(b64);
+    expect(result.croppedBase64).toBe(b64);
   });
 
   it('computeScales returns 1 when natural and display sizes match', () => {

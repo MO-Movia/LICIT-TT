@@ -33,7 +33,7 @@ function makeInstance(props: Partial<ImageUploadProps> = {}): EditorInstance {
 }
 
 function getRoot(instance: ImageUploadEditor): ReactElement {
-  return instance.render() as ReactElement;
+  return instance.render();
 }
 
 function queryNode(
@@ -102,21 +102,21 @@ describe('ImageUploadEditor', () => {
   it('adds "pending" to className when state.pending=true', () => {
     const instance = new ImageUploadEditor({ close: jest.fn(), runtime: {} });
     instance.state = { pending: true, error: null, id: 'test-uuid' };
-    const root = instance.render() as ReactElement;
+    const root = instance.render();
     expect((root.props as Record<string, unknown>).className).toContain('pending');
   });
 
   it('adds "error" to className when state.error is set', () => {
     const instance = new ImageUploadEditor({ close: jest.fn(), runtime: {} });
     instance.state = { pending: false, error: 'oops', id: 'test-uuid' };
-    const root = instance.render() as ReactElement;
+    const root = instance.render();
     expect((root.props as Record<string, unknown>).className).toContain('error');
   });
 
   it('shows default label text when not pending and no error', () => {
     const root = getRoot(makeInstance());
     const labelDiv = findByProp(root, 'className', 'molm-czi-image-upload-editor-label');
-    expect((labelDiv!.props as Record<string, unknown>).children).toBe(
+    expect((labelDiv.props as Record<string, unknown>).children).toBe(
       'Choose an image file...'
     );
   });
@@ -124,9 +124,9 @@ describe('ImageUploadEditor', () => {
   it('shows LoadingIndicator when pending=true', () => {
     const instance = new ImageUploadEditor({ close: jest.fn(), runtime: {} });
     instance.state = { pending: true, error: null, id: 'test-uuid' };
-    const root = instance.render() as ReactElement;
+    const root = instance.render();
     const labelDiv = findByProp(root, 'className', 'molm-czi-image-upload-editor-label');
-    const label = (labelDiv!.props as Record<string, unknown>).children as ReactElement;
+    const label = (labelDiv.props as Record<string, unknown>).children as ReactElement;
     expect(isValidElement(label)).toBe(true);
     expect(label.type).toBe('LoadingIndicator');
   });
@@ -134,16 +134,16 @@ describe('ImageUploadEditor', () => {
   it('shows error message when error is set', () => {
     const instance = new ImageUploadEditor({ close: jest.fn(), runtime: {} });
     instance.state = { pending: false, error: 'oops', id: 'test-uuid' };
-    const root = instance.render() as ReactElement;
+    const root = instance.render();
     const labelDiv = findByProp(root, 'className', 'molm-czi-image-upload-editor-label');
-    expect((labelDiv!.props as Record<string, unknown>).children).toBe(
+    expect((labelDiv.props as Record<string, unknown>).children).toBe(
       'Something went wrong, please try again'
     );
   });
 
   it('renders a file input with correct accept and type', () => {
     const root = getRoot(makeInstance());
-    const input = findByType(root, 'input') as ReactElement;
+    const input = findByType(root, 'input');
     const p = input.props as Record<string, unknown>;
     expect(p.type).toBe('file');
     expect(p.accept).toBe('image/png,image/gif,image/jpeg,image/jpg');
@@ -152,21 +152,21 @@ describe('ImageUploadEditor', () => {
   it('file input is disabled when pending=true', () => {
     const instance = new ImageUploadEditor({ close: jest.fn(), runtime: {} });
     instance.state = { pending: true, error: null, id: 'test-uuid' };
-    const root = instance.render() as ReactElement;
-    const input = findByType(root, 'input') as ReactElement;
+    const root = instance.render();
+    const input = findByType(root, 'input');
     expect((input.props as Record<string, unknown>).disabled).toBe(true);
   });
 
   it('file input is not disabled when pending=false', () => {
     const root = getRoot(makeInstance());
-    const input = findByType(root, 'input') as ReactElement;
+    const input = findByType(root, 'input');
     expect((input.props as Record<string, unknown>).disabled).toBe(false);
   });
 
   it('file input wires onChange to _onSelectFile', () => {
     const instance = makeInstance();
     const root = getRoot(instance);
-    const input = findByType(root, 'input') as ReactElement;
+    const input = findByType(root, 'input');
     expect((input.props as Record<string, unknown>).onChange).toBe(
       instance._onSelectFile
     );
@@ -174,7 +174,7 @@ describe('ImageUploadEditor', () => {
 
   it('file input id and key come from state.id', () => {
     const root = getRoot(makeInstance());
-    const input = findByType(root, 'input') as ReactElement;
+    const input = findByType(root, 'input');
     const p = input.props as Record<string, unknown>;
     expect(p.id).toBe('test-uuid');
   });
@@ -182,7 +182,7 @@ describe('ImageUploadEditor', () => {
   it('renders a CustomButton with label "Cancel" wired to _cancel', () => {
     const instance = makeInstance();
     const root = getRoot(instance);
-    const btn = findByType(root, 'CustomButton') as ReactElement;
+    const btn = findByType(root, 'CustomButton');
     const p = btn.props as Record<string, unknown>;
     expect(p.label).toBe('Cancel');
     expect(p.onClick).toBe(instance._cancel);

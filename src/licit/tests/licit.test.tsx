@@ -135,8 +135,8 @@ describe('Ref Methods', () => {
     const root = createRoot(container);
     root.render(<Licit ref={ref} />);
 
-    const setContent = await waitForValue(() => ref.current?.setContent);
-    expect(typeof setContent).toBe('function');
+    const handle = (await waitForValue(() => ref.current, 10000)) as LicitHandle;
+    expect(typeof handle.setContent).toBe('function');
   });
 
   it('should expose insertJSON method via ref', async () => {

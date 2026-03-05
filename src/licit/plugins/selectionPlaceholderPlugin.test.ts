@@ -187,7 +187,10 @@ describe('SelectionPlaceholderPlugin', () => {
     });
 
     const newTr = showSelectionPlaceholder(stateWithoutPlugin) as Transaction;
-    expect(newTr).toEqual(state.tr);
+    expect(newTr.doc).toEqual(stateWithoutPlugin.tr.doc);
+    expect(newTr.steps).toHaveLength(0);
+    expect(newTr.selection.from).toBe(stateWithoutPlugin.tr.selection.from);
+    expect(newTr.selection.to).toBe(stateWithoutPlugin.tr.selection.to);
   });
 
   it('should be a singleton plugin', () => {

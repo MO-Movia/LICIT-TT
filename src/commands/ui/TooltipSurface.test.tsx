@@ -19,7 +19,7 @@ import { createPopUp } from './createPopUp';
 
 function render(props: { tooltip: string; children?: ReactElement }): ReactElement {
   const instance = new TooltipSurface(props);
-  return instance.render() as ReactElement;
+  return instance.render();
 }
 
 function spanProps(props: { tooltip: string; children?: ReactElement }): Record<string, unknown> {
@@ -71,7 +71,7 @@ describe('TooltipSurface', () => {
   // event handler wiring
   it('wires _onMouseEnter and _onMouseLeave when tooltip is truthy', () => {
     const instance = new TooltipSurface({ tooltip: 'tip' });
-    const p = (instance.render() as ReactElement).props as Record<string, unknown>;
+    const p = (instance.render()).props as Record<string, unknown>;
     expect(p.onMouseEnter).toBe(instance._onMouseEnter);
     expect(p.onMouseLeave).toBe(instance._onMouseLeave);
     expect(p.onMouseDown).toBe(instance._onMouseLeave);

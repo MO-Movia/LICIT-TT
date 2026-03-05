@@ -144,7 +144,7 @@ describe('ColorEditor', () => {
     const buttons = getChildren(section);
     const activeBtn = buttons.find(btn => buttonProps(btn).active === true);
     expect(activeBtn).toBeDefined();
-    expect(buttonProps(activeBtn!).value).toBe(hex);
+    expect(buttonProps(activeBtn).value).toBe(hex);
   });
 
   it('color matching is case-insensitive', () => {

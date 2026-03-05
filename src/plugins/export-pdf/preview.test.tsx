@@ -1748,7 +1748,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
       (previewForm as any).insertTitleSection(data, editorView);
 
-      const spacer = data.querySelector('.forcePageSpacer') as HTMLElement;
+      const spacer = data.querySelector<HTMLElement>('.forcePageSpacer');
       expect(spacer).toBeTruthy();
       expect(spacer?.innerHTML).toBe('&nbsp;');
       expect(spacer?.style.breakAfter).toBe('page');
@@ -1796,7 +1796,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
       (previewForm as any).insertOptionalSections(data);
 
-      const tocSection = data.querySelector('.tocHead') as HTMLElement;
+      const tocSection = data.querySelector<HTMLElement>('.tocHead');
       expect(tocSection).toBeTruthy();
       expect(tocSection?.id).toBe('licit-toc-block');
       expect(tocSection?.style.breakBefore).toBe('page');
@@ -1813,7 +1813,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
       (previewForm as any).insertOptionalSections(data);
 
-      const tofSection = data.querySelector('.tofHead') as HTMLElement;
+      const tofSection = data.querySelector<HTMLElement>('.tofHead');
       expect(tofSection).toBeTruthy();
       expect(tofSection?.id).toBe('licit-tof-block');
       expect(tofSection?.style.breakBefore).toBe('page');
@@ -1828,7 +1828,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
       (previewForm as any).insertOptionalSections(data);
 
-      const totSection = data.querySelector('.totHead') as HTMLElement;
+      const totSection = data.querySelector<HTMLElement>('.totHead');
       expect(totSection).toBeTruthy();
       expect(totSection?.id).toBe('licit-tot-block');
       expect(totSection?.style.breakBefore).toBe('page');

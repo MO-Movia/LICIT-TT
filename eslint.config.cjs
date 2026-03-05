@@ -21,7 +21,6 @@ module.exports = [
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-require-imports': 'warn',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
       'sonarjs/slow-regex': 'warn',
       'sonarjs/array-callback-without-return': 'warn',
       'sonarjs/no-identical-functions': 'warn',

@@ -699,8 +699,8 @@ describe('patchTocEntries', () => {
 
     (handler as unknown as { patchTocEntries(pages: TestPagedPage[]): void }).patchTocEntries(pages);
 
-    const link1 = pages[0].element.querySelector('.toc-element a') as HTMLElement;
-    const link2 = pages[1].element.querySelector('.toc-element a') as HTMLElement;;
+    const link1 = pages[0].element.querySelector<HTMLAnchorElement>('.toc-element a');
+    const link2 = pages[1].element.querySelector<HTMLAnchorElement>('.toc-element a');
 
     expect(link1.dataset.page).toBe('1');
     expect(link2.dataset.page).toBe('2');

@@ -51,16 +51,16 @@ describe('CustomRadioButton (pure Jest)', () => {
 
   it('renders a radio input element', () => {
     ReactDOM.render(<CustomRadioButton />, container);
-    const input = container.querySelector('input[type="radio"]');
+    const input = container.querySelector<HTMLInputElement>('input[type="radio"]');
     expect(input).not.toBeNull();
     expect(input.classList.contains('czi-custom-radio-button-input')).toBe(true);
   });
 
   it('disables the radio button when disabled prop is passed', () => {
     ReactDOM.render(<CustomRadioButton disabled />, container);
-    const input = container.querySelector(
+    const input = container.querySelector<HTMLInputElement>(
       'input[type="radio"]'
-    ) as HTMLInputElement | null;
+    );
     expect(input).not.toBeNull();
     expect(input.disabled).toBe(true);
   });
@@ -81,9 +81,9 @@ describe('CustomRadioButton (pure Jest)', () => {
   it('calls onSelect handler when clicked', () => {
     const handleSelect = jest.fn();
     ReactDOM.render(<CustomRadioButton onSelect={handleSelect} />, container);
-    const surface = container.querySelector(
+    const surface = container.querySelector<HTMLDivElement>(
       '[data-testid="pointer-surface"]'
-    ) as HTMLElement | null;
+    );
     expect(surface).not.toBeNull();
     surface.click();
     expect(handleSelect).toHaveBeenCalled();
