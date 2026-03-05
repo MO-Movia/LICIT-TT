@@ -28,14 +28,16 @@ describe('ListTypeCommandButton', () => {
   let container: HTMLDivElement;
   let mockDispatch: jest.Mock;
   let mockEditorState: EditorState;
-  let mockEditorView: EditorView;
+  let mockEditorView: EditorView & { disabled: boolean };
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
     mockDispatch = jest.fn();
     mockEditorState = {} as EditorState;
-    mockEditorView = { disabled: false } as unknown as EditorView;
+    mockEditorView = { disabled: false } as unknown as EditorView & {
+      disabled: boolean;
+    };
     (hasImageNode as jest.Mock).mockReturnValue(false);
     jest.clearAllMocks();
   });
@@ -74,7 +76,7 @@ describe('ListTypeCommandButton', () => {
 
   test('disables button when editorView.disabled is true', () => {
     const theme = 'dark';
-    mockEditorView['disabled'] = true;
+    mockEditorView.disabled = true;
 
     ReactDOM.render(
       <ThemeContext.Provider value={theme}>
@@ -113,7 +115,7 @@ describe('ListTypeCommandButton', () => {
   test('enabled when editorView.disabled is false and hasImageNode is false', () => {
     const theme = 'light';
     (hasImageNode as jest.Mock).mockReturnValue(false);
-    mockEditorView['disabled'] = false;
+    mockEditorView.disabled = false;
 
     ReactDOM.render(
       <ThemeContext.Provider value={theme}>

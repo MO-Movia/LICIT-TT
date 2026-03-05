@@ -8,6 +8,9 @@ import { setCellAttr } from 'prosemirror-tables';
 import { createPopUp } from '../../../commands';
 import { ColorEditor } from '@modusoperandi/color-picker';
 import { Transform } from 'prosemirror-transform';
+import type { EditorState } from 'prosemirror-state';
+import type { EditorView } from 'prosemirror-view';
+import type { PopUpHandle } from '../../../commands';
 
 jest.mock('prosemirror-tables', () => ({
   setCellAttr: jest.fn(() => jest.fn((state, dispatch) => {
@@ -32,9 +35,9 @@ jest.mock('@modusoperandi/color-picker', () => ({
 
 describe('TableColorCommand', () => {
   let cmd: TableColorCommand;
-  let mockState: unknown;
+  let mockState: EditorState;
   let mockDispatch: jest.Mock;
-  let mockView: unknown;
+  let mockView: EditorView;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -46,8 +49,8 @@ describe('TableColorCommand', () => {
       schema: { marks: { textColor: {} } },
       selection: { from: 1, to: 2 },
       tr: { doc: { nodeAt: jest.fn().mockReturnValue({ marks: [{ attrs: { color: '#abcdef' } }] }) } },
-    };
-    mockView = { dom: document.createElement('div') };
+    } as unknown as EditorState;
+    mockView = { dom: document.createElement('div') } as unknown as EditorView;
   });
 
   test('getAttrName should return empty string', () => {
@@ -59,30 +62,47 @@ describe('TableColorCommand', () => {
   });
 
   test('shouldRespondToUIEvent returns true only for mouseenter', () => {
-    expect(cmd.shouldRespondToUIEvent({ type: 'mouseenter' } as unknown )).toBe(true);
-    expect(cmd.shouldRespondToUIEvent({ type: 'click' }as unknown )).toBe(false);
+    expect(cmd.shouldRespondToUIEvent({ type: 'mouseenter' } as MouseEvent)).toBe(true);
+    expect(cmd.shouldRespondToUIEvent({ type: 'click' } as MouseEvent)).toBe(false);
   });
 
   test('waitForUserInput returns undefined if popup exists', async () => {
-    (cmd as unknown)._popUp = { id: 'exists' };
+    const popUpHandle: PopUpHandle = {
+      close: jest.fn(),
+      update: jest.fn(),
+    };
+    (cmd as TableColorCommand & { _popUp?: PopUpHandle | null })._popUp = popUpHandle;
     const result = await cmd.waitForUserInput(mockState);
     expect(result).toBeUndefined();
   });
 
   test('waitForUserInput resolves immediately if target not HTMLElement', async () => {
-    const result = await cmd.waitForUserInput(mockState, mockDispatch, mockView, { currentTarget: null } as unknown);
+    const result = await cmd.waitForUserInput(
+      mockState,
+      mockDispatch,
+      mockView,
+      { currentTarget: null } as unknown as React.SyntheticEvent
+    );
     expect(result).toBeUndefined();
   });
 
   test('waitForUserInput should create popup and resolve on close', async () => {
     const mockAnchor = document.createElement('div');
-    let onCloseFn: unknown | undefined;
+    let onCloseFn: ((val: unknown) => void) | undefined;
     (createPopUp as jest.Mock).mockImplementation((_Comp, _props, opts) => {
       onCloseFn = opts.onClose;
-      return { id: 'popup' };
+      return {
+        close: jest.fn(),
+        update: jest.fn(),
+      } as PopUpHandle;
     });
 
-    const promise = cmd.waitForUserInput(mockState, mockDispatch, mockView, { currentTarget: mockAnchor } as unknown);
+    const promise = cmd.waitForUserInput(
+      mockState,
+      mockDispatch,
+      mockView,
+      { currentTarget: mockAnchor } as unknown as React.SyntheticEvent
+    );
     expect(createPopUp).toHaveBeenCalledWith(
       ColorEditor,
       expect.objectContaining({ hex: '#112233', runtime: 'mockRuntime', Textcolor: '#abcdef' }),
@@ -95,13 +115,13 @@ describe('TableColorCommand', () => {
       })
     );
 
-    expect((cmd as unknown)._popUp).not.toBeNull();
+    expect((cmd as TableColorCommand & { _popUp?: PopUpHandle | null })._popUp).not.toBeNull();
 
     // simulate user closes popup with a value
     onCloseFn!({ color: '#ff0000' });
     const result = await promise;
     expect(result).toEqual({ color: '#ff0000' });
-    expect((cmd as unknown)._popUp).toBeNull();
+    expect((cmd as TableColorCommand & { _popUp?: PopUpHandle | null })._popUp).toBeNull();
   });
 
   test('executeWithUserInput calls setCellAttr when color provided', () => {
@@ -119,7 +139,11 @@ describe('TableColorCommand', () => {
 
   test('cancel closes popup if exists', () => {
     const closeFn = jest.fn();
-    (cmd as unknown)._popUp = { close: closeFn };
+    const popUpHandle: PopUpHandle = {
+      close: closeFn,
+      update: jest.fn(),
+    };
+    (cmd as TableColorCommand & { _popUp?: PopUpHandle | null })._popUp = popUpHandle;
     cmd.cancel();
     expect(closeFn).toHaveBeenCalledWith(undefined);
   });
@@ -133,7 +157,7 @@ describe('TableColorCommand', () => {
   });
 
   test('executeCustom returns transform unchanged', () => {
-    const tr = new Transform();
+    const tr = {} as Transform;
     expect(cmd.executeCustom(mockState, tr)).toBe(tr);
   });
 });

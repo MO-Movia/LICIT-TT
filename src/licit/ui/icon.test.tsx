@@ -38,13 +38,17 @@ describe('Icon component (pure Jest tests)', () => {
   });
 
   it('should return a cached icon using static get()', () => {
-    const result1 = Icon.get('undo', 'Undo Title', 'dark');
+    const result1 = Icon.get(
+      'undo',
+      'Undo Title',
+      'dark'
+    ) as React.ReactElement<{ type: string; theme?: string }>;
     const result2 = Icon.get('undo', 'Undo Title', 'dark');
 
     expect(result1).toBe(result2);
     expect(React.isValidElement(result1)).toBe(true);
-    expect(result1.props['type']).toBe('undo');
-    expect(result1.props['theme']).toBe('dark');
+    expect(result1.props.type).toBe('undo');
+    expect(result1.props.theme).toBe('dark');
   });
 
   it('should call componentDidMount and set image1 for known type', () => {

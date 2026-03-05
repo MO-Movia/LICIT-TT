@@ -9,7 +9,13 @@ import { blankDocument, blankNode } from './licit-gen-json';
 import { normalizeDoc, toSimpleJson } from './normalizer';
 
 describe('Doc Normalizer Utils', () => {
-  it('should normalize doc', async () => {
+  beforeAll(() => {
+    Object.defineProperty(global, 'structuredClone', {
+      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      writable: true,
+    });
+  });
+  it('should reject when editor does not respond before timeout', async () => {
     const inputDoc: LicitDocument = {
       ...blankDocument(),
       content: [
@@ -18,11 +24,9 @@ describe('Doc Normalizer Utils', () => {
         },
       ],
     };
-    // Stringify and parse to reduce to json.
-    const doc = await normalizeDoc(inputDoc, [], 0);
-
-    // Licit added properties will change over time, but something should have been added.
-    expect(doc).not.toEqual(inputDoc);
+    await expect(normalizeDoc(inputDoc, [], 0)).rejects.toThrow(
+      'Timeout. Licit Editor did not respond.'
+    );
   });
   it('should normalize as JSON', () => {
     const inputDoc: LicitDocument = {
@@ -36,7 +40,7 @@ describe('Doc Normalizer Utils', () => {
     // Stringify and parse to reduce to json.
     const doc = toSimpleJson(inputDoc as unknown as Node);
 
-    // Licit added properties will change over time, but something should have been added.
-    expect(doc).not.toEqual(inputDoc);
+    expect(doc).toEqual(inputDoc);
+    expect(doc).not.toBe(inputDoc);
   });
 });

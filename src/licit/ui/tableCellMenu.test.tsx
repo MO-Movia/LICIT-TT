@@ -22,7 +22,13 @@ describe('TableCellMenu', () => {
   let container: HTMLDivElement;
   let mockEditorState: EditorState;
   let mockEditorView: EditorView;
-  let mockPluginView: PluginView;
+  let mockPluginView: PluginView & {
+    _menu?: (
+      editorState: EditorState,
+      actionNode: Node,
+      defaultCommands: unknown
+    ) => unknown;
+  };
   let mockActionNode: Node;
 
   beforeEach(() => {
@@ -32,7 +38,13 @@ describe('TableCellMenu', () => {
     mockEditorState = { doc: {} } as EditorState;
     mockEditorView = { dispatch: jest.fn() } as unknown as EditorView;
     mockActionNode = document.createElement('div');
-    mockPluginView = {} as PluginView;
+    mockPluginView = {} as PluginView & {
+      _menu?: (
+        editorState: EditorState,
+        actionNode: Node,
+        defaultCommands: unknown
+      ) => unknown;
+    };
 
     jest.clearAllMocks();
   });
@@ -70,7 +82,7 @@ describe('TableCellMenu', () => {
 
   test('uses pluginView._menu return value if defined', () => {
     const mockCmdGroups = [{ label: 'CustomCmd' }];
-    mockPluginView['_menu'] = jest.fn(() => mockCmdGroups);
+    mockPluginView._menu = jest.fn(() => mockCmdGroups);
 
     const element = React.createElement(TableCellMenu, {
       editorState: mockEditorState,
@@ -81,7 +93,7 @@ describe('TableCellMenu', () => {
 
     ReactDOM.render(element, container);
 
-    expect(mockPluginView['_menu']).toHaveBeenCalledWith(
+    expect(mockPluginView._menu).toHaveBeenCalledWith(
       mockEditorState,
       mockActionNode,
       TABLE_COMMANDS_GROUP

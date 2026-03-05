@@ -3,12 +3,12 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Schema} from 'prosemirror-model';
-import {EditorState} from 'prosemirror-state';
-import {EnhancedTableFigure} from './EnhancedTableFigure';
-import {EnhancedTableCommands} from './EnhancedTableCommands';
-import {ImageUploadCommand} from './ImageUploadCommand';
-import {EnhancedTableFigureView} from './EnhancedTableFigureView';
+import { Schema } from 'prosemirror-model';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EnhancedTableFigure } from './EnhancedTableFigure';
+import { EnhancedTableCommands } from './EnhancedTableCommands';
+import { ImageUploadCommand } from './ImageUploadCommand';
+import { EnhancedTableFigureView } from './EnhancedTableFigureView';
 import {
   enhancedTableFigureNodeSpec,
   enhancedTableFigureBodyNodeSpec,
@@ -21,17 +21,17 @@ import {
   ENHANCED_TABLE_FIGURE_CAPCO,
   ENHANCED_TABLE_FIGURE_NOTES,
 } from './Constants';
-import {DarkThemeIcon, LightThemeIcon} from './images';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 
 // Mock dependencies
 jest.mock('./EnhancedTableCommands');
 jest.mock('./ImageUploadCommand');
 jest.mock('./EnhancedTableFigureView');
 jest.mock('./EnhancedTableNodeSpec', () => ({
-  enhancedTableFigureNodeSpec: {content: 'block+'},
-  enhancedTableFigureBodyNodeSpec: {content: 'block+'},
-  enhancedTableFigureNotesNodeSpec: {content: 'text*'},
-  enhancedTableFigureCapcoNodeSpec: {content: 'text*'},
+  enhancedTableFigureNodeSpec: { content: 'block+' },
+  enhancedTableFigureBodyNodeSpec: { content: 'block+' },
+  enhancedTableFigureNotesNodeSpec: { content: 'text*' },
+  enhancedTableFigureCapcoNodeSpec: { content: 'text*' },
 }));
 jest.mock('./images', () => ({
   DarkThemeIcon: 'dark-icon.svg',
@@ -48,23 +48,23 @@ describe('EnhancedTableFigure', () => {
     // Create a base schema
     baseSchema = new Schema({
       nodes: {
-        doc: {content: 'block+'},
+        doc: { content: 'block+' },
         paragraph: {
           content: 'text*',
           group: 'block',
           toDOM: () => ['p', 0],
-          parseDOM: [{tag: 'p'}],
+          parseDOM: [{ tag: 'p' }],
         },
-        text: {group: 'inline'},
+        text: { group: 'inline' },
       },
       marks: {
         strong: {
           toDOM: () => ['strong', 0],
-          parseDOM: [{tag: 'strong'}],
+          parseDOM: [{ tag: 'strong' }],
         },
         em: {
           toDOM: () => ['em', 0],
-          parseDOM: [{tag: 'em'}],
+          parseDOM: [{ tag: 'em' }],
         },
       },
     });
@@ -78,7 +78,8 @@ describe('EnhancedTableFigure', () => {
     it('should create plugin with correct key', () => {
       expect(plugin).toBeDefined();
       expect(plugin.spec.key).toBeDefined();
-      expect(plugin.spec.key['key']).toBe('EnhancedTableFigure$');
+      const keyName = (plugin.spec.key as unknown as { key: string }).key;
+      expect(keyName).toBe('EnhancedTableFigure$');
     });
 
     it('should have state init function', () => {
@@ -111,10 +112,17 @@ describe('EnhancedTableFigure', () => {
     });
 
     it('should call apply without errors', () => {
-      const mockTr = {} as any;
-      const mockSet = {} as any;
+      const mockTr = {} as unknown as Transaction;
+      const mockSet = undefined;
+      const mockOldState = {} as EditorState;
+      const mockNewState = {} as EditorState;
 
-      const result = plugin.spec.state?.apply(mockTr, mockSet);
+      const result = plugin.spec.state?.apply(
+        mockTr,
+        mockSet,
+        mockOldState,
+        mockNewState
+      );
 
       // apply does nothing, so just ensure it doesn't throw
       expect(result).toBeUndefined();
@@ -123,7 +131,7 @@ describe('EnhancedTableFigure', () => {
 
   describe('nodeViews', () => {
     it('should create EnhancedTableFigureView for enhanced_table_figure node', () => {
-      const mockNode = {type: {name: 'enhanced_table_figure'}} as any;
+      const mockNode = { type: { name: 'enhanced_table_figure' } } as any;
       const mockView = {} as any;
       const mockGetPos = jest.fn();
 
@@ -281,15 +289,15 @@ describe('EnhancedTableFigure', () => {
 
     it('should handle edge case themes correctly', () => {
       const edgeCases = [
-        {theme: 'light', expectedIcon: LightThemeIcon},
-        {theme: 'Light', expectedIcon: DarkThemeIcon},
-        {theme: 'LIGHT', expectedIcon: DarkThemeIcon},
-        {theme: 'dark', expectedIcon: DarkThemeIcon},
-        {theme: 'night', expectedIcon: DarkThemeIcon},
-        {theme: '', expectedIcon: DarkThemeIcon},
+        { theme: 'light', expectedIcon: LightThemeIcon },
+        { theme: 'Light', expectedIcon: DarkThemeIcon },
+        { theme: 'LIGHT', expectedIcon: DarkThemeIcon },
+        { theme: 'dark', expectedIcon: DarkThemeIcon },
+        { theme: 'night', expectedIcon: DarkThemeIcon },
+        { theme: '', expectedIcon: DarkThemeIcon },
       ];
 
-      edgeCases.forEach(({theme, expectedIcon}) => {
+      edgeCases.forEach(({ theme, expectedIcon }) => {
         const commands = plugin.initButtonCommands(theme);
         const expectedKey = `[${expectedIcon}] Insert Enhanced Table-Figure`;
         expect(commands[expectedKey]).toBeDefined();
@@ -334,14 +342,14 @@ describe('EnhancedTableFigure', () => {
     it('should handle schema with no marks', () => {
       const schemaWithoutMarks = new Schema({
         nodes: {
-          doc: {content: 'block+'},
+          doc: { content: 'block+' },
           paragraph: {
             content: 'text*',
             group: 'block',
             toDOM: () => ['p', 0],
-            parseDOM: [{tag: 'p'}],
+            parseDOM: [{ tag: 'p' }],
           },
-          text: {group: 'inline'},
+          text: { group: 'inline' },
         },
       });
 
@@ -354,12 +362,12 @@ describe('EnhancedTableFigure', () => {
     it('should handle schema with many existing nodes', () => {
       const complexSchema = new Schema({
         nodes: {
-          doc: {content: 'block+'},
-          paragraph: {content: 'text*', group: 'block'},
-          heading: {content: 'text*', group: 'block'},
-          blockquote: {content: 'block+', group: 'block'},
-          code_block: {content: 'text*', group: 'block'},
-          text: {group: 'inline'},
+          doc: { content: 'block+' },
+          paragraph: { content: 'text*', group: 'block' },
+          heading: { content: 'text*', group: 'block' },
+          blockquote: { content: 'block+', group: 'block' },
+          code_block: { content: 'text*', group: 'block' },
+          text: { group: 'inline' },
         },
         marks: {
           strong: {},

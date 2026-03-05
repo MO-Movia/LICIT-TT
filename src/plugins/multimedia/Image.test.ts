@@ -173,7 +173,7 @@ describe('Image Node View', () => {
 
     const effSchema = MMplugin.getEffectiveSchema(modSchema);
     const newNode = effSchema.node(effSchema.nodes.paragraph);
-    const newruntime = editor.view.runtime;
+    const newruntime = {} as EditorFocused['runtime'];
     const foc = {
       focused: true,
       runtime: newruntime,

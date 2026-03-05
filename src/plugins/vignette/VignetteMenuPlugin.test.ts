@@ -3,18 +3,22 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { VignetteView, VignetteMenuPlugin } from './VignetteMenuPlugin';
-import { PluginKey } from 'prosemirror-state';
+import { VignetteView } from './VignetteMenuPlugin';
 import { TABLE } from './Constants';
 
 jest.mock('prosemirror-tables', () => ({
   CellSelection: class {
+    $anchorCell: { node: jest.Mock };
+
     constructor() {
       this.$anchorCell = { node: jest.fn(() => ({ attrs: { vignette: true } })) };
     }
   },
   deleteTable: jest.fn(),
   TableView: class {
+    table: { style: { border?: string } };
+    update: jest.Mock<boolean, []>;
+
     constructor() {
       this.table = { style: {} };
       this.update = jest.fn(() => true);
@@ -143,7 +147,9 @@ describe('VignetteView', () => {
   });
 
   test('updateBorder sets border to none if table exists', () => {
-    const tableView = { table: { style: {} } };
+    const tableView: { table: { style: { border?: string } } } = {
+      table: { style: {} },
+    };
     const view = new VignetteView(editorView);
     view.updateBorder(tableView as any);
     expect(tableView.table.style.border).toBe('none');
@@ -161,14 +167,23 @@ describe('VignetteView', () => {
     const state = {
       selection,
       selectionType: 'cell',
-      selectionMock: { $anchor: { node: jest.fn(() => ({ attrs: { vignette: false } })) } },
+    };
+    selection.$anchor = {
+      node: jest.fn(() => ({
+        type: { name: 'paragraph' },
+        attrs: { vignette: false },
+      })),
     };
     expect(VignetteView.isVignette(state as any, node as any)).toBe(true);
   });
 
   test('isVignette returns true if $anchor node vignette', () => {
+    const anchorNode = {
+      type: { name: 'paragraph' },
+      attrs: { vignette: true },
+    };
     const state = {
-      selection: { $anchor: { node: jest.fn(() => ({ attrs: { vignette: true } })) } },
+      selection: { $anchor: { node: jest.fn(() => anchorNode) } },
     };
     expect(VignetteView.isVignette(state as any, { attrs: {} } as any)).toBe(true);
   });

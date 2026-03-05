@@ -4,7 +4,6 @@
  */
 
 import { VignetteCommand } from './VignetteCommand';
-import { Fragment } from 'prosemirror-model';
 import { TextSelection } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { DEF_BORDER_COLOR, TABLE, TABLE_CELL, PARAGRAPH } from './Constants';
@@ -160,7 +159,7 @@ describe('VignetteCommand', () => {
   });
 
   test('executeCustom returns tr unchanged', () => {
-    const tr = new Transform();
+    const tr = new Transform(mockState.doc);
     expect(cmd.executeCustom(mockState, tr)).toBe(tr);
   });
 });

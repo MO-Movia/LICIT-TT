@@ -438,7 +438,6 @@ describe('Custom Menu UI', () => {
     },
   });
   const mockdoc = doc(p('Hello World!!!'));
-  // mockdoc.styleName = '';
   const state = EditorState.create({
     doc: mockdoc,
     schema: schema,
@@ -474,11 +473,9 @@ describe('Custom Menu UI', () => {
   document.getElementsByClassName = jest.fn().mockImplementation(() => {
     // Return a custom Element instance with the given class name
     const mockElement = new MockElement('div');
-    // mockElement.classList.add(className);
     return [mockElement];
   });
   const custommenuui = new CustomMenuUI(CustomMenuTestProps);
-  //(custommenuui as any).props = CustomMenuTestProps;
 
   it('should render the component', () => {
     expect(custommenuui.render()).toBeDefined();
@@ -501,7 +498,6 @@ describe('Custom Menu UI', () => {
     jest.spyOn(custommenuui, 'isAllowedNode').mockReturnValue(false);
     const custommenuuipro = new CustomMenuUI(CustomMenuTestProps);
 
-    // (custommenuui as any).props = CustomMenuTestProps;
     expect(custommenuuipro.render()).toBeDefined();
   });
   it('should render the component', () => {
@@ -551,13 +547,11 @@ describe('Custom Menu UI', () => {
       view: window,
       currentTarget: input,
     };
-    // const ui = new UICommand();
     const ui = {
       shouldRespondToUIEvent: () => {
         return true;
       },
     } as unknown as UICommand;
-    //jest.spyOn(ui, 'shouldRespondToUIEvent').mockReturnValue(true);
     const spy1 = jest.spyOn(custommenuui, 'showSubMenu');
     custommenuui._onUIEnter(ui, event as unknown as SyntheticEvent);
     expect(spy1).toHaveBeenCalled();
@@ -581,8 +575,6 @@ describe('Custom Menu UI', () => {
         return false;
       },
     } as unknown as UICommand;
-    //jest.spyOn(ui, 'shouldRespondToUIEvent').mockReturnValue(false);
-    // const spy1 = jest.spyOn(custommenuui, 'showSubMenu');
     const test = custommenuui._onUIEnter(
       ui,
       event as unknown as SyntheticEvent
@@ -611,7 +603,6 @@ describe('Custom Menu UI', () => {
         return true;
       },
     } as unknown as UICommand;
-    //jest.spyOn(ui, 'shouldRespondToUIEvent').mockReturnValue(true);
     const spy1 = jest.spyOn(custommenuui, '_execute');
     custommenuui._onUIEnter(ui, event as unknown as SyntheticEvent);
 
@@ -649,7 +640,6 @@ describe('Custom Menu UI', () => {
   });
   it('should handle showsubmenu when popup not null', () => {
     custommenuui._popUp = null;
-    // custommenuui._stylePopup = {close:()=>{}};
     const ui = {
       _customStyleName: 'Normal',
       _customStyle: {
@@ -1220,7 +1210,7 @@ describe('Custom Menu UI', () => {
     ).toBeUndefined();
   });
 
-  xit('should execute command when command is defined', () => {
+  it('should execute command when command is defined', () => {
     const mockExecute = jest.fn();
     const command = {
       execute: mockExecute,

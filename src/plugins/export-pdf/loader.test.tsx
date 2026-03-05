@@ -11,8 +11,8 @@ jest.useFakeTimers();
 
 describe('Loader component (no react-test-renderer)', () => {
     let loader: Loader;
-    let originalSetInterval: typeof setInterval;
-    let originalClearInterval: typeof clearInterval;
+    let setIntervalSpy: jest.SpiedFunction<typeof setInterval>;
+    let clearIntervalSpy: jest.SpiedFunction<typeof clearInterval>;
 
     beforeEach(() => {
         PDFHandler.state.currentPage = 0;
@@ -20,26 +20,34 @@ describe('Loader component (no react-test-renderer)', () => {
         loader = new Loader({});
         loader.setState = jest.fn();
 
-        originalSetInterval = global.setInterval;
-        originalClearInterval = global.clearInterval;
-        global.setInterval = jest.fn((_fn, _ms) => {
-            return 123 as unknown as number;
-        });
-        global.clearInterval = jest.fn();
+        setIntervalSpy = jest
+            .spyOn(global, 'setInterval')
+            .mockImplementation(
+                (..._args: Parameters<typeof setInterval>): ReturnType<typeof setInterval> =>
+                    123 as unknown as ReturnType<typeof setInterval>
+            );
+        clearIntervalSpy = jest
+            .spyOn(global, 'clearInterval')
+            .mockImplementation(
+                (..._args: Parameters<typeof clearInterval>): ReturnType<typeof clearInterval> =>
+                    undefined
+            );
     });
 
     afterEach(() => {
         jest.clearAllMocks();
-        global.setInterval = originalSetInterval;
-        global.clearInterval = originalClearInterval;
+        setIntervalSpy.mockRestore();
+        clearIntervalSpy.mockRestore();
     });
 
     test('componentDidMount sets up interval', () => {
         loader.componentDidMount();
         expect(global.setInterval).toHaveBeenCalledTimes(1);
 
-        const callback = (global.setInterval as jest.Mock).mock.calls[0][0];
-        callback();
+        const callback = setIntervalSpy.mock.calls[0][0];
+        if (typeof callback === 'function') {
+            callback();
+        }
         expect(loader.setState).toHaveBeenCalledWith(
             expect.objectContaining({ time: expect.any(Number) })
         );
@@ -55,10 +63,12 @@ describe('Loader component (no react-test-renderer)', () => {
         PDFHandler.state.isOnLoad = true;
         loader.componentDidMount();
 
-        const callback = (global.setInterval as jest.Mock).mock.calls[0][0];
+        const callback = setIntervalSpy.mock.calls[0][0];
 
         const initialCounter = loader['passCounter'];
-        callback();
+        if (typeof callback === 'function') {
+            callback();
+        }
 
         expect(loader['passCounter']).toBe(initialCounter + 1);
         expect(loader.setState).toHaveBeenCalledWith(
@@ -70,10 +80,12 @@ describe('Loader component (no react-test-renderer)', () => {
         PDFHandler.state.isOnLoad = false;
         loader.componentDidMount();
 
-        const callback = (global.setInterval as jest.Mock).mock.calls[0][0];
+        const callback = setIntervalSpy.mock.calls[0][0];
 
         const initialCounter = loader['passCounter'];
-        callback();
+        if (typeof callback === 'function') {
+            callback();
+        }
 
         expect(loader['passCounter']).toBe(initialCounter);
         expect(loader.setState).toHaveBeenCalledWith(

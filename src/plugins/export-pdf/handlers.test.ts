@@ -32,6 +32,15 @@ const mockPolisher = {
   insert: jest.fn(),
 };
 const mockCaller = {};
+const previewFormMock = PreviewForm as unknown as {
+  showToc: jest.Mock<boolean, []>;
+  showTof: jest.Mock<boolean, []>;
+  showTot: jest.Mock<boolean, []>;
+  getHeadersTOC: jest.Mock<string[], []>;
+  getHeadersTOF: jest.Mock<string[], []>;
+  getHeadersTOT: jest.Mock<string[], []>;
+  extractedCui: { text: string; color: string } | null;
+};
 
 type TestPagedPage = { element: HTMLElement };
 
@@ -49,15 +58,16 @@ describe('PDFHandler', () => {
     jest.clearAllMocks();
     PDFHandler.state.currentPage = 0;
     PDFHandler.state.isOnLoad = false;
+    previewFormMock.extractedCui = null;
   });
 
   test('beforeParsed calls createTable when any TOC/TOF/TOT is true', () => {
-    PreviewForm.showToc.mockReturnValue(true);
-    PreviewForm.showTof.mockReturnValue(false);
-    PreviewForm.showTot.mockReturnValue(false);
-    PreviewForm.getHeadersTOC.mockReturnValue(['h1']);
-    PreviewForm.getHeadersTOF.mockReturnValue([]);
-    PreviewForm.getHeadersTOT.mockReturnValue([]);
+    previewFormMock.showToc.mockReturnValue(true);
+    previewFormMock.showTof.mockReturnValue(false);
+    previewFormMock.showTot.mockReturnValue(false);
+    previewFormMock.getHeadersTOC.mockReturnValue(['h1']);
+    previewFormMock.getHeadersTOF.mockReturnValue([]);
+    previewFormMock.getHeadersTOT.mockReturnValue([]);
 
     handler.beforeParsed('content');
 
@@ -88,7 +98,7 @@ describe('PDFHandler', () => {
     pageFragment.appendChild(item);
 
     const page = { element: pageEl };
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     expect(item.getAttribute('customcounter')).toBeDefined();
     expect(pageFragment.style.getPropertyValue('--pagedjs-string-last-chapTitled')).toContain('desc');
@@ -101,8 +111,8 @@ describe('PDFHandler', () => {
     page2El.appendChild(document.createElement('div')).className = 'prepages';
     const page2 = { element: page2El };
 
-    expect(() => handler.afterPageLayout(frag, page1)).not.toThrow();
-    expect(() => handler.afterPageLayout(frag, page2)).not.toThrow();
+    expect(() => handler.afterPageLayout(frag, page1, null)).not.toThrow();
+    expect(() => handler.afterPageLayout(frag, page2, null)).not.toThrow();
   });
 
   test('afterRendered applies styles for split and indent items', () => {
@@ -179,7 +189,7 @@ describe('PDFHandler', () => {
     const pageFragment = document.createElement('div');
     const page = { element: document.createElement('div') };
 
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     expect(
       pageFragment.style.getPropertyValue('--pagedjs-string-last-chapTitled')
@@ -197,7 +207,7 @@ describe('PDFHandler', () => {
 
     const page = { element: document.createElement('div') };
 
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     expect(el.getAttribute('customcounter')).toBeNull();
   });
@@ -213,7 +223,7 @@ describe('PDFHandler', () => {
 
     const page = { element: document.createElement('div') };
 
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     expect(el.getAttribute('customcounter')).toContain('.');
   });
@@ -233,7 +243,7 @@ describe('PDFHandler', () => {
 
     const page = { element: document.createElement('div') };
 
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     expect(el2.getAttribute('customcounter')).toBeDefined();
   });
@@ -321,7 +331,7 @@ describe('PDFHandler', () => {
     pageEl.appendChild(info2);
 
     const page = { element: pageEl };
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     const cssString = pageFragment.style.getPropertyValue('--pagedjs-string-last-chapTitled');
     const footerHeight = pageFragment.style.getPropertyValue('--pagedjs-footer-height');
@@ -338,12 +348,12 @@ describe('PDFHandler', () => {
     const pageFragment2 = document.createElement('div');
     const pageEl2 = document.createElement('div');
     const page2 = { element: pageEl2 };
-    handler.afterPageLayout(pageFragment2, page2);
+    handler.afterPageLayout(pageFragment2, page2, null);
     expect(pageFragment2.style.getPropertyValue('--pagedjs-string-last-chapTitled')).toBe('""');
   });
 
     test('afterPageLayout calls processTocAndFooter when extractedCui is null (non-AFTTP)', () => {
-    PreviewForm.extractedCui = null;
+    previewFormMock.extractedCui = null;
 
     const pageFragment = document.createElement('div');
     const pageEl = document.createElement('div');
@@ -354,13 +364,13 @@ describe('PDFHandler', () => {
 
     const page = { element: pageEl };
 
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     expect(pageFragment.style.getPropertyValue('--pagedjs-string-last-chapTitled')).toContain('Test description');
   });
 
   test('afterPageLayout removes and sets CSS properties when extractedCui exists (AFTTP)', () => {
-    PreviewForm['extractedCui'] = {
+    previewFormMock.extractedCui = {
       text: 'CUI//SP-CTI',
       color: 'rgb(255, 0, 0)'
     };
@@ -372,13 +382,13 @@ describe('PDFHandler', () => {
 
     const page = { element: pageEl };
 
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     expect(pageFragment.style.getPropertyValue('--pagedjs-string-last-chapTitled')).toBe('""');
   });
 
   test('afterPageLayout does not call processTocAndFooter when extractedCui has data', () => {
-    PreviewForm.extractedCui = {
+    previewFormMock.extractedCui = {
       text: 'CUI//SP-CTI',
       color: 'rgb(255, 0, 0)'
     };
@@ -392,7 +402,7 @@ describe('PDFHandler', () => {
 
     const page = { element: pageEl };
 
-    handler.afterPageLayout(pageFragment, page);
+    handler.afterPageLayout(pageFragment, page, null);
 
     const cssValue = pageFragment.style.getPropertyValue('--pagedjs-string-last-chapTitled');
     expect(cssValue).toBe('" 1. Should not appear "');
@@ -442,6 +452,7 @@ describe('buildRefToPageMap', () => {
 
   beforeEach(() => {
     handler = new PDFHandler(mockChunker, mockPolisher, mockCaller);
+    previewFormMock.extractedCui = null;
   });
 
   test('maps data-ref to first page number (1-based)', () => {
@@ -520,6 +531,7 @@ describe('applyTocPageNumbers', () => {
 
   beforeEach(() => {
     handler = new PDFHandler(mockChunker, mockPolisher, mockCaller);
+    previewFormMock.extractedCui = null;
   });
 
   test('sets data-page on TOC links when ref exists', () => {
@@ -666,6 +678,7 @@ describe('patchTocEntries', () => {
 
   beforeEach(() => {
     handler = new PDFHandler(mockChunker, mockPolisher, mockCaller);
+    previewFormMock.extractedCui = null;
   });
 
   test('builds ref map and applies page numbers to TOC links', () => {
@@ -705,7 +718,7 @@ describe('patchTocEntries', () => {
   });
 
   test('applyPageNumbers assigns AFTTP chapter and attachment numbering', () => {
-  PreviewForm['extractedCui'] = { text: 'CUI', color: 'red' };
+  previewFormMock.extractedCui = { text: 'CUI', color: 'red' };
 
   const pages = [
     createPage('<p stylename="chapterTitle"></p>'), // chapter 1 start
@@ -826,7 +839,7 @@ test('resolveNonAfttpPageNumber returns roman for pre-pages', () => {
 });
 
 test('handleAfttpFooter skips TOC footer when AFTTP', () => {
-  PreviewForm['extractedCui'] = { text: 'CUI', color: 'red' };
+  previewFormMock.extractedCui = { text: 'CUI', color: 'red' };
 
   const frag = document.createElement('div');
   const spy = jest.fn();
@@ -877,7 +890,7 @@ test('applyPageNumbers skips pages without margin content safely', () => {
 });
 
 test('applySingleTocLink sets attachment page number in AFTTP', () => {
-  PreviewForm['extractedCui'] = { text: 'CUI', color: 'red' };
+  previewFormMock.extractedCui = { text: 'CUI', color: 'red' };
 
   const page = createPage(`
     <div class="toc-element">
@@ -945,7 +958,7 @@ test('fixIndent safely handles pages with no indent elements', () => {
 });
 
 test('handleAfttpFooter executes processTocAndFooter when non-AFTTP', () => {
-  PreviewForm['extractedCui'] = null;
+  previewFormMock.extractedCui = null;
 
   const frag = document.createElement('div');
   const spy = jest.fn();

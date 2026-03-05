@@ -18,6 +18,7 @@ type PrivatePreviewFormMethods = {
   prepareEditorContent: () => void;
   updateTableWidths: () => void;
 };
+const previewFormStatic = PreviewForm as unknown as Record<string, unknown>;
 
 describe('PreviewForm', () => {
 
@@ -40,7 +41,7 @@ describe('PreviewForm', () => {
       onClose: () => { },
     };
     const prevForm = new PreviewForm(props);
-    PreviewForm['isToc'] = true;
+    previewFormStatic.isToc = true;
     expect(prevForm.calcLogic()).toBeUndefined();
   });
 
@@ -68,7 +69,7 @@ describe('PreviewForm', () => {
     };
     const prevForm = new PreviewForm(props);
 
-    PreviewForm['isTitle'] = true;
+    previewFormStatic.isTitle = true;
     expect(prevForm.calcLogic()).toBeUndefined();
   });
 
@@ -97,9 +98,9 @@ describe('PreviewForm', () => {
     const prevForm = new PreviewForm(props);
     jest.spyOn(prevForm, 'insertFooters').mockImplementation(() => { });
 
-    PreviewForm['isToc'] = false;
-    PreviewForm['isTitle'] = true;
-    PreviewForm['isCitation'] = true;
+    previewFormStatic.isToc = false;
+    previewFormStatic.isTitle = true;
+    previewFormStatic.isCitation = true;
 
     expect(prevForm.calcLogic()).toBeUndefined();
   });
@@ -193,12 +194,12 @@ describe('PreviewForm component', () => {
 
     previewForm.componentDidMount();
 
-    expect(PreviewForm['documentTitle']).toBe('Test Document');
-    expect(PreviewForm['pageBanner']).toEqual({
+    expect(previewFormStatic.documentTitle).toBe('Test Document');
+    expect(previewFormStatic.pageBanner).toEqual({
       color: 'rgb(255, 0, 0)',
       text: 'CUI//SP-CTI',
     });
-    expect(PreviewForm['isAfttp']).toBeUndefined();
+    expect(previewFormStatic.isAfttp).toBeUndefined();
   });
 
   it('should reset AFTTP properties when document is not AFTTP in componentDidMount', () => {
@@ -239,9 +240,9 @@ describe('PreviewForm component', () => {
     jest.spyOn(previewProto, 'updateTableWidths').mockImplementation(() => undefined);
     previewForm.componentDidMount();
 
-    expect(PreviewForm['documentTitle']).toBeNull();
-    expect(PreviewForm['pageBanner']).toBeNull();
-    expect(PreviewForm['isAfttp']).toBeUndefined();
+    expect(previewFormStatic.documentTitle).toBeNull();
+    expect(previewFormStatic.pageBanner).toBeNull();
+    expect(previewFormStatic.isAfttp).toBeUndefined();
   });
 
   it('should return null when tableWrapper is not found in extractBannerMarkingFromTableWrapper', () => {
@@ -1103,10 +1104,10 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const showAlertSpy = jest
         .spyOn(previewForm, 'showAlert')
         .mockImplementation(() => { });
-      PreviewForm['lastUpdated'] = true;
+      previewFormStatic.lastUpdated = true;
       previewForm?.calcLogic();
 
-      expect(PreviewForm['formattedDate']).toBeDefined();
+      expect(previewFormStatic.formattedDate).toBeDefined();
       expect(showAlertSpy).toHaveBeenCalled();
     });
 
@@ -1247,19 +1248,19 @@ describe('YourClassName', () => {
     };
     instance = new PreviewForm(props);
     // reset static flags before each test
-    PreviewForm['isTitle'] = false;
-    PreviewForm['lastUpdated'] = false;
+    previewFormStatic.isTitle = false;
+    previewFormStatic.lastUpdated = false;
   });
 
   test('documentTitleActive should set isTitle to true', () => {
     instance.documentTitleActive();
-    expect(PreviewForm['isTitle']).toBe(true);
+    expect(previewFormStatic.isTitle).toBe(true);
   });
 
   test('documentTitleDeactive should set isTitle to false', () => {
-    PreviewForm['isTitle'] = true;
+    previewFormStatic.isTitle = true;
     instance.documentTitleDeactive();
-    expect(PreviewForm['isTitle']).toBe(false);
+    expect(previewFormStatic.isTitle).toBe(false);
   });
 });
 
@@ -1707,7 +1708,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
     test('should insert title header with document name when isTitle is true', () => {
       const data = document.createElement('div');
       const editorView = createMockEditorView('', 'My Test Document');
-      PreviewForm['isTitle'] = true;
+      previewFormStatic.isTitle = true;
 
       (previewForm as any).insertTitleSection(data, editorView);
 
@@ -1789,9 +1790,9 @@ describe('PreviewForm.insertSectionHeaders', () => {
   describe('insertOptionalSections', () => {
     test('should insert TOC section when isToc is true', () => {
       const data = document.createElement('div');
-      PreviewForm['isToc'] = true;
-      PreviewForm['isTof'] = false;
-      PreviewForm['isTot'] = false;
+      previewFormStatic.isToc = true;
+      previewFormStatic.isTof = false;
+      previewFormStatic.isTot = false;
 
       (previewForm as any).insertOptionalSections(data);
 
@@ -1806,9 +1807,9 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
     test('should insert TOF section when isTof is true', () => {
       const data = document.createElement('div');
-      PreviewForm['isToc'] = false;
-      PreviewForm['isTof'] = true;
-      PreviewForm['isTot'] = false;
+      previewFormStatic.isToc = false;
+      previewFormStatic.isTof = true;
+      previewFormStatic.isTot = false;
 
       (previewForm as any).insertOptionalSections(data);
 
@@ -1821,9 +1822,9 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
     test('should insert TOT section when isTot is true', () => {
       const data = document.createElement('div');
-      PreviewForm['isToc'] = false;
-      PreviewForm['isTof'] = false;
-      PreviewForm['isTot'] = true;
+      previewFormStatic.isToc = false;
+      previewFormStatic.isTof = false;
+      previewFormStatic.isTot = true;
 
       (previewForm as any).insertOptionalSections(data);
 
@@ -1836,9 +1837,9 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
     test('should insert all sections when all flags are true', () => {
       const data = document.createElement('div');
-      PreviewForm['isToc'] = true;
-      PreviewForm['isTof'] = true;
-      PreviewForm['isTot'] = true;
+      previewFormStatic.isToc = true;
+      previewFormStatic.isTof = true;
+      previewFormStatic.isTot = true;
 
       (previewForm as any).insertOptionalSections(data);
 
@@ -1849,9 +1850,9 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
     test('should not insert any sections when all flags are false', () => {
       const data = document.createElement('div');
-      PreviewForm['isToc'] = false;
-      PreviewForm['isTof'] = false;
-      PreviewForm['isTot'] = false;
+      previewFormStatic.isToc = false;
+      previewFormStatic.isTof = false;
+      previewFormStatic.isTot = false;
 
       (previewForm as any).insertOptionalSections(data);
 
@@ -1862,9 +1863,9 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
     test('should maintain correct order of sections', () => {
       const data = document.createElement('div');
-      PreviewForm['isToc'] = true;
-      PreviewForm['isTof'] = true;
-      PreviewForm['isTot'] = true;
+      previewFormStatic.isToc = true;
+      previewFormStatic.isTof = true;
+      previewFormStatic.isTot = true;
 
       (previewForm as any).insertOptionalSections(data);
 
@@ -1882,7 +1883,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
     test('should not insert title when isTitle is false', () => {
       const data = document.createElement('div');
       const editorView = createMockEditorView();
-      PreviewForm['isTitle'] = false;
+      previewFormStatic.isTitle = false;
 
       (previewForm as any).insertSectionHeaders(data, editorView);
 
@@ -1906,10 +1907,10 @@ describe('PreviewForm.insertSectionHeaders', () => {
       data.appendChild(proseMirror);
 
       const editorView = createMockEditorView('Afttp-123');
-      PreviewForm['isTitle'] = false;
-      PreviewForm['isToc'] = false;
-      PreviewForm['isTof'] = false;
-      PreviewForm['isTot'] = false;
+      previewFormStatic.isTitle = false;
+      previewFormStatic.isToc = false;
+      previewFormStatic.isTof = false;
+      previewFormStatic.isTot = false;
 
       (previewForm as any).insertSectionHeaders(data, editorView);
 
@@ -1927,10 +1928,10 @@ describe('PreviewForm.insertSectionHeaders', () => {
       data.appendChild(originalChild);
       
       const editorView = createMockEditorView('Afttp-Document');
-      PreviewForm['isTitle'] = false;
-      PreviewForm['isToc'] = false;
-      PreviewForm['isTof'] = false;
-      PreviewForm['isTot'] = false;
+      previewFormStatic.isTitle = false;
+      previewFormStatic.isToc = false;
+      previewFormStatic.isTof = false;
+      previewFormStatic.isTot = false;
 
       (previewForm as any).insertSectionHeaders(data, editorView);
 
@@ -1946,10 +1947,10 @@ describe('PreviewForm.insertSectionHeaders', () => {
       data.appendChild(proseMirror);
 
       const editorView = createMockEditorView('Afttp-Test');
-      PreviewForm['isTitle'] = false;
-      PreviewForm['isToc'] = false;
-      PreviewForm['isTof'] = false;
-      PreviewForm['isTot'] = false;
+      previewFormStatic.isTitle = false;
+      previewFormStatic.isToc = false;
+      previewFormStatic.isTof = false;
+      previewFormStatic.isTot = false;
 
       (previewForm as any).insertSectionHeaders(data, editorView);
 
@@ -1963,10 +1964,10 @@ describe('PreviewForm.insertSectionHeaders', () => {
       data.innerHTML = '<p>No ProseMirror here</p>';
 
       const editorView = createMockEditorView();
-      PreviewForm['isTitle'] = true;
-      PreviewForm['isToc'] = false;
-      PreviewForm['isTof'] = false;
-      PreviewForm['isTot'] = false;
+      previewFormStatic.isTitle = true;
+      previewFormStatic.isToc = false;
+      previewFormStatic.isTof = false;
+      previewFormStatic.isTot = false;
 
       expect(() => {
         (previewForm as any).insertSectionHeaders(data, editorView);
@@ -1984,10 +1985,10 @@ describe('PreviewForm.insertSectionHeaders', () => {
       data.appendChild(proseMirror);
 
       const editorView = createMockEditorView('Afttp-NoChapter');
-      PreviewForm['isTitle'] = false;
-      PreviewForm['isToc'] = false;
-      PreviewForm['isTof'] = false;
-      PreviewForm['isTot'] = false;
+      previewFormStatic.isTitle = false;
+      previewFormStatic.isToc = false;
+      previewFormStatic.isTof = false;
+      previewFormStatic.isTot = false;
 
       expect(() => {
         (previewForm as any).insertSectionHeaders(data, editorView);
@@ -2001,7 +2002,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       data.appendChild(proseMirror);
 
       const editorView = createMockEditorView('Regular-Doc');
-      PreviewForm['isTitle'] = false;
+      previewFormStatic.isTitle = false;
 
       (previewForm as any).insertSectionHeaders(data, editorView);
 
@@ -2025,10 +2026,10 @@ describe('PreviewForm.insertSectionHeaders', () => {
       data.appendChild(proseMirror);
 
       const editorView = createMockEditorView('Afttp-Full', 'Full Document');
-      PreviewForm['isTitle'] = true;
-      PreviewForm['isToc'] = true;
-      PreviewForm['isTof'] = true;
-      PreviewForm['isTot'] = true;
+      previewFormStatic.isTitle = true;
+      previewFormStatic.isToc = true;
+      previewFormStatic.isTof = true;
+      previewFormStatic.isTot = true;
 
       (previewForm as any).insertSectionHeaders(data, editorView);
 

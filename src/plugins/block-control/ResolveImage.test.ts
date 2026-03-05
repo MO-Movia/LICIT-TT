@@ -4,7 +4,6 @@
  */
 
 import { resolveImage, isImgInstance } from './ResolveImage';
-import type { ImageResult } from './ResolveImage';
 
 // Mock dependencies
 jest.mock('url', () => ({

@@ -10,11 +10,12 @@ import {
   ImageSourceCommand,
   insertEnhancedImageFigure,
 } from './ImageSourceCommand';
+import type {ImageProps} from './Types';
 import {
   showCursorPlaceholder,
   hideCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
-import { createPopUp } from '../../commands';
+import { createPopUp, PopUpHandle } from '../../commands';
 
 // Mock dependencies
 jest.mock('./CursorPlaceholderPlugin', () => ({
@@ -31,7 +32,12 @@ describe('ImageSourceCommand', () => {
   let schema: Schema;
   let state: EditorState;
   let mockDispatch: jest.Mock;
-  let mockView: EditorView;
+  let mockView: EditorView & {
+    runtime: {
+      canUploadImage: jest.Mock<boolean, []>;
+      uploadImage: jest.Mock<Promise<unknown>, []>;
+    };
+  };
 
   beforeEach(() => {
     command = new ImageSourceCommand();
@@ -96,7 +102,7 @@ describe('ImageSourceCommand', () => {
         uploadImage: jest.fn(),
       },
       focus: jest.fn(),
-    } as unknown as EditorView;
+    } as unknown as typeof mockView;
   });
 
   afterEach(() => {
@@ -122,7 +128,7 @@ describe('ImageSourceCommand', () => {
         selection: {
           from: 0,
           to: 5,
-        } as any,
+        } as unknown as EditorState['selection'],
       };
       const result = command.isEnabled(customState as EditorState, mockView);
       expect(result).toBe(true);
@@ -149,7 +155,10 @@ describe('ImageSourceCommand', () => {
 
   describe('waitForUserInput', () => {
     it('should return resolved promise if popup already exists', async () => {
-      command._popUp = {} as any;
+      command._popUp = {
+        close: jest.fn(),
+        update: jest.fn(),
+      } as PopUpHandle;
       const result = await command.waitForUserInput(
         state,
         mockDispatch,
@@ -162,7 +171,7 @@ describe('ImageSourceCommand', () => {
     it('should call showCursorPlaceholder when dispatch is provided', async () => {
       (createPopUp as jest.Mock).mockReturnValue({});
 
-      const promise = command.waitForUserInput(state, mockDispatch, mockView);
+      command.waitForUserInput(state, mockDispatch, mockView);
 
       expect(showCursorPlaceholder).toHaveBeenCalledWith(state);
       expect(mockDispatch).toHaveBeenCalled();
@@ -180,7 +189,10 @@ describe('ImageSourceCommand', () => {
     });
 
     it('should create popup with correct props and options', async () => {
-      const mockPopUp = {};
+      const mockPopUp: PopUpHandle = {
+        close: jest.fn(),
+        update: jest.fn(),
+      };
       (createPopUp as jest.Mock).mockReturnValue(mockPopUp);
 
       command.waitForUserInput(state, mockDispatch, mockView);
@@ -196,11 +208,14 @@ describe('ImageSourceCommand', () => {
     });
 
     it('should handle popup onClose callback and resolve promise', async () => {
-      let onCloseCallback: (val: any) => void;
+      let onCloseCallback: ((val: unknown) => void) | undefined;
       (createPopUp as jest.Mock).mockImplementation(
         (editor, props, options) => {
           onCloseCallback = options.onClose;
-          return {};
+          return {
+            close: jest.fn(),
+            update: jest.fn(),
+          } as PopUpHandle;
         }
       );
 
@@ -208,7 +223,7 @@ describe('ImageSourceCommand', () => {
 
       // Simulate popup close
       const closeValue = {src: 'test.jpg'};
-      onCloseCallback(closeValue);
+      onCloseCallback?.(closeValue);
 
       const result = await promise;
       expect(result).toEqual(closeValue);
@@ -216,7 +231,10 @@ describe('ImageSourceCommand', () => {
     });
 
     it('should handle null view', async () => {
-      (createPopUp as jest.Mock).mockReturnValue({});
+      (createPopUp as jest.Mock).mockReturnValue({
+        close: jest.fn(),
+        update: jest.fn(),
+      } as PopUpHandle);
 
       command.waitForUserInput(state, mockDispatch, null);
 
@@ -230,7 +248,12 @@ describe('ImageSourceCommand', () => {
 
   describe('executeWithUserInput', () => {
     it('should execute transaction with valid inputs', () => {
-      const inputs = {src: 'https://example.com/image.jpg'};
+      const inputs: ImageProps = {
+        src: 'https://example.com/image.jpg',
+        id: 'img-1',
+        width: 100,
+        height: 100,
+      };
 
       const result = command.executeWithUserInput(
         state,
@@ -246,7 +269,12 @@ describe('ImageSourceCommand', () => {
     });
 
     it('should handle null dispatch', () => {
-      const inputs = {src: 'https://example.com/image.jpg'};
+      const inputs: ImageProps = {
+        src: 'https://example.com/image.jpg',
+        id: 'img-2',
+        width: 100,
+        height: 100,
+      };
 
       const result = command.executeWithUserInput(
         state,
@@ -272,7 +300,12 @@ describe('ImageSourceCommand', () => {
     });
 
     it('should handle null view', () => {
-      const inputs = {src: 'https://example.com/image.jpg'};
+      const inputs: ImageProps = {
+        src: 'https://example.com/image.jpg',
+        id: 'img-3',
+        width: 100,
+        height: 100,
+      };
 
       const result = command.executeWithUserInput(
         state,
@@ -286,7 +319,12 @@ describe('ImageSourceCommand', () => {
     });
 
     it('should not call view.focus when view is null', () => {
-      const inputs = {src: 'https://example.com/image.jpg'};
+      const inputs: ImageProps = {
+        src: 'https://example.com/image.jpg',
+        id: 'img-4',
+        width: 100,
+        height: 100,
+      };
 
       command.executeWithUserInput(state, mockDispatch, null, inputs);
 

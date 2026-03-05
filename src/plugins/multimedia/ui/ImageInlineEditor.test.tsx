@@ -9,7 +9,6 @@ import {schema} from 'prosemirror-test-builder';
 import {MultimediaPlugin} from '../index';
 import {createEditor, doc, p} from 'jest-prosemirror';
 import {EditorView} from 'prosemirror-view';
-import '@testing-library/jest-dom';
 
 describe('ImageInlineEditor', () => {
   const plugin = new MultimediaPlugin();

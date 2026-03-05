@@ -58,8 +58,11 @@ describe('CustomRadioButton (pure Jest)', () => {
 
   it('disables the radio button when disabled prop is passed', () => {
     ReactDOM.render(<CustomRadioButton disabled />, container);
-    const input = container.querySelector('input[type="radio"]') ;
-    expect(input['disabled']).toBe(true);
+    const input = container.querySelector(
+      'input[type="radio"]'
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+    expect(input.disabled).toBe(true);
   });
 
   it('applies the title prop to PointerSurface', () => {
@@ -78,8 +81,11 @@ describe('CustomRadioButton (pure Jest)', () => {
   it('calls onSelect handler when clicked', () => {
     const handleSelect = jest.fn();
     ReactDOM.render(<CustomRadioButton onSelect={handleSelect} />, container);
-    const surface = container.querySelector('[data-testid="pointer-surface"]') ;
-    surface['click']();
+    const surface = container.querySelector(
+      '[data-testid="pointer-surface"]'
+    ) as HTMLElement | null;
+    expect(surface).not.toBeNull();
+    surface.click();
     expect(handleSelect).toHaveBeenCalled();
   });
 });

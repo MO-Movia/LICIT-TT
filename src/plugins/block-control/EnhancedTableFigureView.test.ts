@@ -6,8 +6,6 @@
 import { EnhancedTableFigureView } from './EnhancedTableFigureView';
 import { Node as ProseMirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-import { NodeSelection, TextSelection } from 'prosemirror-state';
-import { ImageInlineEditor } from './ui/ImageInlineEditor';
 
 // Mock dependencies
 jest.mock('prosemirror-model');
@@ -88,7 +86,11 @@ describe('EnhancedTableFigureView', () => {
           orientation: 'landscape',
         },
       };
-      const landscapeView = new EnhancedTableFigureView(landscapeNode, mockView, mockGetPos);
+      const landscapeView = new EnhancedTableFigureView(
+        landscapeNode as unknown as ProseMirrorNode,
+        mockView,
+        mockGetPos
+      );
 
       expect(landscapeView.dom.style.width).toBe('624px');
       expect(landscapeView.dom.style.maxWidth).toBe('624px');
@@ -104,7 +106,7 @@ describe('EnhancedTableFigureView', () => {
           name: 'different_type',
         },
       };
-      const result = view.update(differentNode as ProseMirrorNode);
+      const result = view.update(differentNode as unknown as ProseMirrorNode);
       expect(result).toBe(false);
     });
 
@@ -166,7 +168,11 @@ describe('EnhancedTableFigureView', () => {
           figureType: 'other',
         },
       };
-      const otherView = new EnhancedTableFigureView(otherNode as ProseMirrorNode, mockView, mockGetPos);
+      const otherView = new EnhancedTableFigureView(
+        otherNode as unknown as ProseMirrorNode,
+        mockView,
+        mockGetPos
+      );
       otherView.updateNotesTrigger();
       expect(otherView.addNotesButton.style.display).toBe('none');
     });
@@ -190,7 +196,9 @@ describe('EnhancedTableFigureView', () => {
   describe('destroy', () => {
     it('should close inline editor on destroy', () => {
       // Mock that we have an inline editor
-      view._inlineEditor = { close: jest.fn() } as unknown as any;
+      view._inlineEditor = {close: jest.fn()} as unknown as NonNullable<
+        EnhancedTableFigureView['_inlineEditor']
+      >;
 
       view.destroy();
       expect(view._inlineEditor?.close).toHaveBeenCalled();
@@ -207,7 +215,7 @@ describe('EnhancedTableFigureView', () => {
     it('should not render if element not active', () => {
       jest.spyOn(document, 'getElementById').mockReturnValue({
         getAttribute: () => 'false',
-      } as any);
+      } as unknown as HTMLElement);
 
       view['_renderInlineEditor']();
       expect(view._inlineEditor).toBeUndefined();
@@ -217,7 +225,7 @@ describe('EnhancedTableFigureView', () => {
       jest.spyOn(document, 'getElementById').mockReturnValue({
         getAttribute: () => 'true',
         closest: () => document.createElement('div'),
-      } as any);
+      } as unknown as HTMLElement);
 
       view.selectNode(); // This will call _renderInlineEditor
       expect(view._inlineEditor).toBeUndefined();

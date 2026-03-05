@@ -3,7 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { Fragment } from 'prosemirror-model';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import {
@@ -14,7 +13,6 @@ import {
   showCursorPlaceholder,
   hideCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
-import { UICommand } from '../../core';
 import { createPopUp } from '../../commands';
 
 jest.mock('prosemirror-model');

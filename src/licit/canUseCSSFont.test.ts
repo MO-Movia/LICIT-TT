@@ -7,6 +7,12 @@ import canUseCSSFont from './canUseCSSFont';
 
 describe('canUseCSSFont', () => {
   let originalFonts: FontFaceSet;
+  const setDocumentFonts = (value: FontFaceSet | undefined): void => {
+    Object.defineProperty(document, 'fonts', {
+      value,
+      configurable: true,
+    });
+  };
 
   beforeAll(() => {
 
@@ -21,11 +27,12 @@ describe('canUseCSSFont', () => {
 
   afterEach(() => {
     // Restore the original `document.fonts`
-    Object.defineProperty(document, 'fonts', { value: originalFonts });
+    setDocumentFonts(originalFonts);
+    jest.useRealTimers();
   });
 
-  it('should return false if FontFaceSet API is not supported', async () => {
-  Object.defineProperty(document, 'fonts', { value: undefined });
+it('should return false if FontFaceSet API is not supported', async () => {
+  setDocumentFonts(undefined);
   const result = await canUseCSSFont('NonExistentFont');
   expect(result).toBe(false);
 });
@@ -33,27 +40,27 @@ describe('canUseCSSFont', () => {
 it('should return true if the font is available', async () => {
   const mockFont = { family: 'Arial' } as unknown as FontFace;
   const mockFonts: Partial<FontFaceSet> = {
-    check: jest.fn(() => true),
+    check: jest.fn(),
+    status: 'loaded',
+    ready: Promise.resolve({} as FontFaceSet),
     values: jest.fn(() => new Set([mockFont]).values()),
   };
 
-  Object.defineProperty(document, 'fonts', {
-    value: mockFonts as FontFaceSet,
-  });
+  setDocumentFonts(mockFonts as FontFaceSet);
 
   const result = await canUseCSSFont('Arial');
-  expect(result).toBe(false);
+  expect(result).toBe(true);
 });
 
 it('should return false if the font is not available', async () => {
   const mockFonts: Partial<FontFaceSet> = {
-    check: jest.fn(() => false),
+    check: jest.fn(),
+    status: 'loaded',
+    ready: Promise.resolve({} as FontFaceSet),
     values: jest.fn(() => new Set<FontFace>().values()),
   };
 
-  Object.defineProperty(document, 'fonts', {
-    value: mockFonts as FontFaceSet,
-  });
+  setDocumentFonts(mockFonts as FontFaceSet);
 
   const result = await canUseCSSFont('NonExistentFont');
   expect(result).toBe(false);
@@ -62,18 +69,16 @@ it('should return false if the font is not available', async () => {
   it("should wait for fonts to load if status is initially 'loading'", async () => {
     let status = 'loading';
 
-    Object.defineProperty(document, 'fonts', {
-      value: {
-        check: jest.fn().mockReturnValue(true),
-        ready: Promise.resolve().then(() => {
-          status = 'loaded'; // Simulate async status update
-        }),
-        get status() {
-          return status;
-        },
-        values: jest.fn().mockReturnValue([{ family: 'Arial' }]),
+    setDocumentFonts({
+      check: jest.fn().mockReturnValue(true),
+      ready: Promise.resolve().then(() => {
+        status = 'loaded'; // Simulate async status update
+      }),
+      get status() {
+        return status;
       },
-    });
+      values: jest.fn().mockReturnValue([{ family: 'Arial' }]),
+    } as unknown as FontFaceSet);
 
     const result = await canUseCSSFont('Arial');
     expect(result).toBe(true);
@@ -98,7 +103,7 @@ it("should use setTimeout and wait for status to change from 'loading' to 'loade
     values: jest.fn().mockReturnValue([{ family: FONT_NAME }]),
   };
 
-  Object.defineProperty(document, 'fonts', { value: mockFonts, configurable: true });
+  setDocumentFonts(mockFonts as unknown as FontFaceSet);
 
   const promise = canUseCSSFont(FONT_NAME);
   readyResolve();
@@ -132,10 +137,7 @@ it('should return cached result on subsequent calls for the same font', async ()
     values: jest.fn(() => [mockFont].values()),
   };
 
-  Object.defineProperty(document, 'fonts', {
-    value: mockFonts as FontFaceSet,
-    configurable: true,
-  });
+  setDocumentFonts(mockFonts as FontFaceSet);
 
   // First call - should check fonts and cache the result
   const result1 = await canUseCSSFont(FONT_NAME);

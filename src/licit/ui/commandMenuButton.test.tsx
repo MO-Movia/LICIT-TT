@@ -124,17 +124,20 @@ describe('CommandMenuButton', () => {
 
 test('should pass correct theme to CustomButton', () => {
   const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
-  const rendered = instance.render();
+  const rendered = instance.render() as unknown as React.ReactElement<{
+    theme: string;
+    className: string;
+    label: string | React.ReactElement;
+  }>;
 
   // The rendered element is a React element of type 'button' (CustomButton mock)
   expect(rendered.type).toBe(CustomButton);
 
   // Props passed to CustomButton should include theme derived from UICommand.theme
-  expect(rendered.props['theme']).toBe('light');
-  expect(rendered.props['className']).toContain('czi-custom-menu-button');
-  expect(rendered.props['label']).toBe('Bold');
+  expect(rendered.props.theme).toBe('light');
+  expect(rendered.props.className).toContain('czi-custom-menu-button');
+  expect(rendered.props.label).toBe('Bold');
 });
 
 
 });
-

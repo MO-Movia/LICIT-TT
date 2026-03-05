@@ -8,6 +8,12 @@ import { blankDocument, blankNode, textNode } from './licit-gen-json';
 import { repairDoc } from './licit-repair';
 
 describe('Doc Repair', () => {
+  beforeAll(() => {
+    Object.defineProperty(global, 'structuredClone', {
+      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      writable: true,
+    });
+  });
   it('should clone the input document and modify it', () => {
     const inputDoc: LicitDocument = {
       ...blankDocument(),
@@ -77,10 +83,11 @@ describe('Doc Repair', () => {
                 colwidth: null,
               },
               content: [{ ...blankNode('paragraph'), content: [textNode()] }],
+              type: 'tableCell',
             },
             {
-              ...blankNode('noContent'),
-              content: undefined,
+              type: 'noContent',
+              attrs: {},
             },
           ],
         },

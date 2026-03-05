@@ -8,7 +8,8 @@ import FontTypeCommandMenuButton from './fontTypeCommandMenuButton';
 import { UICommand } from '../../core';
 
 //  Use `var` to prevent hoisting issues
-let _mockFindActiveFontType: jest.Mock;
+// eslint-disable-next-line no-var
+var _mockFindActiveFontType: jest.Mock;
 jest.mock('../findActiveFontType', () => {
   const fn = jest.fn();
   _mockFindActiveFontType = fn;
@@ -16,7 +17,8 @@ jest.mock('../findActiveFontType', () => {
 });
 
 //  Safe mock pattern for CommandMenuButton
-let _MockCommandMenuButton: jest.Mock;
+// eslint-disable-next-line no-var
+var _MockCommandMenuButton: jest.Mock;
 jest.mock('./commandMenuButton', () => {
   const fn = jest.fn((_props: jest.Mock) => null);
   _MockCommandMenuButton = fn;

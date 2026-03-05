@@ -92,11 +92,16 @@ describe('TableDetails', () => {
 
     ReactDOM.render(<TableDetails {...props} />, container);
 
-    const closeButton = container.querySelector('.czi-table-details-close') ;
+    const closeButton = container.querySelector<HTMLButtonElement>(
+      '.czi-table-details-close'
+    );
     expect(closeButton).toBeTruthy();
-    expect(closeButton['title']).toBe('Close');
+    if (!closeButton) {
+      throw new Error('Close button not found');
+    }
+    expect(closeButton.title).toBe('Close');
 
-    closeButton['click']();
+    closeButton.click();
     expect(closeMock).toHaveBeenCalledTimes(1);
   });
   
