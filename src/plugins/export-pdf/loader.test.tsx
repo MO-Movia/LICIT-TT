@@ -3,7 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import * as React from 'react';
 import { Loader } from './loader';
 import { PDFHandler } from './handlers';
 

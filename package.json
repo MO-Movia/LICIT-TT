@@ -106,9 +106,9 @@
     "build:assets": "npx copyfiles -u 2 src/assets/**/* dist/assets",
     "build:ts": "tsc -p tsconfig.prod.json && npx tsc-alias -p tsconfig.json",
     "ci:build": "npm run build:clean && npm run build:ts && npm run build:css && npm run build:fonts && npm run build:assets && npx copyfiles package.json README.md LICENSE dist",
-    "lint": "eslint src --max-warnings=759",
-    "test": "jest --coverage",
-    "test:coverage": "jest --coverage",
+    "lint": "eslint src --max-warnings=660",
+    "test": "jest --coverage --onlyChanged",
+    "test:coverage": "jest --coverage --silent",
     "verify": "npm run lint -- --fix && npm run ci:build && npm run test:coverage && echo 'All Tests Passed!'"
   },
   "peerDependencies": {

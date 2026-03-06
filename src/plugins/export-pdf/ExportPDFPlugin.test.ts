@@ -5,7 +5,6 @@
 
 import {ExportPDFPlugin} from './ExportPDFPlugin';
 import {createEditor, doc, p} from 'jest-prosemirror';
-import moment from 'moment';
 import {Schema} from 'prosemirror-model';
 jest.mock(
   'html2canvas',
@@ -27,7 +26,6 @@ describe('Export PDF Plugin', () => {
       plugins: [plugin],
     });
     editor.shortcut('Ctrl-Alt-P');
-    moment().format('YYYY-MM-DD_HH:mm:ss');
   });
 
   it('should call initKeyCommands', () => {

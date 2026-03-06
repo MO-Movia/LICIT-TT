@@ -5,7 +5,7 @@
 
 import { CursorPlaceholderPlugin, showCursorPlaceholder, hideCursorPlaceholder, findCursorPlaceholderPos, specFinder, resetInstance, isPlugin, getSingletonInstance } from './CursorPlaceholderPlugin';
 import { EditorState, Transaction } from 'prosemirror-state';
-import { Decoration, DecorationSet } from 'prosemirror-view';
+import { Decoration } from 'prosemirror-view';
 jest.mock('prosemirror-state');
 jest.mock('prosemirror-view');
 jest.mock('prosemirror-transform');
@@ -17,7 +17,6 @@ jest.spyOn(Decoration, 'widget').mockImplementation((pos, element, spec) => {
 describe('CursorPlaceholderPlugin', () => {
   let mockEditorState: EditorState;
   let mockTr: Transaction;
-  let mockDecorationSet: DecorationSet;
 
   beforeEach(() => {
     // Reset singleton before each test
@@ -38,14 +37,6 @@ describe('CursorPlaceholderPlugin', () => {
     } as unknown as EditorState;
 
     mockTr = mockEditorState.tr as unknown as Transaction;
-
-    // Mock DecorationSet
-    mockDecorationSet = {
-      find: jest.fn(),
-      add: jest.fn().mockReturnThis(),
-      remove: jest.fn().mockReturnThis(),
-      map: jest.fn().mockReturnThis(),
-    } as unknown as DecorationSet;
 
     // Mock Decoration
     jest.spyOn(Decoration, 'widget').mockImplementation(() => ({} as any));
@@ -122,6 +113,7 @@ describe('CursorPlaceholderPlugin', () => {
       });
       const result = showCursorPlaceholder(mockEditorState);
       expect(mockTr.deleteSelection).toHaveBeenCalled();
+      expect(result).toBeDefined();
     });
 
     it('should add placeholder meta when no existing placeholder', () => {
@@ -133,6 +125,7 @@ describe('CursorPlaceholderPlugin', () => {
       expect(mockTr.setMeta).toHaveBeenCalledWith(plugin, {
         add: { pos: mockTr.selection.from },
       });
+      expect(result).toBeDefined();
     });
 
     it('should return unchanged transaction when placeholder already exists', () => {
@@ -142,6 +135,7 @@ describe('CursorPlaceholderPlugin', () => {
       });
       const result = showCursorPlaceholder(mockEditorState);
       expect(mockTr.setMeta).not.toHaveBeenCalled();
+      expect(result).toBeDefined();
     });
   });
 
@@ -158,6 +152,7 @@ describe('CursorPlaceholderPlugin', () => {
       });
       const result = hideCursorPlaceholder(mockEditorState);
       expect(mockTr.setMeta).toHaveBeenCalledWith(plugin, { remove: {} });
+      expect(result).toBeDefined();
     });
 
     it('should return unchanged transaction when no placeholder exists', () => {
@@ -167,6 +162,7 @@ describe('CursorPlaceholderPlugin', () => {
       });
       const result = hideCursorPlaceholder(mockEditorState);
       expect(mockTr.setMeta).not.toHaveBeenCalled();
+      expect(result).toBeDefined();
     });
   });
 

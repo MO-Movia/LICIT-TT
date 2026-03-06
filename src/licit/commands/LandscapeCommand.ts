@@ -22,14 +22,14 @@ export class LandscapeCommand extends UICommand{
     icon = LANDSCAPE_ICON;
     title = 'Toggle Landscape';
 
-    isEnabled = (state: EditorState): boolean => {
+    isEnabled = (_state: EditorState): boolean => {
         return true;
     };
 
     execute = (
         state: EditorState,
         dispatch?: (tr: Transaction) => void,
-        view?: EditorView
+        _view?: EditorView
     ): boolean => {
         return this.toggleLandscape(state, dispatch);
     };

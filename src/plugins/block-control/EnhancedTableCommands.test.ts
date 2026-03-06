@@ -3,12 +3,12 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Schema, DOMParser, Node as ProseMirrorNode} from 'prosemirror-model';
+import {Schema} from 'prosemirror-model';
 import {EditorState, TextSelection, Transaction} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EnhancedTableCommands, addNotesCommand} from './EnhancedTableCommands';
 import {schema as basicSchema} from 'prosemirror-schema-basic';
-import {doc, p} from 'jest-prosemirror';
+import {p} from 'jest-prosemirror';
 
 // Extend the basic schema with necessary nodes
 const nodes = basicSchema.spec.nodes.append({

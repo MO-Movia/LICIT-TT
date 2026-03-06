@@ -141,9 +141,7 @@ describe('EnhancedTableFigureView', () => {
 
   describe('updateNotesTrigger', () => {
     it('should show add notes button when no notes exist and figureType is table', () => {
-      (mockNode.forEach as jest.Mock).mockImplementation((callback) => {
-        // Simulate no notes
-      });
+      (mockNode.forEach as jest.Mock).mockImplementation(() => undefined); // Simulate no notes
       view.updateNotesTrigger();
       expect(view.addNotesButton.style.display).toBe('block');
     });

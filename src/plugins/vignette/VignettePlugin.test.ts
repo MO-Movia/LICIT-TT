@@ -145,10 +145,10 @@ describe('VignettePlugin', () => {
     const dom = document.createElement('div');
     const node = p('bold');
     const nodeSpec1: NodeSpec = {
-      toDOM: (node: Node) => ['test', { vignette: 'false', marginLeft: '10px' }],
+      toDOM: (_node: Node) => ['test', { vignette: 'false', marginLeft: '10px' }],
       parseDOM: [
         {
-          getAttrs: (dom: string | HTMLElement) => {
+          getAttrs: (_dom: string | HTMLElement) => {
             return { marginLeft: '10px', vignette: 'true' };
           },
           tag: 'tag'
@@ -171,10 +171,10 @@ describe('VignettePlugin', () => {
   it('dom should have matching node attributes VignetteTableCellNodeSpec', () => {
     const node = p('vignette', 'marginLeft');
     const nodeSpec1: NodeSpec = {
-      toDOM: (node: Node) => ['test', { vignette: 'false', marginLeft: '10px' }],
+      toDOM: (_node: Node) => ['test', { vignette: 'false', marginLeft: '10px' }],
       parseDOM: [
         {
-          getAttrs: (node: string | HTMLElement) => {
+          getAttrs: (_node: string | HTMLElement) => {
             return { marginLeft: '10px', vignette: 'true' };
           },
           tag: 'tag'
@@ -202,13 +202,13 @@ describe('VignettePlugin', () => {
     );
 
     const nodeSpec1: NodeSpec = {
-      toDOM: (node: Node) => [
+      toDOM: (_node: Node) => [
         'test',
         { vignette: true, marginLeft: '10px', style: true },
       ],
       parseDOM: [
         {
-          getAttrs: (node: string | HTMLElement) => {
+          getAttrs: (_node: string | HTMLElement) => {
             return { marginLeft: '10px', vignette: true };
           },
           tag: 'tag'

@@ -210,7 +210,7 @@ describe('ImageSourceCommand', () => {
     it('should handle popup onClose callback and resolve promise', async () => {
       let onCloseCallback: ((val: unknown) => void) | undefined;
       (createPopUp as jest.Mock).mockImplementation(
-        (editor, props, options) => {
+        (_editor, _props, options) => {
           onCloseCallback = options.onClose;
           return {
             close: jest.fn(),

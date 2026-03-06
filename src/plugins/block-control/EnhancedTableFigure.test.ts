@@ -277,8 +277,6 @@ describe('EnhancedTableFigure', () => {
       const commands1 = plugin.initButtonCommands('light');
       const commands2 = plugin.initButtonCommands('light');
 
-      const key = `[${LightThemeIcon}] Insert Enhanced Table-Figure`;
-
       // Verify new instances are created
       expect(EnhancedTableCommands).toHaveBeenCalledTimes(2);
       expect(ImageUploadCommand).toHaveBeenCalledTimes(2);

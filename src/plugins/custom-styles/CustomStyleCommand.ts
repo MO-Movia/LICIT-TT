@@ -228,11 +228,11 @@ export class CustomStyleCommand extends UICommand {
   cancel(): void {
     //ignore
   }
-  executeCustom(state: EditorState, tr: Transform): Transform {
+  executeCustom(_state: EditorState, tr: Transform): Transform {
     return tr;
   }
 
-  executeCustomStyleForTable(state: EditorState, tr: Transform): Transform {
+  executeCustomStyleForTable(_state: EditorState, tr: Transform): Transform {
     return tr;
   }
 
@@ -299,7 +299,7 @@ export class CustomStyleCommand extends UICommand {
     node?,
     startPos?: number,
     endPos?: number,
-    newattrs?,
+    _newattrs?,
     selection?: Selection
   ) {
     let done = false;
@@ -672,7 +672,7 @@ export function compareMarkWithStyle(
   mark,
   style,
   tr,
-  startPos,
+  _startPos,
   _endPos,
   retObj
 ) {
@@ -867,7 +867,7 @@ function applyStyleEx(
   node: Node,
   startPos: number,
   endPos: number,
-  way: number,
+  _way: number,
   opt?: number
 ) {
   const loading = !styleProp;

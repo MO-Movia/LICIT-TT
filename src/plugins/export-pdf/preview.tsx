@@ -886,7 +886,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
   public addLinkEventListeners = (): void => {
     const links = document.querySelectorAll('.exportpdf-preview-container a');
-    for (const [_, link] of links.entries()) {
+    for (const [, link] of links.entries()) {
       link.addEventListener('click', this.handleLinkClick);
     }
   };
@@ -1258,7 +1258,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     private updateImageWidths(data: HTMLElement): void {
       for (const element of Array.from(data.children)) {
         const images = element.querySelectorAll<HTMLImageElement>('img');
-        for (const [_, img] of images.entries()) {
+        for (const [, img] of images.entries()) {
           this.replaceImageWidth(img);
         }
       }
@@ -1269,7 +1269,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
         '[reset="true"], [prefix], [tof="true"], [tot="true"]'
       );
 
-      for (const [_, el] of elements.entries()) {
+      for (const [, el] of elements.entries()) {
         const reset = el.getAttribute('reset');
         const prefix = el.getAttribute('prefix');
         const tof = el.getAttribute('tof');

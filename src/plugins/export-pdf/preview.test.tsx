@@ -681,7 +681,7 @@ describe('PreviewForm component', () => {
     imageElement.setAttribute('width', '700');
 
     Previewform.replaceImageWidth(imageElement);
-    expect(imageElement.getAttribute('data-original-width')).toBe(null);
+    expect(imageElement.dataset.originalWidth).toBeUndefined();
   });
 
   it('should rotate image and adjust styles in replaceImageWidth when width > 620 and figure/title exist', () => {
@@ -935,7 +935,7 @@ describe('PreviewForm component', () => {
 
     document.body.appendChild(tableTitle);
     document.body.appendChild(figure);
-    tableTitle.insertAdjacentElement('afterend', figure);
+    tableTitle.after(figure);
 
     previewForm.rotateWideTable(table, 700);
 
@@ -986,8 +986,6 @@ describe('PreviewForm component', () => {
 });
 
 describe('addLinkEventListeners && handleLinkClick', () => {
-  let previewForm;
-
   beforeEach(() => {
     document.body.innerHTML = `
         <div class="toc-element">
@@ -997,21 +995,20 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       `;
   });
 
-  const props = {
-    editorState: {} as unknown as EditorState,
-    editorView: {} as unknown as EditorView,
-    onClose() {
-      return;
-    },
-  };
-
-  previewForm = new PreviewForm(props);
-
   afterEach(() => {
     document.body.innerHTML = '';
   });
 
   it('should call the function addLinkEventListeners()', () => {
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
     const test_ = previewForm.addLinkEventListeners();
     const link = document.querySelector('.toc-element a');
     const targetElement = document.getElementById('section1');
@@ -1025,6 +1022,15 @@ describe('addLinkEventListeners && handleLinkClick', () => {
   });
 
   it('should call the function handleLinkClick()', () => {
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
     const link = document.createElement('a');
     link.setAttribute('href', '#section1');
 
@@ -1066,13 +1072,13 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const previewForm = new PreviewForm(props);
       const testElement = document.createElement('div');
       testElement.innerHTML = '<span>Test Content</span>';
-      testElement.setAttribute('data-test', 'value');
+      testElement.dataset.test = 'value';
 
       const clonedElement = previewForm.cloneModifyNode(testElement);
 
       expect(clonedElement).not.toBe(testElement);
       expect(clonedElement.innerHTML).toBe(testElement.innerHTML);
-      expect(clonedElement.getAttribute('data-test')).toBe('value');
+      expect(clonedElement.dataset.test).toBe('value');
     });
 
     it('should handle calcLogic correctly when lastUpdated is true', () => {
@@ -1092,7 +1098,7 @@ describe('addLinkEventListeners && handleLinkClick', () => {
             },
           },
         },
-        dispatch: () => { }
+        dispatch: () => {},
       } as unknown as EditorView;
 
       const props = {
@@ -1103,7 +1109,7 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const previewForm = new PreviewForm(props);
       const showAlertSpy = jest
         .spyOn(previewForm, 'showAlert')
-        .mockImplementation(() => { });
+        .mockImplementation(() => {});
       previewFormStatic.lastUpdated = true;
       previewForm?.calcLogic();
 
@@ -1128,7 +1134,7 @@ describe('addLinkEventListeners && handleLinkClick', () => {
             },
           },
         },
-        dispatch: () => { }
+        dispatch: () => {},
       } as unknown as EditorView;
 
       const props = {
@@ -1139,32 +1145,46 @@ describe('addLinkEventListeners && handleLinkClick', () => {
       const previewForm = new PreviewForm(props);
       const showAlertSpy = jest
         .spyOn(previewForm, 'showAlert')
-        .mockImplementation(() => { });
+        .mockImplementation(() => {});
 
       previewForm?.calcLogic();
       expect(showAlertSpy).toHaveBeenCalled();
     });
   });
   it('should handle getToc', () => {
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
     const schema = new Schema({
       nodes: {
         doc: {
-          content: 'block+'
+          content: 'block+',
         },
         paragraph: {
           attrs: { styleName: { default: null } },
           content: 'text*',
           group: 'block',
-          parseDOM: [{ tag: 'p', getAttrs: dom => ({ styleName: dom.getAttribute('stylename') }) }],
+          parseDOM: [
+            {
+              tag: 'p',
+              getAttrs: (dom) => ({ styleName: dom.getAttribute('stylename') }),
+            },
+          ],
           toDOM(node) {
             return ['p', { stylename: node.attrs.styleName }, 0];
-          }
+          },
         },
         text: {
-          group: 'inline'
-        }
+          group: 'inline',
+        },
       },
-      marks: {}
+      marks: {},
     });
     const doc = {
       type: 'doc',
@@ -1172,64 +1192,157 @@ describe('addLinkEventListeners && handleLinkClick', () => {
         {
           type: 'paragraph',
           attrs: { styleName: 'TOT Table' },
-          content: [{ type: 'text', text: 'Table 1: Revenue by Quarter' }]
-        }
-      ]
+          content: [{ type: 'text', text: 'Table 1: Revenue by Quarter' }],
+        },
+      ],
     };
     const newDoc = schema.nodeFromJSON(doc);
 
     const view = {
       runtime: {
         getStylesAsync: () => {
-          return [{ 'toc': true, styleName: 'TOC Heading 1', name: 'TOC Heading 1' },
-          { 'tof': true, styleName: 'TOF Figure', name: 'TOF Figure' }, { 'tot': true, styleName: 'TOT Table', name: 'TOT Table' }]
-        }
+          return [
+            { toc: true, styleName: 'TOC Heading 1', name: 'TOC Heading 1' },
+            { tof: true, styleName: 'TOF Figure', name: 'TOF Figure' },
+            { tot: true, styleName: 'TOT Table', name: 'TOT Table' },
+          ];
+        },
       },
-      state: { tr: { doc: newDoc } }
+      state: { tr: { doc: newDoc } },
     } as unknown as EditorView;
 
-    jest.spyOn(tcUtils, 'getTableStyles').mockReturnValue([{ 'tot': true, styleName: 'TOT Table', name: 'TOT Table' } as unknown as StoredStyle])
+    jest
+      .spyOn(tcUtils, 'getTableStyles')
+      .mockReturnValue([
+        {
+          tot: true,
+          styleName: 'TOT Table',
+          name: 'TOT Table',
+        } as unknown as StoredStyle,
+      ]);
     expect(previewForm.getToc(view)).toBeDefined();
-  })
+  });
   it('should handle calcLogic', () => {
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
     jest.spyOn(document, 'getElementById').mockReturnValue(null);
     expect(previewForm.calcLogic()).toBeUndefined();
-
-  })
+  });
   it('should handle updateDocumentSectionList', () => {
-    previewForm.state.flattenedSectionNodeStructure = [{ isChecked: false }];
-    expect(previewForm.updateDocumentSectionList()).toBeUndefined();
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
 
-  })
+    const previewForm = new PreviewForm(props);
+    (previewForm.state as any).flattenedSectionNodeStructure = [
+      { isChecked: false },
+    ];
+    expect(previewForm.updateDocumentSectionList(undefined)).toBeUndefined();
+  });
   it('should handle showTof', () => {
     expect(PreviewForm.showTof()).toBe(true);
-
-  })
+  });
   it('should handle showTot', () => {
     expect(PreviewForm.showTot()).toBe(true);
-
-  })
+  });
   it('should handle showCitation', () => {
     expect(PreviewForm.showCitation()).toBe(false);
-  })
+  });
   it('should handle handleTOCChange', () => {
-    expect(previewForm.handleTOCChange({ target: { checked: true } })).toBeUndefined();
-  })
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
+    expect(
+      previewForm.handleTOCChange({ target: { checked: true } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOCChange when checked is false', () => {
-    expect(previewForm.handleTOCChange({ target: { checked: false } })).toBeUndefined();
-  })
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
+    expect(
+      previewForm.handleTOCChange({ target: { checked: false } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOFChange', () => {
-    expect(previewForm.handleTOFChange({ target: { checked: true } })).toBeUndefined();
-  })
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
+    expect(
+      previewForm.handleTOFChange({ target: { checked: true } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOFChange when checked is false', () => {
-    expect(previewForm.handleTOFChange({ target: { checked: false } })).toBeUndefined();
-  })
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
+    expect(
+      previewForm.handleTOFChange({ target: { checked: false } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOTChange', () => {
-    expect(previewForm.handleTOTChange({ target: { checked: true } })).toBeUndefined();
-  })
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
+    expect(
+      previewForm.handleTOTChange({ target: { checked: true } })
+    ).toBeUndefined();
+  });
   it('should handle handleTOTChange when checked is false', () => {
-    expect(previewForm.handleTOTChange({ target: { checked: false } })).toBeUndefined();
-  })
+    const props = {
+      editorState: {} as unknown as EditorState,
+      editorView: {} as unknown as EditorView,
+      onClose() {
+        return;
+      },
+    };
+
+    const previewForm = new PreviewForm(props);
+    expect(
+      previewForm.handleTOTChange({ target: { checked: false } })
+    ).toBeUndefined();
+  });
 });
 
 describe('YourClassName', () => {
@@ -1566,7 +1679,6 @@ describe('PreviewForm.updateStyles', () => {
 
 describe('PreviewForm.insertSectionHeaders', () => {
   let previewForm: PreviewForm;
-  let mockEditorView: EditorView;
 
   beforeEach(() => {
     const props = {
@@ -2173,7 +2285,7 @@ describe('rotateWideTable', () => {
 
     document.body.appendChild(tableTitle);
     document.body.appendChild(figure);
-    tableTitle.insertAdjacentElement('afterend', figure);
+    tableTitle.after(figure);
 
     Object.defineProperty(table, 'offsetHeight', { value: 500, configurable: true });
 
@@ -2204,7 +2316,7 @@ describe('rotateWideTable', () => {
 
     document.body.appendChild(tableTitle);
     document.body.appendChild(figure);
-    tableTitle.insertAdjacentElement('afterend', figure);
+    tableTitle.after(figure);
 
     Object.defineProperty(table, 'offsetHeight', { value: 500, configurable: true });
 

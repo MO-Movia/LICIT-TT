@@ -1264,7 +1264,7 @@ describe('Custom Menu UI', () => {
     const custommenuui = new CustomMenuUI(testProps);
 
     const mockDoc = {
-      nodesBetween: jest.fn((from, to, callback) => {
+      nodesBetween: jest.fn((_from, _to, callback) => {
         const node = {
           type: { name: 'image' },
           attrs: { styleName: 'TestStyle' },

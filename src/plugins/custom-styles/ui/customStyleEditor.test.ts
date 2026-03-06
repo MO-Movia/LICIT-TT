@@ -1209,7 +1209,7 @@ describe('CustomStyleEditor', () => {
   it('should return true if custom style is already applied in the document', () => {
     const editorState = {
       doc: {
-        nodesBetween: jest.fn().mockImplementation((start, end, callback) => {
+        nodesBetween: jest.fn().mockImplementation((_start, _end, callback) => {
           const node = {
             attrs: {
               styleName: 'YourCustomStyle',
@@ -1266,7 +1266,7 @@ describe('CustomStyleEditor', () => {
   it('custom style is already applied in the document', () => {
     const editorState = {
       doc: {
-        nodesBetween: jest.fn().mockImplementation((start, end, callback) => {
+        nodesBetween: jest.fn().mockImplementation((_start, _end, callback) => {
           const node = {
             attrs: {
               styleName: 'YourCustomStyle',
