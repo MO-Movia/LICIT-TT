@@ -1,3 +1,4 @@
+// @ts-check
 const config = require('@modusoperandi/eslint-config');
 module.exports = [
   ...config.getFlatConfig({
@@ -5,6 +6,7 @@ module.exports = [
     header: config.header.mit,
   }),
   {
+    files: config.TS_FILES,
     rules: {
       'import/no-cycle': 'warn',
       'no-constant-binary-expression': 'warn',
@@ -19,26 +21,10 @@ module.exports = [
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-require-imports': 'warn',
-      'sonarjs/slow-regex': 'warn',
-      'sonarjs/array-callback-without-return': 'warn',
-      'sonarjs/no-identical-functions': 'warn',
-      'sonarjs/no-misleading-array-reverse': 'warn',
-      'sonarjs/no-incomplete-assertions': 'warn',
-      'sonarjs/updated-loop-counter': 'warn',
-      'sonarjs/no-invariant-returns': 'warn',
-      'sonarjs/public-static-readonly': 'warn',
-      'sonarjs/no-nested-functions': 'warn',
-      'sonarjs/cognitive-complexity': 'warn',
-      'sonarjs/prefer-single-boolean-return': 'warn',
-      'sonarjs/prefer-read-only-props': 'warn',
-      'sonarjs/prefer-regexp-exec': 'warn',
-      'sonarjs/constructor-for-side-effects': 'warn',
-      'sonarjs/no-dead-store': 'warn',
-      'sonarjs/no-undefined-argument': 'warn',
     },
   },
   {
-    files: ['**/*.test.ts', '**/*.test.tsx'],
+    files: config.TEST_FILES,
     rules: {
       'jest/valid-expect': 'warn',
       'jest/no-done-callback': 'warn',
