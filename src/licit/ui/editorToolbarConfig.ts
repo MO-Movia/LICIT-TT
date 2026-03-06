@@ -15,7 +15,7 @@ import { EditorView } from 'prosemirror-view';
 import { EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 
-const ICON_LABEL_PATTERN = /^\[((?!\[)[^\s]+)(\] )(.*)/;
+const ICON_LABEL_PATTERN = /^\[((?!\[)[^\s]{1,10000})(\] )(.*)/;
 
 type parseLabeltype = {
   icon;

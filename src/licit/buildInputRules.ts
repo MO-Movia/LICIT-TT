@@ -23,7 +23,7 @@ import { Plugin } from 'prosemirror-state';
 /// followed by a dot at the start of a textblock into an ordered list.
 export function orderedListRule(nodeType: NodeType) {
   return wrappingInputRule(
-    /^(\d+)\.\s$/,
+    /^(\d{1,10000})\.\s$/,
     nodeType,
     (match) => ({ order: +match[1] }),
     (match, node) => node.childCount + node.attrs.order == +match[1]

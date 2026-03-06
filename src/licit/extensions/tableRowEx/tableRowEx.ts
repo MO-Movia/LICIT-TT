@@ -22,7 +22,7 @@ const normalizeCssSize = (value: unknown, fallback: string): string => {
     return fallback;
   }
 
-  if (/^\d+(\.\d+)?$/.test(trimmed)) {
+  if (/^\d{1,10000}(\.\d{1,10000})?$/.test(trimmed)) {
     return `${trimmed}px`;
   }
 
