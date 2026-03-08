@@ -205,7 +205,7 @@
     "prosemirror-dev-tools": "^4.2.0",
     "prosemirror-test-builder": "^1.1.1",
     "serve": "^14.0.1",
-    "stylelint": "^16.23.0",
+    "stylelint": "^17.4.0",
     "stylelint-config-standard": "^39.0.0",
     "stylelint-prettier": "^5.0.3",
     "ts-jest": "^29.4.1",
