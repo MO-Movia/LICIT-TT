@@ -139,11 +139,11 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
     matchWholeWordsOnly: boolean,
     caseSensitive = false
   ): RegExp {
-    const escapedTerm = searchTerm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const escapedTerm = searchTerm.replace(/[-/\\^$*+?.()|[\]{}]/g, String.raw`\$&`);
     const flags = caseSensitive ? 'g' : 'gi';
 
     if (matchWholeWordsOnly) {
-      return new RegExp(`\\b${escapedTerm}\\b`, flags);
+      return new RegExp(String.raw`\b${escapedTerm}\b`, flags);
     }
     return new RegExp(escapedTerm, flags);
   }

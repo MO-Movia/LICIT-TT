@@ -105,16 +105,16 @@ export class SentanceCaseCommand extends UICommand {
     if (prevCont && prevCont.trim().length > 0) {
       let delimeitorSepChars;
       const charectersToInclude = [">", "}", ")", "]", '"'];
-      const startsWithSpaces = /^\s+/;
-      const endWithSpaces = / +$/;
+      const startsWithSpaces = /^\s{1,10000}/;
+      const endWithSpaces = / {1,10000}$/;
       if (prevCont === "." || prevCont === "?" || prevCont === "!") {
         return true;
       }
       delimeitorSepChars = prevCont.split(".");
-      if (delimeitorSepChars && delimeitorSepChars.length == 1) {
+      if (delimeitorSepChars?.length == 1) {
         delimeitorSepChars = prevCont.split("?");
       }
-      if (delimeitorSepChars && delimeitorSepChars.length == 1) {
+      if (delimeitorSepChars?.length == 1) {
         delimeitorSepChars = prevCont.split("!");
       }
       if (delimeitorSepChars.length > 0) {
@@ -134,11 +134,11 @@ export class SentanceCaseCommand extends UICommand {
               return true;
             }
             for (const char of str) {
-              if (charectersToInclude.indexOf(char) < 0) {
+              if (charectersToInclude.includes(char)) {
+                isParagrphStart = true;
+              } else {
                 isParagrphStart = false;
                 break;
-              } else {
-                isParagrphStart = true;
               }
             }
           }
@@ -149,7 +149,7 @@ export class SentanceCaseCommand extends UICommand {
   }
 
   checkPreviousNode(str: string, currentString: string) {
-    // Checking previous content so that we can identify if it is the first letter of the sentance
+    // Checking previous content so that we can identify if it is the first letter of the sentence
     if (this.processPreviousContent(str, currentString)) {
       return this.capitalizeFirstParagraphCharacter(currentString);
     } else {
@@ -177,7 +177,7 @@ export class SentanceCaseCommand extends UICommand {
   }
 
   checkDelimeter(strs) {
-    // Checking Delimeters to see if it is a sentance
+    // Checking Delimeters to see if it is a sentence
     const regex = /[?}>)\]]/g;
     for (const element of strs) {
       const matches = element.match(regex);

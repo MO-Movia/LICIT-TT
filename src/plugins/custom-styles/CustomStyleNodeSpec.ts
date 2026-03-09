@@ -75,10 +75,10 @@ function toDOM(base: toDOMFn | undefined, node: Node) {
   }
   if (styleLevel) {
     if (isListStyle) {
-      if (node.attrs.indent !== null) {
-        output[1][ATTRIBUTE_LIST_STYLE_LEVEL] = node.attrs.indent + 1;
-      } else {
+      if (node.attrs.indent === null) {
         output[1][ATTRIBUTE_LIST_STYLE_LEVEL] = styleLevel;
+      } else {
+        output[1][ATTRIBUTE_LIST_STYLE_LEVEL] = node.attrs.indent + 1;
       }
     } else {
       output[1][ATTRIBUTE_STYLE_LEVEL] = String(styleLevel);
