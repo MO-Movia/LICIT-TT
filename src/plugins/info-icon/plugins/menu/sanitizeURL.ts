@@ -4,7 +4,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-const HTTP_PREFIX = /^http(s?):*\/\//i;
+const HTTP_PREFIX = /^http(s?):\/\//i;
 
 export function sanitizeURL(url?: string): string {
     if (!url) {

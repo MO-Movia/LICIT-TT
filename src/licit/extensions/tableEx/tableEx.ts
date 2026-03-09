@@ -33,7 +33,7 @@ const normalizeCssSize = (value: unknown, fallback: string): string => {
     return fallback;
   }
 
-  if (/^\d+(\.\d+)?$/.test(trimmed)) {
+  if (/^\d{1,10000}(\.\d{1,10000})?$/.test(trimmed)) {
     return `${trimmed}px`;
   }
 
@@ -80,7 +80,7 @@ export const TableEx = Table.extend({
         default: DEFAULT_TABLE_COLUMNS,
         parseHTML: (element) => {
           const attr = element.getAttribute('noOfColumns') ??
-            element.getAttribute('data-no-of-columns') ??
+            element.dataset.noOfColumns ??
             element.getAttribute('no.of.columns');
 
           if (attr) {

@@ -90,8 +90,7 @@ function processPromise(
   const dispose = () => {
     if (img) {
       if (isImgInstance(img)) {
-        const pe = img.parentNode;
-        pe?.removeChild(img);
+        img?.remove();
       }
       img.onload = null;
       img.onerror = null;

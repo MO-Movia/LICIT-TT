@@ -13,7 +13,7 @@ const ALIGN_PATTERN = /(left|right|center|justify)/;
 function getAttrs(dom: HTMLElement): AttrType {
   const attrs: AttrType = {};
   const { textAlign } = dom.style;
-  let align = dom.getAttribute('data-align') || textAlign || '';
+  let align = dom.dataset.align || textAlign || '';
   align = ALIGN_PATTERN.test(align) ? align : null;
 
   if (align) {

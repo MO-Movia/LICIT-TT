@@ -26,7 +26,7 @@ const normalizeCssSize = (value: unknown, fallback: string): string => {
     return fallback;
   }
 
-  if (/^\d+(\.\d+)?$/.test(trimmed)) {
+  if (/^\d{1,10000}(\.\d{1,10000})?$/.test(trimmed)) {
     return `${trimmed}px`;
   }
 
@@ -52,7 +52,7 @@ export const TableHeaderEx = TableHeader.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('cellWidth') ??
-              element.getAttribute('data-cell-width') ??
+              element.dataset.cellWidth ??
               element.style.width,
             DEFAULT_CELL_WIDTH
           );
@@ -78,7 +78,7 @@ export const TableHeaderEx = TableHeader.extend({
         parseHTML: (element) => {
           return (
             element.getAttribute('cellStyle') ??
-            element.getAttribute('data-cell-style') ??
+            element.dataset.cellStyle ??
             DEFAULT_CELL_STYLE
           );
         },
@@ -98,7 +98,7 @@ export const TableHeaderEx = TableHeader.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('fontSize') ??
-              element.getAttribute('data-font-size') ??
+              element.dataset.fontSize ??
               element.style.fontSize,
             DEFAULT_FONT_SIZE
           );
@@ -119,7 +119,7 @@ export const TableHeaderEx = TableHeader.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('letterSpacing') ??
-              element.getAttribute('data-letter-spacing') ??
+              element.dataset.letterSpacing ??
               element.style.letterSpacing,
             DEFAULT_LETTER_SPACING
           );
@@ -140,7 +140,7 @@ export const TableHeaderEx = TableHeader.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('marginTop') ??
-              element.getAttribute('data-margin-top') ??
+              element.dataset.marginTop ??
               element.style.marginTop,
             DEFAULT_MARGIN_TOP
           );
@@ -162,7 +162,7 @@ export const TableHeaderEx = TableHeader.extend({
           return normalizeCssSize(
             element.getAttribute('MarginBottom') ??
               element.getAttribute('marginBottom') ??
-              element.getAttribute('data-margin-bottom') ??
+              element.dataset.marginBottom ??
               element.style.marginBottom,
             DEFAULT_MARGIN_BOTTOM
           );
@@ -179,7 +179,7 @@ export const TableHeaderEx = TableHeader.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.backgroundColor.replace(/['"]+/g, '');
+          return element.style.backgroundColor.replace(/['"]{1,10000}/g, '');
         },
       },
       borderLeft: {
@@ -230,7 +230,7 @@ export const TableHeaderEx = TableHeader.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.borderColor.replace(/['"]+/g, '');
+          return element.style.borderColor.replace(/['"]{1,10000}/g, '');
         },
       },
     };

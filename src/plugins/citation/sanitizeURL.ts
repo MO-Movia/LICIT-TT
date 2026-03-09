@@ -6,7 +6,7 @@
  */
 
 export function sanitizeURL(url?: string): string {
-  const HTTP_PREFIX = /^http(s?):*\/\//i;
+  const HTTP_PREFIX = /^http(s?):\/\//i;
   if (!url) {
     return 'https://';
   }

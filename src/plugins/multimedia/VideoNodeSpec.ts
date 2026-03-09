@@ -5,7 +5,7 @@
 
 import {NodeSpec} from 'prosemirror-model';
 
-const CSS_ROTATE_PATTERN = /rotate\(([0-9.]+)rad\)/i;
+const CSS_ROTATE_PATTERN = /rotate\(([0-9.]{1,10000})rad\)/i;
 const EMPTY_CSS_VALUE = new Set(['0%', '0pt', '0px']);
 
 export function getCropRotate(
@@ -55,7 +55,7 @@ export function getAlign(
   cssFloat: string,
   display: string
 ): string | null {
-  let align = dom.getAttribute('data-align') ?? dom.getAttribute('align');
+  let align = dom.dataset.align ?? dom.getAttribute('align');
   if (align) {
     align = /(left|right|center)/.test(align) ? align : null;
   } else if (cssFloat === 'left' && !display) {
