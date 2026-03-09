@@ -42,7 +42,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
   _popUp = null;
   _stylePopup = null;
   _styleName = null;
-  _menuItemHeight = 28;
+  _menuItemHeight = 24;
 
   _id = uuid();
   _selectedIndex = 0;

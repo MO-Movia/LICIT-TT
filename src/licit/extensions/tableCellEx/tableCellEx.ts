@@ -5,7 +5,7 @@
 
 import TableCell from '@tiptap/extension-table-cell';
 
-const DEFAULT_CELL_WIDTH = '25px';
+const DEFAULT_CELL_WIDTH = null;
 const DEFAULT_FONT_SIZE = '16px';
 const DEFAULT_LETTER_SPACING = '0px';
 const DEFAULT_MARGIN_TOP = '0px';

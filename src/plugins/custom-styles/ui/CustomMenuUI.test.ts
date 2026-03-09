@@ -526,7 +526,7 @@ describe('Custom Menu UI', () => {
       .spyOn(document, 'getElementsByClassName')
       .mockReturnValue([dom] as unknown as HTMLCollectionOf<Element>);
     custommenuui.componentDidMount();
-    expect(dom.scrollTop).toBe(-33);
+    expect(dom.scrollTop).toBe(-29);
   });
 
   it('should handle isAllowedNode', () => {

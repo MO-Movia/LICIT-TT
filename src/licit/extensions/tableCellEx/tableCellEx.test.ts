@@ -53,7 +53,7 @@ describe('TableCellEx Extension', () => {
     expect(node.spec.attrs).toHaveProperty('letterSpacing');
     expect(node.spec.attrs).toHaveProperty('marginTop');
     expect(node.spec.attrs).toHaveProperty('MarginBottom');
-    expect(node.spec.attrs?.cellWidth.default).toBe('25px');
+    expect(node.spec.attrs?.cellWidth.default).toBe(null);
     expect(node.spec.attrs?.cellStyle.default).toBe('');
     expect(node.spec.attrs?.fontSize.default).toBe('16px');
     expect(node.spec.attrs?.letterSpacing.default).toBe('0px');
