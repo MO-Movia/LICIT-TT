@@ -46,7 +46,7 @@
 }
 
 .czi-editor-frameset .div-height-large {   
-  height: 95px; 
+  height: 71px; 
 }
 
 .czi-editor-frameset .div-height-small {   
@@ -66,6 +66,7 @@
   background-color: var(--czi-button-hover-background-color);
   border: 1px solid;
   border-radius: 6px;
+  color: var(--czi-text-color);
 }
 
 #container1 {

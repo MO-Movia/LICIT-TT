@@ -83,3 +83,7 @@
 .ProseMirror[contenteditable="false"] .enhanced-table-figure-capco {
   display: none !important;
 }
+
+.ProseMirror[contenteditable="false"] .enhanced-table-figure-select-handle {
+    display: none;
+}

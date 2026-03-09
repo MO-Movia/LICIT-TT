@@ -170,7 +170,7 @@ export class EnhancedTableFigureView implements NodeView {
       }
     });
     this.addNotesButton.style.display =
-      !notesExists && (this.node.attrs.figureType === 'table' || this.node.attrs.figureType === 'figure') ? 'block' : 'none';
+      !notesExists && this.view.editable && (this.node.attrs.figureType === 'table' || this.node.attrs.figureType === 'figure') ? 'block' : 'none';
   }
 
   selectNode() {

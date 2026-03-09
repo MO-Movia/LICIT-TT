@@ -39,7 +39,9 @@ export const VignetteTableNodeSpec = (nodespec: NodeSpec): NodeSpec => ({
     //  that calles this method.
     const {marginLeft, vignette} = node.attrs;
     const domAttrs = {vignette};
-    let style = 'border: none';
+    let style;
+    if(vignette){
+    style = 'border: none ';}
     if (marginLeft) {
       style += `margin-left: ${marginLeft}px`;
     }

@@ -126,7 +126,7 @@ describe('VignettePlugin', () => {
     expect(plugin?.toDOM?.call(plugin,node)).toStrictEqual([
       'table',
       {
-        style: 'border: nonemargin-left: 10px',
+        style: 'border: none margin-left: 10px',
         vignette: 'true',
       },
       0,
@@ -134,7 +134,7 @@ describe('VignettePlugin', () => {
     expect(plugin?.toDOM?.call(plugin,node)).toStrictEqual([
       'table',
       {
-        style: 'border: nonemargin-left: 10px',
+        style: 'border: none margin-left: 10px',
         vignette: 'true',
       },
       0,
@@ -161,7 +161,7 @@ describe('VignettePlugin', () => {
     expect(plugin?.toDOM?.call(plugin,node)).toStrictEqual([
       'table',
       {
-        style: 'border: none',
+        style: undefined,
         vignette: undefined,
       },
       0,
