@@ -23,7 +23,7 @@ describe('selection observer', () => {
     ];
     expect(selectionobserver.observe(elem)).toBeUndefined();
   });
-  it('should handle observe', () => {
+  it('should handle observe (case 2)', () => {
     selectionobserver._callback = () => undefined;
     const elem = document.createElement('div');
     selectionobserver._observables = [
@@ -33,7 +33,7 @@ describe('selection observer', () => {
     expect(selectionobserver.observe(elem)).toBeUndefined();
     spy.mockReset();
   });
-  it('should handle observe', () => {
+  it('should handle observe (case 3)', () => {
     selectionobserver._callback = () => undefined;
     const elem = document.createElement('div');
     const spy = jest.spyOn(globalThis, 'getSelection').mockReturnValue({

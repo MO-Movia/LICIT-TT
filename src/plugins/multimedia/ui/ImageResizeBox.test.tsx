@@ -275,7 +275,7 @@ describe('image resizebox control', () => {
     );
     expect(spy1).toHaveBeenCalled();
   });
-  it('should handle render',()=>{
+  it('should handle render (case 2)',()=>{
     const irb = new ImageResizeBox({
       height: 150,
       onResizeEnd: () => undefined,

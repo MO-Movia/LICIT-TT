@@ -6,13 +6,15 @@
 import {InfoToolButton} from './InfoToolButton';
 
 let props: {
-    type: 'type';
-    title?: 'title';
+  type: 'type';
+  title?: 'title';
 };
-it('should render the component', () => {
-    const wrapper = new InfoToolButton ({...props});
+describe('InfoToolButton', () => {
+  it('should render the component', () => {
+    const wrapper = new InfoToolButton({...props});
     wrapper.props = {
-        title: 'title',
+      title: 'title',
     };
     expect(wrapper).toBeDefined();
+  });
 });

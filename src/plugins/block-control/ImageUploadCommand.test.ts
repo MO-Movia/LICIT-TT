@@ -299,7 +299,7 @@ describe('ImageSourceCommand', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle null view', () => {
+    it('should handle null view (case 2)', () => {
       const inputs: ImageProps = {
         src: 'https://example.com/image.jpg',
         id: 'img-3',
@@ -339,7 +339,7 @@ describe('ImageSourceCommand', () => {
   });
 
   describe('renderLabel', () => {
-    it('should return null', () => {
+    it('should return null (case 2)', () => {
       expect(command.renderLabel()).toBeNull();
     });
   });
@@ -359,7 +359,7 @@ describe('ImageSourceCommand', () => {
   });
 
   describe('executeCustomStyleForTable', () => {
-    it('should return the same transform', () => {
+    it('should return the same transform (case 2)', () => {
       const tr = state.tr;
       const result = command.executeCustomStyleForTable(state, tr, 0, 1);
       expect(result).toBe(tr);

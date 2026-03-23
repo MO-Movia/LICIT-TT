@@ -572,7 +572,7 @@ describe('EditorSchema', () => {
         };
         expect(applyEffectiveSchema(mockSchema as unknown as Schema)).toBeDefined();
     });
-    it('Should handle effectiveSchema when schema does not have paragraph node', () => {
+    it('Should handle effectiveSchema when schema does not have paragraph node (case 2)', () => {
         const mockSchema = {
             nodes: {
                 doc: {

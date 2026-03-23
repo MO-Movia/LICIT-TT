@@ -124,7 +124,7 @@ describe('isNodeSelectionForNodeType', () => {
     const test = getSelectedCellPositions(selection);
     expect(test).toBeDefined();
   });
-  it('should return the from and to position of a selection', () => {
+  it('should return the from and to position of a selection (case 2)', () => {
     const test = getSelectedCellPositions({} as unknown as Selection);
     expect(test).toBeDefined();
   });

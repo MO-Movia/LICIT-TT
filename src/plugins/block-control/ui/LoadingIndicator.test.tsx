@@ -10,7 +10,7 @@ describe('Loading Indicator',()=>{
     it('should handle loading indicator',()=>{
         expect(loadingindicator).toBeDefined();
     });
-    it('should handle loading indicator',()=>{
+    it('should handle loading indicator (case 2)',()=>{
         expect(loadingindicator.render()).toBeDefined();
     });
 });

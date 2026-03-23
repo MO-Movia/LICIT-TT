@@ -12,11 +12,19 @@ const DEFAULT_TABLE_COLUMNS = 3;
 const DEFAULT_TABLE_HEIGHT = 'auto';
 
 const normalizePositiveInteger = (value: unknown, fallback: number): number => {
-  const parsedValue = Number.parseInt(String(value), 10);
-  if (Number.isNaN(parsedValue) || parsedValue <= 0) {
-    return fallback;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const rounded = Math.floor(value);
+    return rounded > 0 ? rounded : fallback;
   }
-  return parsedValue;
+
+  if (typeof value === 'string') {
+    const parsedValue = Number.parseInt(value, 10);
+    if (!Number.isNaN(parsedValue) && parsedValue > 0) {
+      return parsedValue;
+    }
+  }
+
+  return fallback;
 };
 
 const normalizeCssSize = (value: unknown, fallback: string): string => {

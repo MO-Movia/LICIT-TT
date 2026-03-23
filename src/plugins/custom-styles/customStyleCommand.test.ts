@@ -137,7 +137,7 @@ describe('CustomStyleCommand', () => {
     );
     expect(resultingTransform).toBe(initialTransform);
   });
-  it('should return the same transform', () => {
+  it('should return the same transform (case 2)', () => {
     const initialState = {} as EditorState;
     const initialTransform = {} as Transform;
     const resultingTransform = customstylecommand.executeCustomStyleForTable(
@@ -256,7 +256,7 @@ describe('CustomStyleCommand', () => {
   it('should handle isEmpty', () => {
     expect(customstylecommand.isEmpty({})).toBeTruthy();
   });
-  it('should handle isEmpty', () => {
+  it('should handle isEmpty (case 2)', () => {
     expect(customstylecommand.isEmpty({ key: 'test' })).toBeFalsy();
   });
   it('should handle isEnabled', () => {
@@ -276,9 +276,12 @@ describe('CustomStyleCommand', () => {
             {
               tag: 'img[src]',
               getAttrs(dom) {
+                if (!(dom instanceof HTMLElement)) {
+                  return false;
+                }
                 return {
-                  align: dom.toString(),
-                  fitToParent: dom.toString(),
+                  align: dom.getAttribute('align') ?? '',
+                  fitToParent: dom.getAttribute('fitToParent') ?? '',
                 };
               },
             },
@@ -598,7 +601,7 @@ describe('CustomStyleCommand', () => {
       )
     ).toBeDefined();
   });
-  it('should handle clearCustomStyles', () => {
+  it('should handle clearCustomStyles (case 2)', () => {
     const mySchema = new Schema({
       nodes: {
         doc: { content: 'block+' },
@@ -729,7 +732,7 @@ describe('CustomStyleCommand', () => {
           },
         } as unknown as EditorState
       )
-    );
+    ).toBeDefined();
   });
 
   it('should handle showAlert when popup null', () => {
@@ -1778,7 +1781,7 @@ describe('getMarkByStyleName', () => {
     });
     expect(getMarkByStyleName('test', mockSchema)).toBeDefined();
   });
-  it('should handle getMarkByStyleName', () => {
+  it('should handle getMarkByStyleName (case 2)', () => {
     jest.spyOn(customstyles, 'getCustomStyleByName').mockReturnValue({
       styles: {
         hasBullet: true,
@@ -1988,7 +1991,7 @@ describe('getStyleLevel', () => {
     spy.mockReset();
   });
 
-  it('should handle getStyleLevel when styleProp null', () => {
+  it('should handle getStyleLevel when styleProp null (case 2)', () => {
     const spy = jest
       .spyOn(customstyles, 'getCustomStyleByName')
       .mockReturnValue({} as unknown as Style);
@@ -3046,7 +3049,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
     const nodemock = { descendants: () => {} };
     expect(addMarksToLine(trmock, statemock, nodemock, 0, true)).toBeDefined();
   });
-  it('should handle addMarksToLine when markstrong is not present', () => {
+  it('should handle addMarksToLine when markstrong is not present (case 2)', () => {
     const trmock = {};
     const statemock = { schema: { marks: {} } };
     const nodemock = { descendants: () => {} };
@@ -3058,7 +3061,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
     ).toBeDefined();
   });
 
-  it('should handle manageElementsAfterSelection', () => {
+  it('should handle manageElementsAfterSelection (case 2)', () => {
     const json = {
       type: 'paragraph',
       attrs: {
@@ -3099,7 +3102,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
       manageElementsAfterSelection([{ node: nodemock }], statemock, trmock)
     ).toBeDefined();
   });
-  it('should handle manageElementsAfterSelection', () => {
+  it('should handle manageElementsAfterSelection (case 3)', () => {
     const json = {
       type: 'paragraph',
       attrs: {
@@ -3171,7 +3174,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
       addElementEx(nodeattrs, statemock, trmock, 0, false, 2)
     ).toBeDefined();
   });
-  it('should handle addElementEx', () => {
+  it('should handle addElementEx (case 2)', () => {
     const nodeattrs = {
       align: 'left',
       color: null,
@@ -4677,7 +4680,7 @@ describe('isCustomStyleAlreadyApplied and isLevelUpdated', () => {
       )
     ).toBeTruthy();
   });
-  it('should handle isLevelUpdated branch coverage', () => {
+  it('should handle isLevelUpdated branch coverage (case 2)', () => {
     const styl = {
       styleName: 'A_12',
       mode: 1,
@@ -5532,7 +5535,7 @@ describe('removeAllMarksExceptLink', () => {
     ).toBeDefined();
   });
 
-  it('removes all marks except link for tables and override', () => {
+  it('removes all marks except link for tables and override (case 2)', () => {
     const mySchema = new Schema({
       nodes: {
         // Define the document node
@@ -5642,7 +5645,7 @@ describe('removeAllMarksExceptLink', () => {
     } as unknown as Transform;
     expect(removeAllMarksExceptLink(0, 1, tr)).toBeDefined();
   });
-  it('should handle removeAllMarksExceptLink when mark.attrs[ATTR_OVERRIDDEN] && link === mark.type.name', () => {
+  it('should handle removeAllMarksExceptLink when mark.attrs[ATTR_OVERRIDDEN] && link === mark.type.name (case 2)', () => {
     const mySchema = new Schema({
       nodes: {
         // Define the document node
@@ -5704,7 +5707,7 @@ describe('removeAllMarksExceptLink', () => {
     } as unknown as Transform;
     expect(removeAllMarksExceptLink(1, 2, tr)).toBeDefined();
   });
-  it('should handle removeAllMarksExceptLink when mark.attrs[ATTR_OVERRIDDEN] && link === mark.type.name', () => {
+  it('should handle removeAllMarksExceptLink when mark.attrs[ATTR_OVERRIDDEN] && link === mark.type.name (case 3)', () => {
     const mySchema = new Schema({
       nodes: {
         // Define the document node

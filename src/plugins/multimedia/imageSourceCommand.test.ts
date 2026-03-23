@@ -366,17 +366,15 @@ describe('ImageSourceCommand', () => {
       } as unknown as typeof Image;
     });
 
-    it('should insert image when valid inputs provided', (done) => {
+    it('should insert image when valid inputs provided', async () => {
       const dispatch = jest.fn();
       const mockInputs:ImageLike = {src: 'https://example.com/image.jpg',height: 400, width: 300, id: '1'};
 
       command.executeWithUserInput(mockState, dispatch, mockView, mockInputs);
 
-      setTimeout(() => {
-        expect(dispatch).toHaveBeenCalled();
-        expect(mockView.focus).toBeDefined();
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(dispatch).toHaveBeenCalled();
+      expect(mockView.focus).toBeDefined();
     });
 
     it('should return false immediately', () => {
@@ -406,32 +404,28 @@ describe('ImageSourceCommand', () => {
       expect(true).toBe(true);
     });
 
-    it('should call hideCursorPlaceholder when view exists', (done) => {
+    it('should call hideCursorPlaceholder when view exists', async () => {
       const dispatch = jest.fn();
       const mockInputs:ImageLike = {src: 'test.jpg',height: 400, width: 300, id: '1'};
       const mockHideCursor = CursorPlaceholderPlugin.hideCursorPlaceholder as jest.Mock;
 
       command.executeWithUserInput(mockState, dispatch, mockView, mockInputs);
 
-      setTimeout(() => {
-        expect(mockHideCursor).toHaveBeenCalledWith(mockView.state);
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(mockHideCursor).toHaveBeenCalledWith(mockView.state);
     });
 
-    it('should handle missing view gracefully', (done) => {
+    it('should handle missing view gracefully', async () => {
       const dispatch = jest.fn();
       const mockInputs:ImageLike = {src: 'test.jpg',height: 400, width: 300, id: '1'};
 
       command.executeWithUserInput(mockState, dispatch, null as unknown as EditorView, mockInputs);
 
-      setTimeout(() => {
-        expect(dispatch).toHaveBeenCalled();
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(dispatch).toHaveBeenCalled();
     });
 
-    it('should call view.focus after insertion', (done) => {
+    it('should call view.focus after insertion', async () => {
       const dispatch = jest.fn();
       const mockFocus = jest.fn();
       const viewWithFocus = {...mockView, focus: mockFocus} as unknown as EditorView;
@@ -439,13 +433,11 @@ describe('ImageSourceCommand', () => {
 
       command.executeWithUserInput(mockState, dispatch, viewWithFocus, mockInputs);
 
-      setTimeout(() => {
-        expect(mockFocus).toHaveBeenCalled();
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(mockFocus).toHaveBeenCalled();
     });
 
-    it('should insert image with correct dimensions from getImageSize', (done) => {
+    it('should insert image with correct dimensions from getImageSize', async () => {
       const mockWidth = 1024;
       const mockHeight = 768;
 
@@ -469,13 +461,11 @@ describe('ImageSourceCommand', () => {
 
       command.executeWithUserInput(mockState, dispatch, mockView, mockInputs);
 
-      setTimeout(() => {
-        expect(dispatch).toHaveBeenCalled();
-        const dispatchedTr = dispatch.mock.calls[0][0] as Transaction;
-        // Verify image node has correct dimensions
-        expect(dispatchedTr).toBeDefined();
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(dispatch).toHaveBeenCalled();
+      const dispatchedTr = dispatch.mock.calls[0][0] as Transaction;
+      // Verify image node has correct dimensions
+      expect(dispatchedTr).toBeDefined();
     });
   });
 

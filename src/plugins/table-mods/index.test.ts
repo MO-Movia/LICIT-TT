@@ -28,10 +28,10 @@ describe('TableExtensionPlugin', () => {
                   return null;
                 },
                 setDOMAttr(value, attrs) {
-                  if (value) {
-                    attrs.style = `${
-                      attrs.style || ''
-                    }background-color: ${value};`;
+                  if (typeof value === 'string' && value) {
+                    const currentStyle =
+                      typeof attrs.style === 'string' ? attrs.style : '';
+                    attrs.style = `${currentStyle}background-color: ${value};`;
                   }
                 },
               },

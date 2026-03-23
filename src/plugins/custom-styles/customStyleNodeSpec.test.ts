@@ -277,7 +277,7 @@ describe('toCustomStyleDOM', () => {
     ]);
   });
 
-  it('should handle toCustomStyleDOM when  hasBullet: false', () => {
+  it('should handle toCustomStyleDOM when  hasBullet: false (case 2)', () => {
     jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
       styles: {
         hasBullet: true,

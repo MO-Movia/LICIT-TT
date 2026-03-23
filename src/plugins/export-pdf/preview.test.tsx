@@ -605,7 +605,7 @@ describe('PreviewForm component', () => {
       },
     };
     const Previewform = new PreviewForm(props);
-    Previewform.prepareCSSRules(doc);
+    expect(Previewform.prepareCSSRules(doc)).toBeUndefined();
   });
 
   it('should handel render', () => {
@@ -1377,7 +1377,7 @@ describe('YourClassName', () => {
   });
 });
 
-describe('addLinkEventListeners && handleLinkClick', () => {
+describe('addLinkEventListeners && handleLinkClick (group 2)', () => {
   let previewForm: PreviewForm;
 
   beforeEach(() => {

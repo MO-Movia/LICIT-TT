@@ -341,7 +341,7 @@ describe('Info Plugin', () => {
     AddInfoICmd.waitForUserInput(editor.state, undefined, view);
   });
 
-  it('should Wait For User Input', () => {
+  it('should Wait For User Input (case 2)', () => {
     const before = 'Hello World!!!';
     const modSchema = new Schema({
       nodes: schema.spec.nodes,
@@ -495,7 +495,7 @@ describe('Info Plugin', () => {
     cView.showSourceText(clickEvent);
   });
 
-  it('Infoiconview call createInfoIconTooltip', () => {
+  it('Infoiconview call createInfoIconTooltip (case 2)', () => {
     const before = 'hello';
     const after = ' world';
 
@@ -536,7 +536,7 @@ describe('Info Plugin', () => {
     cView.setContentRight(clickEvent, errorinfodiv, tooltip, ttContent);
   });
 
-  it('Infoiconview ', () => {
+  it('Infoiconview  (case 2)', () => {
     const state = EditorState.create({
       doc: doc(p('Hello World', newInfoIconNode)),
       schema: effSchema,
@@ -564,7 +564,7 @@ describe('Info Plugin', () => {
     cView.isPNodeNull(view.state.doc.nodeAt(0));
   });
 
-  it('Infoiconview ', () => {
+  it('Infoiconview  (case 3)', () => {
     const state = EditorState.create({
       doc: doc(p(newInfoIconNode)),
       schema: effSchema,

@@ -99,7 +99,7 @@ describe('toggleList', () => {
     const test = toggleList(tr, schema, listNodeType, 'bold');
     expect(test).toBe(tr);
   });
-  it('should be selection is not there or doc is not there', () => {
+  it('should be selection is not there or doc is not there (case 2)', () => {
     const mySchema = new Schema({
       nodes: {
         doc: {
@@ -275,7 +275,7 @@ describe('toggleList', () => {
 
       expect(test).toBeDefined();
     });
-    it('should return the transform if not equal to firstNode and lastNode', () => {
+    it('should return the transform if not equal to firstNode and lastNode (case 2)', () => {
       const schema = new Schema({
         nodes: {
           doc: { content: 'block+' },
@@ -626,7 +626,7 @@ describe('wrapNodesWithListInternal with nodetype', () => {
     const result = wrapNodesWithListInternal(mockMemo, list_node, 'disc');
     expect(result).toBe(mockTransaction);
   });
-  it('should wrap paragraph nodes with list correctly', () => {
+  it('should wrap paragraph nodes with list correctly (case 2)', () => {
 
     const mySchema = new Schema({
       nodes: {

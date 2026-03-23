@@ -177,7 +177,7 @@ describe('MarksClearCommand', () => {
     });
 
     describe('executeWithUserInput', () => {
-      it('should return false', () => {
+      it('should return false (case 2)', () => {
         const result = command.executeWithUserInput(state);
         expect(result).toBe(false);
       });

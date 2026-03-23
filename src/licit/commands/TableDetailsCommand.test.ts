@@ -423,7 +423,7 @@ it('should include cell details when cell is selected', () => {
   });
 
   describe('executeCustomStyleForTable', () => {
-    it('should return transform unchanged', () => {
+    it('should return transform unchanged (case 2)', () => {
       const mockTr = {} as Transform;
       const result = command.executeCustomStyleForTable(mockState, mockTr);
       expect(result).toBe(mockTr);

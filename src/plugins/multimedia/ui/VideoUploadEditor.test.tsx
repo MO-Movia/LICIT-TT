@@ -48,7 +48,7 @@ describe('Video Upload Editor', () => {
 });
 
 });
-describe('Video Upload Editor', () => {
+describe('Video Upload Editor (group 2)', () => {
   const VideoUploadEditorProps = {
     runtime: {
       // Video Proxy
@@ -71,7 +71,7 @@ describe('Video Upload Editor', () => {
 
  const videouploadeditor = new VideoUploadEditor(VideoUploadEditorProps);
 
-    it('should render Video Upload Editor', () => {
+    it('should render Video Upload Editor (case 2)', () => {
 
      expect(videouploadeditor).toBeDefined();
      expect(() => videouploadeditor._cancel()).not.toThrow();
@@ -114,7 +114,7 @@ describe('Video Upload Editor', () => {
       expect(instance).toBeUndefined();
 
      });
-     it('should handle _upload', async() => {
+     it('should handle _upload (case 2)', async() => {
       videouploadeditor.props = {
         runtime: {
           // Video Proxy

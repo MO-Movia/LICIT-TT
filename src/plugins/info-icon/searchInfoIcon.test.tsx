@@ -125,14 +125,34 @@ describe('should render the SearchInfoIcon component', () => {
     it('should update selectedIcon when selectInfoIcon is called with a different icon', () => {
         const wrapper = new SearchInfoIcon(subMenuProps);
 
-        wrapper.setState({ selectedIcon: { name: 'icon1', selected: true, unicode: 'U+1234' } });
+        const setStateSync = (
+          nextState:
+            | Partial<typeof wrapper.state>
+            | ((
+                prevState: typeof wrapper.state,
+                props: typeof wrapper.props
+              ) => Partial<typeof wrapper.state>),
+          callback?: () => void
+        ) => {
+          const resolved =
+            typeof nextState === 'function'
+              ? nextState(wrapper.state, wrapper.props)
+              : nextState;
+          wrapper.state = { ...wrapper.state, ...resolved };
+          callback?.();
+        };
+        wrapper.setState = setStateSync;
+        wrapper.setState({
+          selectedIcon: { name: 'icon1', selected: true, unicode: 'U+1234' },
+        });
 
         // New icon to be selected is different
-        const newIcon = { name: 'icon2', unicode: 'U+5678', selected: false };
+    const newIcon = { name: 'icon2', unicode: 'U+5678', selected: false };
 
-        // Call the method with the test input
-        wrapper.selectInfoIcon(newIcon);
-      });
+    // Call the method with the test input
+    wrapper.selectInfoIcon(newIcon);
+    expect(wrapper.state.selectedIcon).toEqual(newIcon);
+  });
 
 
 });

@@ -443,7 +443,7 @@ describe('transformAndPreserveTextSelection', () => {
     );
     expect(test).toBeDefined();
   });
-  it('should handle transformAndPreserveTextSelection when getMeta return false and when from and to =1 and when prevNode && currentNode && currentNode.type === prevNode.type', () => {
+  it('should handle transformAndPreserveTextSelection when getMeta return false and when from and to =1 and when prevNode && currentNode && currentNode.type === prevNode.type (case 2)', () => {
     const mySchema1 = new Schema({
       nodes: {
         doc: {content: 'text*'},
@@ -566,7 +566,7 @@ describe('transformAndPreserveTextSelection', () => {
     );
     expect(test).toBeDefined();
   });
-  it('should handle transformAndPreserveTextSelection when getMeta return false and when from and to =1 and when prevNode && currentNode && currentNode.type === prevNode.type', () => {
+  it('should handle transformAndPreserveTextSelection when getMeta return false and when from and to =1 and when prevNode && currentNode && currentNode.type === prevNode.type (case 3)', () => {
     const mySchema1 = new Schema({
       nodes: {
         doc: {content: 'text*'},
@@ -689,7 +689,7 @@ describe('transformAndPreserveTextSelection', () => {
     );
     expect(test).toBeDefined();
   });
-  it('should handle transformAndPreserveTextSelection when getMeta return false and when from and to =1 and when prevNode && currentNode && currentNode.type === prevNode.type', () => {
+  it('should handle transformAndPreserveTextSelection when getMeta return false and when from and to =1 and when prevNode && currentNode && currentNode.type === prevNode.type (case 4)', () => {
     const mySchema1 = new Schema({
       nodes: {
         doc: {content: 'text*'},

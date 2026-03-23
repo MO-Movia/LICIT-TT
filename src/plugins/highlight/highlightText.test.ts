@@ -387,7 +387,7 @@ describe('LicitHighlightTextPlugin', () => {
   });
 
   describe('Plugin State Initialization', () => {
-    it('should handle init', () => {
+    it('should handle init (case 2)', () => {
       expect(
         plugin.spec.state?.init(
           null as unknown as EditorStateConfig,
@@ -648,7 +648,7 @@ describe('LicitHighlightTextPlugin', () => {
       updateSearchTermSpy.mockRestore();
     });
 
-    it('should not update search term when plugin state is undefined', () => {
+    it('should not update search term when plugin state is undefined (case 2)', () => {
       jest
         .spyOn(LicitHighlightTextPlugin, 'getPluginState')
         .mockReturnValue(undefined);
@@ -669,7 +669,7 @@ describe('LicitHighlightTextPlugin', () => {
       updateSearchTermSpy.mockRestore();
     });
 
-    it('should not update search term when search term is empty', () => {
+    it('should not update search term when search term is empty (case 2)', () => {
       jest.spyOn(LicitHighlightTextPlugin, 'getPluginState').mockReturnValue({
         searchTerm: '',
         highlightClass: 'highlight-class',

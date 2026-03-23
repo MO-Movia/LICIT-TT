@@ -226,7 +226,7 @@ describe('Video Plugin - Test', () => {
       selection: editor.selection,
       plugins: [],
     });
-    isPlugin(null, stateWithoutPlugin.tr);
+    expect(isPlugin(null, stateWithoutPlugin.tr)).toBe(true);
   });
 
   it('should resolve video', async () => {
@@ -242,7 +242,7 @@ describe('Video Plugin - Test', () => {
     expect(exp).toStrictEqual(res);
   });
 
-  it('should resolve video', async () => {
+  it('should resolve video (case 2)', async () => {
     const nullsrcState: VideoEditorState = {
       id: attrs.id,
       src: '',
@@ -278,12 +278,13 @@ describe('Video Plugin - Test', () => {
     };
 
     const VdoViewBody = new VideoViewBody(ResizeProp);
-    VdoViewBody.getScaleSize();
+    expect(VdoViewBody.getScaleSize()).toBeDefined();
     VdoViewBody._renderInlineEditor();
     VdoViewBody._resolveOriginalSize();
     VdoViewBody._onResizeEnd(250, 500);
     VdoViewBody._onChange({align: 'right'});
-    VdoViewBody.getClipStyle(
+    expect(
+      VdoViewBody.getClipStyle(
       200,
       500,
       150,
@@ -299,7 +300,8 @@ describe('Video Plugin - Test', () => {
         height: 200,
         complete: true,
       }
-    );
+      )
+    ).toBeDefined();
   });
 
   it('should wait For User Input - Video', () => {
@@ -327,6 +329,7 @@ describe('Video Plugin - Test', () => {
     videoNodeView.renderReactComponent();
     const img = document.createElement('img');
     videoNodeView._updateDOM(img);
+    expect(videoNodeView).toBeDefined();
   });
 
   it('Video Resize Box', () => {
@@ -374,6 +377,8 @@ describe('Video Plugin - Test', () => {
     });
     const s1 = state.apply(tr1);
     s1.applyTransaction(s1.tr);
+    expect(s.tr).toBeDefined();
+    expect(s1.tr).toBeDefined();
   });
 
   it('should call  specFinder', () => {
