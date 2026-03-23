@@ -73,7 +73,7 @@ export class VideoUploadEditor extends React.PureComponent {
       0 < (event.target as HTMLInputElement).files.length &&
       (event.target as HTMLInputElement).files[0];
     if (file) {
-      this._upload(file);
+      void this._upload(file);
     }
   };
 

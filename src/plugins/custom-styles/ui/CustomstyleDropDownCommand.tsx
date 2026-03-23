@@ -52,7 +52,8 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
     // Get styles form server configured in runtime
     let HEADING_NAMES = null;
     if (this.hasRuntime) {
-      getStylesAsync().then((result) => {
+      getStylesAsync()
+        .then((result) => {
         if (result) {
           setStyles(result);
           HEADING_NAMES = result;
@@ -77,7 +78,8 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
           }
         }
         return [HEADING_COMMANDS];
-      });
+      })
+        .catch(console.warn);
     }
     return [HEADING_COMMANDS];
   }

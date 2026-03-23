@@ -128,7 +128,7 @@ describe('Video Plugin - Test', () => {
 
   const VideoeditorIns = new VideoEditor(properties, newState);
 
-  it('should Init VideoSourceCommand', async () => {
+  it('should Init VideoSourceCommand', () => {
     const cmd = new VideoSourceCommand().executeWithUserInput(
       state,
       view.dispatch as (tr: Transform) => void,
@@ -153,7 +153,7 @@ describe('Video Plugin - Test', () => {
     expect(enabled).toBeTruthy();
   });
 
-  it('should call getEditor', async () => {
+  it('should call getEditor', () => {
     expect(() => new VideoSourceCommand().getEditor()).toThrow(
       'Not implemented'
     );
@@ -262,7 +262,7 @@ describe('Video Plugin - Test', () => {
     expect(exp).toEqual(res);
   });
 
-  it('should change on Resize', async () => {
+  it('should change on Resize', () => {
     const ResizeProp = {
       height: 200,
       onResizeEnd: () => undefined,
@@ -280,7 +280,7 @@ describe('Video Plugin - Test', () => {
     const VdoViewBody = new VideoViewBody(ResizeProp);
     expect(VdoViewBody.getScaleSize()).toBeDefined();
     VdoViewBody._renderInlineEditor();
-    VdoViewBody._resolveOriginalSize();
+    void VdoViewBody._resolveOriginalSize();
     VdoViewBody._onResizeEnd(250, 500);
     VdoViewBody._onChange({align: 'right'});
     expect(

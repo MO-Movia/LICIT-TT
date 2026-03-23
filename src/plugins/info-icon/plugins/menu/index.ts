@@ -38,7 +38,7 @@ const createLinkMenuItem = (view, marks) => {
                 toggleMark(marks.link)(state, dispatch);
                 return true;
             }
-            addLinkCommand(view).then(() => {});
+            void addLinkCommand(view);
             return false;
         },
     });

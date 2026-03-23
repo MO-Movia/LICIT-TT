@@ -2071,26 +2071,30 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       description: val.description,
       styles: val.styles,
     };
-    saveStyle(styleObj).then((result) => {
-      if (!Array.isArray(result)) {
-        result = addStyleToList(result);
-      }
-      customStyles = result;
-      setStyles(result);
-    });
+    saveStyle(styleObj)
+      .then((result) => {
+        if (!Array.isArray(result)) {
+          result = addStyleToList(result);
+        }
+        customStyles = result;
+        setStyles(result);
+      })
+      .catch(console.warn);
   }
 
   // To fetch the custom styles from server and set to the state.
   getCustomStyles() {
-    getStylesAsync().then((result) => {
-      customStyles = result;
-      // [FS] IRAD-1222 2021-03-01
-      // Issue fix: In edit all, the style list not showing the first time.
+    getStylesAsync()
+      .then((result) => {
+        customStyles = result;
+        // [FS] IRAD-1222 2021-03-01
+        // Issue fix: In edit all, the style list not showing the first time.
 
-      this.setState(() => ({
-        customStyles: result,
-      }));
-    });
+        this.setState(() => ({
+          customStyles: result,
+        }));
+      })
+      .catch(console.warn);
   }
 
   // [FS] IRAD-1231 2021-03-03

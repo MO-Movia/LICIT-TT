@@ -270,10 +270,10 @@ describe('ImageEditor', () => {
   const ImgeditorIns = new ImageURLEditor(properties, newState);
   ImgeditorIns._didSrcChange();
 
-  it('should change on src Change Event', async () => {
+  it('should change on src Change Event', () => {
     expect(() => ImgeditorIns._onSrcChange(srcevent)).not.toThrow();
   });
-  it('should check on src Change Event', async () => {
+  it('should check on src Change Event', () => {
     expect(() => ImgeditorIns._didSrcChange()).not.toThrow();
   });
 
@@ -291,7 +291,7 @@ describe('ImageEditor', () => {
     expect(state.plugins).toContain(plugin);
   });
 
-  it('Image Inline Editor', async () => {
+  it('Image Inline Editor', () => {
     const props = {
       onSelect: (_val: 'RIGHT') => undefined,
       value: {align: 'RIGHT'},

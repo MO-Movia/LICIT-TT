@@ -69,7 +69,7 @@ export class ImageUploadEditor extends React.PureComponent {
   _onSelectFile = (event: React.SyntheticEvent<HTMLInputElement>): void => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file && typeof file === 'object') {
-      this._upload(file);
+      void this._upload(file);
     }
   };
 

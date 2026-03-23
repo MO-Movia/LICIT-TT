@@ -12,19 +12,23 @@ export default function TextEditorBox(props) {
   const [error, setError] = useState<string | null>(null);
   // Load styles on component mount
   useEffect(() => {
-    getStylesAsync().then((result) => {
-      setText(JSON.stringify(result, null, 2)); // prettified JSON
-    });
+    getStylesAsync()
+      .then((result) => {
+        setText(JSON.stringify(result, null, 2)); // prettified JSON
+      })
+      .catch(console.warn);
   }, []);
 
   const handleSave = () => {
     try {
       const styles: Style[] = JSON.parse(text);
-      saveStyleSet(styles).then((result) => {
-        if (result) {
-          props.close(text);
-        }
-      });
+      saveStyleSet(styles)
+        .then((result) => {
+          if (result) {
+            props.close(text);
+          }
+        })
+        .catch(console.warn);
     } catch (error) {
       setError('Failed to save custom styles.' + error);
     }

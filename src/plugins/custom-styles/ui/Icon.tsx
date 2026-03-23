@@ -12,7 +12,7 @@ const cached = {};
 const CSS_CDN_URL = '//fonts.googleapis.com/icon?family=Material+Icons';
 const CSS_FONT = 'Material Icons';
 
-(async function () {
+void (async function () {
   // Inject CSS Fonts reuqired for toolbar icons.
   const fontSupported = await canUseCSSFont(CSS_FONT);
   if (!fontSupported) {

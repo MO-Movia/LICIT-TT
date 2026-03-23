@@ -134,6 +134,12 @@ describe('PreviewForm component', () => {
     document.getElementById = jest.fn().mockReturnValue({
       childNodes: [document.createElement('div')],
     });
+    previewFormStatic.general = false;
+    previewFormStatic.isToc = true;
+    previewFormStatic.isTof = true;
+    previewFormStatic.isTot = true;
+    previewFormStatic.isCitation = false;
+    previewFormStatic.isTitle = true;
   });
 
   afterEach(() => {
@@ -638,12 +644,14 @@ describe('PreviewForm component', () => {
       },
     };
     const Previewform = new PreviewForm(props);
-    const spy = jest.spyOn(Previewform, 'getToc').mockReturnValue(null as unknown as Promise<void>);
+    const spy = jest
+      .spyOn(Previewform, 'getToc')
+      .mockResolvedValue(undefined);
     Previewform.componentDidMount();
     expect(spy).toHaveBeenCalled();
   });
 
-  it('should call the getToc() function', async () => {
+  it('should call the getToc() function', () => {
     const props = {
       editorState: {} as unknown as EditorState,
       editorView: {} as unknown as EditorView,
@@ -1251,12 +1259,15 @@ describe('addLinkEventListeners && handleLinkClick', () => {
     expect(previewForm.updateDocumentSectionList(undefined)).toBeUndefined();
   });
   it('should handle showTof', () => {
+    previewFormStatic.isTof = true;
     expect(PreviewForm.showTof()).toBe(true);
   });
   it('should handle showTot', () => {
+    previewFormStatic.isTot = true;
     expect(PreviewForm.showTot()).toBe(true);
   });
   it('should handle showCitation', () => {
+    previewFormStatic.isCitation = false;
     expect(PreviewForm.showCitation()).toBe(false);
   });
   it('should handle handleTOCChange', () => {
