@@ -28,7 +28,7 @@ describe('ImageInlineEditor', () => {
     const imageinlineeditor = new ImageInlineEditor(() => undefined);
     expect(imageinlineeditor).toBeDefined();
   });
-  it('should render', () => {
+  it('should render (case 2)', () => {
     const imageinlineeditor = new ImageInlineEditor(() => undefined);
     imageinlineeditor.props = {
       onSelect: () => undefined,

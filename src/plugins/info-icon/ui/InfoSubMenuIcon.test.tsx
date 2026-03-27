@@ -6,21 +6,29 @@
 import {InfoSubMenuIcon} from './InfoSubMenuIcon';
 
 let props: {
-    type: 'type';
-    title?: 'title';
+  type: 'type';
+  title?: 'title';
 };
 const DeviceTypeUtilsMock = jest.requireMock('./InfoSubMenuIcon');
-it('should render the component', () => {
-    const wrapper = new InfoSubMenuIcon ({...props});
+describe('InfoSubMenuIcon', () => {
+  it('should render the component', () => {
+    const wrapper = new InfoSubMenuIcon({...props});
     expect(wrapper.render()).toBeDefined();
-});
-it('mock const `isTablet` to the value `true`', () => {
+  });
+
+  it('mock const `isTablet` to the value `true`', () => {
     DeviceTypeUtilsMock.props = {
-        type: 'type',
-        title: 'title'
+      type: 'type',
+      title: 'title',
     };
-});
-it('should handle empty type and title', () => {
+    expect(DeviceTypeUtilsMock.props).toEqual({
+      type: 'type',
+      title: 'title',
+    });
+  });
+
+  it('should handle empty type and title', () => {
     const icon = InfoSubMenuIcon.get('', '');
     expect(icon).toBeDefined();
   });
+});

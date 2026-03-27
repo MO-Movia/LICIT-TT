@@ -250,7 +250,7 @@ describe('updateIndentLevel', () => {
     expect(test).toBeTruthy();
   });
 
-  it('should be return tr inside setListNodeIndent function()', () => {
+  it('should be return tr inside setListNodeIndent function() (case 2)', () => {
     const mySchema = new Schema({
       nodes: {
         doc: {
@@ -563,7 +563,7 @@ describe('updateIndentLevel', () => {
     expect(test).toBeTruthy();
   });
 
-  it('should check the condition inside setListNodeIndent function() !listItem', () => {
+  it('should check the condition inside setListNodeIndent function() !listItem (case 2)', () => {
     const state = {} as unknown as EditorState;
     const tr = {
       doc: dummyDoc,
@@ -600,7 +600,7 @@ describe('updateIndentLevel', () => {
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
   });
-  it('should check the condition inside setListNodeIndent function() !listItem', () => {
+  it('should check the condition inside setListNodeIndent function() !listItem (case 3)', () => {
     const state = {} as unknown as EditorState;
     const linkmark = new Mark();
     const mockschema = new Schema({

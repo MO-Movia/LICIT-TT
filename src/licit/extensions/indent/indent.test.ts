@@ -593,7 +593,7 @@ describe('Indent Extension - addCommands', () => {
       expect(typeof result).toBe('boolean');
     });
 
-    test('should not dispatch when dispatch is undefined', () => {
+    test('should not dispatch when dispatch is undefined (case 2)', () => {
       editor.commands.setContent('<p>Paragraph</p>');
       editor.commands.focus();
       editor.commands.setTextSelection(2);

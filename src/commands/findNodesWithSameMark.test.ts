@@ -48,11 +48,12 @@ describe('findNodesWithSameMark', () => {
     const markType = schema.marks.strong;
     const result = findNodesWithSameMark(doc, from, to, markType);
     expect(result).not.toBeNull();
-    if (result) {
-      expect(result.mark.type.name).toBe('strong');
-      expect(result.from.node?.type.name).toBe('text');
-      expect(result.to.node?.type.name).toBe('text');
-      expect(result.to.pos).toBe(9);
+    if (!result) {
+      throw new Error('Expected result to be defined');
     }
+    expect(result.mark.type.name).toBe('strong');
+    expect(result.from.node?.type.name).toBe('text');
+    expect(result.to.node?.type.name).toBe('text');
+    expect(result.to.pos).toBe(9);
   });
 });

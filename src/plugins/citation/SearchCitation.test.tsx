@@ -53,7 +53,7 @@ describe('Search Citation   ', () => {
     const SearchCitationIns = new SearchCitation(SearchProps);
     expect(SearchCitationIns.onSearchCitations()).toHaveBeenCalled;
   });
-  it('should call onSearch Citations ', () => {
+  it('should call onSearch Citations  (case 2)', () => {
     const dom = document.createElement('input');
     jest.spyOn(document, 'getElementById').mockReturnValue(dom);
     const SearchCitationIns = new SearchCitation(SearchProps);

@@ -109,7 +109,7 @@ describe('video upload command', () => {
       )
     ).toBeFalsy();
   });
-  it('should handle isEnabled when !canUploadVideo and uploadVideo', () => {
+  it('should handle isEnabled when !canUploadVideo and uploadVideo (case 2)', () => {
     const dummyEditorview = {
       focused: true,
       runtime: {uploadVideo: () => undefined, canUploadVideo: () => undefined},

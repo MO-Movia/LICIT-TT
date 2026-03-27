@@ -179,7 +179,7 @@ describe('Image view body', () => {
   imageviewbody._inlineEditor = {
     close: () => undefined,
   } as unknown as PopUpHandle;
-  it('should be defined', () => {
+  it('should be defined (case 2)', () => {
     expect(imageviewbody).toBeDefined();
   });
 
@@ -238,7 +238,7 @@ describe('Image view body', () => {
     };
     expect(imageviewbody.render()).toBeDefined();
   });
-  it('should handle render', () => {
+  it('should handle render (case 2)', () => {
     imageviewbody.state = {
       maxSize: {
         width: 10000,
@@ -287,7 +287,7 @@ describe('Image view body', () => {
       })
     ).toStrictEqual({width: 10, height: 2});
   });
-  it('should handle calcWidthAndHeight when !height', () => {
+  it('should handle calcWidthAndHeight when !height (case 2)', () => {
     expect(
       imageviewbody.calcWidthAndHeight(0, 10, 5, {
         width: 2,
@@ -304,7 +304,7 @@ describe('Image view body', () => {
     expect(imageviewbody._renderInlineEditor()).toBeUndefined();
     spy.mockRestore();
   });
-  it('should handle _renderInlineEditor', () => {
+  it('should handle _renderInlineEditor (case 2)', () => {
     const elem = document.createElement('div');
     elem.setAttribute('data-active', 'true');
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
@@ -501,7 +501,7 @@ describe('Image view body', () => {
     });
     expect(ivb).toBeUndefined();
   });
-  it('should handle _onBodyResize', () => {
+  it('should handle _onBodyResize (case 2)', () => {
     imageviewbody._body = document.createElement('div');
 
     const ivb = imageviewbody._onBodyResize({
@@ -537,7 +537,7 @@ describe('Image view body', () => {
     });
     expect(ivb).toBeUndefined();
   });
-  it('should handle _onBodyRef', () => {
+  it('should handle _onBodyRef (case 2)', () => {
     const mockElement = document.createElement('div');
     expect(
       imageviewbody._onBodyRef(mockElement as unknown as React.ReactInstance)
@@ -649,7 +649,7 @@ describe('Image view body', () => {
       )
     ).toBeDefined();
   });
-  it('should handle calcWidthAndHeight', () => {
+  it('should handle calcWidthAndHeight (case 2)', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
         null as unknown as number,

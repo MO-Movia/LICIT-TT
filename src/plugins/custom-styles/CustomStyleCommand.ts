@@ -557,12 +557,13 @@ export class CustomStyleCommand extends UICommand {
     ) {
       this.showAlert();
     } else {
-      saveStyle(val).then((result) => {
-        //in bladelicitruntime, the response of the saveStyle() changed from list to a object
-        //so need to add that style object to the current style list
-        if (!Array.isArray(result)) {
-          result = addStyleToList(result);
-        }
+      saveStyle(val)
+        .then((result) => {
+          //in bladelicitruntime, the response of the saveStyle() changed from list to a object
+          //so need to add that style object to the current style list
+          if (!Array.isArray(result)) {
+            result = addStyleToList(result);
+          }
         setStyles(result);
         // Issue fix: Created custom style Numbering not applied to paragraph.
         tr = tr.setSelection(TextSelection.create(doc, 0, 0));
@@ -587,7 +588,8 @@ export class CustomStyleCommand extends UICommand {
           tr = applyStyle(val, val.styleName, state, tr) as Transaction;
           dispatch(tr);
         }
-      });
+      })
+        .catch(console.warn);
     }
   }
 
@@ -610,7 +612,8 @@ export class CustomStyleCommand extends UICommand {
   // [FS] IRAD-1231 2021-03-02
   // update the document with the edited styles list.
   getCustomStyles(styleName: string, editorView: EditorView) {
-    getStylesAsync().then((result) => {
+    getStylesAsync()
+      .then((result) => {
       if (styleName) {
         const { dispatch, state } = editorView;
         let tr;
@@ -623,7 +626,8 @@ export class CustomStyleCommand extends UICommand {
           dispatch(tr);
         }
       }
-    });
+    })
+      .catch(console.error);
   }
 
   // creates a sample style object

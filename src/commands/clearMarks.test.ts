@@ -76,7 +76,7 @@ describe('clearMarks', () => {
     const clearmarks = clearMarks(tr, mySchema);
     expect(clearmarks).toBe(tr);
   });
-  it('should push nodes with specific marks into tasks array', () => {
+  it('should push nodes with specific marks into tasks array (case 2)', () => {
     const mySchema = new Schema({
       nodes: {
         doc: { content: 'block+' },
@@ -151,7 +151,7 @@ describe('clearMarks', () => {
     const clearmarks = clearMarks(tr, mySchema);
     expect(clearmarks).toBe(tr);
   });
-  it('should push nodes with specific marks into tasks array', () => {
+  it('should push nodes with specific marks into tasks array (case 3)', () => {
     const mySchema = new Schema({
       nodes: {
         doc: { content: 'block+' },
@@ -609,7 +609,7 @@ describe('comapreMarks', () => {
     const test8 = comapreMarks({ styles: { 'test': [] } } as unknown as Style, { attrs: {}, type: { name: 'test' } } as unknown as Mark, {}, 0, {} as unknown as Node, {} as unknown as Schema);
     expect(test8).toBeDefined();
   });
-  it('should handle comapreMarks', () => {
+  it('should handle comapreMarks (case 2)', () => {
     const test = comapreMarks(
       { styles: { em: [] } } as unknown as Style,
       { attrs: { overridden: true }, type: { name: 'em' } } as unknown as Mark,

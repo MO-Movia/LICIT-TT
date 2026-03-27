@@ -41,7 +41,7 @@ describe('image upload place holder plugin', () => {
 
 
   });
-  it('should handle uploadImageFiles', () => {
+  it('should handle uploadImageFiles (case 2)', () => {
     const mockSchema = new Schema({
       nodes: {
         doc: { content: 'image' },
@@ -97,7 +97,7 @@ describe('image upload place holder plugin', () => {
     jest.runAllTimers();
     // expect defered task not to fail
   });
-  it('should handle uploadImageFiles', () => {
+  it('should handle uploadImageFiles (case 3)', () => {
 
     const mockSchema = new Schema({
       nodes: {
@@ -479,7 +479,7 @@ describe('image upload place holder plugin', () => {
 
   });
 
-  it('should handle uploadImageFiles', () => {
+  it('should handle uploadImageFiles (case 4)', () => {
 
     const mockSchema = new Schema({
       nodes: {

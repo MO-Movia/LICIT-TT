@@ -16,7 +16,7 @@ describe('toCSSLineSpacing', () => {
     expect(toCSSLineSpacing('20px')).toBe('20px');
   });
 
-  it('should normalize incorrect line spacing values', () => {
+  it('should normalize incorrect line spacing values (case 2)', () => {
     expect(toCSSLineSpacing('100%')).toBe('125%');
     expect(toCSSLineSpacing('115%')).toBe('138%');
     expect(toCSSLineSpacing('150%')).toBe('165%');

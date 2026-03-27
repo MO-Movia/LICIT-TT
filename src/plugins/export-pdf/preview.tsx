@@ -115,7 +115,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     this.showAlert();
 
     const { editorView } = this.props;
-    this.getToc(editorView);
+    void this.getToc(editorView).catch(console.warn);
     PreviewForm.general = true;
     PreviewForm.isToc = true;
     PreviewForm.isTof = true;

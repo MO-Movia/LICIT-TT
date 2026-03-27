@@ -63,7 +63,7 @@ describe('VideoNodeSpec', () => {
   });
 
 
-  it('parse dom attributes', () => {
+  it('parse dom attributes (case 2)', () => {
     const dom = document.createElement('span');
 
     dom.setAttribute('height', 113 as any);
@@ -100,7 +100,7 @@ describe('VideoNodeSpec', () => {
     const getAttrs = VideoNodeSpec.parseDOM[0].getAttrs(dom);
     expect(getAttrs).toEqual({ "align": "left", "alt": null, "crop": null, "height": 113, "id": null, "marginLeft": null, "marginTop": null, "rotate": null, "src": "https://www.youtube.com/embed/ru60J99ojJw", "title": null, "width": 200 });
   });
-  it('parse dom attributes', () => {
+  it('parse dom attributes (case 3)', () => {
     const dom = document.createElement('span');
 
     dom.setAttribute('height', 113 as any);
@@ -138,7 +138,7 @@ describe('VideoNodeSpec', () => {
     expect(getAttrs).toEqual({ "align": "block", "alt": null, "crop": null, "height": 113, "id": null, "marginLeft": null, "marginTop": null, "rotate": null, "src": "https://www.youtube.com/embed/ru60J99ojJw", "title": null, "width": 200 });
   });
 
-  it('parse dom attributes', () => {
+  it('parse dom attributes (case 4)', () => {
     const dom = document.createElement('span');
 
     dom.setAttribute('height', 113 as any);
@@ -184,7 +184,7 @@ describe('getalign',()=>{
   })
 })
 describe('getAttrs',()=>{
-  it('should handle getAllign',()=>{
+  it('should handle getAllign (case 2)',()=>{
     const dom = document.createElement('image');
     dom.setAttribute('align','top');
     dom.setAttribute('height',null as unknown as string)
@@ -208,7 +208,7 @@ describe('getCropRotate',()=>{
     const getcroprotate = getCropRotate(dom,'10px','10px');
     expect(getcroprotate).toBeDefined();
 })
-it('should handle getcroprotate',()=>{
+it('should handle getcroprotate (case 2)',()=>{
     const parent = document.createElement('div');
     parent.style.display =  'inline-block';
     parent.style.overflow  =  'hidden';
@@ -223,7 +223,7 @@ it('should handle getcroprotate',()=>{
     const getcroprotate = getCropRotate(dom,'-1','-1');
     expect(getcroprotate).toBeDefined();
 })
-it('should handle getcroprotate',()=>{
+it('should handle getcroprotate (case 3)',()=>{
     const parent = document.createElement('div');
     parent.style.display =  'inline-block';
     parent.style.overflow  =  'hidden';

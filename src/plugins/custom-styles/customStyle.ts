@@ -123,11 +123,13 @@ export function getStyleRuntime(): StyleRuntime {
   return styleRuntime;
 }
 export function setCustomStylesOnLoad() {
-  getStylesAsync().then((result) => {
-    if (result) {
-      setStyles(result);
-    }
-  });
+  getStylesAsync()
+    .then((result) => {
+      if (result) {
+        setStyles(result);
+      }
+    })
+    .catch(console.warn);
 }
 
 function saveDefaultStyle() {

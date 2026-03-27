@@ -216,7 +216,7 @@ describe('Info Plugin Extended', () => {
     expect(cView.update(node)).toBe(true);
   });
 
-  describe('Info Plugin Extended', () => {
+  describe('Info Plugin Extended (group 2)', () => {
     let currentNode: Node | undefined;
 
     const updateNode = (node: Node): boolean => {

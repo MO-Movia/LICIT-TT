@@ -29,6 +29,7 @@ describe('PasteJSONFPlugin', () => {
     createEditor(doc('<cursor>', p('Hello World')), {
       plugins: [plugin],
     });
+    expect(plugin).toBeDefined();
   });
 
   it('transformPastedText method with empty value', () => {

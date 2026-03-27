@@ -175,7 +175,7 @@ describe('CitationDialog', () => {
     expect(styleMock.pointerEvents).toBeDefined();
   });
 
-  describe('CitationDialog', () => {
+  describe('CitationDialog (group 2)', () => {
     it('should handle execute', () => {
       const citationMockProps = {
         overallDocumentCapco: 'TBD',

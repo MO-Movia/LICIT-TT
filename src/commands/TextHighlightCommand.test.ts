@@ -83,7 +83,7 @@ describe('TextHighlightCommand', () => {
 
     expect(test).toBeTruthy();
   });
-  it('executeWithUserInput function() should be return true, If docChanged = true', () => {
+  it('executeWithUserInput function() should be return true, If docChanged = true (case 2)', () => {
     const state = {
       plugins: [],
       schema: { marks: { 'mark-text-highlight': MARK_TEXT_HIGHLIGHT } },
@@ -185,7 +185,7 @@ describe('TextHighlightCommand', () => {
     expect(test).toBe(false);
   });
 
-  it('should call when executeCustom function return false', () => {
+  it('should call when executeCustom function return false (case 2)', () => {
     const mock = jest.spyOn(
       ismarkcommandenabled,
       'isTextStyleMarkCommandEnabled'
@@ -335,7 +335,7 @@ describe('TextHighlightCommand', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should resolve with undefined when event is not defined or currentTarget is not an HTMLElement', async () => {
+  it('should resolve with undefined when event is not defined or currentTarget is not an HTMLElement (case 2)', async () => {
     const state = {} as unknown as EditorState;
 
     const _dispatch = jest.fn();

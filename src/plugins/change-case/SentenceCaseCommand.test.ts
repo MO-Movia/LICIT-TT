@@ -147,7 +147,7 @@ describe('SentanceCaseCommand', () => {
     it('should handle parseSelectedText when text has .', () => {
         expect(plugin.parseSelectedText('What is a text? This is a text.')).toBeDefined();
     });
-    it('should handle parseSelectedText when text has .', () => {
+    it('should handle parseSelectedText when text has . (case 2)', () => {
         expect(plugin.parseSelectedText('What?? is?? a text? This??is a ??text.')).toBeDefined();
     });
     it('should handle checkDelimeter', () => {

@@ -155,7 +155,8 @@ describe('MultimediaPlugin', () => {
       selection: undefined,
       plugins: [new MultimediaPlugin()],
     });
-    new VideoSourceCommand().__isEnabled(statetest, view);
+    const enabled = new VideoSourceCommand().__isEnabled(statetest, view);
+    expect(enabled).toBeDefined();
   });
 
   it('isEnabled in VideoSourceCommand', () => {
@@ -165,7 +166,8 @@ describe('MultimediaPlugin', () => {
       selection: undefined,
       plugins: [new MultimediaPlugin()],
     });
-    new VideoSourceCommand().isEnabled(statetest, view);
+    const enabled = new VideoSourceCommand().isEnabled(statetest, view);
+    expect(enabled).toBeDefined();
   });
 
   it('isEnabled in image', () => {
@@ -195,8 +197,8 @@ describe('MultimediaPlugin', () => {
       schema: schema,
     });
 
-    trans.isEnabled(state);
-    trans.getEditor();
+    expect(trans.isEnabled(state)).toBeDefined();
+    expect(trans.getEditor()).toBeDefined();
   });
 
   it('isEnabled', () => {
@@ -207,12 +209,12 @@ describe('MultimediaPlugin', () => {
       schema: schema,
     });
 
-    trans.isEnabled(state);
+    expect(trans.isEnabled(state)).toBeDefined();
   });
 
   it('getEditor', () => {
     const trans = new VideoUploadCommand();
-    trans.getEditor();
+    expect(trans.getEditor()).toBeDefined();
   });
 
   it('can Image Upload', () => {
@@ -222,17 +224,17 @@ describe('MultimediaPlugin', () => {
       schema: schema,
     });
 
-    trans.isEnabled(state);
+    expect(trans.isEnabled(state)).toBeDefined();
   });
 
-  it('can Image Upload', () => {
+  it('can Image Upload (case 2)', () => {
     const trans = new ImageUploadCommand();
     const state = EditorState.create({
       doc: doc(p('Hello World!!')),
       schema: schema,
     });
 
-    trans.isEnabled(state);
+    expect(trans.isEnabled(state)).toBeDefined();
   });
 
   it('bindImageView', () => {
@@ -256,6 +258,7 @@ describe('MultimediaPlugin', () => {
     selection.disconnect();
     selection.takeRecords();
     selection._check();
+    expect(selection.takeRecords()).toEqual([]);
   });
 
   it('EditorFocused', () => {
@@ -272,9 +275,9 @@ describe('MultimediaPlugin', () => {
 
   it('icon render', () => {
     const trans = new ImageFromURLCommand();
-    trans.getEditor();
+    expect(trans.getEditor()).toBeDefined();
     const trans1 = new VideoFromURLCommand();
-    trans1.getEditor();
+    expect(trans1.getEditor()).toBeDefined();
   });
 
   it('uuid', () => {

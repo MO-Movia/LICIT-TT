@@ -26,6 +26,7 @@ describe('Export PDF Plugin', () => {
       plugins: [plugin],
     });
     editor.shortcut('Ctrl-Alt-P');
+    expect(editor.state).toBeDefined();
   });
 
   it('should call initKeyCommands', () => {

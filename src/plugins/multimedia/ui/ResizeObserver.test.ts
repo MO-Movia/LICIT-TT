@@ -26,7 +26,7 @@ describe('Resize observer', () => {
       unobserve(element, (_ResizeObserverEntry) => undefined)
     ).toBeUndefined();
   });
-  it('should handle unobserve', () => {
+  it('should handle unobserve (case 2)', () => {
     const element = document.createElement('div');
     expect(unobserve(element)).toBeUndefined();
     expect(unobserve(element)).toBeUndefined();

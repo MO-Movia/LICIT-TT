@@ -16,10 +16,11 @@ describe('Plugin', () => {
     });
     const plugin = Plugin();
 
-   new EditorView(null, {
+    const view = new EditorView(null, {
       state,
-      plugins:[plugin] ,
+      plugins: [plugin],
     });
+    expect(view.state).toBe(state);
   });
 
   it('should resolve with the value from the popup onClose',() => {

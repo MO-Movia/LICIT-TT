@@ -207,7 +207,7 @@ describe('TextColorCommand', () => {
     expect(result).toBeDefined();
   });
 
-  it('waitForUserInput function() should be return undefined', () => {
+  it('waitForUserInput function() should be return undefined (case 2)', () => {
     const state = {
       plugins: [],
       selection: { from: 1, to: 2 },
@@ -238,7 +238,7 @@ describe('TextColorCommand', () => {
 
     expect(result).toBeDefined();
   });
-  it('waitForUserInput function() should be return undefined', () => {
+  it('waitForUserInput function() should be return undefined (case 3)', () => {
     const state = {
       plugins: [],
       selection: { from: 1, to: 2 },
@@ -273,7 +273,7 @@ describe('TextColorCommand', () => {
 
     expect(result).toBeDefined();
   });
-  it('waitForUserInput function() should be return undefined', () => {
+  it('waitForUserInput function() should be return undefined (case 4)', () => {
     const state = {
       plugins: [],
       selection: { from: 1, to: 2 },
@@ -335,7 +335,7 @@ describe('TextColorCommand', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should resolve with undefined when event is not defined or currentTarget is not an HTMLElement', async () => {
+  it('should resolve with undefined when event is not defined or currentTarget is not an HTMLElement (case 2)', async () => {
     const state = {} as unknown as EditorState;
 
     const _dispatch = jest.fn();

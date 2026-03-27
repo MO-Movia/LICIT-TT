@@ -35,7 +35,9 @@ export function canUseCSSFont(fontName: string): Promise<boolean> {
         const result = !!matched;
         resolve(result);
       };
-      doc.fonts.ready.then(check);
+      doc.fonts.ready
+        .then(check)
+        .catch(() => resolve(false));
     });
   }
   return cached[fontName];

@@ -58,8 +58,8 @@ describe('Image Upload Editor', () => {
     expect(ImageUploadEditorIns._onSuccess({} as unknown as ImageLike)).toBeUndefined();
   });
 });
-describe('Image Upload Editor', () => {
-  it('should render Image Upload Editor', () => {
+describe('Image Upload Editor (group 2)', () => {
+  it('should render Image Upload Editor (case 2)', () => {
     const ImageUploadEditorProps = {
       runtime: {
         // Image Proxy
@@ -82,7 +82,7 @@ describe('Image Upload Editor', () => {
     const imageuploadeditor = new ImageUploadEditor(ImageUploadEditorProps);
     expect(imageuploadeditor).toBeDefined();
   });
-  it('should handle render', () => {
+  it('should handle render (case 2)', () => {
     const ImageUploadEditorProps = {
       runtime: {
         // Image Proxy
@@ -110,7 +110,7 @@ describe('Image Upload Editor', () => {
     };
     expect(imageuploadeditor.render()).toBeDefined();
   });
-  it('should handle _onSuccess', () => {
+  it('should handle _onSuccess (case 2)', () => {
     const ImageUploadEditorProps = {
       runtime: {
         // Image Proxy
@@ -189,7 +189,7 @@ describe('Image Upload Editor', () => {
     expect(instance).toBeUndefined();
   });
 
-  it('should handle _upload', () => {
+  it('should handle _upload (case 2)', () => {
     const ImageUploadEditorProps = {
       runtime: {
         // Image Proxy

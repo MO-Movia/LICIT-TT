@@ -37,7 +37,7 @@ describe('customstyle', () => {
     const test = isStylesLoaded();
     expect(test).toBeDefined();
   });
-  it('should handle isStylesLoaded', () => {
+  it('should handle isStylesLoaded (case 2)', () => {
     const test = hasStyleRuntime();
     expect(test).toBeFalsy();
   });
@@ -61,7 +61,7 @@ describe('customstyle', () => {
     });
     expect(saveStyle({} as unknown as Style)).toBeDefined();
   });
-  it('should handle saveStyle', () => {
+  it('should handle saveStyle (case 2)', () => {
     setStyleRuntime({
       renameStyle: () => {
         return null;
@@ -69,7 +69,7 @@ describe('customstyle', () => {
     });
     expect(renameStyle('old', 'new')).toBeDefined();
   });
-  it('should handle saveStyle', () => {
+  it('should handle saveStyle (case 3)', () => {
     setStyleRuntime({
       removeStyle: () => {
         return null;

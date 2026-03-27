@@ -81,7 +81,7 @@ describe('Enhanced Table Figure Node Specs', () => {
   });
 
   describe('enhancedTableFigureCapcoNodeSpec', () => {
-    it('returns correct DOM output with attrs', () => {
+    it('returns correct DOM output with attrs (case 2)', () => {
       const mockNode = { attrs: { form: 'short', capco: 'SECRET' } };
       const result = enhancedTableFigureCapcoNodeSpec.toDOM(mockNode as any);
       expect(result).toEqual([
@@ -180,7 +180,7 @@ describe('Enhanced Table Figure Node Specs', () => {
       });
     });
 
-    it('getAttrs falls back to defaults', () => {
+    it('getAttrs falls back to defaults (case 2)', () => {
       const tag = enhancedTableFigureNodeSpec.parseDOM[0];
       const dom = document.createElement('div');
 

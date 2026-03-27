@@ -52,7 +52,7 @@ describe('customstyleitem', () => {
   it('should handle render', () => {
     expect(customstyleitem.render()).toBeDefined();
   });
-   it('should be defined', () => {
+   it('should be defined (case 2)', () => {
     const props = {
     command: {
       _customStyleName: 'Normal',

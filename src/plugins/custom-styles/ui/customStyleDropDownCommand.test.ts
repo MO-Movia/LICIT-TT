@@ -456,13 +456,13 @@ describe('customstyledropdowncommand', () => {
       customstyledropdowncommand.isAllowedNode(node as unknown as Node)
     ).toBe(true);
   });
-  it('should handle isAllowedNode', () => {
+  it('should handle isAllowedNode (case 2)', () => {
     const node = { type: { name: 'ordered_list' } };
     expect(
       customstyledropdowncommand.isAllowedNode(node as unknown as Node)
     ).toBe(true);
   });
-    it('should handle isAllowedNode', () => {
+    it('should handle isAllowedNode (case 3)', () => {
     const node = { type: { name: 'enhanced_table_figure_notes' } };
     expect(
       customstyledropdowncommand.isAllowedNode(node as unknown as Node)
@@ -877,7 +877,7 @@ describe('customstyledropdowncommand 1', () => {
     const headingCommands = commandGroups[0];
     expect(headingCommands).toBeDefined();
   });
-  it('should handle render when styleName not null', () => {
+  it('should handle render when styleName not null (case 2)', () => {
     const spy = jest.spyOn(cusstyles, 'getStylesAsync').mockResolvedValue([
       {
         styleName: 'A Apply Stylefff',
@@ -1041,7 +1041,7 @@ describe('customstyledropdowncommand 1', () => {
     expect(customstyledropdowncommand.render()).toBeDefined();
     spy.mockRestore();
   });
-  it('should handle render when styleName not null', () => {
+  it('should handle render when styleName not null (case 3)', () => {
     const spy = jest.spyOn(cusstyles, 'getStylesAsync').mockResolvedValue([
       {
         styleName: 'A Apply Stylefff',

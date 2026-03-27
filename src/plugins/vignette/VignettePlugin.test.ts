@@ -36,8 +36,8 @@ describe('VignettePlugin', () => {
 
   const view = new EditorView(dom, directeditorprops);
 
-  it('should handle VignetteCommand', async () => {
-    const content = await createEditor(doc(p('<cursor>')), {
+  it('should handle VignetteCommand', () => {
+    const content = createEditor(doc(p('<cursor>')), {
       plugins: [...VignettePlugins],
     }).command((state, dispatch) => {
       if (dispatch) {
@@ -63,12 +63,12 @@ describe('VignettePlugin', () => {
     expect(newSchema.spec.nodes.get(TABLE)?.attrs?.vignette).toBeTruthy();
   });
 
-  it('should handle createCommand', async () => {
+  it('should handle createCommand', () => {
     createEditor(doc(table(tr(td(p('content'))))), {});
 
     const deleteTableCommand = createCommand(deleteTable);
 
-    const newState = await createEditor(doc(table(tr(td(p('content'))))), {
+    const newState = createEditor(doc(table(tr(td(p('content'))))), {
       plugins: [...VignettePlugins],
     }).command((state, _dispatch) => {
       deleteTableCommand.isEnabled(state);
@@ -89,7 +89,7 @@ describe('VignettePlugin', () => {
     const tablebrdercolorcommand = new TableBorderColorCommand();
     expect(tablebrdercolorcommand.getAttrName()).toEqual('borderColor');
   });
-  it('should handle createCommand', () => {
+  it('should return backgroundColor', () => {
     const tablebgcolorcommand = new TableBackgroundColorCommand();
     expect(tablebgcolorcommand.getAttrName()).toEqual('backgroundColor');
   });
@@ -105,8 +105,7 @@ describe('VignettePlugin', () => {
       Fragment.empty
     );
     const nodeSpec1: NodeSpec = {
-      toDOM: (node: any) => {
-        node.attrs.marginLeft = '10px';
+      toDOM: (_node: Node) => {
         return ['test', { vignette: 'false', marginLeft: '10x' }];
       },
       parseDOM: [

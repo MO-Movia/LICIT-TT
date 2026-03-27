@@ -93,12 +93,18 @@ export class ImageURLEditor extends React.PureComponent<
   };
 
   _didSrcChange = (): void => {
-    resolveImage(this.state.src).then((result) => {
-      if (this.state.src === result.src && !this._unmounted) {
-        const validValue = result.complete ? result : null;
-        this.setState({ validValue });
-      }
-    });
+    void resolveImage(this.state.src)
+      .then((result) => {
+        if (this.state.src === result.src && !this._unmounted) {
+          const validValue = result.complete ? result : null;
+          this.setState({ validValue });
+        }
+      })
+      .catch(() => {
+        if (!this._unmounted) {
+          this.setState({ validValue: null });
+        }
+      });
   };
 
   _cancel = (): void => {

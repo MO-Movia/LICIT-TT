@@ -168,10 +168,10 @@ describe('ImageSourceCommand', () => {
       expect(createPopUp).not.toHaveBeenCalled();
     });
 
-    it('should call showCursorPlaceholder when dispatch is provided', async () => {
+    it('should call showCursorPlaceholder when dispatch is provided', () => {
       (createPopUp as jest.Mock).mockReturnValue({});
 
-      command.waitForUserInput(state, mockDispatch, mockView);
+      void command.waitForUserInput(state, mockDispatch, mockView);
 
       expect(showCursorPlaceholder).toHaveBeenCalledWith(state);
       expect(mockDispatch).toHaveBeenCalled();
@@ -180,22 +180,22 @@ describe('ImageSourceCommand', () => {
       command._popUp = undefined;
     });
 
-    it('should not call dispatch when dispatch is null', async () => {
+    it('should not call dispatch when dispatch is null', () => {
       (createPopUp as jest.Mock).mockReturnValue({});
 
-      command.waitForUserInput(state, null, mockView);
+      void command.waitForUserInput(state, null, mockView);
 
       expect(mockDispatch).not.toHaveBeenCalled();
     });
 
-    it('should create popup with correct props and options', async () => {
+    it('should create popup with correct props and options', () => {
       const mockPopUp: PopUpHandle = {
         close: jest.fn(),
         update: jest.fn(),
       };
       (createPopUp as jest.Mock).mockReturnValue(mockPopUp);
 
-      command.waitForUserInput(state, mockDispatch, mockView);
+      void command.waitForUserInput(state, mockDispatch, mockView);
 
       expect(createPopUp).toHaveBeenCalledWith(
         undefined,
@@ -230,13 +230,13 @@ describe('ImageSourceCommand', () => {
       expect(command._popUp).toBeUndefined();
     });
 
-    it('should handle null view', async () => {
+    it('should handle null view', () => {
       (createPopUp as jest.Mock).mockReturnValue({
         close: jest.fn(),
         update: jest.fn(),
       } as PopUpHandle);
 
-      command.waitForUserInput(state, mockDispatch, null);
+      void command.waitForUserInput(state, mockDispatch, null);
 
       expect(createPopUp).toHaveBeenCalledWith(
         undefined,
@@ -299,7 +299,7 @@ describe('ImageSourceCommand', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle null view', () => {
+    it('should handle null view (case 2)', () => {
       const inputs: ImageProps = {
         src: 'https://example.com/image.jpg',
         id: 'img-3',
@@ -339,7 +339,7 @@ describe('ImageSourceCommand', () => {
   });
 
   describe('renderLabel', () => {
-    it('should return null', () => {
+    it('should return null (case 2)', () => {
       expect(command.renderLabel()).toBeNull();
     });
   });
@@ -359,7 +359,7 @@ describe('ImageSourceCommand', () => {
   });
 
   describe('executeCustomStyleForTable', () => {
-    it('should return the same transform', () => {
+    it('should return the same transform (case 2)', () => {
       const tr = state.tr;
       const result = command.executeCustomStyleForTable(state, tr, 0, 1);
       expect(result).toBe(tr);
