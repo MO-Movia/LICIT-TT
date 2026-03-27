@@ -4,19 +4,24 @@
  */
 
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import {flushSync} from 'react-dom';
+import {createRoot, type Root} from 'react-dom/client';
 import TableDetails from './TableDetails';
 
 describe('TableDetails', () => {
   let container: HTMLDivElement;
+  let root: Root;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
+    root = createRoot(container);
   });
 
   afterEach(() => {
-    ReactDOM.unmountComponentAtNode(container);
+    flushSync(() => {
+      root.unmount();
+    });
     document.body.removeChild(container);
     container = null;
   });
@@ -29,7 +34,9 @@ describe('TableDetails', () => {
       },
     };
 
-    ReactDOM.render(<TableDetails {...props} />, container);
+    flushSync(() => {
+      root.render(<TableDetails {...props} />);
+    });
 
     expect(container.querySelector('.czi-table-details-popup')).toBeTruthy();
     expect(container.querySelector('.czi-table-details-header span')?.textContent).toBe('Table Details');
@@ -62,7 +69,9 @@ describe('TableDetails', () => {
       },
     };
 
-    ReactDOM.render(<TableDetails {...props} />, container);
+    flushSync(() => {
+      root.render(<TableDetails {...props} />);
+    });
 
     expect(container.querySelector<HTMLInputElement>('input[name="noOfColumns"]')?.value).toBe('4');
     expect(container.querySelector<HTMLInputElement>('input[name="tableHeight"]')?.value).toBe('250px');
@@ -88,7 +97,9 @@ describe('TableDetails', () => {
       },
     };
 
-    ReactDOM.render(<TableDetails {...props} />, container);
+    flushSync(() => {
+      root.render(<TableDetails {...props} />);
+    });
 
     expect(container.textContent).not.toContain('Cell Width');
     expect(container.textContent).not.toContain('Cell Attributes');
@@ -105,13 +116,17 @@ describe('TableDetails', () => {
       close: closeMock,
     };
 
-    ReactDOM.render(<TableDetails {...props} />, container);
+    flushSync(() => {
+      root.render(<TableDetails {...props} />);
+    });
 
     const closeButton = container.querySelector<HTMLButtonElement>('.czi-table-details-close');
     expect(closeButton).toBeTruthy();
     expect(closeButton?.title).toBe('Close');
 
-    closeButton?.click();
+    flushSync(() => {
+      closeButton?.click();
+    });
     expect(closeMock).toHaveBeenCalledTimes(1);
   });
 
@@ -137,10 +152,14 @@ describe('TableDetails', () => {
       onApply: onApplyMock,
     };
 
-    ReactDOM.render(<TableDetails {...props} />, container);
+    flushSync(() => {
+      root.render(<TableDetails {...props} />);
+    });
 
     const applyButton = container.querySelector<HTMLButtonElement>('button[title="Apply"]');
-    applyButton?.click();
+    flushSync(() => {
+      applyButton?.click();
+    });
 
     expect(onApplyMock).toHaveBeenCalledWith(
       expect.objectContaining({

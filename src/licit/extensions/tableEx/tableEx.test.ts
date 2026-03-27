@@ -92,7 +92,7 @@ describe('TableEx Extension', () => {
     let cellPos = 0;
     state.doc.descendants((node, pos) => {
       if (node.type.name === 'tableCell' && cellPos === 0) {
-        cellPos = pos + 1;
+        cellPos = pos + 2;
       }
     });
 
@@ -115,7 +115,7 @@ describe('TableEx Extension', () => {
       if (node.type.name === 'tableCell') {
         cellCount++;
         if (cellCount === 2) {
-          cellPos = pos + 1;
+          cellPos = pos + 2;
         }
       }
     });
@@ -145,7 +145,7 @@ describe('TableEx Extension', () => {
       }
     });
 
-    editor.commands.setTextSelection(lastCellPos + 1);
+    editor.commands.setTextSelection(lastCellPos + 2);
     editor.commands.updateAttributes('tableCell', {vignette: false});
 
     const countRows = () => {
@@ -228,7 +228,7 @@ test('should not add row when Tab pressed in last cell and vignette is true', ()
     }
   });
 
-  editor.commands.setTextSelection(lastCellPos + 1);
+  editor.commands.setTextSelection(lastCellPos + 2);
   editor.commands.updateAttributes('tableCell', {vignette: true});
 
   editor.state.doc.descendants((node) => {
@@ -262,7 +262,7 @@ test('should add row and move to it when Tab pressed in last cell without vignet
     }
   });
 
-  editor.commands.setTextSelection(lastCellPos + 1);
+  editor.commands.setTextSelection(lastCellPos + 2);
 
   const spy = jest.spyOn(editor.commands, 'addRowAfter');
   const tabEvent = new KeyboardEvent('keydown', {key: 'Tab'});
@@ -293,7 +293,7 @@ test('should handle header_cell role in Tab navigation', () => {
 
   state.doc.descendants((node, pos) => {
     if (node.type.name === 'tableHeader' && headerPos === 0) {
-      headerPos = pos + 1;
+      headerPos = pos + 2;
     }
   });
 
@@ -310,7 +310,7 @@ test('should apply tableHeight to table DOM when attributes are updated', () => 
   let cellPos = 0;
   editor.state.doc.descendants((node, pos) => {
     if (node.type.name === 'tableCell' && cellPos === 0) {
-      cellPos = pos + 1;
+      cellPos = pos + 2;
     }
   });
 
