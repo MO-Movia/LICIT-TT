@@ -107,11 +107,11 @@ describe('TableDetails', () => {
 
     ReactDOM.render(<TableDetails {...props} />, container);
 
-    const closeButton = container.querySelector('.czi-table-details-close');
+    const closeButton = container.querySelector<HTMLButtonElement>('.czi-table-details-close');
     expect(closeButton).toBeTruthy();
-    expect(closeButton['title']).toBe('Close');
+    expect(closeButton?.title).toBe('Close');
 
-    closeButton['click']();
+    closeButton?.click();
     expect(closeMock).toHaveBeenCalledTimes(1);
   });
 
@@ -139,8 +139,8 @@ describe('TableDetails', () => {
 
     ReactDOM.render(<TableDetails {...props} />, container);
 
-    const applyButton = container.querySelector('button[title="Apply"]');
-    applyButton['click']();
+    const applyButton = container.querySelector<HTMLButtonElement>('button[title="Apply"]');
+    applyButton?.click();
 
     expect(onApplyMock).toHaveBeenCalledWith(
       expect.objectContaining({

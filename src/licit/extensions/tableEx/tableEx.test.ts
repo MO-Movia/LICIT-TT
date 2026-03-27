@@ -317,7 +317,7 @@ test('should apply tableHeight to table DOM when attributes are updated', () => 
   editor.commands.setTextSelection(cellPos);
   editor.commands.updateAttributes('table', {tableHeight: '280'});
 
-  const tableElement = editor.view.dom.querySelector('table') as HTMLTableElement;
+  const tableElement = editor.view.dom.querySelector('table');
   expect(tableElement.style.height).toBe('280px');
 });
 
