@@ -500,7 +500,7 @@ describe('Custom Menu UI', () => {
 
     expect(custommenuuipro.render()).toBeDefined();
   });
-  it('should render the component', () => {
+  it('should render the component (case 2)', () => {
     const CustomMenuTestProps = {
       className: 'molcs-menu-button',
       commandGroups: [cmdGrp1, cmdGrp2, { Normal: true }],
@@ -665,7 +665,7 @@ describe('Custom Menu UI', () => {
       } as unknown as SyntheticEvent)
     ).toBeUndefined();
   });
-  it('should handle showsubmenu when popup not null', () => {
+  it('should handle showsubmenu when popup not null (case 2)', () => {
     custommenuui._stylePopup = { close: () => {} } as unknown as null;
     const ui = {
       _customStyleName: 'Normal',
@@ -1111,7 +1111,7 @@ describe('Custom Menu UI', () => {
     expect(custommenuui.showStyleWindow(uicommands, event, 0)).toBeUndefined();
     expect(custommenuui.showStyleWindow(uicommands, event, 0)).toBeUndefined();
   });
-  it('should handle showStyleWindow', () => {
+  it('should handle showStyleWindow (case 2)', () => {
     const event = new Event('click');
     const uicommands = {
       _customStyleName: 'test',
@@ -1126,7 +1126,7 @@ describe('Custom Menu UI', () => {
       )
     ).toBeUndefined();
   });
-  it('should handle showStyleWindow', () => {
+  it('should handle showStyleWindow (case 3)', () => {
     const view = new EditorView(document.createElement('div'), {
       state,
     });
@@ -1164,7 +1164,7 @@ describe('Custom Menu UI', () => {
       )
     ).toBeUndefined();
   });
-  it('should handle showStyleWindow', () => {
+  it('should handle showStyleWindow (case 4)', () => {
     const view = new EditorView(document.createElement('div'), {
       state,
     });

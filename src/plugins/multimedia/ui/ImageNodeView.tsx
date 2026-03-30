@@ -152,7 +152,7 @@ export class ImageViewBody extends React.PureComponent<
 
   componentDidMount(): void {
     this._mounted = true;
-    this._resolveOriginalSize();
+    void this._resolveOriginalSize().catch(console.warn);
     this._renderInlineEditor();
   }
 
@@ -168,7 +168,7 @@ export class ImageViewBody extends React.PureComponent<
     const {src} = node.attrs;
     if (prevSrc !== src) {
       // A new image is provided, resolve it.
-      this._resolveOriginalSize();
+      void this._resolveOriginalSize().catch(console.warn);
     }
     this._renderInlineEditor();
   }

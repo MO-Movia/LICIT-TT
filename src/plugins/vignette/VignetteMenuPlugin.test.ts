@@ -3,6 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+import { CellSelection } from 'prosemirror-tables';
 import { VignetteView } from './VignetteMenuPlugin';
 import { TABLE } from './Constants';
 
@@ -161,19 +162,20 @@ describe('VignetteView', () => {
   });
 
   test('isVignette detects vignette in multiple locations', () => {
-    const CellSelection = require('prosemirror-tables').CellSelection;
-    const selection = new CellSelection();
+    const selection = new CellSelection({} as any);
     const node = { attrs: { vignette: true } };
     const state = {
       selection,
       selectionType: 'cell',
     };
-    selection.$anchor = {
-      node: jest.fn(() => ({
-        type: { name: 'paragraph' },
-        attrs: { vignette: false },
-      })),
-    };
+    Object.defineProperty(selection, '$anchor', {
+      value: {
+        node: jest.fn(() => ({
+          type: { name: 'paragraph' },
+          attrs: { vignette: false },
+        })),
+      },
+    });
     expect(VignetteView.isVignette(state as any, node as any)).toBe(true);
   });
 

@@ -74,7 +74,7 @@ describe('FontSizeCommand', () => {
     expect(test).toBe(true);
   });
 
-  it('should call when execute function return true', () => {
+  it('should call when execute function return true (case 2)', () => {
     jest.spyOn(applymark, 'applyMark').mockReturnValue({
       docChanged: false,
       storedMarksSet: true,
@@ -184,7 +184,7 @@ describe('FontSizeCommand', () => {
   });
 });
 
-describe('FontSizeCommand', () => {
+describe('FontSizeCommand (group 2)', () => {
   let schema1;
   let command: FontSizeCommand;
   let dispatch: jest.Mock;

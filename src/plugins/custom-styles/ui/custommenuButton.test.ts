@@ -243,7 +243,7 @@ describe('custommenubutton', () => {
     custommenubutton._showMenu();
     expect(spy).toHaveBeenCalled();
   });
-  it('should handle _showMenu', () => {
+  it('should handle _showMenu (case 2)', () => {
     const mockschema = new Schema({
       nodes: {
         doc: {

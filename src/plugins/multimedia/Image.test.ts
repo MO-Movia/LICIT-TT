@@ -92,38 +92,46 @@ describe('MultimediaPlugin', () => {
       view,
       ImageArgs
     );
-    ImgSrcCmd.__isEnabled(state);
-    ImgSrcCmd.__isEnabled(newstate);
-    ImgSrcCmd.__isEnabled(newstate1);
-    ImgSrcCmd.isEnabled(state);
+    const enabled = ImgSrcCmd.__isEnabled(state);
+    const enabledWithoutSelection = ImgSrcCmd.__isEnabled(newstate);
+    const enabledWithSelection = ImgSrcCmd.__isEnabled(newstate1);
+    const isEnabled = ImgSrcCmd.isEnabled(state);
+    expect(enabled).toBeDefined();
+    expect(enabledWithoutSelection).toBeDefined();
+    expect(enabledWithSelection).toBeDefined();
+    expect(isEnabled).toBeDefined();
   });
 
   it('ImageNodespec', () => {
     const img = document.createElement('img');
     img.src = '1200x800';
     img.setAttribute('align', 'left');
-    getAttrs(img);
+    const attrs = getAttrs(img) as {align?: string | null};
+    expect(attrs?.align).toBe('left');
   });
 
-  it('ImageNodespec', () => {
+  it('ImageNodespec (case 2)', () => {
     const img = document.createElement('img');
     img.src = '1200x800';
     img.style.cssFloat = 'left';
-    getAttrs(img);
+    const attrs = getAttrs(img) as {align?: string | null};
+    expect(attrs?.align).toBe('left');
   });
 
-  it('ImageNodespec', () => {
+  it('ImageNodespec (case 3)', () => {
     const img = document.createElement('img');
     img.src = '1200x800';
     img.style.cssFloat = 'right';
-    getAttrs(img);
+    const attrs = getAttrs(img) as {align?: string | null};
+    expect(attrs?.align).toBe('right');
   });
 
-  it('ImageNodespec', () => {
+  it('ImageNodespec (case 4)', () => {
     const img = document.createElement('img');
     img.src = '1200x800';
     img.style.display = 'block';
-    getAttrs(img);
+    const attrs = getAttrs(img) as {align?: string | null};
+    expect(attrs?.align).toBe('block');
   });
 
   it('ImageNodeView', () => {
@@ -201,32 +209,35 @@ describe('Image Node View', () => {
   });
 });
 
-it('should resolve Image - Img Instance', async () => {
-  const res = {
-    complete: true,
-    height: 400,
-    naturalHeight: 400,
-    naturalWidth: 200,
-    src: 'https://images.pexels.com/photos/132472/pexels-photo-132472.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=200&h=400',
-    width: 200,
-  };
-
-  const isImgInsMock = jest.spyOn(resolveImageMod, 'isImgInstance');
-  isImgInsMock.mockReturnValue(true);
-  global.document.createElement = (function (create) {
-    return function (...args) {
-      const element = create.apply(this, args);
-
-      if (element.tagName === 'IMG') {
-        setTimeout(() => {
-          element.onload(new Event('load'));
-        }, 100);
-      }
-      return element;
+describe('resolveImage (img instance)', () => {
+  it('should resolve Image - Img Instance', async () => {
+    const res = {
+      complete: true,
+      height: 400,
+      naturalHeight: 400,
+      naturalWidth: 200,
+      src: 'https://images.pexels.com/photos/132472/pexels-photo-132472.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=200&h=400',
+      width: 200,
     };
-  })(document.createElement);
 
-  await resolveImage(res.src);
+    const isImgInsMock = jest.spyOn(resolveImageMod, 'isImgInstance');
+    isImgInsMock.mockReturnValue(true);
+    global.document.createElement = (function (create) {
+      return function (...args) {
+        const element = create.apply(this, args);
+
+        if (element.tagName === 'IMG') {
+          setTimeout(() => {
+            element.onload(new Event('load'));
+          }, 100);
+        }
+        return element;
+      };
+    })(document.createElement);
+
+    const resolved = await resolveImage(res.src);
+    expect(resolved.src).toBe(res.src);
+  });
 });
 
 describe('ImageEditor', () => {
@@ -259,14 +270,14 @@ describe('ImageEditor', () => {
   const ImgeditorIns = new ImageURLEditor(properties, newState);
   ImgeditorIns._didSrcChange();
 
-  it('should change on src Change Event', async () => {
+  it('should change on src Change Event', () => {
     expect(() => ImgeditorIns._onSrcChange(srcevent)).not.toThrow();
   });
-  it('should check on src Change Event', async () => {
+  it('should check on src Change Event', () => {
     expect(() => ImgeditorIns._didSrcChange()).not.toThrow();
   });
 
-  it('should handle image placeholder plugin', () => {
+  it('should handle image placeholder plugin (case 2)', () => {
     const plugin = new ImageUploadPlaceholderPlugin();
     const editor = createEditor(doc(p('<cursor>')), {
       plugins: [plugin],
@@ -280,7 +291,7 @@ describe('ImageEditor', () => {
     expect(state.plugins).toContain(plugin);
   });
 
-  it('Image Inline Editor', async () => {
+  it('Image Inline Editor', () => {
     const props = {
       onSelect: (_val: 'RIGHT') => undefined,
       value: {align: 'RIGHT'},
@@ -312,7 +323,7 @@ describe('ImageEditor', () => {
     expect(uploadImageFiles(view, [filex], {x: 1, y: 2})).toBeDefined();
   });
 
-  it('should upload image files readonly and disabled true and runtime.canuploadimage true', () => {
+  it('should upload image files readonly and disabled true and runtime.canuploadimage true (case 2)', () => {
     const state: EditorState = EditorState.create({
       schema: schema,
       selection: editor.selection,
@@ -345,11 +356,12 @@ describe('resolveImage', () => {
       width: 200,
     };
 
-    await resolveImage(res.src);
+    const resolved = await resolveImage(res.src);
+    expect(resolved.src).toBe(res.src);
   });
 });
 
-describe('resolveImage', () => {
+describe('resolveImage (group 2)', () => {
   it('should resolve Image - onLoad offline', async () => {
     const spy = jest.spyOn(Object, 'hasOwn').mockReturnValue(true);
     const res = {
@@ -366,7 +378,7 @@ describe('resolveImage', () => {
   });
 });
 
-describe('Image Node View', () => {
+describe('Image Node View (group 2)', () => {
   it('should change attrs', () => {
     const MMplugin = new MultimediaPlugin();
     const editor = createEditor(doc(p('<cursor>')), {

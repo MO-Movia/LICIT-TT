@@ -33,7 +33,7 @@ describe('isLicitDocument', () => {
   });
 
   describe('when passed an empty string', () => {
-    it('should return falsy', () => {
+    it('should return falsy (case 2)', () => {
       const doc = '';
 
       expect(isLicitDocument(doc)).toBeFalsy();

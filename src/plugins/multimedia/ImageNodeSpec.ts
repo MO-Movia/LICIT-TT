@@ -126,7 +126,7 @@ function makeCrop(
   marginTop: string
 ) {
   return {
-    width: (ps.width, 10) || 0,
+    width: Number.parseInt(ps.width, 10) || 0,
     height: Number.parseInt(ps.height, 10) || 0,
     left: Number.parseInt(marginLeft, 10) || 0,
     top: Number.parseInt(marginTop, 10) || 0,

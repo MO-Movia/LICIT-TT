@@ -12,7 +12,7 @@ describe('constants',()=>{
         const transform = {doc:{doc:{type:{name:'paragraph'}},nodesBetween:()=>{return {value:'selctednode_dummy'}; }} };
         expect(getNode(0,1,transform as unknown as Transform)).toBe(null);
     });
-    it('should return selectedNode',()=>{
+    it('should return selectedNode (case 2)',()=>{
         const doc = schema.node('doc', null, [
             schema.node('paragraph'),
             schema.node('heading'),

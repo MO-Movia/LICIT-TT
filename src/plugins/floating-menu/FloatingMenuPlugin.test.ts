@@ -459,7 +459,7 @@ describe('copySelectionPlain', () => {
     });
   });
 
-  it('should return early if selection is empty', () => {
+  it('should return early if selection is empty (case 2)', () => {
     const sel = TextSelection.create(doc, 0, 0);
     state = state.apply(state.tr.setSelection(sel));
     view.updateState(state);
@@ -773,7 +773,7 @@ describe('FloatingMenuPlugin clipboard paste helpers', () => {
     expect(plugin._popUpHandle?.close).toBeUndefined();
   });
 
-  it('should handle clipboard read failure gracefully', async () => {
+  it('should handle clipboard read failure gracefully (case 2)', async () => {
     (navigator.clipboard.readText as jest.Mock).mockRejectedValue(
       new Error('fail')
     );
@@ -2404,7 +2404,7 @@ describe('copySelectionPlain - Error Handling', () => {
     plugin = new FloatingMenuPlugin(mockRuntime, urlConfig);
   });
 
-  it('should handle successful clipboard write', () => {
+  it('should handle successful clipboard write (case 2)', () => {
     Object.assign(navigator, {
       clipboard: {
         writeText: jest.fn().mockResolvedValue(undefined),
@@ -2512,7 +2512,7 @@ describe('addAltRightClickHandler - Complete Coverage', () => {
     jest.spyOn(view, 'posAtCoords').mockReturnValue({ pos: 10, inside: 10 });
   });
 
-  it('should call openFloatingMenu on Alt + Right Click', () => {
+  it('should call openFloatingMenu on Alt + Right Click (case 2)', () => {
     addAltRightClickHandler(view, plugin);
 
     const event = new MouseEvent('contextmenu', {
@@ -2718,7 +2718,7 @@ describe('Document Click Handler - Complete Coverage', () => {
     view = new EditorView(document.createElement('div'), { state });
   });
 
-  it('should not close popup when clicking inside context-menu', () => {
+  it('should not close popup when clicking inside context-menu (case 2)', () => {
     const closeSpy = jest.fn();
     plugin._popUpHandle = { close: closeSpy, update: jest.fn() };
     plugin.spec.view(view);
@@ -2737,7 +2737,7 @@ describe('Document Click Handler - Complete Coverage', () => {
     document.body.removeChild(contextMenu);
   });
 
-  it('should not close popup when clicking on float-icon', () => {
+  it('should not close popup when clicking on float-icon (case 2)', () => {
     const closeSpy = jest.fn();
     plugin._popUpHandle = { close: closeSpy, update: jest.fn() };
     plugin.spec.view(view);

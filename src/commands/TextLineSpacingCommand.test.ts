@@ -125,7 +125,7 @@ describe('TextLineSpacingCommand', () => {
 
     expect(test).toBeFalsy();
   });
-  it('should be check condition !selection', () => {
+  it('should be check condition !selection (case 2)', () => {
     const state = {
       selection: {to: 2, from: 1},
       schema: {nodes: {heading: HEADING, paragraph: PARAGRAPH}},
@@ -286,7 +286,7 @@ describe('TextLineSpacingCommand', () => {
     const docNode = mySchema.nodeFromJSON(jsonDoc);
     expect(command.isActive({selection:{from:0,to:25},doc:docNode,schema:mySchema} as unknown as EditorState)).toBeTruthy();
   });
-  it('should handle isActive',()=>{
+  it('should handle isActive (case 2)',()=>{
     command._lineSpacing = '2.0'; // Change this to test different values
     const mySchema = new Schema({
       nodes: {

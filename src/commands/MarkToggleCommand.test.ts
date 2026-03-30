@@ -51,7 +51,7 @@ describe('MarkToggleCommand', () => {
     expect(test).toBe(false);
   });
 
-  it('should call when executeCustom function return first false', () => {
+  it('should call when executeCustom function return first false (case 2)', () => {
     const state = {
       selection: {
         node: null,
@@ -512,8 +512,8 @@ describe('MarkToggleCommand', () => {
           },
         },
 
-        nodesBetween: (_x, _y, _z: (node) => {return}) => {
-          ('');
+        nodesBetween: (_x, _y, _z: (node) => void) => {
+          return;
         },
       },
       selection: {
@@ -1053,7 +1053,7 @@ it('should return false in executeCustomStyleForTable for atomic node', () => {
   expect(result).toBe(false);
 });
 
-  it('should call when isActive function return false', () => {
+  it('should call when isActive function return false (case 2)', () => {
     const state = {
       doc: {
         nodeAt: (_x) => {
@@ -1191,7 +1191,7 @@ it('should return false in executeCustomStyleForTable for atomic node', () => {
       const test = toggleCustomStyle(mt, attrs, state, tr, 1, 1);
       expect(test).toStrictEqual({});
     });
-    it('should return tr when selection is empty and no stored marks', () => {
+    it('should return tr when selection is empty and no stored marks (case 2)', () => {
       const mt = {
         isInSet: () => {
           return true;

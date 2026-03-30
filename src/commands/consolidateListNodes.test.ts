@@ -52,7 +52,7 @@ describe('consolidateListNodes', () => {
     expect(consolidateListNodes(tr)).toBeDefined();
   });
 
-  it('should consolidate list nodes', () => {
+  it('should consolidate list nodes (case 2)', () => {
     const state = EditorState.create({
       doc: doc(p('Item 1')),
       schema: schema,

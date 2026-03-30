@@ -66,13 +66,13 @@ describe('Image URL Editor', () => {
     expect(spy).toBeCalled();
   });
 
-  it('should handle _didSrcChange when result.complete = false', () => {
+  it('should handle _didSrcChange when result.complete = false (case 2)', () => {
     const spy = jest.spyOn(imageurleditor.props,'close');
     imageurleditor._cancel ();
     expect(spy).toHaveBeenCalled();
   });
 
-  it('should handle _didSrcChange when result.complete = false', () => {
+  it('should handle _didSrcChange when result.complete = false (case 3)', () => {
     const spy = jest.spyOn(imageurleditor.props,'close');
     imageurleditor._insert();
     expect(spy).toHaveBeenCalled();
@@ -82,7 +82,7 @@ describe('Image URL Editor', () => {
     initialValue:null
   };
   const imageurleditor1 = new ImageURLEditor(ImageEditorProps1);
-  it('should be defined', () => {
+  it('should be defined (case 2)', () => {
     expect(imageurleditor1.state).toBeDefined();
   });
 });

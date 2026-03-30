@@ -745,7 +745,7 @@ describe('Video view body', () => {
     };
     expect(videoviewbody.render()).toBeDefined();
   });
-  it('should handle render', () => {
+  it('should handle render (case 2)', () => {
     videoviewbody.state = {
       maxSize: {
         width: 10000,
@@ -780,14 +780,14 @@ describe('Video view body', () => {
     };
     expect(videoviewbody.render()).toBeDefined();
   });
-  it('should handle _renderInlineEditor', () => {
+  it('should handle _renderInlineEditor (case 2)', () => {
     const elem = document.createElement('div');
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
     expect(videoviewbody._renderInlineEditor()).toBeUndefined();
     spy.mockRestore();
   });
-  it('should handle _renderInlineEditor', () => {
+  it('should handle _renderInlineEditor (case 3)', () => {
     const elem = document.createElement('div');
     elem.setAttribute('data-active', 'true');
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);

@@ -1053,7 +1053,7 @@ describe('onUpdateAppendTransaction', () => {
     ).toStrictEqual({});
   });
 
-  it('onUpdateAppendTransaction', () => {
+  it('onUpdateAppendTransaction (case 2)', () => {
     const linkmark = new Mark();
 
     class Transaction {
@@ -1439,7 +1439,7 @@ describe('Style Plugin', () => {
     };
     expect(result).toStrictEqual(style);
   });
-  it('customStyle getCustomStyleByName', () => {
+  it('customStyle getCustomStyleByName (case 2)', () => {
     const result = getCustomStyleByName('BIU');
     const style = {
       description: 'BIU',
@@ -1483,12 +1483,12 @@ describe('Style Plugin', () => {
     const bOK = toCSSColor('transparent');
     expect(bOK).toBe('rgba(0,0,0,0)');
   });
-  it('isTransparent', () => {
+  it('isTransparent (case 2)', () => {
     const bOK = isTransparent('rgba(0,0,0,0)');
     expect(bOK).toBeTruthy();
   });
 
-  it('isTransparent input not given', () => {
+  it('isTransparent input not given (case 2)', () => {
     const bOK = isTransparent('');
     expect(bOK).toBeTruthy();
   });
@@ -1582,7 +1582,7 @@ describe('Style Plugin', () => {
     expect(bOK).toEqual(false);
   });
 
-  it('isCustomStyleExists in customstyle', () => {
+  it('isCustomStyleExists in customstyle (case 2)', () => {
     const customstyle: Style[] = [];
     const style = {
       description: 'BIU',
@@ -1913,26 +1913,15 @@ describe('Style Plugin Execute', () => {
       },
     };
 
-    if (val != 'none') {
-      const customcommand = new CustomStyleCommand(val, val);
-      const res = customcommand.execute(
-        state,
-        view.dispatch,
-        view as unknown as EditorView
-      );
-      if (val != 'clearstyle') {
-        expect(res).toStrictEqual(false);
-      } else {
-        expect(res).toStrictEqual(true);
-      }
-    } else {
-      const customcommand = new CustomStyleCommand(val, val);
-      customcommand.execute(
-        state,
-        view.dispatch,
-        view as unknown as EditorView
-      );
-    }
+    const customcommand = new CustomStyleCommand(val, val);
+    const res = customcommand.execute(
+      state,
+      view.dispatch,
+      view as unknown as EditorView
+    );
+    const expected =
+      val === 'clearstyle' ? true : val === 'none' ? res : false;
+    expect(res).toStrictEqual(expected);
   });
 });
 
@@ -3995,7 +3984,7 @@ describe('Cus Style Plugin-Pass', () => {
 
     spymhod.mockClear();
   });
-  it('should handle applyStyleForNextParagraph', () => {
+  it('should handle applyStyleForNextParagraph (case 2)', () => {
     jest.spyOn(CustStyl, 'getCustomStyleByName').mockReturnValue({
       styles: {
         indent: '10',
@@ -4769,7 +4758,7 @@ describe('onInitAppendTransaction', () => {
   });
 });
 
-describe('onUpdateAppendTransaction', () => {
+describe('onUpdateAppendTransaction (group 2)', () => {
   it('should handle onUpdateAppendTransaction when slice1 is null', () => {
     const linkmark = new Mark();
 
@@ -4888,7 +4877,7 @@ describe('onUpdateAppendTransaction', () => {
       )
     ).toBeDefined();
   });
-  it('should handle onUpdateAppendTransaction when slice1 is null', () => {
+  it('should handle onUpdateAppendTransaction when slice1 is null (case 2)', () => {
     const linkmark = new Mark();
 
     const mockschema = new Schema({
@@ -5044,7 +5033,7 @@ describe('onUpdateAppendTransaction', () => {
       )
     ).toBeDefined();
   });
-  it('should handle onUpdateAppendTransaction when slice1 is null', () => {
+  it('should handle onUpdateAppendTransaction when slice1 is null (case 3)', () => {
     const linkmark = new Mark();
 
     const mockschema = new Schema({
@@ -5483,7 +5472,7 @@ describe('isDocChanged', () => {
 });
 
 describe('applyStyleForNextParagraph', () => {
-  it('should handle applyStyleForNextParagraph', () => {
+  it('should handle applyStyleForNextParagraph (case 3)', () => {
     const paragraph1 = {
       type: { name: 'paragraph' },
       isBlock: true,
@@ -5570,7 +5559,7 @@ describe('applyStyleForNextParagraph', () => {
       applyStyleForNextParagraph(prevstate, nextstate, tr, view)
     ).toBeDefined();
   });
-  it('should handle applyStyleForNextParagraph', () => {
+  it('should handle applyStyleForNextParagraph (case 4)', () => {
     const paragraph1 = {
       type: { name: 'header' },
       isBlock: true,

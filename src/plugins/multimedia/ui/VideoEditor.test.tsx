@@ -36,7 +36,7 @@ describe('VideoEditor', () => {
     };
     expect(videoeditor.render()).toBeDefined();
   });
-  it('should handle render', () => {
+  it('should handle render (case 2)', () => {
     const videoeditor = new VideoEditor(props);
     videoeditor.state = {
       id: 'id',

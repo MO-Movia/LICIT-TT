@@ -26,7 +26,7 @@ describe('initialize icon', () => {
     expect(icon).toBeDefined();
   });
 
-  it('should handle Icon', () => {
+  it('should handle Icon (case 2)', () => {
     expect(icon.render()).toBeDefined();
   });
 

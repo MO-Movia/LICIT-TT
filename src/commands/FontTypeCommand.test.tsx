@@ -42,7 +42,7 @@ describe('FontTypeCommand', () => {
     expect(dispatch).not.toHaveBeenCalledWith(expect.any(transform));
   });
 
-  it('should apply the font size mark to the current selection', () => {
+  it('should apply the font size mark to the current selection (case 2)', () => {
     const state = EditorState.create({schema: schema1});
     command.execute(state, undefined);
     const transform = new Transform(schema as unknown as Node);
@@ -50,7 +50,7 @@ describe('FontTypeCommand', () => {
   });
 });
 
-describe('FontTypeCommand', () => {
+describe('FontTypeCommand (group 2)', () => {
   let plugin!: FontTypeCommand;
   beforeEach(() => {
     plugin = new FontTypeCommand('Arielle');
@@ -255,7 +255,7 @@ describe('FontTypeCommand', () => {
     });
     expect(test).toBe(true);
   });
-  it('should call when execute function return true', () => {
+  it('should call when execute function return true (case 2)', () => {
     jest
       .spyOn(applymark, 'applyMark')
       .mockReturnValue({docChanged: true} as unknown as Transform);
@@ -285,7 +285,7 @@ describe('FontTypeCommand', () => {
     expect(test).toBe(true);
   });
 
-  it('should call when execute function return true', () => {
+  it('should call when execute function return true (case 3)', () => {
     jest.spyOn(applymark, 'applyMark').mockReturnValue({
       docChanged: false,
       storedMarksSet: true,

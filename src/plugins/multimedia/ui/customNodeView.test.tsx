@@ -83,7 +83,7 @@ describe('CustomNodeView', () => {
     expect(testNodeView).toBeDefined();
     expect(testNodeView.dom).toBeInstanceOf(HTMLElement);
   });
-  it('should handle mutation gracefully', () => {
+  it('should handle mutation gracefully (case 2)', () => {
     expect(testNodeView).toBeDefined();
     expect(testNodeView.dom).toBeInstanceOf(HTMLElement);
   });
@@ -210,7 +210,7 @@ describe('createDOMElement error handling', () => {
 });
 
 describe('renderReactComponent error handling', () => {
-  it('should throw error when not overridden', () => {
+  it('should throw error when not overridden (case 2)', () => {
     class PartialNodeView extends CustomNodeView {
       createDOMElement(): HTMLElement {
         return document.createElement('div');

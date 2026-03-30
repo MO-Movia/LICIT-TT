@@ -122,7 +122,7 @@ describe('applyMark', () => {
     expect(transformedTr.steps).toHaveLength(2);
   });
 
-  it('should apply a mark to the given range', () => {
+  it('should apply a mark to the given range (case 2)', () => {
     const markType = schema.marks.bold;
     const attrs = {fontWeight: 'bold'};
     const schema1 = new Schema({
@@ -461,11 +461,11 @@ describe('applyMark', () => {
 expect(addMarkWithAttributes({addMark:()=>{return {};},removeMark:()=>{return {addMark:()=>{return {};}};},doc:{nodeAt:()=>{return {marks:[{type:{name:'mark-text-color'}}]};}}} as unknown as Transform,{marks:{'mark-text-color':{}}} as unknown as Schema,{pos:0} as unknown as ResolvedPos,
   {pos:1} as unknown as ResolvedPos,{create:()=>{},name:'link'} as unknown as MarkType,{},true)).toStrictEqual({});
   });
-  it('should handle addMarkWithAttributes',()=>{
+  it('should handle addMarkWithAttributes (case 2)',()=>{
     expect(addMarkWithAttributes({addMark:()=>{return {};},removeMark:()=>{return {addMark:()=>{return {};}};},doc:{nodeAt:()=>{return {marks:[{type:{name:'mark-text-color'}}]};}}} as unknown as Transform,{marks:{'mark-text-color':{}}} as unknown as Schema,{pos:0} as unknown as ResolvedPos,
       {pos:1} as unknown as ResolvedPos,{create:()=>{},name:'mark-text-color'} as unknown as MarkType,{},true)).toStrictEqual({});
       });
-      it('should handle addMarkWithAttributes',()=>{
+      it('should handle addMarkWithAttributes (case 3)',()=>{
         expect(addMarkWithAttributes({addMark:()=>{return {};},removeMark:()=>{return {addMark:()=>{return {};}};},doc:{nodeAt:()=>{return {marks:[{type:{name:'mark-text-color'}}]};}}} as unknown as Transform,{marks:{'mark-text-color':{}}} as unknown as Schema,{pos:0} as unknown as ResolvedPos,
           {pos:1} as unknown as ResolvedPos,{create:()=>{},name:'test'} as unknown as MarkType,{},true)).toStrictEqual({});
           });
@@ -532,7 +532,7 @@ describe('updateMarksAttrs',()=>{
     const test1 = updateMarksAttrs({name:'mark-text-color',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,'#000000');
     expect(test1).toBeUndefined();
   });
-  it('should handle updateMarksAttrs',()=>{
+  it('should handle updateMarksAttrs (case 2)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -591,7 +591,7 @@ describe('updateMarksAttrs',()=>{
     const test1 = updateMarksAttrs({name:'mark-text-color',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,'#000000');
     expect(test1).toBeUndefined();
   });
-  it('should handle updateMarksAttrs',()=>{
+  it('should handle updateMarksAttrs (case 3)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -652,7 +652,7 @@ describe('updateMarksAttrs',()=>{
     const test1 = updateMarksAttrs({name:'mark-font-size',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,'#000000');
     expect(test1).toBeUndefined();
   });
-  it('should handle updateMarksAttrs',()=>{
+  it('should handle updateMarksAttrs (case 4)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -711,7 +711,7 @@ describe('updateMarksAttrs',()=>{
     const test1 = updateMarksAttrs({name:'mark-font-size',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,undefined as unknown as string | number);
     expect(test1).toBeUndefined();
   });
-  it('should handle updateMarksAttrs',()=>{
+  it('should handle updateMarksAttrs (case 5)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -772,7 +772,7 @@ describe('updateMarksAttrs',()=>{
     const test1 = updateMarksAttrs({name:'mark-font-type',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,undefined as unknown as string | number);
     expect(test1).toBeUndefined();
   });
-  it('should handle updateMarksAttrs',()=>{
+  it('should handle updateMarksAttrs (case 6)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -833,7 +833,7 @@ describe('updateMarksAttrs',()=>{
     const test1 = updateMarksAttrs({name:'mark-text-highlight',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,'#ffffff');
     expect(test1).toBeUndefined();
   });
-  it('should handle updateMarksAttrs',()=>{
+  it('should handle updateMarksAttrs (case 7)',()=>{
     const mySchema = new Schema({
       nodes: {
         doc: { content: 'block+' },
@@ -914,7 +914,7 @@ describe('addMarksToNode',()=>{
       {} as unknown as Record<string, unknown>,{} as unknown as Node | null,undefined);
       expect(test1).toBeUndefined();
   });
-  it('should handle addMarksToNode',()=>{
+  it('should handle addMarksToNode (case 2)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -966,7 +966,7 @@ describe('addMarksToNode',()=>{
       {} as unknown as Record<string, unknown>,docNode,false);
       expect(test).toBeUndefined();
   });
-  it('should handle addMarksToNode',()=>{
+  it('should handle addMarksToNode (case 3)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -1037,7 +1037,7 @@ describe('addMarksToNode',()=>{
       {} as unknown as Record<string, unknown>,docNode,{pos:1} as unknown as ResolvedPos);
       expect(test1).toBeUndefined();
   });
-  it('should handle handleTextColorMark',()=>{
+  it('should handle handleTextColorMark (case 2)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -1092,7 +1092,7 @@ describe('addMarksToNode',()=>{
       {} as unknown as Record<string, unknown>,docNode,{pos:1} as unknown as ResolvedPos);
       expect(test1).toBeUndefined();
   });
-  it('should handle handleTextColorMark',()=>{
+  it('should handle handleTextColorMark (case 3)',()=>{
     const schema = new Schema({
       nodes: {
         doc: {
@@ -1202,7 +1202,7 @@ describe('updateToggleMarks',()=>{
     const test = updateToggleMarks({} as unknown as MarkType,{doc:docNode} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState);
     expect(test).toBeUndefined();
   });
-  it('should handle updateToggleMarks',()=>{
+  it('should handle updateToggleMarks (case 2)',()=>{
     const mySchema = new Schema({
       nodes: {
         doc: { content: 'block+' },
@@ -1285,7 +1285,7 @@ describe('updateToggleMarks',()=>{
 
 
 
-  it('should handle updateToggleMarks',()=>{
+  it('should handle updateToggleMarks (case 3)',()=>{
     const mySchema = new Schema({
       nodes: {
         doc: { content: 'block+' },

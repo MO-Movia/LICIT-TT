@@ -35,20 +35,20 @@ describe('atAnchorBottomLeft', () => {
   });
 });
 describe('atAnchorBottomCenter', () => {
-  it('should return the correct rect when both anchorRect and bodyRect are provided', () => {
+  it('should return the correct rect when both anchorRect and bodyRect are provided (case 2)', () => {
     const anchorRect: Rect = {x: 10, y: 20, w: 50, h: 30};
     const bodyRect: Rect = {x: 0, y: 0, w: 100, h: 50};
     const expectedRect: Rect = {x: 10, y: 50, w: 0, h: 0};
     expect(atAnchorBottomCenter(anchorRect, bodyRect)).toEqual(expectedRect);
   });
 
-  it('should return the correct rect when anchorRect is undefined', () => {
+  it('should return the correct rect when anchorRect is undefined (case 2)', () => {
     const bodyRect: Rect = {x: 0, y: 0, w: 100, h: 50};
     const expectedRect: Rect = {x: -10000, y: 0, w: 0, h: 0};
     expect(atAnchorBottomCenter(undefined, bodyRect)).toEqual(expectedRect);
   });
 
-  it('should return the correct rect when anchorRect is collapsed', () => {
+  it('should return the correct rect when anchorRect is collapsed (case 2)', () => {
     const anchorRect: Rect = {x: 10, y: 20, w: 0, h: 0};
     const bodyRect: Rect = {x: 0, y: 0, w: 100, h: 50};
     const expectedRect: Rect = {x: -10000, y: 20, w: 0, h: 0};
@@ -128,7 +128,7 @@ describe('atAnchorTopRight', () => {
     expect(result).toEqual({x: -10000, y: 20, w: 0, h: 0});
   });
 
-  it('should return the correct rect when anchorRect is not provided', () => {
+  it('should return the correct rect when anchorRect is not provided (case 2)', () => {
     const result = atAnchorTopRight(undefined, {x: 0, y: 0, w: 50, h: 60});
 
     expect(result).toEqual({x: -10000, y: 0, w: 0, h: 0});
@@ -145,7 +145,7 @@ describe('atAnchorTopCenter', () => {
     expect(result).toEqual({x: 0, y: 20, w: 0, h: 0});
   });
 
-  it('should return the correct rect when anchorRect is collapsed', () => {
+  it('should return the correct rect when anchorRect is collapsed (case 3)', () => {
     const anchorRect = {x: 10, y: 20, w: 0, h: 0};
     const bodyRect = {x: 0, y: 0, w: 50, h: 60};
 
@@ -188,8 +188,8 @@ describe('atAnchorTopCenter', () => {
   });
 });
 
-describe('atAnchorRight', () => {
-  it('should return the correct rectangle when both anchorRect and bodyRect are provided', () => {
+describe('atAnchorRight (group 2)', () => {
+  it('should return the correct rectangle when both anchorRect and bodyRect are provided (case 2)', () => {
     const anchorRect = {x: 10, y: 20, w: 30, h: 40};
     const bodyRect = {x: 0, y: 0, w: 50, h: 60};
     const result = atAnchorRight(anchorRect, bodyRect);

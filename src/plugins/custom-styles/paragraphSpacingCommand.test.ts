@@ -41,7 +41,7 @@ describe('paragraphspacingcommand', () => {
       setParagraphSpacing(trmock, mockschema as unknown as Schema)
     ).toBeDefined();
   });
-  it('should handle setParagraphSpacing', () => {
+  it('should handle setParagraphSpacing (case 2)', () => {
     const doc = schema.node('doc', null, [
       schema.node('paragraph'),
       schema.node('heading'),
@@ -235,7 +235,7 @@ describe('ParagraphSpacingCommand', () => {
     expect(psc).toBeDefined();
   });
 
-  it('should handle execute when tr.docChanged is true', () => {
+  it('should handle execute when tr.docChanged is true (case 2)', () => {
     const mockstate = {
       schema: {},
       selection: {},

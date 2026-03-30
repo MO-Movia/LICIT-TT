@@ -115,17 +115,19 @@ export class ImageSourceCommand extends UICommand {
     inputs: ImageLike
   ): boolean => {
     if (dispatch && inputs?.src) {
-      getImageSize(inputs.src).then(({width, height}) => {
-        const {selection, schema} = state;
-        let {tr} = state;
-        tr = view ? (hideCursorPlaceholder(view.state) as Transaction) : tr;
-        tr = tr.setSelection(selection);
+      getImageSize(inputs.src)
+        .then(({width, height}) => {
+          const {selection, schema} = state;
+          let {tr} = state;
+          tr = view ? (hideCursorPlaceholder(view.state) as Transaction) : tr;
+          tr = tr.setSelection(selection);
 
-        tr = insertImage(tr, schema, inputs.src, width, height) as Transaction;
+          tr = insertImage(tr, schema, inputs.src, width, height) as Transaction;
 
-        dispatch(tr);
-        view?.focus();
-      });
+          dispatch(tr);
+          view?.focus();
+        })
+        .catch(console.warn);
     }
     return false;
   };

@@ -17,13 +17,13 @@ describe('ImageNodeSpec', () => {
         expect(getattrs).toBeDefined();
     });
 
-    it('should be defined', () => {
+    it('should be defined (case 2)', () => {
         const dom = document.createElement('div');
         dom.setAttribute('fitToParent', '10');
         const getattrs = getAttrs(dom);
         expect(getattrs).toBeDefined();
     });
-    it('should be defined', () => {
+    it('should be defined (case 3)', () => {
         const parent = document.createElement('div');
         parent.style.display = 'inline-block';
         parent.style.overflow = 'hidden';
@@ -37,7 +37,7 @@ describe('ImageNodeSpec', () => {
         const getattrs = getAttrs(dom);
         expect(getattrs).toBeDefined();
     });
-    it('should be defined', () => {
+    it('should be defined (case 4)', () => {
         const parent = document.createElement('div');
         parent.style.display = 'inline-block';
         parent.style.overflow = 'hidden';
@@ -52,7 +52,7 @@ describe('ImageNodeSpec', () => {
         const getattrs = getAttrs(dom);
         expect(getattrs).toBeDefined();
     });
-    it('should be defined', () => {
+    it('should be defined (case 5)', () => {
         const parent = document.createElement('div');
         parent.style.display = 'inline-block';
         parent.style.overflow = 'hidden';

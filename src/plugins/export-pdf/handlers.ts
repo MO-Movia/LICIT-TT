@@ -732,7 +732,7 @@ export class PDFHandler extends Handler {
   }
 
   public beforePageLayout(): void {
-    this.doIT();
+    void this.doIT().catch(console.warn);
   }
 
   public async doIT(): Promise<void> {
