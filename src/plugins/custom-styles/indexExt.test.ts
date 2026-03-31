@@ -138,7 +138,9 @@ describe('index branch coverage', () => {
     const nextNode = {
       type: { name: 'paragraph' },
       content: { size: 0 },
-      descendants: (cb) => cb({ type: { name: 'text' } }),
+      descendants: (cb: (node: { type: { name: string } }) => unknown) => {
+        cb({ type: { name: 'text' } });
+      },
     };
 
     const $from = {

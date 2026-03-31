@@ -109,7 +109,8 @@ describe('PreviewForm', () => {
 describe('PreviewForm component', () => {
     beforeAll(() => {
     Object.defineProperty(global, 'structuredClone', {
-      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      value: (value: unknown): unknown =>
+        JSON.parse(JSON.stringify(value)) as unknown,
       writable: true,
     });
   });
@@ -130,7 +131,7 @@ describe('PreviewForm component', () => {
       },
       print: jest.fn(),
     };
-    window.open = jest.fn(() => printWindowMock);
+    window.open = jest.fn(() => printWindowMock as unknown as Window);
     document.getElementById = jest.fn().mockReturnValue({
       childNodes: [document.createElement('div')],
     });

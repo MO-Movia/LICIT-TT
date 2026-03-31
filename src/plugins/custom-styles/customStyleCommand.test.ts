@@ -401,7 +401,7 @@ describe('CustomStyleCommand', () => {
         },
       },
       $to: {
-        after: (x) => {
+        after: (x: number) => {
           return x + 1;
         },
         end: () => {
@@ -546,7 +546,7 @@ describe('CustomStyleCommand', () => {
         },
       },
       $to: {
-        after: (x) => {
+        after: (x: number) => {
           return x + 1;
         },
         end: () => {
@@ -2553,7 +2553,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
     setSelection: () => {
       return {};
     },
-  };
+  } as unknown as Transform;
 
   const schema = new Schema({
     nodes: {
@@ -2778,7 +2778,11 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
     ],
   });
 
-  const statemock = { schema: schema, doc: doc, selection: { from: 0, to: 1 } };
+  const statemock = {
+    schema: schema,
+    doc: doc,
+    selection: { from: 0, to: 1 },
+  } as unknown as EditorState;
   const schema1 = new Schema({
     nodes: {
       doc: {
@@ -2992,7 +2996,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
         text: '.fggf.dfgfgh.fghfgh',
       },
     ],
-  };
+  } as unknown as Transform;
 
   const nodemock = schema1.nodeFromJSON(json);
 
@@ -3044,15 +3048,17 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
     expect(addMarksToLine(trmock, statemock, nodemock, 0, true)).toBeDefined();
   });
   it('should handle addMarksToLine when markstrong is not present', () => {
-    const trmock = {};
-    const statemock = { schema: { marks: { strong: true } } };
-    const nodemock = { descendants: () => {} };
+    const trmock = {} as unknown as Transform;
+    const statemock = {
+      schema: { marks: { strong: true } },
+    } as unknown as EditorState;
+    const nodemock = { descendants: () => undefined } as unknown as Node;
     expect(addMarksToLine(trmock, statemock, nodemock, 0, true)).toBeDefined();
   });
   it('should handle addMarksToLine when markstrong is not present (case 2)', () => {
-    const trmock = {};
-    const statemock = { schema: { marks: {} } };
-    const nodemock = { descendants: () => {} };
+    const trmock = {} as unknown as Transform;
+    const statemock = { schema: { marks: {} } } as unknown as EditorState;
+    const nodemock = { descendants: () => undefined } as unknown as Node;
     expect(addMarksToLine(trmock, statemock, nodemock, 0, true)).toBeDefined();
   });
   it('should handle manageElementsAfterSelection', () => {
@@ -3265,7 +3271,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
         },
       },
       $to: {
-        after: (x) => {
+        after: (x: number) => {
           return x + 1;
         },
         end: () => {
@@ -4371,7 +4377,11 @@ describe('updateDocument', () => {
     ],
   });
   // Create the EditorState
-  const statemock = { schema: schema, doc: doc, selection: { from: 0, to: 1 } };
+  const statemock = {
+    schema: schema,
+    doc: doc,
+    selection: { from: 0, to: 1 },
+  } as unknown as EditorState;
   // Create the ProseMirror node from JSON
   it('updateDocument', () => {
     expect(
@@ -4611,7 +4621,11 @@ describe('isCustomStyleAlreadyApplied and isLevelUpdated', () => {
     ],
   });
   // Create the EditorState
-  const statemock = { schema: schema, doc: doc, selection: { from: 0, to: 1 } };
+  const statemock = {
+    schema: schema,
+    doc: doc,
+    selection: { from: 0, to: 1 },
+  } as unknown as EditorState;
   it('should handle isCustomStyleAlreadyApplied', () => {
     expect(
       isCustomStyleAlreadyApplied(
@@ -5191,7 +5205,15 @@ describe('allowCustomLevelIndent', () => {
 
 describe('insertParagraph', () => {
   it('should handle insertParagraph when state is null', () => {
-    expect(insertParagraph([], 1, {}, 1, null)).toStrictEqual({});
+    expect(
+      insertParagraph(
+        {},
+        1,
+        {} as unknown as Transform,
+        1,
+        null as unknown as EditorState
+      )
+    ).toStrictEqual({});
   });
 });
 describe('applyLineStyle', () => {
@@ -5222,7 +5244,7 @@ describe('applyLineStyle', () => {
               pos: 0,
             },
             $to: {
-              after: (x) => {
+              after: (x: number) => {
                 return x + 1;
               },
               end: () => {
@@ -5310,7 +5332,7 @@ describe('applyLineStyle', () => {
               pos = traverse(child, pos);
             }
           }
-          return pos;
+          return pos as number;
         }
 
         // Start traversal from the document node
@@ -5338,7 +5360,7 @@ describe('applyLineStyle', () => {
                 pos: 0,
               },
               $to: {
-                after: (x) => {
+                after: (x: number) => {
                   return x + 1;
                 },
                 end: () => {

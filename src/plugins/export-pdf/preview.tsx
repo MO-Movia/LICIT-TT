@@ -1146,7 +1146,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
  }
 
   public getDocumentTitle(editorView): string {
-    return editorView?.state?.doc?.attrs?.objectMetaData?.name ?? '';
+    return String(editorView?.state?.doc?.attrs?.objectMetaData?.name ?? '');
   }
 
   private extractPreChapterNodes(prose: HTMLElement): ChildNode[] {

@@ -46,7 +46,9 @@ function onResizeObserve(entries: Entries): void {
 function handleResizeObserverEntry(entry: ResizeObserverEntry): void {
   const node = entry.target;
   const callbacks = nodesObserving.get(node);
-  const executeCallback = (cb) => cb(entry);
+  const executeCallback = (cb: ResizeCallback): void => {
+    cb(entry);
+  };
   callbacks?.forEach(executeCallback);
 }
 

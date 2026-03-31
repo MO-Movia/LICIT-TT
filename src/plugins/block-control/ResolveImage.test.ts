@@ -51,7 +51,9 @@ describe('Image Resolver Module', () => {
             Object.defineProperty(img, 'width', { value: 100 });
             Object.defineProperty(img, 'height', { value: 200 });
 
-            jest.spyOn(document, 'createElement').mockImplementation(() => img as any);
+            jest
+              .spyOn(document, 'createElement')
+              .mockImplementation(() => img as unknown as HTMLElement);
             const appendSpy = jest.spyOn(document.body, 'appendChild').mockImplementation(() => img);
 
             setTimeout(() => {
@@ -76,7 +78,9 @@ describe('Image Resolver Module', () => {
             const src = 'https://example.com/invalid.jpg';
             const img = new Image();
 
-            jest.spyOn(document, 'createElement').mockImplementation(() => img as any);
+            jest
+              .spyOn(document, 'createElement')
+              .mockImplementation(() => img as unknown as HTMLElement);
             const appendSpy = jest.spyOn(document.body, 'appendChild').mockImplementation(() => img);
 
             setTimeout(() => {

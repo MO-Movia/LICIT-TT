@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Plugin, PluginKey} from 'prosemirror-state';
+import {EditorState, Plugin, PluginKey} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {Node, Schema} from 'prosemirror-model';
 import {VideoNodeView} from './ui/VideoNodeView';
@@ -22,13 +22,14 @@ export class MultimediaPlugin extends Plugin {
     super({
       key: new PluginKey('MultimediaPlugin'),
       state: {
-        init(_config, _state) {
+        init(_config, _state: EditorState): EditorState {
           (this as MultimediaPlugin).spec.props.nodeViews[VIDEO] =
             bindVideoView.bind(this);
           (this as MultimediaPlugin).spec.props.nodeViews[IMAGE] =
             bindImageView.bind(this);
+          return _state;
         },
-        apply(_tr, _state) {
+        apply(_tr, _state: EditorState): EditorState {
           return _state;
         },
       },

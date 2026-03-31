@@ -67,7 +67,7 @@ function createAttribute(content, key, value) {
 }
 
 function getContent(type, schema: Schema, nodeAttrs, toDOM) {
-  let content = null;
+  let content: Record<string, unknown> | null = null;
   const contentArr = schema[SPEC][NODES][CONTENT];
   const len = contentArr.length;
 
@@ -109,13 +109,23 @@ function createStyleNodeAttributes(schema: Schema) {
   });
 }
 
-function getAnExistingAttribute(schema) {
-  let existingAttr = null;
-  existingAttr = schema['marks']['link']['attrs']['href'];
+function getAnExistingAttribute(schema: Schema): unknown {
+  let existingAttr: unknown = null;
+  existingAttr = (
+    schema as unknown as {
+      marks?: {
+        link?: {
+          attrs?: {
+            href?: unknown;
+          };
+        };
+      };
+    }
+  ).marks?.link?.attrs?.href;
   return existingAttr;
 }
 function getMarkContent(type, schema, nodeAttrs, toDOM) {
-  let content = null;
+  let content: Record<string, unknown> | null = null;
   const contentArr = schema[SPEC]['marks']['content'];
   const len = contentArr.length;
   // check even index to find the content type name
@@ -176,7 +186,7 @@ export function createMarkAttributes(mark, existingAttr) {
     });
   }
 }
-function createNewAttributes(schema) {
+function createNewAttributes(schema: Schema): Schema {
   const marks = [];
   const existingAttr = getAnExistingAttribute(schema);
   ALLOWED_MARKS.forEach((name) => {

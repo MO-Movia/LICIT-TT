@@ -8,7 +8,7 @@ import Color from 'color';
 const RGBA_PATTERN = /^rgba/i;
 const RGBA_TRANSPARENT = 'rgba(0,0,0,0)';
 
-const ColorMaping = {
+const ColorMaping: Record<string, string> = {
   transparent: RGBA_TRANSPARENT,
   inherit: '',
 };
@@ -35,7 +35,7 @@ export function toCSSColor(source: string): string {
       ColorMaping[source] = RGBA_TRANSPARENT;
       return RGBA_TRANSPARENT;
     }
-    const rgba = color.toString();
+    const rgba = String(color.toString());
     ColorMaping[source] = rgba.toString();
     return rgba;
   }

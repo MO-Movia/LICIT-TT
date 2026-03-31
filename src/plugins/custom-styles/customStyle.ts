@@ -11,12 +11,27 @@ import {
 } from './CustomStyleNodeSpec';
 import { DEFAULT_NORMAL_STYLE } from './Constants';
 import { setCustomStyles } from '../../commands';
-let customStyles = new Array(0);
-let styleRuntime;
+
+type MaybePromise<T> = Promise<T> | T;
+
+type StyleRuntimeLike = Partial<StyleRuntime> & {
+  canEditStyle?: boolean;
+  getStylesAsync?: () => MaybePromise<Style[] | null | undefined>;
+  saveStyle?: (style: Style) => MaybePromise<Style | Style[] | null | undefined>;
+  renameStyle?: (
+    oldStyleName: string,
+    newStyleName: string
+  ) => MaybePromise<Style[] | null | undefined>;
+  removeStyle?: (name: string) => MaybePromise<Style[] | null | undefined>;
+  saveStyleSet?: (styles: Style[]) => MaybePromise<Style[] | null | undefined>;
+};
+
+let customStyles: Style[] = [];
+let styleRuntime: StyleRuntimeLike | null = null;
 let hideNumbering = false;
-let _view: EditorView;
+let _view: EditorView | null = null;
 let hasdocTypechanged = false;
-let docType = null;
+let docType: string | null = null;
 // None & None-@#$- have same effect of None.
 // None-@#$-<styleLevel> is used for numbering to set style level for None, based on the cursor level style level.
 function isValidStyleName(styleName?: string) {
@@ -27,7 +42,7 @@ function isValidStyleName(styleName?: string) {
   );
 }
 
-export function addStyleToList(style: Style) {
+export function addStyleToList(style: Style): Style[] {
   if (0 < customStyles.length && style?.styleName) {
     const index = customStyles.findIndex(
       (item) => item?.styleName === style?.styleName
@@ -107,7 +122,7 @@ export function setStyles(style: Style[]) {
     saveDefaultStyle();
   }
 }
-export function setHidenumberingFlag(hideNumberingFlag) {
+export function setHidenumberingFlag(hideNumberingFlag: boolean): void {
   hideNumbering = hideNumberingFlag;
 }
 
@@ -115,14 +130,14 @@ export function getHidenumberingFlag(): boolean {
   return hideNumbering;
 }
 
-export function setStyleRuntime(runtime) {
+export function setStyleRuntime(runtime: StyleRuntimeLike | null): void {
   styleRuntime = runtime;
 }
 
-export function getStyleRuntime(): StyleRuntime {
+export function getStyleRuntime(): StyleRuntimeLike | null {
   return styleRuntime;
 }
-export function setCustomStylesOnLoad() {
+export function setCustomStylesOnLoad(): void {
   getStylesAsync()
     .then((result) => {
       if (result) {
@@ -132,20 +147,20 @@ export function setCustomStylesOnLoad() {
     .catch(console.warn);
 }
 
-function saveDefaultStyle() {
-  saveStyle(DEFAULT_NORMAL_STYLE)?.catch(console.error);
+function saveDefaultStyle(): void {
+  saveStyle(DEFAULT_NORMAL_STYLE).catch(console.error);
 }
 
-export function isStylesLoaded() {
+export function isStylesLoaded(): boolean {
   return customStyles?.length > 0 && hasdocTypechanged;
 }
 
-export function hasStyleRuntime() {
+export function hasStyleRuntime(): boolean {
   return !!styleRuntime;
 }
 // get a style by Level
-export function getCustomStyleByLevel(level: number) {
-  let style = null;
+export function getCustomStyleByLevel(level: number): Style | null {
+  let style: Style | null = null;
   if (customStyles.length > 0) {
     for (const obj of customStyles) {
       if (
@@ -248,21 +263,31 @@ export function getCustomStyle(customStyle) {
   return style;
 }
 // method to save,retrive,rename and remove style from the style server.
-export function saveStyle(styleProps: Style): Promise<Style[]> {
-  return styleRuntime?.saveStyle(styleProps);
+export function saveStyle(
+  styleProps: Style
+): Promise<Style[] | Style | null | undefined> {
+  return Promise.resolve(styleRuntime?.saveStyle?.(styleProps));
 }
 export function getStylesAsync(): Promise<Style[]> {
-  return styleRuntime.getStylesAsync();
+  return Promise.resolve(styleRuntime?.getStylesAsync?.()).then(
+    (result) => result ?? []
+  );
 }
 export function renameStyle(
   oldName: string,
   newName: string
 ): Promise<Style[]> {
-  return styleRuntime.renameStyle(oldName, newName);
+  return Promise.resolve(styleRuntime?.renameStyle?.(oldName, newName)).then(
+    (result) => result ?? []
+  );
 }
 export function removeStyle(styleName: string): Promise<Style[]> {
-  return styleRuntime.removeStyle(styleName);
+  return Promise.resolve(styleRuntime?.removeStyle?.(styleName)).then(
+    (result) => result ?? []
+  );
 }
 export function saveStyleSet(styles: Style[]): Promise<Style[]> {
-  return styleRuntime?.saveStyleSet(styles);
+  return Promise.resolve(styleRuntime?.saveStyleSet?.(styles)).then(
+    (result) => result ?? []
+  );
 }

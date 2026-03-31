@@ -114,7 +114,11 @@ describe('VignetteView', () => {
     const node = { attrs: { vignette: true } };
     const base = { update: jest.fn(), table: { style: {} } };
     const spyUpdateBorder = jest.spyOn(view, 'updateBorder');
-    const result = view.tableNodeViewEx(() => base as any, node as any, {} as any);
+    const result = view.tableNodeViewEx(
+      () => base as unknown as ReturnType<VignetteView['tableNodeViewEx']>,
+      node as any,
+      {} as any
+    );
     expect(spyUpdateBorder).toHaveBeenCalled();
     expect(result).toBe(base);
   });
@@ -123,7 +127,11 @@ describe('VignetteView', () => {
     const view = new VignetteView(editorView);
     const node = { attrs: { vignette: false } };
     const base = { update: jest.fn() };
-    const result = view.tableNodeViewEx(() => base as any, node as any, {} as any);
+    const result = view.tableNodeViewEx(
+      () => base as unknown as ReturnType<VignetteView['tableNodeViewEx']>,
+      node as any,
+      {} as any
+    );
     expect(result).toBe(base);
   });
 

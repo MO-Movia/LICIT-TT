@@ -107,7 +107,7 @@ export class ImageInlineEditor extends React.PureComponent {
   }
 
   prepButtons(ImgValues) {
-    let buttons;
+    let buttons: React.ReactElement[];
     const align = this.props.value ? this.props.value.align : null;
     const onClick = this._onClick;
     const {editorView} = this.props;

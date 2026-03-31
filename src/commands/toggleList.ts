@@ -369,7 +369,7 @@ function unwrapNodesFromSelection(
       if (unwrapParagraphNode) {
         return unwrapParagraphNode(block.node);
       } else {
-        return block.node;
+        return block.node as Node;
       }
     });
     const frag = Fragment.from(nodes);

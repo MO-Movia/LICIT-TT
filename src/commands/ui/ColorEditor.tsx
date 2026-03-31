@@ -12,7 +12,7 @@ import {clamp} from './clamp';
 function generateGreyColors(count: number): Array<ColorInstance> {
   let cc = 255;
   const interval = cc / count;
-  const colors = [];
+  const colors: ColorInstance[] = [];
   while (cc > 0) {
     const color = Color({r: cc, g: cc, b: cc});
     cc -= interval;
@@ -27,7 +27,7 @@ function generateRainbowColors(
   saturation: number,
   lightness: number
 ): Array<ColorInstance> {
-  const colors = [];
+  const colors: ColorInstance[] = [];
   const interval = 360 / count;
   const ss = clamp(0, saturation, 100);
   const ll = clamp(0, lightness, 100);

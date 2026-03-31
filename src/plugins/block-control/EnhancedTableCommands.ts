@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { Fragment } from 'prosemirror-model';
+import { Fragment, Node, Schema } from 'prosemirror-model';
 import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { UICommand } from '../../core';
@@ -77,7 +77,7 @@ export class EnhancedTableCommands extends UICommand {
   };
 
   // Command to insert the entire Enhanced Table/Figure node
-  insertEnhancedTableFigure(tr, schema) {
+  insertEnhancedTableFigure(tr: Transaction, schema: Schema): Transaction {
     const { selection } = tr;
     const { from, to } = selection;
     if (from !== to) {
@@ -120,7 +120,7 @@ export class EnhancedTableCommands extends UICommand {
   }
 
 
-  createBlueTable(schema, rows, cols) {
+  createBlueTable(schema: Schema, rows: number, cols: number): Node | undefined {
     const { nodes } = schema;
     const cell = nodes[TABLE_CELL];
     const paragraph = nodes[PARAGRAPH];
@@ -151,7 +151,11 @@ export class EnhancedTableCommands extends UICommand {
 
 }
 
-export function addNotesCommand(tr, schema, pos) {
+export function addNotesCommand(
+  tr: Transform,
+  schema: Schema,
+  pos: number
+): Transform {
   const node = tr.doc.nodeAt(pos);
   if (!node || node.type.name !== ENHANCED_TABLE_FIGURE) return tr;
 

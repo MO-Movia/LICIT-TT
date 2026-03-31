@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Mark, Schema} from 'prosemirror-model';
+import {Mark, MarkType, Schema} from 'prosemirror-model';
 import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
@@ -1188,7 +1188,7 @@ it('should return false in executeCustomStyleForTable for atomic node', () => {
       } as unknown as EditorState;
 
       const tr = {} as unknown as Transform;
-      const test = toggleCustomStyle(mt, attrs, state, tr, 1, 1);
+      const test = toggleCustomStyle(mt as unknown as MarkType, attrs, state, tr, 1, 1);
       expect(test).toStrictEqual({});
     });
     it('should return tr when selection is empty and no stored marks (case 2)', () => {
@@ -1222,7 +1222,7 @@ it('should return false in executeCustomStyleForTable for atomic node', () => {
         },
       } as unknown as EditorState;
       const tr = {} as unknown as Transform;
-      const test = toggleCustomStyle(mt, attrs, state, tr, 1, 1);
+      const test = toggleCustomStyle(mt as unknown as MarkType, attrs, state, tr, 1, 1);
       expect(test).toStrictEqual({});
     });
   });

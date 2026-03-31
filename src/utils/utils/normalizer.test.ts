@@ -11,7 +11,8 @@ import { normalizeDoc, toSimpleJson } from './normalizer';
 describe('Doc Normalizer Utils', () => {
   beforeAll(() => {
     Object.defineProperty(global, 'structuredClone', {
-      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      value: (value: unknown): unknown =>
+        JSON.parse(JSON.stringify(value)) as unknown,
       writable: true,
     });
   });

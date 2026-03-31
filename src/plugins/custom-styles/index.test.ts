@@ -500,8 +500,8 @@ describe('onUpdateAppendTransaction', () => {
         this.meta = meta;
       }
 
-      getMeta(key) {
-        return this.meta[key];
+      getMeta(key: string): unknown {
+        return this.meta[key] as unknown;
       }
     }
 
@@ -720,13 +720,13 @@ describe('onUpdateAppendTransaction', () => {
             scrollIntoView: () => {
               return {};
             },
-            setSelection: function () {
+            setSelection: function (this: Record<string, unknown>) {
               return this;
             },
-            setNodeMarkup: function () {
+            setNodeMarkup: function (this: Record<string, unknown>) {
               return this;
             },
-            addStoredMark: function () {
+            addStoredMark: function (this: Record<string, unknown>) {
               return this;
             },
             selection: {
@@ -800,8 +800,8 @@ describe('onUpdateAppendTransaction', () => {
         this.meta = meta;
       }
 
-      getMeta(key) {
-        return this.meta[key];
+      getMeta(key: string): unknown {
+        return this.meta[key] as unknown;
       }
     }
 
@@ -984,13 +984,13 @@ describe('onUpdateAppendTransaction', () => {
             scrollIntoView: () => {
               return {};
             },
-            setSelection: function () {
+            setSelection: function (this: Record<string, unknown>) {
               return this;
             },
-            setNodeMarkup: function () {
+            setNodeMarkup: function (this: Record<string, unknown>) {
               return this;
             },
-            addStoredMark: function () {
+            addStoredMark: function (this: Record<string, unknown>) {
               return this;
             },
             selection: {
@@ -1064,8 +1064,8 @@ describe('onUpdateAppendTransaction', () => {
         this.meta = meta;
       }
 
-      getMeta(key) {
-        return this.meta[key];
+      getMeta(key: string): unknown {
+        return this.meta[key] as unknown;
       }
     }
 
@@ -1246,13 +1246,13 @@ describe('onUpdateAppendTransaction', () => {
             scrollIntoView: () => {
               return {};
             },
-            setSelection: function () {
+            setSelection: function (this: Record<string, unknown>) {
               return this;
             },
-            setNodeMarkup: function () {
+            setNodeMarkup: function (this: Record<string, unknown>) {
               return this;
             },
-            addStoredMark: function () {
+            addStoredMark: function (this: Record<string, unknown>) {
               return this;
             },
             selection: {
@@ -1324,7 +1324,7 @@ describe('onUpdateAppendTransaction', () => {
   });
 });
 
-jest.fn((tr) => {
+jest.fn((tr: unknown) => {
   return tr;
 });
 describe('Style Plugin', () => {
@@ -1936,15 +1936,15 @@ describe('Custom Style Plugin pass', () => {
   observedElement.appendChild(newNode); // This will trigger the docChange event
 
   jest.mock('./index', () => {
-    const originalModule = jest.requireActual('./index');
+    const originalModule = jest.requireActual<Record<string, unknown>>('./index');
     return {
       ...originalModule,
       __esModule: true,
       default: {
-        ...originalModule.default,
+        ...(originalModule.default as Record<string, unknown>),
         isDocChanged: jest.fn(() => true),
       },
-    };
+    } as Record<string, unknown>;
   });
   const plugin = new CustomstylePlugin(TestCustomStyleRuntime);
   const editor = createEditor(doc(p('<cursor>')), {
