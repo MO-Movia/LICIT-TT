@@ -266,6 +266,7 @@ export class CapcoContextMenu extends React.Component<
       }
       tr.setNodeMarkup(enhanced_capco_pos, null, newAttrs);
     }
+    tr.setMeta("capcoChangedPos", pos);
     this.props.editorView.dispatch(tr);
     this.props.close();
   }
