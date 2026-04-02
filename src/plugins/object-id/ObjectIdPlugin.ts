@@ -154,8 +154,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
           return null;
         }
 
-        const capcoPos = transactions.find(t => t.getMeta("capcoChangedPos"))?.getMeta("capcoChangedPos");
-
+        const capcoPos = transactions.find(t => t.getMeta("capcoChangedPos") !== undefined)?.getMeta("capcoChangedPos");
         // Separate undo/redo from regular transactions
         const undoRedoTransactions = transactions.filter(t =>
           t.getMeta('history')?.undo || t.getMeta('history')?.redo
@@ -590,7 +589,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     }
     let para = null;
     let para1 = null;
-    if (capcoPos) {
+    if (null != capcoPos) {
       para = nextState.doc.nodeAt(capcoPos);
       para1 = prevState.doc.nodeAt(capcoPos);
       if (para) {
