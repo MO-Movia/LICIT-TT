@@ -162,7 +162,7 @@ describe('LandscapePlugin', () => {
 
         const proxy = frame.querySelector('.czi-landscape-horizontal-proxy');
         const track =
-            frame.querySelector('.czi-landscape-horizontal-proxy-track');
+            frame.querySelector<HTMLElement>('.czi-landscape-horizontal-proxy-track');
         expect(proxy).toBeTruthy();
         expect(track).toBeTruthy();
         expect(proxy?.classList.contains('czi-visible')).toBe(true);
@@ -228,7 +228,7 @@ describe('LandscapePlugin', () => {
 
         const proxy = frame.querySelector('.czi-landscape-horizontal-proxy');
         const track =
-            frame.querySelector('.czi-landscape-horizontal-proxy-track');
+            frame.querySelector<HTMLElement>('.czi-landscape-horizontal-proxy-track');
         expect(proxy).toBeTruthy();
         expect(track).toBeTruthy();
         expect(proxy?.classList.contains('czi-visible')).toBe(false);
@@ -304,15 +304,27 @@ describe('LandscapePlugin', () => {
         const proxyView = plugin.spec.view?.(view) as unknown as {
             syncingFromLandscape: boolean;
             syncingFromProxy: boolean;
+            activeLandscape: HTMLElement | null;
+            proxyScrollbar: HTMLElement | null;
             onProxyScroll: () => void;
             onLandscapeScroll: () => void;
         };
+        const proxyScrollbar = frame.querySelector<HTMLElement>('.czi-landscape-horizontal-proxy');
+        if (!proxyScrollbar) {
+            throw new Error('Expected proxy scrollbar to be created');
+        }
+        Object.defineProperty(proxyScrollbar, 'scrollLeft', {value: 10, writable: true});
+        Object.defineProperty(landscape, 'scrollLeft', {value: 20, writable: true});
+        proxyView.activeLandscape = landscape;
+        proxyView.proxyScrollbar = proxyScrollbar;
 
         proxyView.syncingFromLandscape = true;
         proxyView.onProxyScroll();
+        expect(landscape.scrollLeft).toBe(20);
         proxyView.syncingFromLandscape = false;
         proxyView.syncingFromProxy = true;
         proxyView.onLandscapeScroll();
+        expect(proxyScrollbar.scrollLeft).toBe(10);
 
         (globalThis as unknown as {IntersectionObserver?: typeof IntersectionObserver}).IntersectionObserver =
             undefined;
@@ -650,12 +662,22 @@ describe('LandscapePlugin', () => {
         const state = EditorState.create({schema});
         const view = {state, dom: editorDom} as unknown as EditorView;
         const proxyView = plugin.spec.view?.(view) as unknown as {
+            activeLandscape: HTMLElement | null;
+            proxyScrollbar: HTMLElement | null;
             proxyScrollbarTrack: HTMLElement | null;
             syncProxyWithActiveLandscape: () => void;
             destroy?: () => void;
         };
+        const proxyScrollbar = frame.querySelector<HTMLElement>('.czi-landscape-horizontal-proxy');
+        if (!proxyScrollbar) {
+            throw new Error('Expected proxy scrollbar to be created');
+        }
+        Object.defineProperty(proxyScrollbar, 'scrollLeft', {value: 12, writable: true});
+        proxyView.activeLandscape = landscape;
+        proxyView.proxyScrollbar = proxyScrollbar;
         proxyView.proxyScrollbarTrack = null;
         proxyView.syncProxyWithActiveLandscape();
+        expect(proxyScrollbar.scrollLeft).toBe(12);
 
         proxyView?.destroy?.();
         frame.remove();
@@ -698,9 +720,11 @@ describe('LandscapePlugin', () => {
             onProxyScroll: () => void;
             destroy?: () => void;
         };
+        Object.defineProperty(landscape, 'scrollLeft', {value: 15, writable: true});
         proxyView.activeLandscape = landscape;
         proxyView.proxyScrollbar = null;
         proxyView.onProxyScroll();
+        expect(landscape.scrollLeft).toBe(15);
 
         proxyView?.destroy?.();
         frame.remove();

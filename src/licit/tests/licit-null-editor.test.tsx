@@ -10,7 +10,7 @@ import {createRoot} from 'react-dom/client';
 import {JSONContent} from '@tiptap/core';
 
 jest.mock('@tiptap/react', () => {
-  const actual = jest.requireActual('@tiptap/react');
+  const actual = jest.requireActual<typeof import('@tiptap/react')>('@tiptap/react');
   return {
     ...actual,
     useEditor: () => null,
@@ -28,16 +28,18 @@ describe('Licit with null editor', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(container.firstChild).toBeDefined();
-    expect(ref.current).toBeDefined();
+    expect(ref.current).not.toBeNull();
 
-    if (ref.current) {
-      ref.current.goToEnd();
-      ref.current.pageLayout();
-      const emptyDoc = {type: 'doc', content: []} as JSONContent;
-      ref.current.setContent(emptyDoc);
-      ref.current.insertJSON(emptyDoc);
-      const content = ref.current.getContent();
-      expect(typeof content).toBe('object');
+    const handle = ref.current;
+    if (!handle) {
+      throw new Error('Expected Licit ref to be available');
     }
+    handle.goToEnd();
+    handle.pageLayout();
+    const emptyDoc = {type: 'doc', content: []} as JSONContent;
+    handle.setContent(emptyDoc);
+    handle.insertJSON(emptyDoc);
+    const content = handle.getContent();
+    expect(typeof content).toBe('object');
   });
 });

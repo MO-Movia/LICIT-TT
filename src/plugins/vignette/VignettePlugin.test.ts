@@ -20,6 +20,7 @@ import { Node, NodeSpec, Fragment } from 'prosemirror-model';
 import { VignetteMenuPlugin } from './VignetteMenuPlugin';
 import { deleteTable } from 'prosemirror-tables';
 import { EditorView } from 'prosemirror-view';
+import { LightThemeIcon } from './images';
 
 describe('VignettePlugin', () => {
   const editor = createEditor(doc(p('<cursor>')), {
@@ -61,6 +62,12 @@ describe('VignettePlugin', () => {
     const vignetteplugin = new VignettePlugin();
     vignetteplugin.initButtonCommands('dark');
     expect(newSchema.spec.nodes.get(TABLE)?.attrs?.vignette).toBeTruthy();
+  });
+
+  it('should use the light theme icon when light theme is selected', () => {
+    const commands = new VignettePlugin().initButtonCommands('light');
+
+    expect(Object.keys(commands)).toEqual([`[${LightThemeIcon}] Add Vignette`]);
   });
 
   it('should handle createCommand', () => {
@@ -228,4 +235,4 @@ describe('VignettePlugin', () => {
 
     plugin?.parseDOM?.[0].getAttrs?.call(plugin?.parseDOM?.[0], dom);
   });
-})
+});

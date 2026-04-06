@@ -9,6 +9,7 @@ import React from 'react';
 import {Licit, LicitHandle} from '../licit';
 import {Extension} from '@tiptap/core';
 import {createRoot} from 'react-dom/client';
+import prosemirrorDevTools from 'prosemirror-dev-tools';
 import {WebrtcProvider} from 'y-webrtc';
 
 // Mock prosemirror-dev-tools
@@ -216,11 +217,13 @@ describe('Ref Methods', () => {
 
     const handle = (await waitForValue(() => ref.current, 10000)) as LicitHandle;
     const view = handle.editorView;
-    if (view) {
-      const focusSpy = jest.spyOn(view, 'focus');
-      handle.goToEnd();
-      expect(focusSpy).toHaveBeenCalled();
+    expect(view).not.toBeNull();
+    if (!view) {
+      throw new Error('Expected editor view to be available');
     }
+    const focusSpy = jest.spyOn(view, 'focus');
+    handle.goToEnd();
+    expect(focusSpy).toHaveBeenCalled();
   });
 
   it('pageLayout triggers DocLayoutCommand workflow', async () => {
@@ -299,9 +302,7 @@ describe('Callbacks', () => {
     const root = createRoot(container);
     root.render(<Licit debug={true} />);
     await new Promise((resolve) => setTimeout(resolve, 200));
-    const devTools = (require('prosemirror-dev-tools') as {default: jest.Mock})
-      .default;
-    expect(devTools).toHaveBeenCalled();
+    expect(prosemirrorDevTools).toHaveBeenCalled();
   });
 
   it('should configure collaboration when docID provided', async () => {

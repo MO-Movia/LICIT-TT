@@ -49,6 +49,13 @@ describe('UICommand', () => {
     expect(respond).toEqual(true);
   });
 
+  it('should ignore non-click UI events', () => {
+    const respond = uiCmd.shouldRespondToUIEvent({
+      type: UICommand.EventType.MOUSEENTER,
+    } as MouseEvent);
+    expect(respond).toEqual(false);
+  });
+
   it('should by default be active', () => {
     expect(uiCmd.isActive(null as unknown as EditorState)).toBeTruthy();
   });
@@ -90,6 +97,16 @@ describe('UICommand', () => {
         expect(output).toBe(state.other);
       });
     });
+
+    describe('when `tr` is not a transaction instance', () => {
+      it('should return the raw value without setting dryrun metadata', () => {
+        const nonTransactionState = {tr: 'not-a-transaction'} as unknown as EditorState;
+
+        expect(
+          uiCmd.dryRunEditorStateProxyGetter(nonTransactionState, 'tr')
+        ).toBe('not-a-transaction');
+      });
+    });
   });
 
   describe('dryRunEditorStateProxySetter', () => {
@@ -123,6 +140,33 @@ describe('UICommand', () => {
         {} as unknown as EditorView
       );
       expect(spy).toHaveBeenCalled();
+    });
+  });
+
+  describe('dryRun', () => {
+    it('should fall back to the original state when Proxy is unavailable', () => {
+      const originalProxy = window.Proxy;
+      const executeSpy = jest
+        .spyOn(uiCmd, 'execute')
+        .mockReturnValue(true);
+
+      Object.defineProperty(window, 'Proxy', {
+        configurable: true,
+        value: undefined,
+      });
+
+      expect(uiCmd.dryRun(editor.state)).toBe(true);
+      expect(executeSpy).toHaveBeenCalledWith(
+        editor.state,
+        undefined,
+        undefined,
+        null
+      );
+
+      Object.defineProperty(window, 'Proxy', {
+        configurable: true,
+        value: originalProxy,
+      });
     });
   });
 });

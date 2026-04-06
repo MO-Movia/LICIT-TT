@@ -56,4 +56,14 @@ describe('convertToCSSPTValue', () => {
     expect(result).toBe(0); // Should return 0 as there’s no unit
   });
 
+  it('should return 0 when the numeric portion cannot be parsed', () => {
+    const invalidPxValue = 'abcpx';
+    const result = convertToCSSPTValue(invalidPxValue);
+    expect(result).toBe(0);
+  });
+
+  it('should return 0 for non-string inputs', () => {
+    const result = convertToCSSPTValue(undefined as unknown as string);
+    expect(result).toBe(0);
+  });
 });

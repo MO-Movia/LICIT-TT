@@ -3,11 +3,17 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {RuntimeService, setRuntime} from './runtime.service';
+import {
+  RuntimeService,
+  getStyleByName,
+  setCustomStyles,
+  setRuntime,
+} from './runtime.service';
 
 describe('RuntimeService', () => {
   beforeEach(() => {
     RuntimeService.Runtime = null;
+    setCustomStyles();
   });
 
   test('should set runtime correctly using setRuntime function', () => {
@@ -26,5 +32,18 @@ describe('RuntimeService', () => {
 
   test('should return null initially if runtime is not set', () => {
     expect(RuntimeService.Runtime).toBeNull();
+  });
+
+  test('should return a matching custom style by name', () => {
+    const customStyle = {styleName: 'BodyText'};
+    setCustomStyles([customStyle]);
+
+    expect(getStyleByName('BodyText')).toEqual(customStyle);
+  });
+
+  test('should return null when the requested custom style is missing', () => {
+    setCustomStyles([{styleName: 'Heading1'}]);
+
+    expect(getStyleByName('BodyText')).toBeNull();
   });
 });

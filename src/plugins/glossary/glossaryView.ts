@@ -24,7 +24,7 @@ export function updateCache(values?: CacheInput): void {
   }
 }
 export class GlossaryView implements NodeView {
-  dom: globalThis.Node;
+  dom: HTMLElement;
   contentDOM: HTMLElement;
   constructor(
     private node: Node,
@@ -38,7 +38,7 @@ export class GlossaryView implements NodeView {
       outerView.dom.ownerDocument,
       node.type.spec.toDOM(this.node)
     );
-    this.dom = spec.dom;
+    this.dom = spec.dom as HTMLElement;
     this.contentDOM = spec.contentDOM!;
     this.contentDOM.contentEditable = 'false';
     this.contentDOM.className = GLOSSARY;

@@ -7,6 +7,7 @@
 
 import React from 'react';
 import {createRoot} from 'react-dom/client';
+import prosemirrorDevTools from 'prosemirror-dev-tools';
 
 jest.mock('prosemirror-dev-tools', () => ({
   __esModule: true,
@@ -21,8 +22,6 @@ describe('Licit dev tools fallback', () => {
     const root = createRoot(container);
     root.render(<Licit debug={true} />);
     await new Promise((resolve) => setTimeout(resolve, 200));
-    const devTools = (require('prosemirror-dev-tools') as {default: unknown})
-      .default;
-    expect(devTools).toBeNull();
+    expect(prosemirrorDevTools).toBeNull();
   });
 });
