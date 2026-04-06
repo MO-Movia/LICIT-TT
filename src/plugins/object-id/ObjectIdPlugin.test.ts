@@ -782,7 +782,7 @@ describe('Object ID plugin', () => {
       doc: { resolve: () => mockSelection },
     } as unknown as EditorState;
 
-    plugin.setDirtyFlagOnChange(prevState, nextState, tr, true);
+    plugin.setDirtyFlagOnChange(prevState, nextState, tr, true, 0);
 
     expect(tr.setNodeMarkup).toBeDefined();
   });
@@ -818,7 +818,7 @@ describe('Object ID plugin', () => {
       doc: { resolve: () => mockSelection },
     } as unknown as EditorState;
 
-    plugin.setDirtyFlagOnChange(prevState, nextState, tr, true);
+    plugin.setDirtyFlagOnChange(prevState, nextState, tr, true, 0);
 
     expect(tr.setNodeMarkup).toBeDefined();
   });
@@ -835,7 +835,7 @@ describe('Object ID plugin', () => {
       doc: { resolve: () => mockSelection },
     } as unknown as EditorState;
 
-    plugin.setDirtyFlagOnChange(prevState, nextState, tr, true);
+    plugin.setDirtyFlagOnChange(prevState, nextState, tr, true, 0);
 
     expect(tr.setNodeMarkup).not.toHaveBeenCalled();
   });
@@ -1142,7 +1142,7 @@ describe('Object ID plugin', () => {
       schema: { nodes: {} }
     } as unknown as EditorState;
 
-    const result = plugin.setDirtyFlagOnChange(prevState, nextState, tr, true);
+    const result = plugin.setDirtyFlagOnChange(prevState, nextState, tr, true, 0);
     expect(result).toBe(tr);
   });
 
@@ -1158,7 +1158,13 @@ describe('Object ID plugin', () => {
     const doc = schema.node('doc', null, [schema.text('test')]);
     const state = EditorState.create({ schema, doc });
 
-    const result = plugin.setDirtyFlagOnChange(state, state, null, true);
+    const result = plugin.setDirtyFlagOnChange(
+      state,
+      state,
+      null,
+      true,
+      state.doc.content.size
+    );
     expect(result).toBeNull();
   });
 
@@ -1195,7 +1201,7 @@ describe('Object ID plugin', () => {
     ]);
 
     const state = EditorState.create({ schema, doc });
-    const result = plugin.setDirtyFlagOnChange(state, state, null, true);
+    const result = plugin.setDirtyFlagOnChange(state, state, null, true, 0);
     expect(result).toBeDefined();
   });
 
@@ -1336,6 +1342,4 @@ describe('Object ID plugin', () => {
     expect(result).toBeDefined();
   });
 });
-
-
 
