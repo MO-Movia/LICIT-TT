@@ -11,7 +11,7 @@ import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 
 class MockUICommand extends UICommand {
-  waitForUserInput(): Promise<any> {
+  waitForUserInput(): Promise<unknown> {
     throw new Error('Method not implemented.');
   }
   executeWithUserInput(): boolean {
@@ -45,7 +45,7 @@ describe('UICommand', () => {
   it('should respond to UI event', () => {
     const respond = uiCmd.shouldRespondToUIEvent({
       type: UICommand.EventType.CLICK,
-    } as Event);
+    } as MouseEvent);
     expect(respond).toEqual(true);
   });
 
@@ -59,7 +59,7 @@ describe('UICommand', () => {
 
   describe('dryRunEditorStateProxyGetter', () => {
     let tr: Transaction;
-    let state: any;
+    let state: {tr: Transaction; other: Transaction};
     let uiCmd: UICommand;
 
     beforeEach(() => {
@@ -71,7 +71,10 @@ describe('UICommand', () => {
 
     describe('when getting the transaction', () => {
       it('should update transaction metadata', () => {
-        const output = uiCmd.dryRunEditorStateProxyGetter(state, 'tr');
+        const output = uiCmd.dryRunEditorStateProxyGetter(
+          state as unknown as EditorState,
+          'tr'
+        );
         expect(tr.setMeta).toHaveBeenCalled();
         expect(output).toBe(state.tr);
       });
@@ -79,7 +82,10 @@ describe('UICommand', () => {
 
     describe('when getting other data', () => {
       it('should not update transaction metadata', () => {
-        const output = uiCmd.dryRunEditorStateProxyGetter(state, 'other');
+        const output = uiCmd.dryRunEditorStateProxyGetter(
+          state as unknown as EditorState,
+          'other'
+        );
         expect(tr.setMeta).not.toHaveBeenCalled();
         expect(output).toBe(state.other);
       });

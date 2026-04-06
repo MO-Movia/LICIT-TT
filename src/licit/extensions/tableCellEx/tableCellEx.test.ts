@@ -4,10 +4,11 @@
  */
 
 import {Editor} from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
-import TableRowEx from '../tableRowEx';
+import type {Node as PMNode} from 'prosemirror-model';
+import {StarterKit} from '@tiptap/starter-kit';
+import {TableRowEx} from '../tableRowEx';
 import {Table} from '@tiptap/extension-table';
-import TableHeader from '@tiptap/extension-table-header';
+import {TableHeader} from '@tiptap/extension-table-header';
 import {TableCellEx} from './tableCellEx';
 
 describe('TableCellEx Extension', () => {
@@ -85,8 +86,8 @@ describe('TableCellEx Extension', () => {
       '<table><tr><td style="width: 140px; font-size: 18px; letter-spacing: 1.5px; margin-top: 6px; margin-bottom: 9px;">Cell</td></tr></table>'
     );
 
-    let cellAttrs = null;
-    editor.state.doc.descendants((node) => {
+    let cellAttrs: Record<string, unknown> | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
       if (node.type.name === 'tableCell') {
         cellAttrs = node.attrs;
       }
@@ -112,7 +113,7 @@ describe('TableCellEx Extension', () => {
 
   test('should render nested color value when vignette is false', () => {
     // Add backgroundColor as object
-    editor.state.doc.descendants((node, _pos) => {
+    editor.state.doc.descendants((node: PMNode, _pos) => {
       if (node.type.name === 'tableCell') {
         editor
           .chain()
@@ -137,7 +138,7 @@ describe('TableCellEx Extension', () => {
     editor.commands.setContent(htmlWithBgColor);
 
     let found = false;
-    editor.state.doc.descendants((node) => {
+    editor.state.doc.descendants((node: PMNode) => {
       if (
         node.type.name === 'tableCell' &&
         node.attrs.backgroundColor === 'blue'
@@ -155,7 +156,7 @@ describe('TableCellEx Extension', () => {
     );
 
     let backgroundColor = '';
-    editor.state.doc.descendants((node) => {
+    editor.state.doc.descendants((node: PMNode) => {
       if (node.type.name === 'tableCell') {
         backgroundColor = node.attrs.backgroundColor;
       }
@@ -201,9 +202,10 @@ describe('TableCellEx Extension', () => {
       '<table><tr><td style="border-left: 2px solid red; border-right: 3px dashed blue">Cell</td></tr></table>'
     );
 
-    let left, right;
+    let left: string | undefined;
+    let right: string | undefined;
 
-    editor.state.doc.descendants((node) => {
+    editor.state.doc.descendants((node: PMNode) => {
       if (node.type.name === 'tableCell') {
         left = node.attrs.borderLeft;
         right = node.attrs.borderRight;

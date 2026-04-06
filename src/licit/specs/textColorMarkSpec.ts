@@ -5,7 +5,7 @@
 
 import { Mark, MarkSpec, Node } from 'prosemirror-model';
 
-import toCSSColor from '../toCSSColor';
+import {toCSSColor} from '../toCSSColor';
 
 const TextColorMarkSpec: MarkSpec = {
   attrs: {

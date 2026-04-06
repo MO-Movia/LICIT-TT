@@ -7,6 +7,7 @@ import {
   Plugin,
   PluginKey,
   EditorState,
+  Selection,
   TextSelection,
   Transaction,
 } from 'prosemirror-state';
@@ -46,7 +47,7 @@ type CustomStyleView = Plugin['spec']['view'] extends (
 
 type TrLike = Transaction | null;
 type NodeWithPos = { node: Node; pos: number };
-type SliceLike = any;
+type SliceLike = Slice | null;
 type SliceNodeInfo = {
   pos: number;
   endPos: number;
@@ -57,25 +58,23 @@ type SliceNodeInfo = {
   needsMarkup: boolean;
 };
 type LooseState = {
-  doc?: any;
-  selection?: any;
-  tr?: any;
-  schema?: any;
+  doc?: Node;
+  selection?: EditorState['selection'];
+  tr?: Transaction;
+  schema?: Schema;
 };
-type LooseTr = any;
+type LooseTr = Transaction | null;
 type LooseView = {
-  state?: any;
+  state?: EditorState;
   input?: { lastKeyCode?: number };
 };
 
 let slice1: Slice | null = null;
 
 function getSelectionCursor(
-  selection: { $cursor?: { pos?: number } | null } | null | undefined
+  selection: Selection | null | undefined
 ): { pos?: number } | null {
-  return (
-    selection?.$cursor ?? null
-  );
+  return (selection as Selection & { $cursor?: { pos?: number } })?.$cursor ?? null;
 }
 
 const isNodeHasAttribute = (node: Node | null | undefined, attrName: string): boolean => {
@@ -204,7 +203,7 @@ export function onUpdateAppendTransaction(
   nextState: LooseState,
   prevState: LooseState,
   csview: CustomStyleView | LooseView | null,
-  transactions: any,
+  transactions: readonly Transaction[],
   slice1: SliceLike
 ): LooseTr {
   tr = applyStyleForEmptyParagraph(nextState, tr);

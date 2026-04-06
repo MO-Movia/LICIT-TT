@@ -7,13 +7,20 @@ import { resolveImage, isImgInstance } from './ResolveImage';
 
 // Mock dependencies
 jest.mock('url', () => ({
-    parse: jest.fn((src) => new URL(src)),
+    parse: jest.fn((src: string) => new URL(src)),
 }));
+
+const setNavigatorOnline = (isOnline: boolean) => {
+    Object.defineProperty(window.navigator, 'onLine', {
+        configurable: true,
+        get: () => isOnline,
+    });
+};
 
 describe('Image Resolver Module', () => {
     beforeEach(() => {
         document.body.innerHTML = ''; // Reset DOM
-        (window.navigator as any).__defineGetter__('onLine', () => true); // Simulate online
+        setNavigatorOnline(true); // Simulate online
     });
 
     describe('isImgInstance', () => {
@@ -31,7 +38,7 @@ describe('Image Resolver Module', () => {
 
     describe('resolveImage', () => {
         it('resolves with result if offline', async () => {
-            (window.navigator as any).__defineGetter__('onLine', () => false);
+            setNavigatorOnline(false);
             const result = await resolveImage('https://example.com/test.jpg');
             expect(result).toEqual(
                 expect.objectContaining({
@@ -51,10 +58,10 @@ describe('Image Resolver Module', () => {
             Object.defineProperty(img, 'width', { value: 100 });
             Object.defineProperty(img, 'height', { value: 200 });
 
-            jest
-              .spyOn(document, 'createElement')
-              .mockImplementation(() => img as unknown as HTMLElement);
-            const appendSpy = jest.spyOn(document.body, 'appendChild').mockImplementation(() => img);
+            jest.spyOn(document, 'createElement').mockImplementation(() => img);
+            const appendSpy = jest
+                .spyOn(document.body, 'appendChild')
+                .mockImplementation((node) => node);
 
             setTimeout(() => {
                 img.onload?.(new Event('load'));
@@ -78,10 +85,10 @@ describe('Image Resolver Module', () => {
             const src = 'https://example.com/invalid.jpg';
             const img = new Image();
 
-            jest
-              .spyOn(document, 'createElement')
-              .mockImplementation(() => img as unknown as HTMLElement);
-            const appendSpy = jest.spyOn(document.body, 'appendChild').mockImplementation(() => img);
+            jest.spyOn(document, 'createElement').mockImplementation(() => img);
+            const appendSpy = jest
+                .spyOn(document.body, 'appendChild')
+                .mockImplementation((node) => node);
 
             setTimeout(() => {
                 img.onerror?.(new Event('error'));

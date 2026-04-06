@@ -275,6 +275,20 @@ describe('image resizebox control', () => {
     );
     expect(spy1).toHaveBeenCalled();
   });
+  it('should no-op when ending without active resize', () => {
+    const control = new ImageResizeBoxControl({
+      boxID: 'boxid',
+      config: 'any',
+      direction: 'bottom',
+      height: 10,
+      onResizeEnd: () => undefined,
+      width: 10,
+      fitToParent: true,
+    });
+    control._active = false;
+    expect(() => control._end()).not.toThrow();
+  });
+
   it('should handle render (case 2)',()=>{
     const irb = new ImageResizeBox({
       height: 150,

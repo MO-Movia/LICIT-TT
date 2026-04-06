@@ -5,10 +5,11 @@
 
 import * as React from 'react';
 
-class Frag extends React.Component<
-    any,
-    any
-> {
+type FragProps = {
+  children?: React.ReactNode;
+};
+
+class Frag extends React.Component<FragProps, unknown> {
   render(): React.ReactNode {
     return <div className="czi-frag">{this.props.children}</div>;
   }

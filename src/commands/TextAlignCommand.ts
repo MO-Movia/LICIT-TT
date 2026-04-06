@@ -17,7 +17,7 @@ import { getSelectionRange, isColumnCellSelected, getSelectedCellPositions, find
 export function setTextAlign(
   tr: Transform,
   schema: Schema,
-  alignment?: string
+  alignment: string = null
 ): Transform {
   const { selection, doc } = tr as Transaction;
   if (!selection || !doc) {
@@ -33,13 +33,12 @@ export function setTextAlign(
   const listItem = nodes[LIST_ITEM];
   const heading = nodes[HEADING];
   const paragraph = nodes[PARAGRAPH];
-  alignment = alignment || null;
   const allowedNodeTypes = new Set([blockquote, heading, listItem, paragraph]);
 
   if (isColumnCellSelected(selection)) {
     const positions = getSelectedCellPositions(selection);
     if (positions.length > 0) {
-      positions.forEach(pos => {
+      for (const pos of positions) {
         const node = tr.doc.nodeAt(pos);
         findParagraphsInNode(node, pos, (paraNode, paraPos) => {
           const align = paraNode.attrs.align ?? null;
@@ -51,7 +50,7 @@ export function setTextAlign(
             });
           }
         });
-      });
+      };
     }
   }
   else {
@@ -74,7 +73,7 @@ export function setTextAlign(
     return tr;
   }
 
-  tasks.forEach((job) => {
+  for (const job of tasks) {
     const { node, pos, nodeType } = job;
     let { attrs } = node;
     if (alignment) {
@@ -93,8 +92,8 @@ export function setTextAlign(
         overriddenAlignValue: isOverridden ? attrs.overriddenAlignValue : null
       };
     }
-    tr = tr.setNodeMarkup(pos, nodeType, attrs, node.marks);
-  });
+    tr.setNodeMarkup(pos, nodeType, attrs, node.marks);
+  };
 
   return tr;
 }

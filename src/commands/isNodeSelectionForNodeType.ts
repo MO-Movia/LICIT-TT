@@ -86,7 +86,8 @@ export function findParagraphsInNode(
   callback: (paragraphNode: Node, paragraphPos: number) => void
 ) {
   let offset = 0;
-  node.forEach((child, _childOffset) => {
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
     const childPos = pos + 1 + offset;
     if (child.type.name === 'paragraph') {
       callback(child, childPos);
@@ -95,5 +96,5 @@ export function findParagraphsInNode(
       findParagraphsInNode(child, childPos, callback);
     }
     offset += child.nodeSize;
-  });
+  };
 }

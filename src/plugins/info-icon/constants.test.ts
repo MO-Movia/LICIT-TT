@@ -9,14 +9,14 @@ import { schema, builders } from 'prosemirror-test-builder';
 import {
     Schema,
 } from 'prosemirror-model';
-import { InfoIconPlugin } from './index';
+import { InfoIconNodeSpec } from './infoIconNodeSpec';
 describe('should work getNode function', () => {
 
     it('inside getNode func', () => {
         const before = 'hello';
         const after = ' world';
         const mySchema = new Schema({
-            nodes: schema.spec.nodes,
+            nodes: schema.spec.nodes.addToEnd('infoicon', InfoIconNodeSpec),
             marks: schema.spec.marks
         });
         const info = {
@@ -26,16 +26,13 @@ describe('should work getNode function', () => {
             infoIcon: 'faIcon'
         };
         const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
-        const plugin = new InfoIconPlugin();
-        const effSchema = plugin.getEffectiveSchema(mySchema);
-        const newInfoIconNode = effSchema.node(
-            effSchema.nodes.infoicon,
+        const newInfoIconNode = mySchema.node(
+            mySchema.nodes.infoicon,
             info
         );
         const state = EditorState.create({
             doc: doc(p(before, newInfoIconNode, after)),
-            schema: effSchema,
-            plugins: [plugin],
+            schema: mySchema,
         });
         const dom = document.createElement('div');
         document.body.appendChild(dom);

@@ -12,7 +12,7 @@ export const PARAGRAPH = 'paragraph';
 export const STYLEKEY = 'styleName';
 export const ATTR_OVERRIDDEN = 'overridden';
  
-export type KeyValuePair = { [key: string]: any };
+export type KeyValuePair = { [key: string]: unknown };
 
 export const DEFAULT_NORMAL_STYLE = {
   styleName: 'Normal',

@@ -78,7 +78,8 @@ describe('keymap-utils', () => {
       const plugin = {} as unknown as Plugin;
       const result = setPluginKey(plugin, 'noSpec');
       expect(result).toBe(plugin);
-      expect((plugin as any).spec).toBeUndefined();
+      const pluginWithoutSpec = plugin as Plugin & {spec?: unknown};
+      expect(pluginWithoutSpec.spec).toBeUndefined();
     });
   });
 

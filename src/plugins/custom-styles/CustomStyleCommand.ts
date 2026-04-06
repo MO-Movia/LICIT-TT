@@ -86,7 +86,7 @@ export const LEVEL = 'styleLevel';
 export const BOLDPARTIAL = 'boldPartial';
 type NodeWithPos = { pos?: number; node: Node };
 type MutableAttrs = Record<string, unknown>;
-type AddElementResult = { tr: any; level: number; counter: number };
+type AddElementResult = { tr: Transform; level: number; counter: number };
 const MISSED_HEIRACHY_ELEMENT = {
   isAfter: '',
   attrs: { styleName: '', styleLevel: 0 },
@@ -1334,7 +1334,7 @@ function addElement(
     isAfter,
     appliedLevel,
     currentLevel
-  ).tr as Transform;
+  ).tr;
 }
 
 export function addElementAfter(

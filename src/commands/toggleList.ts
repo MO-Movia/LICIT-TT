@@ -42,10 +42,10 @@ export function toggleList(
       }
     });
     endPos = -1 == endPos ? to : endPos;
-    startPos = 0 < to - endPos ? to - endPos : 0;
+    startPos = Math.max(to - endPos, 0);
 
     from = startPos;
-    to = 0 < endPos ? endPos : 0;
+    to = Math.max(endPos, 0);
 
     newselection = TextSelection.create(doc, from, to);
     tr = (tr as Transaction).setSelection(newselection);
@@ -186,7 +186,7 @@ export function wrapNodesWithListInternal(
 
   lists.reverse();
 
-  lists.forEach((items) => {
+  for (const items of lists) {
     tr = wrapItemsWithListInternal(
       tr,
       schema,
@@ -194,7 +194,7 @@ export function wrapNodesWithListInternal(
       items,
       listStyleType
     );
-  });
+  };
 
   return tr;
 }
@@ -215,18 +215,18 @@ export function wrapItemsWithListInternal(
   }
 
   const paragraphNodes = [];
-  items.forEach((item) => {
-    const {node, pos} = item;
+  for (const item of items) {
+    const { node, pos } = item;
 
     const uniqueID = {};
-    const nodeAttrs = {...node.attrs, id: uniqueID};
+    const nodeAttrs = { ...node.attrs, id: uniqueID };
 
     tr = tr.setNodeMarkup(pos, paragraph, nodeAttrs, node.marks);
     paragraphNodes.push(tr.doc.nodeAt(pos));
-  });
+  };
 
   const firstNode = paragraphNodes[0];
-  const lastNode = paragraphNodes[paragraphNodes.length - 1];
+  const lastNode = paragraphNodes.at(-1);
   if (!firstNode || !lastNode) {
     return initialTr;
   }
@@ -255,8 +255,8 @@ export function wrapItemsWithListInternal(
   }
 
   const listItemNodes = [];
-  items.forEach((item) => {
-    const {node} = item;
+  for (const item of items) {
+    const { node } = item;
     const paragraphNode = paragraph.create(
       node.attrs,
       node.content,
@@ -267,7 +267,7 @@ export function wrapItemsWithListInternal(
       Fragment.from(paragraphNode)
     );
     listItemNodes.push(listItemNode);
-  });
+  };
 
   const listNodeAttrs = {indent: 0, start: 1, type: listStyleType};
 
@@ -429,19 +429,9 @@ export function unwrapNodesFromListInternal(
     return tr;
   }
 
-  [...listNodePoses]
-    .sort(compareNumber)
-    .reverse()
-    .forEach((pos) => {
-      tr = unwrapNodesFromSelection(
-        tr,
-        pos,
-        nodes,
-        from,
-        to,
-        unwrapParagraphNode
-      );
-    });
+  for (const pos of [...listNodePoses].sort(compareNumber).reverse()) {
+    tr = unwrapNodesFromSelection(tr, pos, nodes, from, to, unwrapParagraphNode);
+  }
 
   return tr;
 }

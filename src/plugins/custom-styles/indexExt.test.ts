@@ -20,8 +20,8 @@ describe('index branch coverage', () => {
 
   it('onInitAppendTransaction applies styles only when styles are loaded', () => {
     const ref = { loaded: false };
-    const tr = {};
-    const nextState = { tr: {} };
+    const tr = {} as unknown as import('prosemirror-state').Transaction;
+    const nextState = { tr: {} as unknown as import('prosemirror-state').Transaction };
 
     jest.spyOn(customStyle, 'isStylesLoaded').mockReturnValue(false);
     expect(onInitAppendTransaction(ref, tr, nextState)).toBe(tr);
@@ -49,7 +49,7 @@ describe('index branch coverage', () => {
   });
 
   it('applyStyleForEmptyParagraph applies latest style for eligible node', () => {
-    const tr = {};
+    const tr = {} as unknown as import('prosemirror-state').Transaction;
     const node = {
       attrs: { styleName: 'MyStyle' },
       content: { content: [{ marks: [] }] },
@@ -68,7 +68,10 @@ describe('index branch coverage', () => {
       .spyOn(command, 'applyLatestStyle')
       .mockReturnValue({ changed: true } as never);
 
-    const result = applyStyleForEmptyParagraph(nextState as never, tr as never);
+    const result = applyStyleForEmptyParagraph(
+      nextState as never,
+      tr as unknown as import('prosemirror-state').Transaction
+    );
     expect(result).toEqual({ changed: true });
     expect(applyLatestStyleSpy).toHaveBeenCalledWith(
       'MyStyle',
@@ -187,7 +190,12 @@ describe('index branch coverage', () => {
   });
 
   it('isDocChanged returns false when no transactions changed document', () => {
-    expect(isDocChanged([{ docChanged: false }, { docChanged: 0 }])).toBe(false);
+    expect(
+      isDocChanged([
+        { docChanged: false } as unknown as import('prosemirror-state').Transaction,
+        { docChanged: false } as unknown as import('prosemirror-state').Transaction,
+      ])
+    ).toBe(false);
   });
 
   it('RESERVED_STYLE_NONE constant is available for branch-dependent defaults', () => {

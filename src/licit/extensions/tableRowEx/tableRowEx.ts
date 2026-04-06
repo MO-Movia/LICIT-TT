@@ -3,7 +3,7 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import TableRow from '@tiptap/extension-table-row';
+import {TableRow} from '@tiptap/extension-table-row';
 
 const DEFAULT_ROW_HEIGHT = 'auto';
 const DEFAULT_ROW_WIDTH = 'auto';

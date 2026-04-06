@@ -6,6 +6,8 @@
 import {Schema} from 'prosemirror-model';
 import {EditorState, TextSelection, Transaction} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
+import type {EditorView} from 'prosemirror-view';
+import type {SyntheticEvent} from 'react';
 import {EnhancedTableCommands, addNotesCommand} from './EnhancedTableCommands';
 import {schema as basicSchema} from 'prosemirror-schema-basic';
 import {p} from 'jest-prosemirror';
@@ -92,7 +94,7 @@ describe('EnhancedTableCommands', () => {
 
   test('execute inserts enhanced table figure', () => {
     const dispatch = jest.fn();
-    const view = {focus: jest.fn()} as any;
+    const view = {focus: jest.fn()} as unknown as EditorView;
 
     command.execute(state, dispatch, view);
 
@@ -120,14 +122,14 @@ describe('EnhancedTableCommands', () => {
     const result = await command.waitForUserInput(
       state,
       () => {},
-      {} as any,
-      {} as any
+      {} as EditorView,
+      {} as SyntheticEvent<Element, Event>
     );
     expect(result).toBeUndefined();
   });
 
   test('executeWithUserInput returns false', () => {
-    const result = command.executeWithUserInput(state, () => {}, {} as any, '');
+    const result = command.executeWithUserInput(state, () => {}, {} as EditorView, '');
     expect(result).toBe(false);
   });
 
