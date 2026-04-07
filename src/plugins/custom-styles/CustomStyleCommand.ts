@@ -12,7 +12,7 @@ import {
 import { Transform } from 'prosemirror-transform';
 import { CellSelection } from 'prosemirror-tables';
 import { EditorView } from 'prosemirror-view';
-import { Node, Fragment, Schema } from 'prosemirror-model';
+import { Mark, Node, Fragment, Schema } from 'prosemirror-model';
 import { UICommand } from '../../core';
 import {
   atViewportCenter,
@@ -84,15 +84,18 @@ export const NUMBERING = 'hasNumbering';
 export const LEVELBASEDINDENT = 'isLevelbased';
 export const LEVEL = 'styleLevel';
 export const BOLDPARTIAL = 'boldPartial';
+type NodeWithPos = { pos?: number; node: Node };
+type MutableAttrs = Record<string, unknown>;
+type AddElementResult = { tr: Transform; level: number; counter: number };
 const MISSED_HEIRACHY_ELEMENT = {
   isAfter: '',
   attrs: { styleName: '', styleLevel: 0 },
   previousLevel: '',
   startPos: '',
 };
-const nodesAfterSelection = [];
-const nodesBeforeSelection = [];
-const selectedNodes = [];
+const nodesAfterSelection: NodeWithPos[] = [];
+const nodesBeforeSelection: NodeWithPos[] = [];
+const selectedNodes: NodeWithPos[] = [];
 
 function getCustomStyleCommandsEx(
   customStyle,
@@ -191,7 +194,9 @@ function getCustomStyleCommandsEx(
 
 // [FS] IRAD-1042 2020-10-01
 // Creates commands based on custom style JSon object
-export function getCustomStyleCommands(customStyle) {
+export function getCustomStyleCommands(
+  customStyle: Record<string, unknown>
+): UICommand[] {
   let commands: UICommand[] = [];
   for (const property in customStyle) {
     commands = getCustomStyleCommandsEx(customStyle, property, commands);
@@ -673,20 +678,22 @@ export const compareAttributes = (mark, style): boolean => {
 };
 
 export function compareMarkWithStyle(
-  mark,
-  style,
-  tr,
+  mark: {
+    type: { name: string; create?: (attrs?: unknown) => unknown };
+    attrs: Record<string, unknown>;
+  },
+  style: Record<string, unknown> | null | undefined,
+  tr: Transform,
   _startPos,
   _endPos,
-  retObj
-) {
+  retObj: { modified: boolean }
+): Transform {
   if (!style) return tr;
   const overridden = !compareAttributes(mark, style);
 
   if (
     undefined !== mark.attrs[ATTR_OVERRIDDEN] &&
-    mark.attrs[ATTR_OVERRIDDEN] !== overridden &&
-    tr.curSelection
+    mark.attrs[ATTR_OVERRIDDEN] !== overridden
   ) {
     mark.attrs[ATTR_OVERRIDDEN] = overridden;
     retObj.modified = true;
@@ -695,11 +702,11 @@ export function compareMarkWithStyle(
   return tr;
 }
 
-export function getMarkByStyleName(styleName: string, schema: Schema) {
+export function getMarkByStyleName(styleName: string, schema: Schema): Mark[] {
   const styleProp = getCustomStyleByName(styleName);
-  const marks = [];
-  let markType = null;
-  let attrs = null;
+  const marks: Mark[] = [];
+  let markType: Schema['marks'][string] | null = null;
+  let attrs: Record<string, unknown> | null = null;
   if (styleProp?.styles) {
     for (const property in styleProp.styles) {
       switch (property) {
@@ -729,7 +736,9 @@ export function getMarkByStyleName(styleName: string, schema: Schema) {
           attrs = styleProp.styles[property]
             ? { pt: styleProp.styles[property] }
             : null;
-          marks.push(markType?.create(attrs));
+          if (markType) {
+            marks.push(markType.create(attrs));
+          }
           break;
 
         case FONTNAME:
@@ -737,7 +746,9 @@ export function getMarkByStyleName(styleName: string, schema: Schema) {
           attrs = styleProp.styles[property]
             ? { name: styleProp.styles[property] }
             : null;
-          marks.push(markType?.create(attrs));
+          if (markType) {
+            marks.push(markType.create(attrs));
+          }
           break;
 
         case TEXTHL:
@@ -817,11 +828,11 @@ export function applyStyleForTableColumnCell(
   styleProp: Style,
   styleName: string,
   state: EditorState,
-  tr: Transform,
+  tr: Transaction | Transform,
   node: Node,
   startPos: number,
   opt?: number
-) {
+): Transaction | Transform {
   const loading = !styleProp;
   tr = removeAllMarksExceptLinkForTableColumnCell(startPos, node, tr);
 
@@ -863,17 +874,17 @@ export function applyStyleForTableColumnCell(
   return tr;
 }
 
-function applyStyleEx(
+function applyStyleEx<T extends Transaction | Transform>(
   styleProp: Style,
   styleName: string,
   state: EditorState,
-  tr: Transform,
+  tr: T,
   node: Node,
   startPos: number,
   endPos: number,
   _way: number,
   opt?: number
-) {
+): T {
   const loading = !styleProp;
   // Custom style is applied from menu the endpos is correct ie nodesize is calculating correct
   // when loading the document with a node having custom style the nodesize is one point less
@@ -882,7 +893,7 @@ function applyStyleEx(
   endPos = null === lastChild ? endPos : endPos + 1;
 
   // Issue fix: applied link is missing after applying a custom style.
-  tr = removeAllMarksExceptLink(startPos, endPos, tr);
+  tr = removeAllMarksExceptLink(startPos, endPos, tr) as T;
 
   if (loading || !opt) {
     styleProp = getCustomStyleByName(styleName);
@@ -955,7 +966,7 @@ function applyStyleEx(
       ) {
         const returnVal = element.executeCustom(state, tr, startPos, endPos);
         if (typeof returnVal != 'boolean') {
-          tr = returnVal;
+          tr = returnVal as T;
         }
       }
     });
@@ -963,7 +974,7 @@ function applyStyleEx(
     const storedmarks = getMarkByStyleName(styleName, state.schema);
     newattrs.id = null === newattrs.id ? '' : null;
 
-    tr = _setNodeAttribute(state, tr, startPos, endPos, newattrs);
+    tr = _setNodeAttribute(state, tr, startPos, endPos, newattrs) as T;
     (tr as Transaction).storedMarks = storedmarks;
     if (originalSelectionPos) {
       (tr as Transaction).setSelection(
@@ -1179,8 +1190,11 @@ export function allowCustomLevelIndent(
   return allowIndent;
 }
 
-// Mange heirarchy for the elements after selection
-export function manageElementsAfterSelection(nodeArray, state, tr) {
+export function manageElementsAfterSelection(
+  nodeArray: NodeWithPos[],
+  state: EditorState,
+  tr: Transform
+): Transform {
   let selectedLevel = Number(MISSED_HEIRACHY_ELEMENT.previousLevel);
   let subsequantLevel = 0;
   let counter = 0;
@@ -1243,7 +1257,13 @@ function setNewElementObject(attrs, startPos, previousLevel, isAfter) {
   MISSED_HEIRACHY_ELEMENT.previousLevel = previousLevel;
 }
 
-export function insertParagraph(nodeAttrs, startPos, tr, index, state?) {
+export function insertParagraph(
+  nodeAttrs: MutableAttrs,
+  startPos: number,
+  tr: Transform,
+  index: number,
+  state?: EditorState
+): Transform {
   if (state?.schema && nodeAttrs) {
     const paragraph = state.schema.nodes[PARAGRAPH];
     // [FS] IRAD-1202 2021-02-15
@@ -1259,7 +1279,10 @@ export function insertParagraph(nodeAttrs, startPos, tr, index, state?) {
 
 // [FS] IRAD-1243 2021-05-05
 // To reset the previous numbering custom style attribute values.
-export function resetNodeAttrs(nodeAttrs, customStyle) {
+export function resetNodeAttrs(
+  nodeAttrs: MutableAttrs,
+  customStyle: Partial<Style> | Record<string, unknown> | null
+): MutableAttrs {
   nodeAttrs.styleName = customStyle ? customStyle.styleName : '';
   nodeAttrs.indent = null;
   nodeAttrs.lineSpacing = null;
@@ -1269,14 +1292,14 @@ export function resetNodeAttrs(nodeAttrs, customStyle) {
 }
 
 export function addElementEx(
-  nodeAttrs,
-  state,
-  tr,
-  startPos,
-  after,
-  previousLevel,
-  currentLevel?
-) {
+  nodeAttrs: MutableAttrs,
+  state: EditorState,
+  tr: Transform,
+  startPos: number,
+  after: boolean,
+  previousLevel: number,
+  currentLevel?: number
+): AddElementResult {
   let level = 0;
   let counter = 0;
   const nextLevel = 0;
@@ -1295,14 +1318,14 @@ export function addElementEx(
 }
 
 function addElement(
-  nodeAttrs,
-  state,
-  tr,
-  startPos,
-  isAfter,
-  appliedLevel,
-  currentLevel
-) {
+  nodeAttrs: MutableAttrs,
+  state: EditorState,
+  tr: Transform,
+  startPos: number,
+  isAfter: boolean,
+  appliedLevel: number,
+  currentLevel: number
+): Transform {
   return addElementEx(
     nodeAttrs,
     state,
@@ -1314,7 +1337,13 @@ function addElement(
   ).tr;
 }
 
-export function addElementAfter(nodeAttrs, state, tr, startPos, nextLevel) {
+export function addElementAfter(
+  nodeAttrs: MutableAttrs,
+  state: EditorState,
+  tr: Transform,
+  startPos: number,
+  nextLevel: number
+): Transform {
   const element = addElementEx(nodeAttrs, state, tr, startPos, true, nextLevel);
   if (element) {
     tr = element.tr;
@@ -1350,13 +1379,13 @@ export function getStyleLevel(styleName: string) {
 export function applyLatestStyle(
   styleName: string,
   state: EditorState,
-  tr: Transform,
+  tr: Transaction | Transform,
   node: Node,
   startPos: number,
   endPos: number,
   style?: Style,
   opt?: number
-) {
+): Transaction | Transform {
   const way = 1;
   tr = applyStyleEx(
     style,
@@ -1480,8 +1509,8 @@ export function applyStyle(
   style: Style,
   styleName: string,
   state: EditorState,
-  tr: Transform
-) {
+  tr: Transaction | Transform
+): Transaction | Transform {
   const { selection } = state;
   let startPos, endPos;
   let positions = [];
@@ -1525,7 +1554,7 @@ export function applyStyleToEachNode(
   style: Style,
   styleName: string,
   positions: number[] = []
-) {
+): Transaction | Transform {
   const way = 0;
   if (positions.length > 0) {
     positions.forEach((pos) => {
@@ -1562,10 +1591,10 @@ export function applyStyleToEachNode(
 // Fix: bold first sentence custom style not showing after reload editor.
 export function applyLineStyle(
   state: EditorState,
-  tr: Transform,
-  node: Node,
+  tr: Transaction | Transform,
+  node: Node | null,
   startPos: number
-) {
+): Transaction | Transform {
   if (node) {
     if (node.attrs?.styleName) {
       const styleProp = getCustomStyleByName(node.attrs.styleName);
@@ -1628,7 +1657,13 @@ export function applyLineStyle(
   return tr;
 }
 // add bold marks to node
-export function addMarksToLine(tr, state, node, pos, boldSentence) {
+export function addMarksToLine(
+  tr: Transform,
+  state: EditorState,
+  node: Node,
+  pos: number,
+  boldSentence: boolean
+): Transform {
   const markType = state.schema.marks[MARKSTRONG];
   if (!markType) return tr;
 
@@ -1722,7 +1757,7 @@ export function addMarksToLine(tr, state, node, pos, boldSentence) {
   return tr;
 }
 // get text content from selected node
-function getNodeText(node: Node) {
+function getNodeText(node: Node): string {
   let textContent = '';
   node.descendants((child: Node) => {
     if ('text' === child.type.name) {
@@ -1738,8 +1773,8 @@ export function getNode(
   from: number,
   to: number,
   tr: Transform
-): Node {
-  let selectedNode = null;
+): Node | null {
+  let selectedNode: Node | null = null;
   selectedNodes.splice(0);
   tr.doc.nodesBetween(from, to, (node, startPos) => {
     if (

@@ -3,7 +3,8 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {EditorState} from 'prosemirror-state';
+import {EditorState, TextSelection} from 'prosemirror-state';
+import {MarkType} from 'prosemirror-model';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 import {findNodesWithSameMark} from './findNodesWithSameMark';
@@ -116,18 +117,18 @@ export class MarkToggleCommand extends UICommand {
     tr: Transform,
     posfrom: number,
     posto: number
-  ) => {
+  ): Transform => {
     const {schema} = state;
     const markType = schema.marks[this._markName];
     if (!markType) {
-      return false;
+      return false as unknown as Transform;
     }
 
     if (tr && posto === posfrom + 1) {
       const node = tr.doc.nodeAt(posfrom);
-      if (node.isAtom && !node.isText && node.isLeaf) {
+      if (node?.isAtom && !node.isText && node.isLeaf) {
         // An atomic node (e.g. Image) is selected.
-        return false;
+        return false as unknown as Transform;
       }
     }
 
@@ -139,18 +140,18 @@ export class MarkToggleCommand extends UICommand {
     tr: Transform,
     from: number,
     to: number
-  ) => {
+  ): Transform => {
     const {schema} = state;
     const markType = schema.marks[this._markName];
     if (!markType) {
-      return false;
+      return false as unknown as Transform;
     }
 
     if (tr && to === from + 1) {
       const node = tr.doc.nodeAt(from);
-      if (node.isAtom && !node.isText && node.isLeaf) {
+      if (node?.isAtom && !node.isText && node.isLeaf) {
         // An atomic node (e.g. Image) is selected.
-        return false;
+        return false as unknown as Transform;
       }
     }
 
@@ -166,14 +167,16 @@ export class MarkToggleCommand extends UICommand {
 // Fix: overrided the toggleMarks for custom style implementation
 // Return Transform object
 export function toggleCustomStyle(
-  markType,
-  attrs,
-  state,
-  tr,
+  markType: MarkType,
+  attrs: Record<string, unknown> | null,
+  state: EditorState,
+  tr: Transform,
   posfrom: number,
   posto: number
-) {
-  const ref = state.selection;
+): Transform {
+  const ref = state.selection as TextSelection & {
+    $cursor?: EditorState['selection']['$from'] | null;
+  };
   const empty = ref.empty;
   const $cursor = ref.$cursor;
   const ranges = ref.ranges;
@@ -198,7 +201,7 @@ export function toggleCustomStyle(
         const overridden = node.marks.find(
           (mark) => mark.type.name === 'override'
         );
-        const skip = overridden?.attrs[markType.name] === true;
+        const skip = overridden?.attrs[markType.name ?? ''] === true;
         if (!skip) {
           attrs = {overridden: false};
           tr = tr.addMark(from, to, markType.create(attrs));
@@ -211,7 +214,11 @@ export function toggleCustomStyle(
 }
 
 //overrided method from prosemirror Transform
-function markApplies(doc, ranges, type) {
+function markApplies(
+  doc: EditorState['doc'],
+  ranges: EditorState['selection']['ranges'],
+  type: MarkType
+): boolean {
   let returned = false;
   const loop = function (i) {
     const ref = ranges[i];

@@ -759,13 +759,17 @@ describe('comapreMarks', () => {
   it('should recursively extract paragraphs from child nodes', () => {
     const normalParagraphs = [];
     const otherParagraphs = [];
+    const children = [
+      { attrs: { styleName: 'Normal' }, type: { name: 'paragraph' } },
+      { attrs: { styleName: 'test' }, type: { name: 'paragraph' } },
+    ];
     extractParagraphs(
       {
         type: { name: 'doc' },
-        content: [
-          { attrs: { styleName: 'Normal' }, type: { name: 'paragraph' } },
-          { attrs: { styleName: 'test' }, type: { name: 'paragraph' } },
-        ],
+        content: {
+          childCount: children.length,
+          child: (index: number) => children[index],
+        },
       } as unknown as Node,
       normalParagraphs,
       otherParagraphs

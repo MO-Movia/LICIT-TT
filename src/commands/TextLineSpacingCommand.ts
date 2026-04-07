@@ -47,7 +47,7 @@ export function setTextLineSpacing(
   if (isColumnCellSelected(selection)) {
     const positions = getSelectedCellPositions(selection);
     if (positions.length > 0) {
-      positions.forEach(originalPos => {
+      for (const originalPos of positions) {
         const pos = originalPos + 1;
         const node = tr.doc.nodeAt(pos);
         if (!node) return;
@@ -62,7 +62,7 @@ export function setTextLineSpacing(
             });
           }
         }
-      });
+      };
     }
   }
   else {
@@ -88,7 +88,7 @@ export function setTextLineSpacing(
     return tr;
   }
 
-  tasks.forEach((job) => {
+  for (const job of tasks) {
     const { node, pos, nodeType } = job;
     let { attrs } = node;
     if (lineSpacingValue) {
@@ -110,7 +110,7 @@ export function setTextLineSpacing(
       };
     }
     tr = tr.setNodeMarkup(pos, nodeType, attrs, node.marks);
-  });
+  };
 
   return tr;
 }

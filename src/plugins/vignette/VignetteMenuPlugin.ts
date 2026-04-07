@@ -66,7 +66,7 @@ export class VignetteView {
     tableNodeView: (node: Node, view: EditorView) => TableView,
     node: Node,
     view: EditorView
-  ): TableView {
+  ): TableView | undefined {
     const base = tableNodeView?.(node, view);
     if (base?.update && node.attrs.vignette) {
       base.update = this.updateEx.bind(base, base.update, this);
@@ -80,7 +80,7 @@ export class VignetteView {
     self: VignetteView,
     node: Node
   ): boolean {
-    const result = update.call(this, node);
+    const result = Boolean(update.call(this, node));
     if (result) {
       self.updateBorder(this as unknown as TableView);
     }
@@ -93,7 +93,7 @@ export class VignetteView {
     }
   }
 
-  static isVignette(state: EditorState, actionNode: Node) {
+  static isVignette(state: EditorState, actionNode: Node | null) {
     let vignette = false;
     if (state.selection instanceof CellSelection) {
       if (state.selection?.$anchorCell?.node(-1)?.attrs.vignette) {
@@ -138,7 +138,7 @@ export class VignetteView {
   ): boolean {
     return VignetteView.isVignette(state, null)
       ? false
-      : isEnabled.call(this as unknown as UICommand, state, view);
+      : Boolean(isEnabled.call(this as unknown as UICommand, state, view));
   }
 
   destroy = (): void => {

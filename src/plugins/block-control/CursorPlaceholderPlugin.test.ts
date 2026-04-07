@@ -39,7 +39,7 @@ describe('CursorPlaceholderPlugin', () => {
     mockTr = mockEditorState.tr as unknown as Transaction;
 
     // Mock Decoration
-    jest.spyOn(Decoration, 'widget').mockImplementation(() => ({} as any));
+    jest.spyOn(Decoration, 'widget').mockImplementation(() => ({} as unknown as Decoration));
   });
 
   afterEach(() => {
@@ -90,7 +90,7 @@ describe('CursorPlaceholderPlugin', () => {
     });
 
     it('should return true when tr.selection is null', () => {
-      const result = isPlugin({}, { selection: null });
+      const result = isPlugin({}, { selection: null } as unknown as Transaction);
       expect(result).toBe(true);
     });
 

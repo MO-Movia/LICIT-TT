@@ -7,7 +7,7 @@ import {ImageNodeView, ImageViewBody} from './ImageNodeView';
 import {Schema, Node} from 'prosemirror-model';
 import {EditorState} from 'prosemirror-state';
 import {EditorFocused, NodeViewProps} from './CustomNodeView';
-import ResizeObserver from './ResizeObserver';
+import * as ResizeObserver from './ResizeObserver';
 import { PopUpHandle } from '../../../commands';
 
 describe('ImageNodeView', () => {

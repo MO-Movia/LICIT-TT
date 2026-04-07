@@ -4,11 +4,12 @@
  */
 
 import {Editor} from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import type {Node as PMNode} from 'prosemirror-model';
+import {StarterKit} from '@tiptap/starter-kit';
 import {TableEx} from './tableEx';
-import TableRowEx from '../tableRowEx';
-import TableHeader from '@tiptap/extension-table-header';
-import TableCell from '@tiptap/extension-table-cell';
+import {TableRowEx} from '../tableRowEx';
+import {TableHeader} from '@tiptap/extension-table-header';
+import {TableCell} from '@tiptap/extension-table-cell';
 
 describe('TableEx Extension', () => {
   let editor: Editor;
@@ -48,8 +49,8 @@ describe('TableEx Extension', () => {
       '<table><tr><td>First</td><td>Second</td><td>Third</td></tr></table>'
     );
 
-    let tableAttrs = null;
-    editor.state.doc.descendants((node) => {
+    let tableAttrs: Record<string, unknown> | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
       if (node.type.name === 'table') {
         tableAttrs = node.attrs;
       }
@@ -118,7 +119,7 @@ describe('TableEx Extension', () => {
     // Get the first table cell position and set selection there
     const {state} = editor;
     let cellPos = 0;
-    state.doc.descendants((node, pos) => {
+    state.doc.descendants((node: PMNode, pos: number) => {
       if (node.type.name === 'tableCell' && cellPos === 0) {
         cellPos = pos + 1;
       }
@@ -139,7 +140,7 @@ describe('TableEx Extension', () => {
     const {state} = editor;
     let cellCount = 0;
     let cellPos = 0;
-    state.doc.descendants((node, pos) => {
+    state.doc.descendants((node: PMNode, pos: number) => {
       if (node.type.name === 'tableCell') {
         cellCount++;
         if (cellCount === 2) {
@@ -167,7 +168,7 @@ describe('TableEx Extension', () => {
     const {state} = editor;
     let lastCellPos = 0;
 
-    state.doc.descendants((node, pos) => {
+    state.doc.descendants((node: PMNode, pos: number) => {
       if (node.type.name === 'tableCell') {
         lastCellPos = pos;
       }
@@ -178,7 +179,7 @@ describe('TableEx Extension', () => {
 
     const countRows = () => {
       let rows = 0;
-      editor.state.doc.descendants((node) => {
+      editor.state.doc.descendants((node: PMNode) => {
         if (node.type.name === 'tableRow') rows++;
       });
       return rows;
@@ -196,7 +197,7 @@ describe('TableEx Extension', () => {
   editor.commands.insertTable({rows: 2, cols: 2});
 
   let hasHeaderCell = false;
-  editor.state.doc.descendants((node) => {
+  editor.state.doc.descendants((node: PMNode) => {
     if (node.type.name === 'tableHeader') {
       hasHeaderCell = true;
     }
@@ -212,7 +213,7 @@ test('should insert table with custom rows and cols', () => {
   let maxCols = 0;
   let currentCols = 0;
 
-  editor.state.doc.descendants((node) => {
+  editor.state.doc.descendants((node: PMNode) => {
     if (node.type.name === 'tableRow') {
       rowCount++;
       currentCols = 0;
@@ -250,7 +251,7 @@ test('should not add row when Tab pressed in last cell and vignette is true', ()
   const {state} = editor;
   let lastCellPos = 0;
 
-  state.doc.descendants((node, pos) => {
+  state.doc.descendants((node: PMNode, pos: number) => {
     if (node.type.name === 'tableCell') {
       lastCellPos = pos;
     }
@@ -259,7 +260,7 @@ test('should not add row when Tab pressed in last cell and vignette is true', ()
   editor.commands.setTextSelection(lastCellPos + 1);
   editor.commands.updateAttributes('tableCell', {vignette: true});
 
-  editor.state.doc.descendants((node) => {
+  editor.state.doc.descendants((node: PMNode) => {
     return node.type.name === 'tableRow';
   });
 
@@ -267,7 +268,7 @@ test('should not add row when Tab pressed in last cell and vignette is true', ()
   editor.view.dom.dispatchEvent(tabEvent);
 
   let finalRows = 0;
-  editor.state.doc.descendants((node) => {
+  editor.state.doc.descendants((node: PMNode) => {
     if (node.type.name === 'tableRow') finalRows++;
   });
 
@@ -284,7 +285,7 @@ test('should add row and move to it when Tab pressed in last cell without vignet
   const {state} = editor;
   let lastCellPos = 0;
 
-  state.doc.descendants((node, pos) => {
+  state.doc.descendants((node: PMNode, pos: number) => {
     if (node.type.name === 'tableCell') {
       lastCellPos = pos;
     }

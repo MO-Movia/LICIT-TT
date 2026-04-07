@@ -4,10 +4,11 @@
  */
 
 import {Editor} from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import type {Node as PMNode} from 'prosemirror-model';
+import {StarterKit} from '@tiptap/starter-kit';
 import {Table} from '@tiptap/extension-table';
-import TableHeader from '@tiptap/extension-table-header';
-import TableCell from '@tiptap/extension-table-cell';
+import {TableHeader} from '@tiptap/extension-table-header';
+import {TableCell} from '@tiptap/extension-table-cell';
 import {TableRowEx} from './tableRowEx';
 
 describe('TableRowEx Extension', () => {
@@ -39,8 +40,8 @@ describe('TableRowEx Extension', () => {
       '<table><tr rowheight="40px" rowwidth="320px"><td>Cell</td></tr></table>'
     );
 
-    let parsedRowAttrs = null;
-    editor.state.doc.descendants((node) => {
+    let parsedRowAttrs: Record<string, unknown> | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
       if (node.type.name === 'tableRow') {
         parsedRowAttrs = node.attrs;
       }

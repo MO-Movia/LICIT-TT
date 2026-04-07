@@ -5,6 +5,7 @@
 
 import { Schema } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { EnhancedTableFigure } from './EnhancedTableFigure';
 import { EnhancedTableCommands } from './EnhancedTableCommands';
 import { ImageUploadCommand } from './ImageUploadCommand';
@@ -22,6 +23,7 @@ import {
   ENHANCED_TABLE_FIGURE_NOTES,
 } from './Constants';
 import { DarkThemeIcon, LightThemeIcon } from './images';
+import { EditorView } from 'prosemirror-view';
 
 // Mock dependencies
 jest.mock('./EnhancedTableCommands');
@@ -131,8 +133,8 @@ describe('EnhancedTableFigure', () => {
 
   describe('nodeViews', () => {
     it('should create EnhancedTableFigureView for enhanced_table_figure node', () => {
-      const mockNode = { type: { name: 'enhanced_table_figure' } } as any;
-      const mockView = {} as any;
+      const mockNode = { type: { name: 'enhanced_table_figure' } } as unknown as ProseMirrorNode;
+      const mockView = {} as EditorView;
       const mockGetPos = jest.fn();
 
       const nodeView = plugin.spec.props.nodeViews.enhanced_table_figure(

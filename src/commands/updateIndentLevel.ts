@@ -45,7 +45,7 @@ export function updateIndentLevel(
   if (isColumnCellSelected(selection)) {
     const positions = getSelectedCellPositions(selection);
     if (positions.length > 0) {
-      positions.forEach(pos => {
+      for (const pos of positions) {
         const node = tr.doc.nodeAt(pos);
         if (!node) return;
         findParagraphsInNode(node, pos, (paraNode, paraPos) => {
@@ -56,7 +56,7 @@ export function updateIndentLevel(
             listNodePoses.push(paraPos);
           }
         });
-      });
+      };
     }
   }
   else {
@@ -83,12 +83,9 @@ export function updateIndentLevel(
   tr = transformAndPreserveTextSelection(tr, schema, (memo) => {
     const { schema } = memo;
     let tr2 = memo.tr;
-    [...listNodePoses]
-      .sort(compareNumber)
-      .reverse()
-      .forEach((pos) => {
-        tr2 = setListNodeIndent(state, tr2, schema, pos, delta);
-      });
+    for (const pos of [...listNodePoses].sort(compareNumber).reverse()) {
+      tr2 = setListNodeIndent(state, tr2, schema, pos, delta);
+    }
     tr2 = consolidateListNodes(tr2 as Transaction);
     return tr2;
   });
@@ -216,7 +213,7 @@ export function setNodeIndentMarkup(
     ...node.attrs,
     indent,
     overriddenIndent: indent != node.attrs.indent,
-    overriddenIndentValue: (indent != node.attrs.indent) ? indent : null
+    overriddenIndentValue: (indent === node.attrs.indent) ? null : indent
   };
   tr = tr.setNodeMarkup(pos, node.type, nodeAttrs, node.marks);
   return { tr, docChanged: true };

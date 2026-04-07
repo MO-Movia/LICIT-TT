@@ -3,13 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { EditorState, Plugin, PluginKey } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 
 const PLACE_HOLDER_ID = { name: 'CursorPlaceholderPlugin' };
 
-let singletonInstance: CursorPlaceholderPlugin = null;
+let singletonInstance: CursorPlaceholderPlugin | null = null;
 
 // https://prosemirror.net/examples/upload/
 const SPEC = {
@@ -19,7 +19,7 @@ const SPEC = {
     init() {
       return DecorationSet.empty;
     },
-    apply(tr, set) {
+    apply(tr, set: DecorationSet): DecorationSet {
       set = set.map(tr.mapping, tr.doc);
       const action = tr.getMeta(this);
       if (!action) {
@@ -41,9 +41,9 @@ const SPEC = {
     },
   },
   props: {
-    decorations: (state) => {
+    decorations: (state): DecorationSet | null => {
       const plugin = singletonInstance;
-      return plugin ? plugin.getState(state) : null;
+      return plugin ? (plugin.getState(state) as DecorationSet) : null;
     },
   },
 };
@@ -61,20 +61,23 @@ export function specFinder(spec: Record<string, unknown>): boolean {
   return spec.id === PLACE_HOLDER_ID;
 }
 
-export function resetInstance() {
+export function resetInstance(): void {
   singletonInstance = null;
 }
 function findCursorPlaceholderPos(state: EditorState): number | null {
   if (!singletonInstance) {
     return null;
   }
-  const decos = singletonInstance.getState(state);
+  const decos = singletonInstance.getState(state) as DecorationSet;
   const found = decos.find(null, null, specFinder);
   const pos = found.length ? found[0].from : null;
   return pos || null;
 }
 
-export function isPlugin(plugin,tr):boolean {
+export function isPlugin(
+  plugin: CursorPlaceholderPlugin | null,
+  tr: Transaction
+): boolean {
   if (!plugin || !tr.selection) {
     return true;
 }

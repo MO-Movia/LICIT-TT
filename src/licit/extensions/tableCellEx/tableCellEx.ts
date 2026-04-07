@@ -3,7 +3,7 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import TableCell from '@tiptap/extension-table-cell';
+import {TableCell} from '@tiptap/extension-table-cell';
 
 const DEFAULT_CELL_WIDTH = null;
 const DEFAULT_FONT_SIZE = '16px';

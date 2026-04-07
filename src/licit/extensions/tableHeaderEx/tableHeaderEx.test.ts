@@ -4,10 +4,11 @@
  */
 
 import {Editor} from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import type {Node as PMNode} from 'prosemirror-model';
+import {StarterKit} from '@tiptap/starter-kit';
 import {Table} from '@tiptap/extension-table';
-import TableRowEx from '../tableRowEx';
-import TableCellEx from '../tableCellEx';
+import {TableRowEx} from '../tableRowEx';
+import {TableCellEx} from '../tableCellEx';
 import {TableHeaderEx} from './tableHeaderEx';
 
 describe('TableHeaderEx Extension', () => {
@@ -41,8 +42,8 @@ describe('TableHeaderEx Extension', () => {
       '<table><tr><th style="width: 180px; font-size: 20px; letter-spacing: 2px; margin-top: 7px; margin-bottom: 11px;">Header</th></tr></table>'
     );
 
-    let headerAttrs = null;
-    editor.state.doc.descendants((node) => {
+    let headerAttrs: Record<string, unknown> | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
       if (node.type.name === 'tableHeader') {
         headerAttrs = node.attrs;
       }
@@ -57,7 +58,7 @@ describe('TableHeaderEx Extension', () => {
 
   test('should render table header styles and cellStyle', () => {
     let headerPos = 0;
-    editor.state.doc.descendants((node, pos) => {
+    editor.state.doc.descendants((node: PMNode, pos: number) => {
       if (node.type.name === 'tableHeader') {
         headerPos = pos + 1;
       }

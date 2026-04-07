@@ -1,24 +1,45 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+import {EditorState} from 'prosemirror-state';
+import {Schema} from 'prosemirror-model';
 import {
   blankDocumentFromEditor,
   blankDocumentFromSchema,
 } from './licit-gen-pm';
-import type { EditorState } from '@tiptap/pm/state';
-import { schema } from '@tiptap/pm/schema-basic';
 
-describe('Licit ProseMirror Generator Utils', () => {
-  it('should create blankDocumentFromEditor', () => {
-    expect(
-      blankDocumentFromEditor({
-        schema,
-      } as EditorState)
-    ).toBeDefined();
+describe('licit-gen-pm', () => {
+  const schema = new Schema({
+    nodes: {
+      doc: {content: 'paragraph+'},
+      paragraph: {content: 'text*', group: 'block'},
+      text: {group: 'inline'},
+    },
+    marks: {},
   });
-  it('should create blankDocumentFromSchema', () => {
-    expect(blankDocumentFromSchema(schema)).toBeDefined();
+
+  it('creates a blank document from schema', () => {
+    const doc = blankDocumentFromSchema(schema);
+    expect(doc.type.name).toBe('doc');
+    expect(doc.childCount).toBeGreaterThan(0);
+  });
+
+  it('creates a blank document from editor state', () => {
+    const state = EditorState.create({schema});
+    const doc = blankDocumentFromEditor(state);
+    expect(doc.type.name).toBe('doc');
+  });
+
+  it('throws when schema cannot create a document', () => {
+    const fakeSchema = {
+      topNodeType: {
+        createAndFill: () => null,
+      },
+    } as unknown as Schema;
+    expect(() => blankDocumentFromSchema(fakeSchema)).toThrow(
+      'Invalid schema. Ensure schema topNodeType is defined.'
+    );
   });
 });

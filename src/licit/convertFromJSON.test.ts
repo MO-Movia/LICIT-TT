@@ -67,6 +67,38 @@ describe('getEffectiveSchema', () => {
         expect(result).toBe(defaultSchema);
     });
 
+    test('should add multiple key command plugins when initKeyCommands returns an array', () => {
+        const keyCommandPlugins = [new Plugin({}), new Plugin({})];
+        const mockPlugin: LicitPlugin = {
+            ...new Plugin({}),
+            getEffectiveSchema: jest.fn((schema) => schema),
+            initKeyCommands: jest.fn(() => keyCommandPlugins as unknown as Plugin),
+            initButtonCommands: jest.fn(),
+            getState: jest.fn()
+        };
+
+        getEffectiveSchema(defaultSchema, defaultPlugins, [mockPlugin]);
+
+        expect(mockPlugin.initKeyCommands).toHaveBeenCalled();
+        expect(defaultPlugins).toEqual(expect.arrayContaining(keyCommandPlugins));
+    });
+
+    test('should ignore falsy key command plugin results', () => {
+        const mockPlugin: LicitPlugin = {
+            ...new Plugin({}),
+            getEffectiveSchema: jest.fn((schema) => schema),
+            initKeyCommands: jest.fn(() => null as unknown as Plugin),
+            initButtonCommands: jest.fn(),
+            getState: jest.fn()
+        };
+
+        const result = getEffectiveSchema(defaultSchema, defaultPlugins, [mockPlugin]);
+
+        expect(mockPlugin.initKeyCommands).toHaveBeenCalled();
+        expect(defaultPlugins).toHaveLength(2);
+        expect(result).toBe(defaultSchema);
+    });
+
     test('should avoid adding duplicate plugins', () => {
         const mockPlugin: LicitPlugin = {
             ...new Plugin({}),

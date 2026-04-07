@@ -35,7 +35,7 @@ export function toCSSColor(source: string): string {
       ColorMaping[source] = RGBA_TRANSPARENT;
       return RGBA_TRANSPARENT;
     }
-    const rgba = color.toString();
+    const rgba = String(color.toString());
     ColorMaping[source] = rgba.toString();
     return rgba;
   }

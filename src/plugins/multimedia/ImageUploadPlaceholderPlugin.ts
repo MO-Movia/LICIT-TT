@@ -34,8 +34,8 @@ export function findImageUploadPlaceholder(
   placeholderPlugin: ImageUploadPlaceholderPlugin,
   state: EditorState,
   id: Record<string, unknown>
-): Decoration {
-  const decos = placeholderPlugin.getState(state);
+): number | null {
+  const decos = placeholderPlugin.getState(state) as DecorationSet;
   const found = decos?.find(null, null, (spec) => spec.id === id);
   return found?.length ? found[0].from : null;
 }
@@ -79,9 +79,9 @@ export function uploadImageFiles(
     const done = (imageInfo: {src: string}) => {
       const pos = findImageUploadPlaceholder(placeholderPlugin, view.state, id);
       let trNext = view.state.tr;
-      if (pos && !view.readOnly && !view.disabled) {
+      if (pos !== null && !view.readOnly && !view.disabled) {
         const imageNode = imageType.create(imageInfo);
-        trNext = trNext.replaceWith(pos.from, pos.to, imageNode);
+        trNext = trNext.replaceWith(pos, pos, imageNode);
       } else {
         // Upload was cancelled.
         imageFiles.length = 0;
@@ -177,7 +177,7 @@ export class ImageUploadPlaceholderPlugin extends Plugin {
       },
       props: {
         decorations(state: EditorState): DecorationSet {
-          return this.getState(state);
+          return this.getState(state) as DecorationSet;
         },
       },
     });

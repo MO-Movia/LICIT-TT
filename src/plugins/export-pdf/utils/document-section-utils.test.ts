@@ -25,7 +25,8 @@ import {
 describe('document section utilities', () => {
   beforeAll(() => {
     Object.defineProperty(global, 'structuredClone', {
-      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      value: (value: unknown): unknown =>
+        JSON.parse(JSON.stringify(value)) as unknown,
       writable: true,
     });
   });

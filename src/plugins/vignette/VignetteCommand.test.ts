@@ -4,14 +4,16 @@
  */
 
 import { VignetteCommand } from './VignetteCommand';
-import { TextSelection } from 'prosemirror-state';
+import * as React from 'react';
+import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
+import { EditorView } from 'prosemirror-view';
 import { DEF_BORDER_COLOR, TABLE, TABLE_CELL, PARAGRAPH } from './Constants';
 
 jest.mock('prosemirror-model', () => ({
   Fragment: {
-    fromArray: jest.fn((arr) => arr),
-    from: jest.fn((obj) => obj),
+    fromArray: jest.fn((arr: unknown[]) => arr),
+    from: jest.fn((obj: unknown) => obj),
   },
 }));
 
@@ -24,10 +26,10 @@ jest.mock('prosemirror-state', () => ({
 describe('VignetteCommand', () => {
   let cmd: VignetteCommand;
   let mockDispatch: jest.Mock;
-  let mockView: any;
-  let mockTr: any;
-  let mockState: any;
-  let schemaNodes: any;
+  let mockView: EditorView;
+  let mockTr: Transaction;
+  let mockState: EditorState;
+  let schemaNodes: Record<string, unknown>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -45,17 +47,17 @@ describe('VignetteCommand', () => {
       doc: { nodeAt: jest.fn() },
       insert: jest.fn().mockReturnThis(),
       setSelection: jest.fn().mockReturnThis(),
-    };
+    } as unknown as Transaction;
 
     mockState = {
       tr: mockTr,
       doc: { content: [] },
       selection: mockTr.selection,
       schema: { nodes: schemaNodes, text: schemaNodes.text },
-    };
+    } as unknown as EditorState;
 
     mockDispatch = jest.fn();
-    mockView = { focus: jest.fn() };
+    mockView = { focus: jest.fn() } as unknown as EditorView;
 
     cmd = new VignetteCommand();
   });
@@ -84,7 +86,12 @@ describe('VignetteCommand', () => {
   });
 
   test('waitForUserInput should resolve undefined', async () => {
-    const result = await cmd.waitForUserInput(mockState, mockDispatch, mockView, {} as any);
+    const result = await cmd.waitForUserInput(
+      mockState as unknown as EditorState,
+      mockDispatch,
+      mockView as unknown as EditorView,
+      {} as React.SyntheticEvent<Element, Event>
+    );
     expect(result).toBeUndefined();
   });
 
@@ -102,25 +109,35 @@ describe('VignetteCommand', () => {
 
   test('insertTable should return tr unchanged if no selection', () => {
     const tr = { doc: {}, selection: null };
-    const result = cmd.insertTable(tr as any, mockState.schema, 1, 1);
+    const result = cmd.insertTable(
+      tr as unknown as Transaction,
+      mockState.schema,
+      1,
+      1
+    );
     expect(result).toBe(tr);
   });
 
   test('insertTable should return tr unchanged if from !== to', () => {
     const tr = { selection: { from: 1, to: 2 } };
-    const result = cmd.insertTable(tr as any, mockState.schema, 1, 1);
+    const result = cmd.insertTable(
+      tr as unknown as Transaction,
+      mockState.schema,
+      1,
+      1
+    );
     expect(result).toBe(tr);
   });
 
   test('insertTable should return tr unchanged if nodes missing', () => {
     const badSchema = { nodes: { [TABLE]: null } };
-    const result = cmd.insertTable(mockTr, badSchema as any, 1, 1);
+    const result = cmd.insertTable(mockTr, badSchema as unknown as EditorState['schema'], 1, 1);
     expect(result).toBe(mockTr);
   });
 
   test('insertTable creates correct nested structure and sets selection', () => {
     const result = cmd.insertTable(mockTr, mockState.schema, 2, 2);
-    expect(schemaNodes[TABLE_CELL].create).toHaveBeenCalledWith(
+    expect((schemaNodes[TABLE_CELL] as { create: jest.Mock }).create).toHaveBeenCalledWith(
       expect.objectContaining({
         borderColor: DEF_BORDER_COLOR,
         backgroundColor: '#dce6f2',
@@ -128,9 +145,9 @@ describe('VignetteCommand', () => {
       }),
       expect.anything()
     );
-    expect(schemaNodes[PARAGRAPH].create).toHaveBeenCalled();
-    expect(schemaNodes.tableRow.create).toHaveBeenCalled();
-    expect(schemaNodes[TABLE].create).toHaveBeenCalled();
+    expect((schemaNodes[PARAGRAPH] as { create: jest.Mock }).create).toHaveBeenCalled();
+    expect((schemaNodes.tableRow as { create: jest.Mock }).create).toHaveBeenCalled();
+    expect((schemaNodes[TABLE] as { create: jest.Mock }).create).toHaveBeenCalled();
     expect(mockTr.insert).toHaveBeenCalled();
     expect(mockTr.setSelection).toHaveBeenCalled();
     expect(TextSelection.create).toHaveBeenCalled();
@@ -139,14 +156,17 @@ describe('VignetteCommand', () => {
 
   test('insertParagraph inserts paragraph when from === to', () => {
     const result = cmd.insertParagraph(mockState, mockTr);
-    expect(schemaNodes[PARAGRAPH].create).toHaveBeenCalled();
+    expect((schemaNodes[PARAGRAPH] as { create: jest.Mock }).create).toHaveBeenCalled();
     expect(mockTr.insert).toHaveBeenCalled();
     expect(result).toBe(mockTr);
   });
 
   test('insertParagraph returns tr unchanged when from !== to', () => {
     const badTr = { selection: { from: 1, to: 2 } };
-    const result = cmd.insertParagraph(mockState, badTr as any);
+    const result = cmd.insertParagraph(
+      mockState as unknown as EditorState,
+      badTr as unknown as Transaction
+    );
     expect(result).toBe(badTr);
   });
 

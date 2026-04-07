@@ -56,17 +56,9 @@ export function toggleHeading(
     return !isListNode(node);
   });
   // Update from the bottom to avoid disruptive changes in pos.
-  [...poses]
-    .sort(compareNumber)
-    .reverse()
-    .forEach((pos) => {
-      tr = setHeadingNode(
-        tr,
-        schema,
-        pos,
-        startWithHeadingBlock ? null : level
-      );
-    });
+  for (const pos of [...poses].sort(compareNumber).reverse()) {
+    tr = setHeadingNode(tr, schema, pos, startWithHeadingBlock ? null : level);
+  }
   return tr;
 }
 

@@ -15,7 +15,7 @@ import CommandMenuButton from './commandMenuButton';
 import { CustomButton, ThemeContext } from '../../commands';
 import {COMMAND_GROUPS, CommandGroup, parseLabel} from './editorToolbarConfig';
 import Icon from './icon';
-import ResizeObserver from '../resizeObserver';
+import {observe, unobserve} from '../resizeObserver';
 import { UICommand } from '../../core';
 import isReactClass from '../isReactClass';
 import {LicitPlugin} from '../convertFromJSON';
@@ -430,13 +430,13 @@ class EditorToolbar extends React.PureComponent {
       // Mounting
       const el = ReactDOM.findDOMNode(ref);
       if (el instanceof HTMLElement) {
-        ResizeObserver.observe(el, this._checkIfContentIsWrapped);
+        observe(el, this._checkIfContentIsWrapped);
       }
     } else {
       // Unmounting.
       const el = this._body && ReactDOM.findDOMNode(this._body);
       if (el instanceof HTMLElement) {
-        ResizeObserver.unobserve(el);
+        unobserve(el);
       }
       this._body = null;
     }

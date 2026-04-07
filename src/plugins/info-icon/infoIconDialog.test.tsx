@@ -5,11 +5,11 @@
 
 import {InfoIconDialog} from './infoIconDialog';
 import {
-    Schema,Mark
+    Schema, MarkSpec
 } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 import { schema, builders } from 'prosemirror-test-builder';
-import { InfoIconPlugin } from './index';
+import { InfoIconNodeSpec } from './infoIconNodeSpec';
 import {EditorView} from 'prosemirror-view';
 import { SyntheticEvent } from 'react';
 
@@ -37,12 +37,10 @@ describe('InfoIconDialog', () => {
         const expectedEditor = document.createElement('div');
         expectedEditor.id = 'editor';
         jest.spyOn(document, 'querySelector').mockReturnValue(expectedEditor);
-        const plugin = new InfoIconPlugin();
         const mySchema = new Schema({
-            nodes: schema.spec.nodes,
+            nodes: schema.spec.nodes.addToEnd('infoicon', InfoIconNodeSpec),
             marks: schema.spec.marks
         });
-        const effSchema = plugin.getEffectiveSchema(mySchema);
         const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
         const before = 'hello';
         const after = ' world';
@@ -53,14 +51,13 @@ describe('InfoIconDialog', () => {
             mode: 0,
             infoIcon: ''
         };
-        const newCitationNode = effSchema.node(
-            effSchema.nodes.infoicon,
+        const newCitationNode = mySchema.node(
+            mySchema.nodes.infoicon,
             infoIconObj
         );
         EditorState.create({
             doc: doc(p(before, newCitationNode, after)),
-            schema: effSchema,
-            plugins: [plugin],
+            schema: mySchema,
         });
         const wrapper = new InfoIconDialog(infoIconProps);
         wrapper._cancel();
@@ -172,7 +169,14 @@ describe('InfoIconDialog', () => {
       });
 
     it('should call validateInsert method',() => {
-        const linkmark = new Mark();
+        const linkmark: MarkSpec = {
+          attrs: { overridden: { default: true } },
+          inclusive: false,
+          parseDOM: [{ tag: 'a' }],
+          toDOM() {
+            return ['a', 0];
+          },
+        };
         const mockschema = new Schema({
           nodes: {
             doc: {

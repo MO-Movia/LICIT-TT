@@ -10,7 +10,8 @@ import { repairDoc } from './licit-repair';
 describe('Doc Repair', () => {
   beforeAll(() => {
     Object.defineProperty(global, 'structuredClone', {
-      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      value: (value: unknown): unknown =>
+        JSON.parse(JSON.stringify(value)) as unknown,
       writable: true,
     });
   });
@@ -103,5 +104,57 @@ describe('Doc Repair', () => {
 
     const result = repairDoc(inputDoc);
     expect(result).toEqual(inputDoc);
+  });
+
+  it('should normalize table header, row, and rule types', () => {
+    const inputDoc: LicitDocument = blankDocument(
+      {
+        ...blankNode('table_header'),
+        attrs: {background: 'red', colwidth: [null]},
+        content: [],
+      },
+      {
+        ...blankNode('table_row'),
+        content: [],
+      },
+      blankNode('hard_break'),
+      blankNode('horizontal_rule')
+    );
+
+    const result = repairDoc(inputDoc);
+    const [header, row, hardBreak, horizontalRule] = result.content;
+
+    expect(header.type).toBe('tableHeader');
+    expect(header.attrs?.backgroundColor).toBe('red');
+    expect(header.attrs?.background).toBeUndefined();
+    expect(header.attrs?.colwidth).toBeNull();
+    expect(header.content?.length).toBe(1);
+
+    expect(row.type).toBe('tableRow');
+    expect(hardBreak.type).toBe('hardBreak');
+    expect(horizontalRule.type).toBe('horizontalRule');
+  });
+
+  it('keeps existing cell content and respects existing backgroundColor', () => {
+    const inputDoc: LicitDocument = blankDocument(
+      {
+        ...blankNode('table_cell'),
+        attrs: {
+          colwidth: [120],
+          background: 'blue',
+          backgroundColor: 'green',
+        },
+        content: [{...blankNode('paragraph'), content: [textNode('x')]}],
+      }
+    );
+
+    const result = repairDoc(inputDoc);
+    const cell = result.content[0];
+
+    expect(cell.type).toBe('tableCell');
+    expect(cell.attrs?.colwidth).toEqual([120]);
+    expect(cell.attrs?.backgroundColor).toBe('green');
+    expect(cell.attrs?.background).toBeUndefined();
+    expect(cell.content?.length).toBe(1);
   });
 });

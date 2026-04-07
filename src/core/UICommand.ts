@@ -35,11 +35,11 @@ export abstract class UICommand {
     this._editor = editor;
   }
 
-  shouldRespondToUIEvent = (e: any): boolean => {
+  shouldRespondToUIEvent = (e: React.SyntheticEvent | MouseEvent): boolean => {
     return e.type === UICommand.EventType.CLICK;
   };
 
-  renderLabel(_state?: EditorState): any {
+  renderLabel(_state?: EditorState) {
     return null;
   }
 
@@ -52,7 +52,7 @@ export abstract class UICommand {
   };
 
   dryRun = (state: EditorState, view?: EditorView): boolean | Transform => {
-    const fnProxy = typeof window !== 'undefined' && window['Proxy'];
+    const fnProxy = globalThis.window?.['Proxy'];
 
     const dryRunState = fnProxy
       ? new fnProxy(state, {
@@ -64,7 +64,7 @@ export abstract class UICommand {
     return this.execute(dryRunState, undefined, view, null);
   };
 
-  dryRunEditorStateProxyGetter = (state: any, propKey: string): any => {
+  dryRunEditorStateProxyGetter = (state: EditorState, propKey: string): unknown => {
     const val = state[propKey];
     if (propKey === 'tr' && val instanceof Transaction) {
       return val.setMeta('dryrun', true);
@@ -73,9 +73,9 @@ export abstract class UICommand {
   };
 
   dryRunEditorStateProxySetter = (
-    state: any,
+    state: EditorState,
     propKey: string,
-    propValue: any
+    propValue: unknown
   ): boolean => {
     state[propKey] = propValue;
     // Indicate success
@@ -86,7 +86,7 @@ export abstract class UICommand {
     state: EditorState,
     dispatch?: (tr: Transform) => void,
     view?: EditorView,
-    event?: any
+    event?: unknown
   ): Transform | boolean => {
     this.waitForUserInput(state, dispatch, view, event)
       .then((inputs) => {
@@ -102,14 +102,14 @@ export abstract class UICommand {
     state: EditorState,
     dispatch?: (tr: Transform) => void,
     view?: EditorView,
-    event?: any
-  ): Promise<any>;
+    event?: unknown
+  ): Promise<unknown>;
 
   abstract executeWithUserInput(
     state: EditorState,
     dispatch?: (tr: Transform) => void,
     view?: EditorView,
-    inputs?: any
+    inputs?: unknown
   ): boolean;
 
   abstract cancel(): void;

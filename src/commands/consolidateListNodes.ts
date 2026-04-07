@@ -195,7 +195,7 @@ function traverseDocAndFindJointInfo(
   }
 
   let prevNode = null;
-  let jointInfo = null;
+  let jointInfo: JointInfo = null;
   let firstListNodePos = 0;
 
   // Perform the breadth-first traversal.

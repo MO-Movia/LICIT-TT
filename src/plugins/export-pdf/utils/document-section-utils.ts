@@ -28,7 +28,7 @@ export type FlatSectionNodeStructure = {
 type NodeContent = Fragment & { content: { text: string }[] }
 
 export function buildSectionStructure(nodeList: Node[], styles: StoredStyle[]): SectionNodeStructure[] {
-  const structure = nodeList.reduce((nodes, { ...node }) => {
+  const structure = nodeList.reduce<SectionNodeStructure[][]>((nodes, { ...node }) => {
     const style = node.attrs.styleName;
     const level = getStyleLevel(style, styles) ?? 1;
     const nodeContent = node.content as NodeContent;
@@ -44,7 +44,7 @@ export function buildSectionStructure(nodeList: Node[], styles: StoredStyle[]): 
     nodes[level] = value.children;
     nodes[level - 1]?.push(value);
     return nodes;
-  }, [[]]).shift();
+  }, [[]]).shift() ?? [];
 
   return structure;
 }
@@ -219,7 +219,7 @@ function sortExcludeListByFlattenedSection(nodeList: string[], flatStructure: Fl
 }
 
 function getAllSectionIds(section: FlatSectionNodeStructure, flatStructure: FlatSectionNodeStructure[]): string[] {
-  let allChildIds = [];
+  let allChildIds: string[] = [];
 
   if (section.childrenIds?.length) {
     for (const id of section.childrenIds) {
@@ -260,7 +260,7 @@ function deleteDocumentChildElements(
 }
 
 function getIndexBySectionName(collectionArray: Element[], styleName: string): number[] {
-  const nodeIndexs = [];
+  const nodeIndexs: number[] = [];
 
   for (const [index, element] of collectionArray.entries()) {
     if (element.attributes.getNamedItem('stylename')?.value === styleName) {

@@ -231,7 +231,7 @@ describe('resolveImage (img instance)', () => {
             element.onload(new Event('load'));
           }, 100);
         }
-        return element;
+        return element as HTMLElement;
       };
     })(document.createElement);
 

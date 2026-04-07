@@ -5,7 +5,7 @@
 
 import { Node as ProseMirrorNode } from 'prosemirror-model';
 import { EditorView, NodeView } from 'prosemirror-view';
-import { NodeSelection, TextSelection } from 'prosemirror-state';
+import { NodeSelection, TextSelection, Transaction } from 'prosemirror-state';
 import { addNotesCommand } from './EnhancedTableCommands';
 import {
   atAnchorBottomCenter,
@@ -77,7 +77,7 @@ export class EnhancedTableFigureView implements NodeView {
     this.addNotesButton.addEventListener('click', (event) => {
       event.preventDefault();
       const { state, dispatch } = this.view;
-      dispatch(addNotesCommand(state.tr, state.schema, this.getPos()));
+      dispatch(addNotesCommand(state.tr, state.schema, this.getPos()) as Transaction);
     });
     this.dom.appendChild(this.addNotesButton);
 

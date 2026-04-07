@@ -7,6 +7,7 @@ import { toggleList, unwrapNodesFromListInternal, wrapItemsWithListInternal, wra
 import { Node, NodeType, Schema } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
 import { SelectionMemo } from './transformAndPreserveTextSelection';
+import { EditorState, TextSelection } from 'prosemirror-state';
 
 describe('toggleList', () => {
   let schema;
@@ -336,6 +337,96 @@ describe('toggleList', () => {
       const test = wrapItemsWithListInternal(tr, sc, list_node, items, '');
 
       expect(test).toBeDefined();
+    });
+
+    it('should return initial transform when items array is empty', () => {
+      const tr = {} as unknown as Transform;
+      const sc = { nodes: { paragraph: {}, list_item: {} } } as unknown as Schema;
+      const list_node = {} as unknown as NodeType;
+      const test = wrapItemsWithListInternal(tr, sc, list_node, [], '');
+      expect(test).toBe(tr);
+    });
+  });
+
+  describe('wrapNodesWithListInternal additional branches', () => {
+    it('returns original transform when no listable nodes are found', () => {
+      const localSchema = new Schema({
+        nodes: {
+          doc: {content: 'block+'},
+          paragraph: {content: 'text*', group: 'block'},
+          table: {content: 'table_row+', group: 'block'},
+          table_row: {content: 'table_cell+'},
+          table_cell: {content: 'paragraph+'},
+          text: {group: 'inline'},
+        },
+      });
+      const doc = localSchema.node('doc', null, [
+        localSchema.node('table', null, [
+          localSchema.node('table_row', null, [
+            localSchema.node('table_cell', null, [
+              localSchema.node('paragraph', null, [localSchema.text('x')]),
+            ]),
+          ]),
+        ]),
+      ]);
+      const editorState = EditorState.create({
+        schema: localSchema,
+        doc,
+        selection: TextSelection.create(doc, 1, Math.max(1, doc.content.size)),
+      });
+      const state = {
+        tr: editorState.tr,
+        schema: localSchema,
+      } as SelectionMemo;
+      const listNodeType = localSchema.nodes.paragraph;
+      const result = wrapNodesWithListInternal(state, listNodeType, 'disc');
+      expect(result).toBe(state.tr as unknown as Transform);
+    });
+
+    it('handles list nodes and paragraphs when wrapping', () => {
+      const localSchema = new Schema({
+        nodes: {
+          doc: {content: 'block+'},
+          paragraph: {content: 'text*', group: 'block'},
+          heading: {content: 'text*', group: 'block'},
+          bullet_list: {content: 'list_item+', group: 'block'},
+          ordered_list: {content: 'list_item+', group: 'block'},
+          list_item: {content: 'paragraph', group: 'block'},
+          table: {content: 'table_row+', group: 'block'},
+          table_row: {content: 'table_cell+'},
+          table_cell: {content: 'paragraph+'},
+          text: {group: 'inline'},
+        },
+      });
+      const doc = localSchema.node('doc', null, [
+        localSchema.node('paragraph', null, [localSchema.text('a')]),
+        localSchema.node('bullet_list', null, [
+          localSchema.node('list_item', null, [
+            localSchema.node('paragraph', null, [localSchema.text('b')]),
+          ]),
+        ]),
+        localSchema.node('table', null, [
+          localSchema.node('table_row', null, [
+            localSchema.node('table_cell', null, [
+              localSchema.node('paragraph', null, [localSchema.text('c')]),
+            ]),
+          ]),
+        ]),
+        localSchema.node('heading', null, [localSchema.text('d')]),
+      ]);
+      const state = EditorState.create({
+        schema: localSchema,
+        doc,
+        selection: TextSelection.create(doc, 1, Math.max(1, doc.content.size)),
+      });
+      const memoWithTr = {tr: state.tr, schema: localSchema} as SelectionMemo;
+      const listNodeType = localSchema.nodes.ordered_list;
+      const result = wrapNodesWithListInternal(
+        memoWithTr,
+        listNodeType,
+        'decimal'
+      );
+      expect(result).toBeDefined();
     });
   });
 });
@@ -729,5 +820,3 @@ describe('wrapNodesWithListInternal with nodetype', () => {
     expect(result).toBe(mockTransaction);
   });
 });
-
-

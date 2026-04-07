@@ -61,7 +61,7 @@ describe('SetDocAttrStep', () => {
   };
 
       const sdaStep = new SetDocAttrStep(key, value);
-      const result = sdaStep.apply(doc);
+      const result = sdaStep.apply(doc as unknown as import('prosemirror-model').Node);
 
       expect(result.doc).toBeDefined();
 

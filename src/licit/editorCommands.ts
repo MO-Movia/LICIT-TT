@@ -45,7 +45,7 @@ import TableToggleHeaderRowCommand from './commands/tableToggleHeaderRowCommand'
 import TableToggleHeaderColumnCommand from './commands/tableToggleHeaderColumnCommand';
 import MarkToggleCommandEx from './commands/markToggleCommandEx';
 import ListSplitCommand from './commands/listSplitCommand';
-import LandscapeCommand from './commands/LandscapeCommand'; 
+import {LandscapeCommand} from './commands/LandscapeCommand'; 
 
 // Note that Firefox will, by default, add various kinds of controls to
 // editable tables, even though those don't work in ProseMirror. The only way
