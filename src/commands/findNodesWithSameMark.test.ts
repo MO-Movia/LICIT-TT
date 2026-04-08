@@ -56,4 +56,66 @@ describe('findNodesWithSameMark', () => {
     expect(result.to.node?.type.name).toBe('text');
     expect(result.to.pos).toBe(9);
   });
+
+  it('should handle reversed range (from > to)', () => {
+    const doc: Node = schema.nodeFromJSON({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              marks: [{type: 'strong'}],
+              text: 'Bold text',
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = findNodesWithSameMark(doc, 5, 2, schema.marks.strong);
+    expect(result).not.toBeNull();
+    expect(result?.mark.type.name).toBe('strong');
+  });
+
+  it('should stop at trailing node that starts with space', () => {
+    const doc: Node = schema.nodeFromJSON({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              marks: [{type: 'strong'}],
+              text: 'Bold',
+            },
+            {
+              type: 'text',
+              text: ' text',
+            },
+          ],
+        },
+      ],
+    });
+
+    const textPositions: number[] = [];
+    doc.descendants((node, pos) => {
+      if (node.isText) {
+        textPositions.push(pos);
+      }
+      return true;
+    });
+
+    const result = findNodesWithSameMark(
+      doc,
+      textPositions[0],
+      textPositions[1],
+      schema.marks.strong
+    );
+    expect(result).not.toBeNull();
+    expect(result?.from.node?.text).toBe('Bold');
+    expect(result?.to.node?.text).toBe('Bold');
+  });
 });
