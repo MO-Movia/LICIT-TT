@@ -33,6 +33,7 @@ import {
 } from '../../../commands';
 import { setParagraphSpacing } from '../ParagraphSpacingCommand';
 import { RESERVED_STYLE_NONE } from '../CustomStyleNodeSpec';
+
 let HEADING_COMMANDS = {
   [RESERVED_STYLE_NONE]: new HeadingCommand(0),
 };
@@ -432,18 +433,18 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
 
   // [FS] IRAD-1308 2020-04-21
   // To get the customstylename of the selected paragraph
-  getTheSelectedCustomStyle(editorState) {
+  getTheSelectedCustomStyle(editorState): string {
     const { selection, doc } = editorState;
     const { from, to } = selection;
     let customStyleName = RESERVED_STYLE_NONE;
     doc.nodesBetween(from, to, (node) => {
       if (this.isAllowedNode(node)) {
-        if (node.attrs.styleName) {
+        if (typeof node.attrs.styleName === 'string') {
           customStyleName = node.attrs.styleName;
         }
       }
     });
-    return customStyleName;
+    return String(customStyleName);
   }
 
   //[FS] IRAD-1085 2020-10-09

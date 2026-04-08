@@ -25,7 +25,9 @@ import {
   getTableStyles,
   StoredStyle,
 } from './utils/table-of-contents-utils';
-import { ExportPDFCommand } from './exportPdfCommand';
+import { closePreviewForm } from './previewSession';
+import { previewState } from './previewState';
+import { pdfPreviewProgress } from './pdfPreviewProgress';
 
 interface Props {
   editorView: EditorView;
@@ -54,61 +56,175 @@ type EditorViewLike = {
 };
 
 export class PreviewForm extends React.PureComponent<Props, State> {
-  private static general: boolean = false;
-  private static formattedDate: string;
-  private static isToc: boolean = true;
-  private static isTof: boolean = true;
-  private static isTot: boolean = true;
-  private static isCitation: boolean = false;
-  private static isTitle: boolean = true;
-  private static readonly tocHeader: string[] = [];
-  private static readonly tofHeader: string[] = [];
-  private static readonly totHeader: string[] = [];
-  private static readonly tocNodeList: Node[] = [];
-  private static readonly tofNodeList: Node[] = [];
-  private static readonly totNodeList: Node[] = [];
-  private static documentTitle: string = '';
-  private static pageBanner: {
-    text: string;
-    color: string;
-  } | null = null;
   public sectionListElements: React.ReactElement[] = [];
   private _popUp = null;
 
+  static get general(): boolean {
+    return previewState.general;
+  }
+
+  static set general(value: boolean) {
+    previewState.general = value;
+  }
+
+  static get formattedDate(): string {
+    return previewState.formattedDate;
+  }
+
+  static set formattedDate(value: string) {
+    previewState.formattedDate = value;
+  }
+
+  static get isToc(): boolean {
+    return previewState.isToc;
+  }
+
+  static set isToc(value: boolean) {
+    previewState.isToc = value;
+  }
+
+  static get isTof(): boolean {
+    return previewState.isTof;
+  }
+
+  static set isTof(value: boolean) {
+    previewState.isTof = value;
+  }
+
+  static get isTot(): boolean {
+    return previewState.isTot;
+  }
+
+  static set isTot(value: boolean) {
+    previewState.isTot = value;
+  }
+
+  static get isCitation(): boolean {
+    return previewState.isCitation;
+  }
+
+  static set isCitation(value: boolean) {
+    previewState.isCitation = value;
+  }
+
+  static get isTitle(): boolean {
+    return previewState.isTitle;
+  }
+
+  static set isTitle(value: boolean) {
+    previewState.isTitle = value;
+  }
+
+  static get tocHeader(): string[] {
+    return previewState.tocHeader;
+  }
+
+  static set tocHeader(value: string[]) {
+    previewState.tocHeader.splice(0, previewState.tocHeader.length, ...value);
+  }
+
+  static get tofHeader(): string[] {
+    return previewState.tofHeader;
+  }
+
+  static set tofHeader(value: string[]) {
+    previewState.tofHeader.splice(0, previewState.tofHeader.length, ...value);
+  }
+
+  static get totHeader(): string[] {
+    return previewState.totHeader;
+  }
+
+  static set totHeader(value: string[]) {
+    previewState.totHeader.splice(0, previewState.totHeader.length, ...value);
+  }
+
+  static get tocNodeList(): Node[] {
+    return previewState.tocNodeList;
+  }
+
+  static set tocNodeList(value: Node[]) {
+    previewState.tocNodeList.splice(0, previewState.tocNodeList.length, ...value);
+  }
+
+  static get tofNodeList(): Node[] {
+    return previewState.tofNodeList;
+  }
+
+  static set tofNodeList(value: Node[]) {
+    previewState.tofNodeList.splice(0, previewState.tofNodeList.length, ...value);
+  }
+
+  static get totNodeList(): Node[] {
+    return previewState.totNodeList;
+  }
+
+  static set totNodeList(value: Node[]) {
+    previewState.totNodeList.splice(0, previewState.totNodeList.length, ...value);
+  }
+
+  static get documentTitle(): string | null {
+    return previewState.documentTitle;
+  }
+
+  static set documentTitle(value: string | null) {
+    previewState.documentTitle = value;
+  }
+
+  static get pageBanner():
+    | {
+        text: string;
+        color: string;
+      }
+    | null {
+    return previewState.pageBanner;
+  }
+
+  static set pageBanner(
+    value:
+      | {
+          text: string;
+          color: string;
+        }
+      | null
+  ) {
+    previewState.pageBanner = value;
+  }
+
   static isGeneral() {
-    return PreviewForm.general;
+    return previewState.general;
   }
 
   static showToc() {
-    return PreviewForm.isToc;
+    return previewState.isToc;
   }
 
   static showTof() {
-    return PreviewForm.isTof;
+    return previewState.isTof;
   }
 
   static showTot() {
-    return PreviewForm.isTot;
+    return previewState.isTot;
   }
 
   static showTitle() {
-    return PreviewForm.isTitle;
+    return previewState.isTitle;
   }
 
   static showCitation() {
-    return PreviewForm.isCitation;
+    return previewState.isCitation;
   }
 
   static getHeadersTOC() {
-    return [...this.tocHeader];
+    return [...previewState.tocHeader];
   }
 
   static getHeadersTOF() {
-    return [...this.tofHeader];
+    return [...previewState.tofHeader];
   }
 
   static getHeadersTOT() {
-    return [...this.totHeader];
+    return [...previewState.totHeader];
   }
 
   constructor(props) {
@@ -123,17 +239,17 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   }
 
   public componentDidMount(): void {
-    PreviewForm.pageBanner = null;
+    previewState.pageBanner = null;
     const paged = new Previewer();
     this.showAlert();
 
     const { editorView } = this.props;
     void this.getToc(editorView).catch(console.warn);
-    PreviewForm.general = true;
-    PreviewForm.isToc = true;
-    PreviewForm.isTof = true;
-    PreviewForm.isTot = true;
-    PreviewForm.isTitle = true;
+    previewState.general = true;
+    previewState.isToc = true;
+    previewState.isTof = true;
+    previewState.isTot = true;
+    previewState.isTitle = true;
     if (!registeredHandlers.includes(PDFHandler)) {
       registerHandlers(PDFHandler);
     }
@@ -150,23 +266,23 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     if (this.isAfttpDoc(editorView)) {
       const markingData  = this.extractBannerMarkingFromTableWrapper(data1);
       const docTitle = this.getDocumentTitle(editorView);
-      PreviewForm.documentTitle = docTitle;
-      PreviewForm.pageBanner = markingData ;
+      previewState.documentTitle = docTitle;
+      previewState.pageBanner = markingData;
     } else {
-      PreviewForm.pageBanner = null;
-      PreviewForm.documentTitle = null;
+      previewState.pageBanner = null;
+      previewState.documentTitle = null;
     }
     editorView.dispatch(editorView.state?.tr.setMeta('suppressOnChange', true));
-    PDFHandler.state.isOnLoad = true;
+    pdfPreviewProgress.isOnLoad = true;
     paged.preview(data1, [], divContainer).then(() => {
-      PDFHandler.state.isOnLoad = false;
-      this.calcLogic()
+      pdfPreviewProgress.isOnLoad = false;
+      this.calcLogic();
     });
   }
 
   public showAlert(): void {
     const anchor = null;
-    PDFHandler.state.currentPage = 0;
+    pdfPreviewProgress.currentPage = 0;
     this._popUp = createPopUp(Loader, null, {
       anchor,
       modal: true,
@@ -406,12 +522,12 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
   public getToc = async (view): Promise<void> => {
       // Reset static lists
-    PreviewForm.tocNodeList.length = 0;
-    PreviewForm.tocHeader.length = 0;
-    PreviewForm.tofNodeList.length = 0;
-    PreviewForm.tofHeader.length = 0;
-    PreviewForm.totNodeList.length = 0;
-    PreviewForm.totHeader.length = 0;
+    previewState.tocNodeList.length = 0;
+    previewState.tocHeader.length = 0;
+    previewState.tofNodeList.length = 0;
+    previewState.tofHeader.length = 0;
+    previewState.totNodeList.length = 0;
+    previewState.totHeader.length = 0;
     const styles = (await view.runtime.getStylesAsync()) as DocumentStyle[];
     const storeTOCvalue = getTableStyles(styles, 'toc');
     const storeTOFvalue = getTableStyles(styles, 'tof');
@@ -424,27 +540,27 @@ export class PreviewForm extends React.PureComponent<Props, State> {
       }
       for (const tofValue of storeTOFvalue) {
         if (tofValue.name === node.attrs.styleName) {
-          PreviewForm.tofNodeList.push(node);
-          PreviewForm.tofHeader.push(node.attrs.styleName);
+          previewState.tofNodeList.push(node);
+          previewState.tofHeader.push(node.attrs.styleName);
         }
       }
 
       for (const totValue of storeTOTvalue) {
         if (totValue.name === node.attrs.styleName) {
-          PreviewForm.totNodeList.push(node);
-          PreviewForm.totHeader.push(node.attrs.styleName);
+          previewState.totNodeList.push(node);
+          previewState.totHeader.push(node.attrs.styleName);
         }
       }
       for (const tocValue of storeTOCvalue) {
         if (tocValue.name === node.attrs.styleName) {
-          PreviewForm.tocNodeList.push(node);
-          PreviewForm.tocHeader.push(node.attrs.styleName);
+          previewState.tocNodeList.push(node);
+          previewState.tocHeader.push(node.attrs.styleName);
         }
       }
     });
 
     const sectionNodeStructure = buildSectionStructure(
-      PreviewForm.tocNodeList,
+      previewState.tocNodeList,
       storeTOCvalue
     );
     const flattenedSectionNodeStructure =
@@ -806,15 +922,15 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   };
 
   public documentTitleActive = (): void => {
-    PreviewForm.isTitle = true;
+    previewState.isTitle = true;
   };
 
   public documentTitleDeactive = (): void => {
-    PreviewForm.isTitle = false;
+    previewState.isTitle = false;
   };
 
   public citationActive = (): void => {
-    PreviewForm.isCitation = true;
+    previewState.isCitation = true;
   };
 
   public insertFooters = (CitationIcons, trialHtml): void => {
@@ -826,7 +942,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
           const citation_header = document.createElement('h4');
           citation_header.textContent = 'Endnotes';
           citation_header.style.color = 'blue';
-          citation_header.setAttribute('stylename', PreviewForm.tocHeader[0]);
+          citation_header.setAttribute('stylename', previewState.tocHeader[0]);
           selector.appendChild(citation_header);
         } else if (i === 5) {
           const underline = document.createElement('div');
@@ -890,7 +1006,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   };
 
   public citationDeactive = (): void => {
-    PreviewForm.isCitation = false;
+    previewState.isCitation = false;
   };
 
   public cloneModifyNode = (data: HTMLElement) => {
@@ -956,7 +1072,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   };
 
   public calcLogic = (): void => {
-    PreviewForm.pageBanner = null;
+    previewState.pageBanner = null;
 
     const divContainer = document.getElementById('holder');
     if (!divContainer) return;
@@ -971,12 +1087,12 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
     data1 = filterDocumentSections(
       data1,
-      PreviewForm.tocNodeList,
+      previewState.tocNodeList,
       this.state.sectionNodesToExclude,
       this.state.storedStyles
     );
 
-    if (PreviewForm.isCitation) {
+    if (previewState.isCitation) {
       this.replaceCitations(data1);
     }
     
@@ -989,11 +1105,11 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     if (this.isAfttpDoc(editorView)) {
       const markingData  = this.extractBannerMarkingFromTableWrapper(data1);
       const docTitle = this.getDocumentTitle(editorView);
-      PreviewForm.documentTitle = docTitle;
-      PreviewForm.pageBanner = markingData ;
+      previewState.documentTitle = docTitle;
+      previewState.pageBanner = markingData;
     } else {
-      PreviewForm.pageBanner = null;
-      PreviewForm.documentTitle = null;
+      previewState.pageBanner = null;
+      previewState.documentTitle = null;
     }
 
     const paged = new Previewer();
@@ -1045,7 +1161,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   private setLastUpdated(editorView): void {
     const lastEdited = editorView?.state?.doc?.attrs?.objectMetaData?.lastEditedOn;
     const date = new Date(lastEdited);
-    PreviewForm.formattedDate = date.toLocaleString('en-GB', {
+    previewState.formattedDate = date.toLocaleString('en-GB', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -1072,7 +1188,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
     data.innerHTML = '';
 
-    if (PreviewForm.isTitle) {
+    if (previewState.isTitle) {
       this.insertTitleSection(data, editorView);
     }
 
@@ -1097,7 +1213,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
   let insertBeforeNode: ChildNode | null = data.firstChild;
 
-  if (PreviewForm.isTitle) {
+  if (previewState.isTitle) {
     const titleDiv = document.createElement('div');
     titleDiv.classList.add('titleHead', 'prepages');
 
@@ -1121,9 +1237,9 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   }
 
   const sections = [
-    { flag: PreviewForm.isToc, className: 'tocHead' },
-    { flag: PreviewForm.isTof, className: 'tofHead' },
-    { flag: PreviewForm.isTot, className: 'totHead' },
+    { flag: previewState.isToc, className: 'tocHead' },
+    { flag: previewState.isTof, className: 'tofHead' },
+    { flag: previewState.isTot, className: 'totHead' },
   ];
 
   for (const { flag, className } of sections) {
@@ -1235,9 +1351,9 @@ export class PreviewForm extends React.PureComponent<Props, State> {
  
   private insertOptionalSections(data: HTMLElement): void {
     const sections = [
-      { flag: PreviewForm.isToc, className: 'tocHead', id: 'licit-toc-block' },
-      { flag: PreviewForm.isTof, className: 'tofHead', id: 'licit-tof-block' },
-      { flag: PreviewForm.isTot, className: 'totHead', id: 'licit-tot-block' },
+      { flag: previewState.isToc, className: 'tocHead', id: 'licit-toc-block' },
+      { flag: previewState.isTof, className: 'tofHead', id: 'licit-tof-block' },
+      { flag: previewState.isTot, className: 'totHead', id: 'licit-tot-block' },
     ];
 
     for (const { flag, className, id } of sections) {
@@ -1305,37 +1421,37 @@ export class PreviewForm extends React.PureComponent<Props, State> {
   }
 
   public tocActive = (): void => {
-    PreviewForm.isToc = true;
+    previewState.isToc = true;
   };
 
   public tofActive = (): void => {
-    PreviewForm.isTof = true;
+    previewState.isTof = true;
   };
 
   public totActive = (): void => {
-    PreviewForm.isTot = true;
+    previewState.isTot = true;
   };
 
   public Tocdeactive = (): void => {
-    PreviewForm.isToc = false;
+    previewState.isToc = false;
   };
 
   public Tofdeactive = (): void => {
-    PreviewForm.isTof = false;
+    previewState.isTof = false;
   };
 
   public Totdeactive = (): void => {
-    PreviewForm.isTot = false;
+    previewState.isTot = false;
   };
 
   public handleCancel = (): void => {
-    PreviewForm.isToc = false;
-    PreviewForm.isTof = false;
-    PreviewForm.isTot = false;
-    PreviewForm.general = false;
-    PreviewForm.isTitle = false;
-    PreviewForm.isCitation = false;
-    ExportPDFCommand.closePreviewForm();
+    previewState.isToc = false;
+    previewState.isTof = false;
+    previewState.isTot = false;
+    previewState.general = false;
+    previewState.isTitle = false;
+    previewState.isCitation = false;
+    closePreviewForm();
     this.props.onClose();
   };
 
@@ -1367,7 +1483,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
       printWindow.document.close();
       printWindow.print();
     }
-    ExportPDFCommand.closePreviewForm();
+    closePreviewForm();
     this.props.onClose();
   };
 

@@ -193,7 +193,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       style.fontWeight = 'bold';
     }
     if (this.state.styles.color) {
-      style.color = this.state.styles.color;
+      style.color = this.state.styles.color as unknown as React.CSSProperties['color'];
     }
     if (this.state.styles.underline) {
       style.textDecoration =
@@ -211,15 +211,18 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       style.fontStyle = 'italic';
     }
     if (this.state.styles.textHighlight) {
-      style.backgroundColor = this.state.styles.textHighlight;
+      style.backgroundColor =
+        this.state.styles.textHighlight as unknown as React.CSSProperties['backgroundColor'];
     }
     if (this.state.styles.align) {
-      style.textAlign = this.state.styles.align;
+      style.textAlign = this.state.styles.align as React.CSSProperties['textAlign'];
     }
     if (this.state.styles.lineHeight) {
       // [FS] IRAD-1104 2020-11-13
       // Issue fix : Linespacing Double and Single not applied in the sample text paragraph
-      style.lineHeight = getLineSpacingValue(this.state.styles.lineHeight);
+      style.lineHeight = getLineSpacingValue(
+        this.state.styles.lineHeight as string
+      );
     }
     // [FS] IRAD-1111 2020-12-10
     // Issue fix : Paragraph space before is not applied in the sample text.
@@ -234,8 +237,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     // [FS] IRAD-1111 2020-12-10
     // Issue fix : Indent is not applied in the sample text.
     if (!this.state.styles.isLevelbased) {
-      if (this.state.styles.indent) {
-        style.marginLeft = `${parseInt(this.state.styles.indent) * 2}px`;
+      if (
+        typeof this.state.styles.indent === 'string' ||
+        typeof this.state.styles.indent === 'number'
+      ) {
+        style.marginLeft = `${parseInt(`${this.state.styles.indent}`, 10) * 2}px`;
       }
     } else {
       const levelValue = document?.getElementById('levelValue');
@@ -295,8 +301,13 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
         (this.state.styles.hasNumbering || this.state.styles.isList)
       ) {
         const numberingLevel = this.getNumberingLevel(
-          this.state.styles.styleLevel,
-          this.state.styles.prefixValue
+          typeof this.state.styles.styleLevel === 'boolean'
+            ? Number(this.state.styles.styleLevel)
+            : this.state.styles.styleLevel,
+          typeof this.state.styles.prefixValue === 'string' ||
+            typeof this.state.styles.prefixValue === 'number'
+            ? this.state.styles.prefixValue
+            : ''
         );
         const numberingNode = document.createTextNode(numberingLevel);
         if (this.state.styles.boldNumbering) {
@@ -554,7 +565,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
           ).style.maxHeight = '100%';
 
           // Ensure the next line style is set
-          this.setNextLineStyle(this.state.styles.nextLineStyleName);
+          this.setNextLineStyle(
+            typeof this.state.styles.nextLineStyleName === 'string'
+              ? this.state.styles.nextLineStyleName
+              : ''
+          );
         }
       );
     }
@@ -734,8 +749,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
 
   isCustomStyleAlreadyApplied() {
     let found = false;
-    const { doc } = this.state.editorView.state;
-    doc.nodesBetween(0, doc.nodeSize - 2, (node) => {
+    const doc = this.state.editorView?.state?.doc;
+    if (!doc?.nodesBetween) {
+      return found;
+    }
+    doc.nodesBetween(0, (doc.nodeSize ?? 2) - 2, (node) => {
       if (node.content?.content?.length) {
         if (!found && node.attrs.styleName === this.state.styleName) {
           found = true;
@@ -827,7 +845,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     )[0] as HTMLElement;
     mp3.style.maxHeight = mp3.scrollHeight + 'px';
 
-    this.setNextLineStyle(this.state.styles.nextLineStyleName);
+    this.setNextLineStyle(
+      typeof this.state.styles.nextLineStyleName === 'string'
+        ? this.state.styles.nextLineStyleName
+        : ''
+    );
     // [FS] IRAD-1153 2021-02-25
     // Numbering level not showing in Preview text when modify style
     if (
@@ -863,7 +885,10 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                   {' '}
                   -- select a style --{' '}
                 </option>
-                {this.state.customStyles.map((style) => (
+                {(Array.isArray(this.state.customStyles)
+                  ? this.state.customStyles
+                  : []
+                ).map((style) => (
                   <option key={style.styleName} value={style.styleName}>
                     {style.styleName}
                   </option>
@@ -1098,6 +1123,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                         className="molsp-iconspan czi-icon format_color_text editor-markbuttons"
                         style={{
                           color:
+                            typeof this.state.styles.color === 'string' &&
                             this.state.styles.color !== 'rgba(0,0,0,0)'
                               ? this.state.styles.color
                               : '#666',
@@ -1125,6 +1151,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                         className="molsp-iconspan czi-icon border_color editor-markbuttons"
                         style={{
                           color:
+                            typeof this.state.styles.textHighlight === 'string' &&
                             this.state.styles.textHighlight !== 'rgba(0,0,0,0)'
                               ? this.state.styles.textHighlight
                               : '#666',
@@ -1376,7 +1403,12 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                 <select
                   className="molsp-linespacing molsp-fontstyle"
                   onChange={this.onLineSpaceChange.bind(this)}
-                  value={this.state.styles.lineHeight || ''}
+                  value={
+                    typeof this.state.styles.lineHeight === 'string' ||
+                    typeof this.state.styles.lineHeight === 'number'
+                      ? this.state.styles.lineHeight
+                      : ''
+                  }
                 >
                   {LINE_SPACE.map((value) => (
                     <option key={value} value={value}>
@@ -1589,7 +1621,12 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                     }
                     id="levelValue"
                     onChange={this.onLevelChange.bind(this)}
-                    value={this.state.styles.styleLevel || ''}
+                    value={
+                      typeof this.state.styles.styleLevel === 'number' ||
+                      typeof this.state.styles.styleLevel === 'string'
+                        ? this.state.styles.styleLevel
+                        : ''
+                    }
                   >
                     {LEVEL_VALUES.map((value) => (
                       <option key={value} value={value}>
@@ -1677,7 +1714,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                           }}
                         >
                           <input
-                            checked={this.state.styles.hideNumbering}
+                            checked={!!this.state.styles.hideNumbering}
                             className="molsp-chkboldnumbering"
                             disabled={
                               this.checkCondition(
@@ -1775,7 +1812,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                             id="bulletValue"
                             onChange={this.onBulletLevelChange.bind(this)}
                             style={{ textAlign: 'center' }}
-                            value={this.state.styles.bulletLevel || ''}
+                            value={
+                              typeof this.state.styles.bulletLevel === 'string'
+                                ? this.state.styles.bulletLevel
+                                : ''
+                            }
                           >
                             {BULLET_POINTS.map((value) => (
                               <option key={value.key} value={value.key}>
@@ -1843,7 +1884,12 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                         }
                         onChange={this.onIndentChange.bind(this)}
                         style={{ width: '99px !important' }}
-                        value={this.state.styles.indent || ''}
+                        value={
+                          typeof this.state.styles.indent === 'string' ||
+                          typeof this.state.styles.indent === 'number'
+                            ? this.state.styles.indent
+                            : ''
+                        }
                       >
                         {LEVEL_VALUES.map((value) => (
                           <option key={value} value={value}>
@@ -1855,7 +1901,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     <input
-                      checked={this.state.styles.isHangingIndent}
+                      checked={!!this.state.styles.isHangingIndent}
                       id='hanging-indent-checkbox'
                       onChange={this.onHangingIndentChange.bind(this)}
                       type="checkbox"
@@ -1873,7 +1919,12 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                       onChange={this.onIndentPositionChange.bind(this)}
                       style={{ width: '34px', marginRight: '6px' }}
                       type="text"
-                      value={this.state.styles.indentPosition ?? ''}
+                      value={
+                        typeof this.state.styles.indentPosition === 'string' ||
+                        typeof this.state.styles.indentPosition === 'number'
+                          ? this.state.styles.indentPosition
+                          : ''
+                      }
                     />
                     <span>inches</span>
                   </div>
@@ -1953,7 +2004,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                   </div>
                   <div className="molsp-indentdiv">
                     <input
-                      checked={this.state.otherStyleSelected}
+                      checked={!!this.state.otherStyleSelected}
                       disabled={this.state.styles.tot || this.state.styles.tof}
                       name="nextlinestyle"
                       onChange={this.onNextLineStyleSelected.bind(this, 2)}
@@ -1980,7 +2031,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                           marginLeft: '7px',
                           width: '97px',
                         }}
-                        value={this.state.styles.nextLineStyleName}
+                        value={
+                          typeof this.state.styles.nextLineStyleName === 'string'
+                            ? this.state.styles.nextLineStyleName
+                            : ''
+                        }
                       >
                         {customStyles.map((style) => (
                           <option key={style.styleName}>

@@ -6,24 +6,11 @@
  */
 
 import { PDFHandler } from './handlers';
-import { createTable } from './exportPdf';
-import { PreviewForm } from './preview';
+import { createTable } from './generatedLists';
+import { previewState } from './previewState';
 
-jest.mock('./exportPdf', () => ({
+jest.mock('./generatedLists', () => ({
   createTable: jest.fn(),
-}));
-
-jest.mock('./preview', () => ({
-  PreviewForm: {
-    showToc: jest.fn(),
-    showTof: jest.fn(),
-    showTot: jest.fn(),
-    getHeadersTOC: jest.fn(),
-    getHeadersTOF: jest.fn(),
-    getHeadersTOT: jest.fn(),
-    formattedDate: '2025-10-13',
-    lastUpdated: true,
-  },
 }));
 
 const mockChunker = {};
@@ -32,15 +19,6 @@ const mockPolisher = {
   insert: jest.fn(),
 };
 const mockCaller = {};
-const previewFormMock = PreviewForm as unknown as {
-  showToc: jest.Mock<boolean, []>;
-  showTof: jest.Mock<boolean, []>;
-  showTot: jest.Mock<boolean, []>;
-  getHeadersTOC: jest.Mock<string[], []>;
-  getHeadersTOF: jest.Mock<string[], []>;
-  getHeadersTOT: jest.Mock<string[], []>;
-  extractedCui: { text: string; color: string } | null;
-};
 
 type TestPagedPage = { element: HTMLElement };
 
@@ -58,16 +36,24 @@ describe('PDFHandler', () => {
     jest.clearAllMocks();
     PDFHandler.state.currentPage = 0;
     PDFHandler.state.isOnLoad = false;
-    previewFormMock.extractedCui = null;
+    previewState.pageBanner = null;
+    previewState.documentTitle = '';
+    previewState.formattedDate = '2025-10-13';
+    previewState.isToc = false;
+    previewState.isTof = false;
+    previewState.isTot = false;
+    previewState.tocHeader = [];
+    previewState.tofHeader = [];
+    previewState.totHeader = [];
   });
 
   test('beforeParsed calls createTable when any TOC/TOF/TOT is true', () => {
-    previewFormMock.showToc.mockReturnValue(true);
-    previewFormMock.showTof.mockReturnValue(false);
-    previewFormMock.showTot.mockReturnValue(false);
-    previewFormMock.getHeadersTOC.mockReturnValue(['h1']);
-    previewFormMock.getHeadersTOF.mockReturnValue([]);
-    previewFormMock.getHeadersTOT.mockReturnValue([]);
+    previewState.isToc = true;
+    previewState.isTof = false;
+    previewState.isTot = false;
+    previewState.tocHeader = ['h1'];
+    previewState.tofHeader = [];
+    previewState.totHeader = [];
 
     handler.beforeParsed('content');
 
@@ -353,7 +339,7 @@ describe('PDFHandler', () => {
   });
 
     test('afterPageLayout calls processTocAndFooter when extractedCui is null (non-AFTTP)', () => {
-    previewFormMock.extractedCui = null;
+    previewState.pageBanner = null;
 
     const pageFragment = document.createElement('div');
     const pageEl = document.createElement('div');
@@ -370,7 +356,7 @@ describe('PDFHandler', () => {
   });
 
   test('afterPageLayout removes and sets CSS properties when extractedCui exists (AFTTP)', () => {
-    previewFormMock.extractedCui = {
+    previewState.pageBanner = {
       text: 'CUI//SP-CTI',
       color: 'rgb(255, 0, 0)'
     };
@@ -388,7 +374,7 @@ describe('PDFHandler', () => {
   });
 
   test('afterPageLayout does not call processTocAndFooter when extractedCui has data', () => {
-    previewFormMock.extractedCui = {
+    previewState.pageBanner = {
       text: 'CUI//SP-CTI',
       color: 'rgb(255, 0, 0)'
     };
@@ -405,7 +391,7 @@ describe('PDFHandler', () => {
     handler.afterPageLayout(pageFragment, page, null);
 
     const cssValue = pageFragment.style.getPropertyValue('--pagedjs-string-last-chapTitled');
-    expect(cssValue).toBe('" 1. Should not appear "');
+    expect(cssValue).toBe('""');
   });
 
   test('truncateTitle returns original title when null or undefined', () => {
@@ -452,7 +438,7 @@ describe('buildRefToPageMap', () => {
 
   beforeEach(() => {
     handler = new PDFHandler(mockChunker, mockPolisher, mockCaller);
-    previewFormMock.extractedCui = null;
+    previewState.pageBanner = null;
   });
 
   test('maps data-ref to first page number (1-based)', () => {
@@ -531,7 +517,7 @@ describe('applyTocPageNumbers', () => {
 
   beforeEach(() => {
     handler = new PDFHandler(mockChunker, mockPolisher, mockCaller);
-    previewFormMock.extractedCui = null;
+    previewState.pageBanner = null;
   });
 
   test('sets data-page on TOC links when ref exists', () => {
@@ -678,7 +664,7 @@ describe('patchTocEntries', () => {
 
   beforeEach(() => {
     handler = new PDFHandler(mockChunker, mockPolisher, mockCaller);
-    previewFormMock.extractedCui = null;
+    previewState.pageBanner = null;
   });
 
   test('builds ref map and applies page numbers to TOC links', () => {
@@ -718,7 +704,7 @@ describe('patchTocEntries', () => {
   });
 
   test('applyPageNumbers assigns AFTTP chapter and attachment numbering', () => {
-  previewFormMock.extractedCui = { text: 'CUI', color: 'red' };
+  previewState.pageBanner = { text: 'CUI', color: 'red' };
 
   const pages = [
     createPage('<p stylename="chapterTitle"></p>'), // chapter 1 start
@@ -744,10 +730,10 @@ describe('patchTocEntries', () => {
   );
 
   expect(nums).toEqual([
-    '1',
-    '2',
-    '3',
-    '4',
+    '1-1',
+    '1-2',
+    'A1-1',
+    'A1-2',
   ]);
 });
 
@@ -839,14 +825,14 @@ test('resolveNonAfttpPageNumber returns roman for pre-pages', () => {
 });
 
 test('handleAfttpFooter skips TOC footer when AFTTP', () => {
-  previewFormMock.extractedCui = { text: 'CUI', color: 'red' };
+  previewState.pageBanner = { text: 'CUI', color: 'red' };
 
   const frag = document.createElement('div');
   const spy = jest.fn();
 
   handler['handleAfttpFooter'](frag, spy);
 
-  expect(frag.style.getPropertyValue('--pagedjs-string-last-chapTitled')).toBe('');
+  expect(frag.style.getPropertyValue('--pagedjs-string-last-chapTitled')).toBe('""');
 });
 
 test('fixSplitTo safely returns when element not found', () => {
@@ -890,7 +876,7 @@ test('applyPageNumbers skips pages without margin content safely', () => {
 });
 
 test('applySingleTocLink sets attachment page number in AFTTP', () => {
-  previewFormMock.extractedCui = { text: 'CUI', color: 'red' };
+  previewState.pageBanner = { text: 'CUI', color: 'red' };
 
   const page = createPage(`
     <div class="toc-element">
@@ -958,7 +944,7 @@ test('fixIndent safely handles pages with no indent elements', () => {
 });
 
 test('handleAfttpFooter executes processTocAndFooter when non-AFTTP', () => {
-  previewFormMock.extractedCui = null;
+  previewState.pageBanner = null;
 
   const frag = document.createElement('div');
   const spy = jest.fn();

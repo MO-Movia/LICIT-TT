@@ -8,7 +8,7 @@ import { EditorView } from 'prosemirror-view';
 import {
   RESERVED_STYLE_NONE,
   RESERVED_STYLE_NONE_NUMBERING,
-} from './CustomStyleNodeSpec';
+} from './customStyleConstants';
 import { DEFAULT_NORMAL_STYLE } from './Constants';
 import { setCustomStyles } from '../../commands';
 

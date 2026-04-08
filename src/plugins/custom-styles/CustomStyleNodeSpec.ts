@@ -6,6 +6,13 @@
 import { Node, DOMOutputSpec } from 'prosemirror-model';
 import type { KeyValuePair } from './Constants';
 import { toCSSLineSpacing } from '../../commands';
+import {
+  RESERVED_STYLE_NONE_NUMBERING,
+} from './customStyleConstants';
+export {
+  RESERVED_STYLE_NONE,
+  RESERVED_STYLE_NONE_NUMBERING,
+} from './customStyleConstants';
 
 import { getCustomStyleByName, getHidenumberingFlag } from './customStyle';
 
@@ -24,8 +31,6 @@ export const HIDE_STYLE_LEVEL = 'hide-style-level';
 export const ATTRIBUTE_BULLET_SYMBOL = 'data-bullet-symbol';
 export const ATTRIBUTE_SHOW_SYMBOL = 'data-show-bullet';
 export const ATTRIBUTE_BULLET_COLOR = 'data-bullet-color';
-export const RESERVED_STYLE_NONE = 'Normal';
-export const RESERVED_STYLE_NONE_NUMBERING = RESERVED_STYLE_NONE + '-@#$-';
 const cssVal = new Set(['', '0%', '0pt', '0px']);
 /*
 Symbols are grabbed from
