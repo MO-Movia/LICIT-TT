@@ -790,10 +790,10 @@ describe('CustomStyleCommand', () => {
     ]);
 
     const tr = new Transform(localDoc as unknown as Node);
-    const paragraph = tr.doc.nodeAt(0) as Node;
+    const paragraph = tr.doc.nodeAt(0);
     const updatedTr = customstylecommand.clearNodeStyleAndMarks(tr, paragraph, 0);
 
-    const updatedPara = updatedTr.doc.nodeAt(0) as Node;
+    const updatedPara = updatedTr.doc.nodeAt(0);
     expect(updatedPara.attrs.styleName).toBe(RESERVED_STYLE_NONE);
     expect(updatedPara.attrs.id).toBe('');
     expect(updatedPara.attrs.indent).toBe(0);
@@ -842,9 +842,9 @@ describe('CustomStyleCommand', () => {
     ]);
 
     const tr = new Transform(localDoc as unknown as Node);
-    const paragraph = tr.doc.nodeAt(0) as Node;
+    const paragraph = tr.doc.nodeAt(0);
     const updatedTr = customstylecommand.clearNodeStyleAndMarks(tr, paragraph, 0);
-    const updatedPara = updatedTr.doc.nodeAt(0) as Node;
+    const updatedPara = updatedTr.doc.nodeAt(0);
 
     expect(updatedPara.attrs.styleName).toBe(RESERVED_STYLE_NONE);
     expect(updatedPara.attrs.indent).toBe(6);
