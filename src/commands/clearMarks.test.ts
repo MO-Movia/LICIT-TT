@@ -10,9 +10,13 @@ import { doc, p } from 'prosemirror-test-builder';
 import { Transform } from 'prosemirror-transform';
 import { MARK_EM, MARK_FONT_SIZE, MARK_STRONG } from './MarkNames';
 import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
-import { Style } from './runtime.service';
+import { setCustomStyles, Style } from './runtime.service';
 
 describe('clearMarks', () => {
+  beforeEach(() => {
+    setCustomStyles();
+  });
+
   const mySchema = new Schema({
     nodes: {
       doc: {
@@ -576,6 +580,123 @@ it('clearMarks: should call addMark when marksToAdd is populated (MARK_TEXT_COLO
   clearMarks(fakeTr, mySchema2);
   expect(addMarkCalls.length).toBeGreaterThan(0);
   expect(removeMarkCalls.length).toBeGreaterThan(0);
+});
+
+it('clearMarks: should return early when selection is empty', () => {
+  const fakeNodesBetween = jest.fn();
+  const tr = {
+    doc: { nodesBetween: fakeNodesBetween },
+    selection: { empty: true, from: 1, to: 1 },
+  } as unknown as Transform;
+
+  const schema = {
+    marks: {
+      strong: { create: jest.fn(() => ({})) },
+    },
+  } as unknown as Schema;
+
+  const result = clearMarks(tr, schema);
+  expect(result).toBe(tr);
+  expect(fakeNodesBetween).not.toHaveBeenCalled();
+});
+
+it('clearMarks: should reset indent and align attrs to style defaults', () => {
+  setCustomStyles([
+    {
+      styleName: 'Normal',
+      styles: { indent: '0', align: 'left' },
+    } as Style,
+  ]);
+
+  const nodeWithOverrides = {
+    attrs: {
+      styleName: 'Normal',
+      indent: 2,
+      overriddenIndent: true,
+      overriddenIndentValue: 2,
+      align: 'center',
+      overriddenAlign: 'center',
+      overriddenAlignValue: 'center',
+    },
+    marks: [],
+    nodeSize: 5,
+    type: { name: 'paragraph' },
+  } as unknown as Node;
+
+  const fakeDoc = {
+    nodesBetween: jest.fn((_from, _to, callback) => {
+      callback(nodeWithOverrides, 1);
+      return true;
+    }),
+  };
+
+  const schema = {
+    marks: {
+      strong: { create: jest.fn(() => ({})), name: 'strong' },
+    },
+  } as unknown as Schema;
+
+  const fakeTr = {
+    doc: fakeDoc,
+    selection: { empty: false, from: 1, to: 2 },
+    removeMark: jest.fn(() => fakeTr),
+    addMark: jest.fn(() => fakeTr),
+    setNodeMarkup: jest.fn(() => fakeTr),
+  } as unknown as Transform;
+
+  clearMarks(fakeTr, schema);
+
+  expect(fakeTr.setNodeMarkup).toHaveBeenCalledTimes(1);
+  const call = (fakeTr.setNodeMarkup as jest.Mock).mock.calls[0];
+  const updatedAttrs = call[2];
+
+  expect(updatedAttrs.indent).toBe('0');
+  expect(updatedAttrs.overriddenIndent).toBe(false);
+  expect(updatedAttrs.overriddenIndentValue).toBeNull();
+  expect(updatedAttrs.align).toBe('left');
+  expect(updatedAttrs.overriddenAlign).toBeNull();
+  expect(updatedAttrs.overriddenAlignValue).toBeNull();
+});
+
+it('clearMarks: should not reset attrs when indent and align are already defaults', () => {
+  const nodeAtDefaults = {
+    attrs: {
+      styleName: 'Normal',
+      indent: '0',
+      overriddenIndent: false,
+      overriddenIndentValue: null,
+      align: 'left',
+      overriddenAlign: null,
+      overriddenAlignValue: null,
+    },
+    marks: [],
+    nodeSize: 5,
+    type: { name: 'paragraph' },
+  } as unknown as Node;
+
+  const fakeDoc = {
+    nodesBetween: jest.fn((_from, _to, callback) => {
+      callback(nodeAtDefaults, 1);
+      return true;
+    }),
+  };
+
+  const schema = {
+    marks: {
+      strong: { create: jest.fn(() => ({})), name: 'strong' },
+    },
+  } as unknown as Schema;
+
+  const fakeTr = {
+    doc: fakeDoc,
+    selection: { empty: false, from: 1, to: 2 },
+    removeMark: jest.fn(() => fakeTr),
+    addMark: jest.fn(() => fakeTr),
+    setNodeMarkup: jest.fn(() => fakeTr),
+  } as unknown as Transform;
+
+  clearMarks(fakeTr, schema);
+  expect(fakeTr.setNodeMarkup).not.toHaveBeenCalled();
 });
 });
 describe('comapreMarks', () => {
