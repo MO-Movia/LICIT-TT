@@ -7,7 +7,7 @@ import cx from 'classnames';
 import * as React from 'react';
  import { UICommand } from '../../../core';
 const VALID_CHARS = /[a-z_]+/;
-const cached = {};
+const cached: Record<string, React.ReactNode> = {};
 
 type InfoSubMenuProps = {
   type: string;

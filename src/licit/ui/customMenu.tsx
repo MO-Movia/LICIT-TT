@@ -6,10 +6,12 @@
 import * as React from 'react';
 import cx from 'classnames';
 
-class CustomMenu extends React.Component<
-    any,
-    any
-> {
+type CustomMenuProps = {
+  children?: React.ReactNode;
+  isHorizontal?: boolean;
+  theme?: string;
+};
+class CustomMenu extends React.Component<CustomMenuProps> {
   render(): React.ReactElement {
     const { children, isHorizontal, theme } = this.props;
     const menuClasssName = 'czi-custom-menu ' + theme;

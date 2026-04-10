@@ -4,7 +4,8 @@
  */
 
 import {Editor, KeyboardShortcutCommand, Extension, Mark} from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import type {Node as PMNode} from 'prosemirror-model';
+import {StarterKit} from '@tiptap/starter-kit';
 import {
   clamp,
   findActualItemIndex,
@@ -15,7 +16,7 @@ import {
 import {EditorState, Transaction} from 'prosemirror-state';
 
 describe('Indent Extension', () => {
-    let editor;
+  let editor: Editor;
 
     beforeEach(() => {
         editor = new Editor({
@@ -53,17 +54,17 @@ describe('Indent Extension', () => {
         expect(newIndent).toBe(initialIndent);
     });
 
-    test('should not exceed maximum indent level', () => {
-        editor.commands.focus();
-        const maxIndent = editor.extensionManager.extensions.find(
-            (ext) => ext.name === 'indent'
-        ).options.maxIndentLevel;
-        for (let i = 0; i < 20; i++) {
-            editor.commands.indent();
-        }
-        const finalIndent = editor.getAttributes('paragraph').indent;
-        expect(finalIndent).toBeLessThanOrEqual(maxIndent);
-    });
+  test('should not exceed maximum indent level', () => {
+    editor.commands.focus();
+    const maxIndent = editor.extensionManager.extensions.find(
+      (ext) => ext.name === 'indent'
+    )?.options.maxIndentLevel;
+    for (let i = 0; i < 20; i++) {
+      editor.commands.indent();
+    }
+    const finalIndent = editor.getAttributes('paragraph').indent;
+    expect(finalIndent).toBeLessThanOrEqual(maxIndent);
+  });
 });
 
 type IndentExtensionType = Extension & {
@@ -298,7 +299,7 @@ describe('Indent Extension - addCommands', () => {
       const {state} = editor;
       let secondItemPos = 0;
       let itemCount = 0;
-      state.doc.descendants((node, pos) => {
+      state.doc.descendants((node: PMNode, pos: number) => {
         if (node.type.name === 'listItem') {
           itemCount++;
           if (itemCount === 2) {
@@ -380,7 +381,7 @@ describe('Indent Extension - addCommands', () => {
       expect(typeof result).toBe('boolean');
     });
     it('should return the correct index for items in a list', () => {
-      const editor = new Editor({
+      const localEditor = new Editor({
         extensions: [StarterKit, Indent],
         content: `
         <ul>
@@ -391,12 +392,13 @@ describe('Indent Extension - addCommands', () => {
       `,
       });
 
-      const {doc} = editor.state;
-      let listNode, listPos;
-      const listItemPositions = [];
+      const {doc} = localEditor.state;
+      let listNode: PMNode | null = null;
+      let listPos: number | null = null;
+      const listItemPositions: number[] = [];
 
       // Traverse the doc to find the list and its items
-      doc.descendants((node, pos) => {
+      doc.descendants((node: PMNode, pos: number) => {
         if (node.type.name === 'bulletList') {
           listNode = node;
           listPos = pos;
@@ -407,21 +409,35 @@ describe('Indent Extension - addCommands', () => {
       });
 
       // Test each item index
-      expect(findActualItemIndex(listNode, listPos, listItemPositions[0])).toBe(
-        0
-      );
-      expect(findActualItemIndex(listNode, listPos, listItemPositions[1])).toBe(
-        1
-      );
-      expect(findActualItemIndex(listNode, listPos, listItemPositions[2])).toBe(
-        2
-      );
+      expect(
+        findActualItemIndex(
+          listNode,
+          listPos,
+          listItemPositions[0]
+        )
+      ).toBe(0);
+      expect(
+        findActualItemIndex(
+          listNode,
+          listPos,
+          listItemPositions[1]
+        )
+      ).toBe(1);
+      expect(
+        findActualItemIndex(
+          listNode,
+          listPos,
+          listItemPositions[2]
+        )
+      ).toBe(2);
 
       // Test a position that doesn't exist in the list
-      expect(findActualItemIndex(listNode, listPos, 9999)).toBe(-1);
+      expect(
+        findActualItemIndex(listNode, listPos, 9999)
+      ).toBe(-1);
     });
     it('handleSingleItemIndent', () => {
-      const editor = new Editor({
+      const localEditor = new Editor({
         extensions: [StarterKit, Indent],
         content: `
         <ul>
@@ -432,11 +448,12 @@ describe('Indent Extension - addCommands', () => {
       `,
       });
 
-      const {doc} = editor.state;
-      let listNode, listPos;
+      const {doc} = localEditor.state;
+      let listNode: PMNode | null = null;
+      let listPos: number | null = null;
 
       // Traverse the doc to find the list and its items
-      doc.descendants((node, pos) => {
+      doc.descendants((node: PMNode, pos: number) => {
         if (node.type.name === 'bulletList') {
           listNode = node;
           listPos = pos;
@@ -453,7 +470,7 @@ describe('Indent Extension - addCommands', () => {
     });
 
     it('createSplitLists', () => {
-      const editor = new Editor({
+      const localEditor = new Editor({
         extensions: [StarterKit, Indent],
         content: `
         <ul>
@@ -464,11 +481,12 @@ describe('Indent Extension - addCommands', () => {
       `,
       });
 
-      const {doc} = editor.state;
-      let listNode, listPos;
+      const {doc} = localEditor.state;
+      let listNode: PMNode | null = null;
+      let listPos: number | null = null;
 
       // Traverse the doc to find the list and its items
-      doc.descendants((node, pos) => {
+      doc.descendants((node: PMNode, pos: number) => {
         if (node.type.name === 'bulletList') {
           listNode = node;
           listPos = pos;
@@ -642,7 +660,7 @@ describe('Indent Extension - addCommands', () => {
       editor.commands.focus();
 
       let nestedPos = 0;
-      editor.state.doc.descendants((node, pos) => {
+      editor.state.doc.descendants((node: PMNode, pos: number) => {
         if (node.textContent === 'Nested') {
           nestedPos = pos;
         }
@@ -728,7 +746,7 @@ describe('Indent Extension - Shortcut Constraints', () => {
 
     const indentExt = editor.extensionManager.extensions.find(
       (e) => e.name === 'indent'
-    );
+    ) as IndentExtensionType;
     const shortcuts = indentExt.config.addKeyboardShortcuts.call({
       editor,
       options: indentExt.options,
@@ -753,7 +771,7 @@ describe('Indent Extension - Shortcut Constraints', () => {
 
     const indentExt = editor.extensionManager.extensions.find(
       (e) => e.name === 'indent'
-    );
+    ) as IndentExtensionType;
     const shortcuts = indentExt.config.addKeyboardShortcuts.call({
       editor,
       options: indentExt.options,
@@ -796,7 +814,7 @@ describe('Indent Extension - Shortcut Constraints', () => {
 
     const indentExt = editor.extensionManager.extensions.find(
       (e) => e.name === 'indent'
-    );
+    ) as IndentExtensionType;
     const shortcuts = indentExt.config.addKeyboardShortcuts.call({
       editor,
       options: indentExt.options,

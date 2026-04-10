@@ -78,7 +78,8 @@ describe('keymap-utils', () => {
       const plugin = {} as unknown as Plugin;
       const result = setPluginKey(plugin, 'noSpec');
       expect(result).toBe(plugin);
-      expect((plugin as any).spec).toBeUndefined();
+      const pluginWithoutSpec = plugin as Plugin & {spec?: unknown};
+      expect(pluginWithoutSpec.spec).toBeUndefined();
     });
   });
 
@@ -108,5 +109,17 @@ describe('keymap-utils', () => {
       expect(keymap).toHaveBeenCalledTimes(2);
       expect(result).toHaveLength(2);
     });
+  });
+  it('should use the default plugin name when none is provided', () => {
+    const fakeMap = {'Mod-u': jest.fn()};
+    const result = createKeyMapPlugin(fakeMap);
+
+    const pluginWithSpec = result[0] as Plugin & {
+      spec: {key?: PluginKey};
+      key?: string;
+    };
+
+    expect(pluginWithSpec.key).toBe('UnnamedKeyMapPlugin');
+    expect(pluginWithSpec.spec.key).toBeInstanceOf(PluginKey);
   });
 });

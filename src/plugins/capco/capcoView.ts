@@ -19,7 +19,7 @@ import {DOMSerializer, Node} from 'prosemirror-model';
 import {EditorView, NodeView} from 'prosemirror-view';
 
 export class CapcoView implements NodeView {
-  dom: globalThis.Node;
+  dom: HTMLElement;
   constructor(
     private node: Node,
     outerView: EditorView
@@ -29,7 +29,7 @@ export class CapcoView implements NodeView {
       outerView.dom.ownerDocument,
       this.node.type.spec.toDOM(this.node)
     );
-    this.dom = spec.dom;
+    this.dom = spec.dom as HTMLElement;
   }
 
   update(node: Node): boolean {

@@ -5,12 +5,13 @@
 
 // [FS] IRAD-??? 2020-10-19
 // Plugin to handle automatic assign unique id to the block nodes.
+import { Node as ProseMirrorNode, Schema } from 'prosemirror-model';
 import { Step, StepResult } from 'prosemirror-transform';
 
 type SetDocAttrStepJSONValue = {
   key: string;
   stepType: string;
-  value: any;
+  value: unknown;
 };
 
 const STEPNAME_SDA = 'SetDocAttr';
@@ -20,17 +21,17 @@ const STEPNAME_SDA = 'SetDocAttr';
 export class SetDocAttrStep extends Step {
   key: string;
   stepType: string;
-  value: any;
-  prevValue!: any;
+  value: unknown;
+  prevValue!: unknown;
 
-  constructor(key: string, value: any, stepType: string = STEPNAME_SDA) {
+  constructor(key: string, value: unknown, stepType: string = STEPNAME_SDA) {
     super();
     this.stepType = stepType;
     this.key = key;
     this.value = value;
   }
 
-  apply(doc: any): StepResult {
+  apply(doc: ProseMirrorNode): StepResult {
     this.prevValue = doc.attrs[this.key];
     // Fix for the issue-After creating a citation, it can't be deleted from the document.
     const newDoc = doc.type.create(
@@ -73,7 +74,7 @@ export class SetDocAttrStep extends Step {
     };
   }
 
-  static fromJSON(_schema: any, json: SetDocAttrStepJSONValue): SetDocAttrStep {
+  static fromJSON(_schema: Schema, json: SetDocAttrStepJSONValue): SetDocAttrStep {
     return new SetDocAttrStep(json.key, json.value, json.stepType);
   }
 

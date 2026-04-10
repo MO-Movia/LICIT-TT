@@ -267,7 +267,7 @@ export class InfoIconDialog extends React.PureComponent<
   getCacheIcons(): FaIcons[] {
     const ccList = localStorage.getItem(SELECTEDINFOICON);
     if (ccList) {
-      return JSON.parse(ccList);
+      return JSON.parse(ccList) as FaIcons[];
     } else {
       const fq = FONTAWESOMEICONS.slice(0, 10);
       localStorage.setItem(SELECTEDINFOICON, JSON.stringify(fq));

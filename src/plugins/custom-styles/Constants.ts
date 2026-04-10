@@ -12,7 +12,7 @@ export const PARAGRAPH = 'paragraph';
 export const STYLEKEY = 'styleName';
 export const ATTR_OVERRIDDEN = 'overridden';
  
-export type KeyValuePair = { [key: string]: any };
+export type KeyValuePair = { [key: string]: unknown };
 
 export const DEFAULT_NORMAL_STYLE = {
   styleName: 'Normal',
@@ -34,8 +34,8 @@ export const DEFAULT_NORMAL_STYLE = {
 };
 
 //to get the selected node
-export function getNode(from: number, to: number, tr: Transform): Node {
-  let selectedNode = null;
+export function getNode(from: number, to: number, tr: Transform): Node | null {
+  let selectedNode: Node | null = null;
   tr.doc.nodesBetween(from, to, (node) => {
     if (node.type.name === 'paragraph' || node.type.name === 'enhanced_table_figure_notes') {
       if (null === selectedNode) {

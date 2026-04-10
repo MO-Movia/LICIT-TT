@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef } from 'react';
-import ReactCrop, { centerCrop, makeAspectCrop, Crop } from 'react-image-crop';
+import { centerCrop, makeAspectCrop, Crop, ReactCrop} from 'react-image-crop';
 
 
 export type CropDataPropValue = {

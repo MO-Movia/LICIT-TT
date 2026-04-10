@@ -9,8 +9,9 @@ import {
   enhancedTableFigureCapcoNodeSpec,
   enhancedTableFigureNodeSpec,
 } from './EnhancedTableNodeSpec';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
-const mockNode = { attrs: {} } as any;
+const mockNode: ProseMirrorNode = { attrs: {} } as unknown as ProseMirrorNode;
 
 describe('Enhanced Table Figure Node Specs', () => {
   describe('enhancedTableFigureBodyNodeSpec', () => {
@@ -38,8 +39,8 @@ describe('Enhanced Table Figure Node Specs', () => {
   });
 
     it('returns correct DOM output with attrs', () => {
-      const mockNode = {attrs: {form: 'short'}};
-      const result = enhancedTableFigureCapcoNodeSpec.toDOM(mockNode as any);
+      const mockNode = {attrs: {form: 'short'}} as unknown as ProseMirrorNode;
+      const result = enhancedTableFigureCapcoNodeSpec.toDOM(mockNode);
       expect(result).toEqual([
         'div',
         {
@@ -52,9 +53,9 @@ describe('Enhanced Table Figure Node Specs', () => {
     });
 
     it('returns correct DOM output with custom styleName', () => {
-      const result = enhancedTableFigureNotesNodeSpec.toDOM({
-        attrs: { styleName: 'CustomStyle' },
-      } as any);
+      const result = enhancedTableFigureNotesNodeSpec.toDOM(
+        { attrs: { styleName: 'CustomStyle' } } as unknown as ProseMirrorNode
+      );
       expect(result).toEqual([
         'div',
         {
@@ -82,8 +83,8 @@ describe('Enhanced Table Figure Node Specs', () => {
 
   describe('enhancedTableFigureCapcoNodeSpec', () => {
     it('returns correct DOM output with attrs (case 2)', () => {
-      const mockNode = { attrs: { form: 'short', capco: 'SECRET' } };
-      const result = enhancedTableFigureCapcoNodeSpec.toDOM(mockNode as any);
+      const mockNode = { attrs: { form: 'short', capco: 'SECRET' } } as unknown as ProseMirrorNode;
+      const result = enhancedTableFigureCapcoNodeSpec.toDOM(mockNode);
       expect(result).toEqual([
         'div',
         {
@@ -124,7 +125,7 @@ describe('Enhanced Table Figure Node Specs', () => {
           maximized: true,
         },
       };
-      const result = enhancedTableFigureNodeSpec.toDOM(mockNode as any);
+      const result = enhancedTableFigureNodeSpec.toDOM(mockNode as unknown as ProseMirrorNode);
       expect(result).toEqual([
         'div',
         {
@@ -148,7 +149,7 @@ describe('Enhanced Table Figure Node Specs', () => {
           maximized: false,
         },
       };
-      const result = enhancedTableFigureNodeSpec.toDOM(mockNode as any);
+      const result = enhancedTableFigureNodeSpec.toDOM(mockNode as unknown as ProseMirrorNode);
       expect(result).toEqual([
         'div',
         {

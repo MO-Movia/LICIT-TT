@@ -5,7 +5,7 @@
 
 import { Schema } from 'prosemirror-model';
 import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
-import LandscapeCommand from './LandscapeCommand';
+import {LandscapeCommand} from './LandscapeCommand';
 import LandscapeSectionNodeSpec from '../specs/landscapeSectionNodeSpec';
 
 describe('LandscapeCommand', () => {
@@ -46,7 +46,7 @@ describe('LandscapeCommand', () => {
       selection: TextSelection.create(doc, 2),
     });
     const command = new LandscapeCommand();
-    let applied: Transaction = null;
+    let applied: Transaction | null = null;
 
     const handled = command.execute(state, (tr) => {
       applied = tr;
@@ -70,7 +70,7 @@ describe('LandscapeCommand', () => {
       selection: TextSelection.create(doc, 1, 6),
     });
     const command = new LandscapeCommand();
-    let applied: Transaction = null;
+    let applied: Transaction | null = null;
 
     const handled = command.execute(state, (tr) => {
       applied = tr;
@@ -110,7 +110,7 @@ describe('LandscapeCommand', () => {
       selection: TextSelection.create(doc, cursorPos),
     });
     const command = new LandscapeCommand();
-    let applied: Transaction = null;
+    let applied: Transaction | null = null;
 
     const handled = command.execute(state, (tr) => {
       applied = tr;
@@ -147,6 +147,145 @@ describe('LandscapeCommand', () => {
     const command = new LandscapeCommand();
     const dispatch = jest.fn();
 
+    expect(command.execute(state, dispatch)).toBe(false);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  test('unwraps an existing landscape section when selection is inside', () => {
+    const doc = schema.node('doc', null, [
+      schema.node('landscape_section', null, [
+        schema.node('paragraph', null, [schema.text('Hello')]),
+      ]),
+    ]);
+    const state = EditorState.create({
+      schema,
+      doc,
+      selection: TextSelection.create(doc, 2),
+    });
+    const command = new LandscapeCommand();
+    let applied: Transaction | null = null;
+
+    const handled = command.execute(state, (tr) => {
+      applied = tr;
+    });
+
+    expect(handled).toBe(true);
+    expect(applied).toBeTruthy();
+    expect(applied?.doc.child(0).type.name).toBe('paragraph');
+  });
+
+  test('isActive returns true when inside landscape section', () => {
+    const doc = schema.node('doc', null, [
+      schema.node('landscape_section', null, [
+        schema.node('paragraph', null, [schema.text('Hi')]),
+      ]),
+    ]);
+    const state = EditorState.create({
+      schema,
+      doc,
+      selection: TextSelection.create(doc, 2),
+    });
+    const command = new LandscapeCommand();
+    expect(command.isActive(state)).toBe(true);
+  });
+
+  test('returns false when paragraph node is missing', () => {
+    const schemaWithoutParagraph = new Schema({
+      nodes: {
+        doc: {content: 'text*'},
+        landscape_section: LandscapeSectionNodeSpec,
+        text: {group: 'inline'},
+      },
+      marks: {},
+    });
+    const doc = schemaWithoutParagraph.node('doc', null, [
+      schemaWithoutParagraph.text('Hello'),
+    ]);
+    const state = EditorState.create({
+      schema: schemaWithoutParagraph,
+      doc,
+      selection: TextSelection.create(doc, 1),
+    });
+    const command = new LandscapeCommand();
+    const dispatch = jest.fn();
+    expect(command.execute(state, dispatch)).toBe(false);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  test('returns false when landscape section cannot be inserted', () => {
+    const limitedSchema = new Schema({
+      nodes: {
+        doc: {content: 'paragraph+'},
+        paragraph: {content: 'text*', group: 'block'},
+        landscape_section: LandscapeSectionNodeSpec,
+        text: {group: 'inline'},
+      },
+      marks: {},
+    });
+    const doc = limitedSchema.node('doc', null, [
+      limitedSchema.node('paragraph', null, [limitedSchema.text('Hello')]),
+    ]);
+    const state = EditorState.create({
+      schema: limitedSchema,
+      doc,
+      selection: TextSelection.create(doc, 2),
+    });
+    const command = new LandscapeCommand();
+    const dispatch = jest.fn();
+    expect(command.execute(state, dispatch)).toBe(false);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  test('returns false when table cannot be wrapped', () => {
+    const tableSchema = new Schema({
+      nodes: {
+        doc: {content: 'table+'},
+        table: {
+          content: 'table_row+',
+          group: 'block',
+          tableRole: 'table',
+        },
+        table_row: {
+          content: 'table_cell+',
+          tableRole: 'row',
+        },
+        table_cell: {
+          content: 'paragraph+',
+          tableRole: 'cell',
+        },
+        paragraph: {content: 'text*', group: 'block'},
+        landscape_section: LandscapeSectionNodeSpec,
+        text: {group: 'inline'},
+      },
+      marks: {},
+    });
+    const doc = tableSchema.node('doc', null, [
+      tableSchema.node('table', null, [
+        tableSchema.node('table_row', null, [
+          tableSchema.node('table_cell', null, [
+            tableSchema.node('paragraph', null, [tableSchema.text('Cell')]),
+          ]),
+        ]),
+      ]),
+    ]);
+    let pos = -1;
+    doc.descendants((node, p) => {
+      if (node.isText) {
+        pos = p + 1;
+        return false;
+      }
+      return true;
+    });
+    if (pos < 0) {
+      pos = 1;
+    }
+    const state = EditorState.create({
+      schema: tableSchema,
+      doc,
+      selection: TextSelection.create(doc, pos),
+    });
+    const command = new LandscapeCommand();
+    const dispatch = jest.fn();
     expect(command.execute(state, dispatch)).toBe(false);
     expect(dispatch).not.toHaveBeenCalled();
   });

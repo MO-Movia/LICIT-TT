@@ -144,12 +144,10 @@ class TableDetailsCommand extends UICommand {
    }
   }
 
-    if (!element) {return null;}
-    else{
-   return element.closest('td, th');
+    if (element) {
+      return element.closest('td, th');
     }
-
- 
+    return null;
   }
 
   cancel(): void {

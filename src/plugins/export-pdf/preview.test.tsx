@@ -18,7 +18,31 @@ type PrivatePreviewFormMethods = {
   prepareEditorContent: () => void;
   updateTableWidths: () => void;
 };
+type PreviewFormPrivate = PrivatePreviewFormMethods & {
+  rotateWideTable: (table: HTMLTableElement, totalWidth: number) => void;
+  extractPreChapterNodes: (prose: HTMLElement) => HTMLElement[];
+  insertTitleSection: (data: HTMLElement, editorView: EditorView) => void;
+  insertPrePages: (data: HTMLElement, nodes: HTMLElement[]) => void;
+  insertOptionalSections: (data: HTMLElement) => void;
+  insertSectionHeaders: (data: HTMLElement, editorView: EditorView) => void;
+  isAfttpDoc: (editorView: EditorView) => boolean;
+  updateStyles: (data: HTMLElement) => void;
+};
+type PrintWindowMock = {
+  document: {
+    open: jest.Mock;
+    writeln: jest.Mock;
+    close: jest.Mock;
+    createElement: jest.Mock;
+    appendChild: jest.Mock;
+    removeChild: jest.Mock;
+    documentElement: HTMLElement;
+  };
+  print: jest.Mock;
+};
 const previewFormStatic = PreviewForm as unknown as Record<string, unknown>;
+const asPrivate = (instance: PreviewForm) =>
+  instance as unknown as PreviewFormPrivate;
 
 describe('PreviewForm', () => {
 
@@ -109,12 +133,12 @@ describe('PreviewForm', () => {
 describe('PreviewForm component', () => {
     beforeAll(() => {
     Object.defineProperty(global, 'structuredClone', {
-      value: (value: unknown) => JSON.parse(JSON.stringify(value)),
+      value: <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T,
       writable: true,
     });
   });
   let onCloseMock: jest.Mock;
-  let printWindowMock: any;
+  let printWindowMock: PrintWindowMock;
 
   beforeEach(() => {
     onCloseMock = jest.fn();
@@ -130,7 +154,7 @@ describe('PreviewForm component', () => {
       },
       print: jest.fn(),
     };
-    window.open = jest.fn(() => printWindowMock);
+    window.open = jest.fn(() => printWindowMock) as unknown as typeof window.open;
     document.getElementById = jest.fn().mockReturnValue({
       childNodes: [document.createElement('div')],
     });
@@ -186,7 +210,8 @@ describe('PreviewForm component', () => {
     };
 
     const previewForm = new PreviewForm(props);
-    const previewProto = PreviewForm.prototype as unknown as PrivatePreviewFormMethods;
+    const previewProto =
+      PreviewForm.prototype as unknown as PrivatePreviewFormMethods;
 
     jest.spyOn(previewProto, 'insertSectionHeaders').mockImplementation(() => undefined);
     jest.spyOn(previewProto, 'replaceInfoIcons').mockImplementation(() => undefined);
@@ -234,7 +259,8 @@ describe('PreviewForm component', () => {
     };
 
     const previewForm = new PreviewForm(props);
-    const previewProto = PreviewForm.prototype as unknown as PrivatePreviewFormMethods;
+    const previewProto =
+      PreviewForm.prototype as unknown as PrivatePreviewFormMethods;
 
     jest.spyOn(previewProto, 'isAfttpDoc').mockReturnValue(false);
     jest.spyOn(previewForm, 'getToc').mockResolvedValue();
@@ -883,7 +909,7 @@ describe('PreviewForm component', () => {
 
     const previewForm = new PreviewForm(props);
     const rotateSpy = jest
-      .spyOn(previewForm as any, 'rotateWideTable')
+      .spyOn(asPrivate(previewForm), 'rotateWideTable')
       .mockImplementation(() => { });
 
     const table = document.createElement('table');
@@ -1253,8 +1279,16 @@ describe('addLinkEventListeners && handleLinkClick', () => {
     };
 
     const previewForm = new PreviewForm(props);
-    (previewForm.state as any).flattenedSectionNodeStructure = [
-      { isChecked: false },
+    (
+      previewForm.state as unknown as {
+        flattenedSectionNodeStructure: Array<{
+          node: HTMLElement;
+          level: number;
+          isChecked?: boolean;
+        }>;
+      }
+    ).flattenedSectionNodeStructure = [
+      {node: document.createElement('div'), level: 0, isChecked: false},
     ];
     expect(previewForm.updateDocumentSectionList(undefined)).toBeUndefined();
   });
@@ -1722,19 +1756,19 @@ describe('PreviewForm.insertSectionHeaders', () => {
   describe('isAfttpDoc', () => {
     test('should return true for Afttp document types', () => {
       const editorView = createMockEditorView('Afttp-123');
-      const result = (previewForm as any).isAfttpDoc(editorView);
+      const result = asPrivate(previewForm).isAfttpDoc(editorView);
       expect(result).toBe(true);
     });
 
     test('should return false for non-Afttp document types', () => {
       const editorView = createMockEditorView('Regular');
-      const result = (previewForm as any).isAfttpDoc(editorView);
+      const result = asPrivate(previewForm).isAfttpDoc(editorView);
       expect(result).toBe(false);
     });
 
     test('should be case-sensitive (lowercase afttp should return false)', () => {
       const editorView = createMockEditorView('afttp-test');
-      const result = (previewForm as any).isAfttpDoc(editorView);
+      const result = asPrivate(previewForm).isAfttpDoc(editorView);
       expect(result).toBe(false);
     });
 
@@ -1748,7 +1782,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
           },
         },
       } as unknown as EditorView;
-      const result = (previewForm as any).isAfttpDoc(editorView);
+      const result = asPrivate(previewForm).isAfttpDoc(editorView);
       expect(result).toBe(false);
     });
   });
@@ -1773,7 +1807,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       prose.appendChild(chapterTitle);
       prose.appendChild(postNode);
 
-      const extracted = (previewForm as any).extractPreChapterNodes(prose);
+      const extracted = asPrivate(previewForm).extractPreChapterNodes(prose);
 
       expect(extracted.length).toBe(2);
       expect(prose.children.length).toBe(2); // Only chapterTitle and postNode remain
@@ -1786,7 +1820,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       prose.classList.add('ProseMirror');
       prose.innerHTML = '<p>No chapter title</p>';
 
-      const extracted = (previewForm as any).extractPreChapterNodes(prose);
+      const extracted = asPrivate(previewForm).extractPreChapterNodes(prose);
 
       expect(extracted.length).toBe(0);
     });
@@ -1802,7 +1836,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       prose.appendChild(chapterTitle);
       prose.appendChild(postNode);
 
-      const extracted = (previewForm as any).extractPreChapterNodes(prose);
+      const extracted = asPrivate(previewForm).extractPreChapterNodes(prose);
 
       expect(extracted.length).toBe(0);
     });
@@ -1820,7 +1854,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       prose.appendChild(preNode);
       prose.appendChild(wrapper);
 
-      const extracted = (previewForm as any).extractPreChapterNodes(prose);
+      const extracted = asPrivate(previewForm).extractPreChapterNodes(prose);
 
       expect(extracted.length).toBe(1);
       expect(extracted[0]).toBe(preNode);
@@ -1833,7 +1867,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       const editorView = createMockEditorView('', 'My Test Document');
       previewFormStatic.isTitle = true;
 
-      (previewForm as any).insertTitleSection(data, editorView);
+      asPrivate(previewForm).insertTitleSection(data, editorView);
 
       const titleDiv = data.querySelector('.titleHead');
       expect(titleDiv).toBeTruthy();
@@ -1859,7 +1893,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
         },
       } as unknown as EditorView;
 
-      (previewForm as any).insertTitleSection(data, editorView);
+      asPrivate(previewForm).insertTitleSection(data, editorView);
 
       const header = data.querySelector('.titleHead h4');
       expect(header?.textContent).toBe('Untitled');
@@ -1869,7 +1903,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       const data = document.createElement('div');
       const editorView = createMockEditorView();
 
-      (previewForm as any).insertTitleSection(data, editorView);
+      asPrivate(previewForm).insertTitleSection(data, editorView);
 
       const spacer = data.querySelector<HTMLElement>('.forcePageSpacer');
       expect(spacer).toBeTruthy();
@@ -1886,7 +1920,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       const node2 = document.createElement('p');
       node2.textContent = 'Pre node 2';
 
-      (previewForm as any).insertPrePages(data, [node1, node2]);
+      asPrivate(previewForm).insertPrePages(data, [node1, node2]);
 
       const prepages = data.querySelector('.prepages');
       expect(prepages).toBeTruthy();
@@ -1900,7 +1934,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
     test('should handle empty nodes array', () => {
       const data = document.createElement('div');
 
-      (previewForm as any).insertPrePages(data, []);
+      asPrivate(previewForm).insertPrePages(data, []);
 
       const prepages = data.querySelector('.prepages');
       expect(prepages).toBeTruthy();
@@ -1917,7 +1951,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = false;
       previewFormStatic.isTot = false;
 
-      (previewForm as any).insertOptionalSections(data);
+      asPrivate(previewForm).insertOptionalSections(data);
 
       const tocSection = data.querySelector<HTMLElement>('.tocHead');
       expect(tocSection).toBeTruthy();
@@ -1934,7 +1968,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = true;
       previewFormStatic.isTot = false;
 
-      (previewForm as any).insertOptionalSections(data);
+      asPrivate(previewForm).insertOptionalSections(data);
 
       const tofSection = data.querySelector<HTMLElement>('.tofHead');
       expect(tofSection).toBeTruthy();
@@ -1949,7 +1983,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = false;
       previewFormStatic.isTot = true;
 
-      (previewForm as any).insertOptionalSections(data);
+      asPrivate(previewForm).insertOptionalSections(data);
 
       const totSection = data.querySelector<HTMLElement>('.totHead');
       expect(totSection).toBeTruthy();
@@ -1964,7 +1998,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = true;
       previewFormStatic.isTot = true;
 
-      (previewForm as any).insertOptionalSections(data);
+      asPrivate(previewForm).insertOptionalSections(data);
 
       expect(data.querySelector('.tocHead')).toBeTruthy();
       expect(data.querySelector('.tofHead')).toBeTruthy();
@@ -1977,7 +2011,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = false;
       previewFormStatic.isTot = false;
 
-      (previewForm as any).insertOptionalSections(data);
+      asPrivate(previewForm).insertOptionalSections(data);
 
       expect(data.querySelector('.tocHead')).toBeNull();
       expect(data.querySelector('.tofHead')).toBeNull();
@@ -1990,7 +2024,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = true;
       previewFormStatic.isTot = true;
 
-      (previewForm as any).insertOptionalSections(data);
+      asPrivate(previewForm).insertOptionalSections(data);
 
       const children = Array.from(data.children);
       const tocIndex = children.findIndex(el => el.classList.contains('tocHead'));
@@ -2008,7 +2042,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       const editorView = createMockEditorView();
       previewFormStatic.isTitle = false;
 
-      (previewForm as any).insertSectionHeaders(data, editorView);
+      asPrivate(previewForm).insertSectionHeaders(data, editorView);
 
       const titleDiv = data.querySelector('.titleHead');
       expect(titleDiv).toBeNull();
@@ -2035,7 +2069,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = false;
       previewFormStatic.isTot = false;
 
-      (previewForm as any).insertSectionHeaders(data, editorView);
+      asPrivate(previewForm).insertSectionHeaders(data, editorView);
 
       // Should have prepages container with ProseMirror wrapper
       const prepages = data.querySelector('.prepages .ProseMirror');
@@ -2056,7 +2090,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = false;
       previewFormStatic.isTot = false;
 
-      (previewForm as any).insertSectionHeaders(data, editorView);
+      asPrivate(previewForm).insertSectionHeaders(data, editorView);
 
       // Original content should be cleared for Afttp
       expect(data.querySelector('#original')).toBeNull();
@@ -2075,7 +2109,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = false;
       previewFormStatic.isTot = false;
 
-      (previewForm as any).insertSectionHeaders(data, editorView);
+      asPrivate(previewForm).insertSectionHeaders(data, editorView);
 
       // ProseMirror should be re-appended
       const proseMirrorElements = data.querySelectorAll(':scope > .ProseMirror');
@@ -2093,7 +2127,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTot = false;
 
       expect(() => {
-        (previewForm as any).insertSectionHeaders(data, editorView);
+        asPrivate(previewForm).insertSectionHeaders(data, editorView);
       }).not.toThrow();
 
       // Should still insert title
@@ -2114,7 +2148,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTot = false;
 
       expect(() => {
-        (previewForm as any).insertSectionHeaders(data, editorView);
+        asPrivate(previewForm).insertSectionHeaders(data, editorView);
       }).not.toThrow();
     });
 
@@ -2127,7 +2161,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       const editorView = createMockEditorView('Regular-Doc');
       previewFormStatic.isTitle = false;
 
-      (previewForm as any).insertSectionHeaders(data, editorView);
+      asPrivate(previewForm).insertSectionHeaders(data, editorView);
 
       // Should not have prepages for non-Afttp
       const prepages = data.querySelector('.prepages');
@@ -2154,7 +2188,7 @@ describe('PreviewForm.insertSectionHeaders', () => {
       previewFormStatic.isTof = true;
       previewFormStatic.isTot = true;
 
-      (previewForm as any).insertSectionHeaders(data, editorView);
+      asPrivate(previewForm).insertSectionHeaders(data, editorView);
 
       // Check all components are present
       expect(data.querySelector('.titleHead')).toBeTruthy();
@@ -2172,7 +2206,11 @@ describe('PreviewForm.insertSectionHeaders', () => {
 
 describe('rotateWideTable', () => {
   let previewForm: PreviewForm;
-  let props: any;
+  let props: {
+    editorState: EditorState;
+    editorView: EditorView;
+    onClose: jest.Mock;
+  };
 
   beforeEach(() => {
     props = {

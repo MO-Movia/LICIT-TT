@@ -21,7 +21,7 @@ import {
   createPopUp,
 } from '../../../commands';
 import {v1 as uuid} from 'uuid';
-import ResizeObserver from './ResizeObserver';
+import {observe, unobserve} from './ResizeObserver';
 import {resolveVideo, VideoResult} from './resolveVideo';
 
 import type {ResizeObserverEntry} from './ResizeObserver';
@@ -400,13 +400,13 @@ export class VideoViewBody extends React.PureComponent {
       // Mounting
       const el = ReactDOM.findDOMNode(ref);
       if (el instanceof HTMLElement) {
-        ResizeObserver.observe(el, this._onBodyResize);
+        observe(el, this._onBodyResize);
       }
     } else {
       // Unmounting.
       const el = this._body && ReactDOM.findDOMNode(this._body);
       if (el instanceof HTMLElement) {
-        ResizeObserver.unobserve(el);
+        unobserve(el);
       }
       this._body = null;
     }

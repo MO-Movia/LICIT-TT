@@ -16,11 +16,11 @@ describe('createCommand', () => {
         mockExecute = jest.fn();
         tr = {
             docChanged: false,
-        } as any as Transaction;
+        } as unknown as Transaction;
 
         state = {
             tr,
-        } as any as EditorState;
+        } as unknown as EditorState;
     });
 
     it('should return a UICommand instance', () => {
@@ -37,7 +37,7 @@ describe('createCommand', () => {
 
     it('execute should call execute callback and update transaction if changed', () => {
         const dispatch = jest.fn();
-        const nextTr = { docChanged: true } as any as Transform;
+        const nextTr = { docChanged: true } as unknown as Transform;
 
         mockExecute.mockImplementation((_state, dispatchFn) => {
             dispatchFn(nextTr);
@@ -53,7 +53,7 @@ describe('createCommand', () => {
 
     it('execute should return false if no transaction change', () => {
         mockExecute.mockImplementation((_state, dispatchFn) => {
-            dispatchFn(state.tr as any as Transform); // same transaction, no change
+            dispatchFn(state.tr as unknown as Transform); // same transaction, no change
         });
 
         const cmd = createCommand(mockExecute);

@@ -44,7 +44,7 @@ export class IndentCommand extends UICommand {
             overriddenIndent: true,
             overriddenIndentValue: paraNode.attrs.indent
           };
-          tr = tr.setNodeMarkup(nodePos, null, newAttrs);
+          tr.setNodeMarkup(nodePos, null, newAttrs);
         }
       }
 
