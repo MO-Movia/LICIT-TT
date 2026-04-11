@@ -7,6 +7,7 @@ import React from 'react';
 import { preventEventDefault, CustomButton } from '../../../commands';
 
 import axios from 'axios';
+import {resolveVideo} from './resolveVideo';
 
 export type VideoEditorProps = {
   initialValue;
@@ -103,22 +104,20 @@ export class VideoEditor extends React.PureComponent<
 
   _onSrcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const src = this.getsrc(e);
-    const yId = this._getYouTubeId(src);
-    const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${yId}&format=json`;
-    let width = 300;
-    let height = 200;
-    const setValues = this._setStateValues;
-
-    axios
-      .get(url)
-      .then((response) => {
-        height = response.data.height;
-        width = response.data.width;
-        setValues(src, width, height, true);
-      })
-      .catch((_rejected) => {
-        setValues(src, width, height, true);
-      });
+    this.setState(
+      {
+        src,
+        validValue: null,
+      },
+      this._didSrcChange
+    );
+  };
+  _didSrcChange = () => {
+    resolveVideo(this.state).then((result) => {
+      if (this.state.src === result.src && !this._unmounted) {
+        this._setStateValues(result.src, result.width, result.height, true);
+      }
+    });
   };
 
   _setStateValues = (

@@ -693,7 +693,8 @@ export function compareMarkWithStyle(
 
   if (
     undefined !== mark.attrs[ATTR_OVERRIDDEN] &&
-    mark.attrs[ATTR_OVERRIDDEN] !== overridden
+    mark.attrs[ATTR_OVERRIDDEN] !== overridden &&
+    tr.curSelection
   ) {
     mark.attrs[ATTR_OVERRIDDEN] = overridden;
     retObj.modified = true;
@@ -976,7 +977,13 @@ function applyStyleEx<T extends Transaction | Transform>(
 
     tr = _setNodeAttribute(state, tr, startPos, endPos, newattrs) as T;
     (tr as Transaction).storedMarks = storedmarks;
-    if (originalSelectionPos) {
+    if (state.selection && !state.selection.empty) {
+      const newFrom = tr?.mapping?.map(state.selection.from);
+      const newTo = tr?.mapping?.map(state.selection.to);
+      (tr as Transaction)?.setSelection(
+        TextSelection.create(tr.doc, newFrom, newTo)
+      );
+    } else if (originalSelectionPos) {
       (tr as Transaction).setSelection(
         TextSelection.create(tr.doc, originalSelectionPos)
       );
