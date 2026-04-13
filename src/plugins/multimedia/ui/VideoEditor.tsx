@@ -7,7 +7,7 @@ import React from 'react';
 import { preventEventDefault, CustomButton } from '../../../commands';
 
 import axios from 'axios';
-import {resolveVideo} from './resolveVideo';
+import { resolveVideo } from './resolveVideo';
 
 export type VideoEditorProps = {
   initialValue;
@@ -32,7 +32,7 @@ export class VideoEditor extends React.PureComponent<
   };
 
   render(): React.ReactNode {
-    const {src, width, height} = this.state;
+    const { src, width, height } = this.state;
 
     return (
       <div className="molm-czi-image-url-editor">
@@ -114,7 +114,7 @@ export class VideoEditor extends React.PureComponent<
   };
   _didSrcChange = () => {
     resolveVideo(this.state).then((result) => {
-      if (this.state.src === result.src && !this._unmounted) {
+      if (this.state.src === result.src) {
         this._setStateValues(result.src, result.width, result.height, true);
       }
     });
@@ -126,7 +126,7 @@ export class VideoEditor extends React.PureComponent<
     height: number,
     validValue: boolean
   ) => {
-    (this as VideoEditor).setState({src, width, height, validValue});
+    (this as VideoEditor).setState({ src, width, height, validValue });
   };
 
   _getYouTubeId = (url: string) => {

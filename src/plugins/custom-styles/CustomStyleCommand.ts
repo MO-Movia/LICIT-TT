@@ -569,31 +569,31 @@ export class CustomStyleCommand extends UICommand {
           if (!Array.isArray(result)) {
             result = addStyleToList(result);
           }
-        setStyles(result);
-        // Issue fix: Created custom style Numbering not applied to paragraph.
-        tr = tr.setSelection(TextSelection.create(doc, 0, 0));
-        // Apply created styles to document
-        const { selection } = state;
-        const startPos = selection.$from.before(1);
-        const endPos = selection.$to.after(1);
-        const node = getNode(state, startPos, endPos, tr);
-        // [FS] IRAD-1238 2021-03-08
-        // Fix: Shows alert message 'This Numberings breaks hierarchy, Previous levels are missing' on create styles
-        // if a numbering applied in editor.
-        if (!styleHasNumbering(val) || isValidHeirarchy(val.styleName, 0)) {
-          // to add previous heirarchy levels
-          hasMismatchHeirarchy(
-            state,
-            tr,
-            node,
-            startPos,
-            endPos,
-            val.styleName
-          );
-          tr = applyStyle(val, val.styleName, state, tr) as Transaction;
-          dispatch(tr);
-        }
-      })
+          setStyles(result);
+          // Issue fix: Created custom style Numbering not applied to paragraph.
+          tr = tr.setSelection(TextSelection.create(doc, 0, 0));
+          // Apply created styles to document
+          const { selection } = state;
+          const startPos = selection.$from.before(1);
+          const endPos = selection.$to.after(1);
+          const node = getNode(state, startPos, endPos, tr);
+          // [FS] IRAD-1238 2021-03-08
+          // Fix: Shows alert message 'This Numberings breaks hierarchy, Previous levels are missing' on create styles
+          // if a numbering applied in editor.
+          if (!styleHasNumbering(val) || isValidHeirarchy(val.styleName, 0)) {
+            // to add previous heirarchy levels
+            hasMismatchHeirarchy(
+              state,
+              tr,
+              node,
+              startPos,
+              endPos,
+              val.styleName
+            );
+            tr = applyStyle(val, val.styleName, state, tr) as Transaction;
+            dispatch(tr);
+          }
+        })
         .catch(console.warn);
     }
   }
@@ -619,19 +619,19 @@ export class CustomStyleCommand extends UICommand {
   getCustomStyles(styleName: string, editorView: EditorView) {
     getStylesAsync()
       .then((result) => {
-      if (styleName) {
-        const { dispatch, state } = editorView;
-        let tr;
-        result.forEach((obj) => {
-          if (styleName === obj.styleName) {
-            tr = updateDocument(state, state.tr, styleName, obj);
+        if (styleName) {
+          const { dispatch, state } = editorView;
+          let tr;
+          result.forEach((obj) => {
+            if (styleName === obj.styleName) {
+              tr = updateDocument(state, state.tr, styleName, obj);
+            }
+          });
+          if (tr) {
+            dispatch(tr);
           }
-        });
-        if (tr) {
-          dispatch(tr);
         }
-      }
-    })
+      })
       .catch(console.error);
   }
 
@@ -694,7 +694,7 @@ export function compareMarkWithStyle(
   if (
     undefined !== mark.attrs[ATTR_OVERRIDDEN] &&
     mark.attrs[ATTR_OVERRIDDEN] !== overridden &&
-    tr.curSelection
+    (tr as Transaction).selection
   ) {
     mark.attrs[ATTR_OVERRIDDEN] = overridden;
     retObj.modified = true;

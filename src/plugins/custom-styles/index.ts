@@ -11,7 +11,7 @@ import {
   TextSelection,
   Transaction,
 } from 'prosemirror-state';
-import { canJoin } from 'prosemirror-transform';
+import { canJoin, Transform } from 'prosemirror-transform';
 import {
   applyLatestStyle,
   getMarkByStyleName,
@@ -146,20 +146,20 @@ export class CustomstylePlugin extends Plugin {
             t.getMeta('customStylePlugin')
           );
           if (!hasPluginTransaction) {
-          tr = onUpdateAppendTransaction(
-            ref,
-            tr,
-            nextState,
-            prevState,
-            csview,
-            transactions,
-            slice1
-          );
-        }
-        firstTime = ref.firstTime;
-        loaded = ref.loaded;
-        if (tr?.docChanged) {
-          slice1 = null;
+            tr = onUpdateAppendTransaction(
+              ref,
+              tr,
+              nextState,
+              prevState,
+              csview,
+              transactions,
+              slice1
+            );
+          }
+          firstTime = ref.firstTime;
+          loaded = ref.loaded;
+          if (tr?.docChanged) {
+            slice1 = null;
           }
         }
         if (tr) {
@@ -209,8 +209,8 @@ export function onInitAppendTransaction(
 export function onUpdateAppendTransaction(
   ref: { firstTime?: boolean; loaded?: boolean },
   tr: LooseTr,
-  nextState: LooseState,
-  prevState: LooseState,
+  nextState: EditorState,
+  prevState: EditorState,
   csview: CustomStyleView | LooseView | null,
   transactions: readonly Transaction[],
   slice1: SliceLike
@@ -274,23 +274,23 @@ export function onUpdateAppendTransaction(
       tr = applyStyleForNextParagraph(prevState, nextState, tr, csview);
     } else if (
       ENTERKEYCODE === csview.input.lastKeyCode &&
-      tr.selection.$cursor?.pos === tr.selection.$from.start()
+      getSelectionCursor(tr.selection)?.pos === tr.selection.$from.start()
     ) {
       tr = applyStyleForPreviousEmptyParagraph(nextState, tr);
-      const cursourPosition = prevState.selection.$cursor?.pos;
+      const cursorPosition = getSelectionCursor(prevState.selection)?.pos;
       if (
-        cursourPosition !== undefined &&
-        cursourPosition >= 0 &&
-        cursourPosition <= prevState.doc.content.size
+        cursorPosition !== undefined &&
+        cursorPosition >= 0 &&
+        cursorPosition <= prevState.doc.content.size
       ) {
-        tr = tr.setSelection(TextSelection.create(tr.doc, cursourPosition));
+        tr = tr.setSelection(TextSelection.create(tr.doc, cursorPosition));
       }
     } else if (
       // ? ADD THIS BLOCK RIGHT HERE ? after the two existing else-if blocks
       ENTERKEYCODE === csview.input.lastKeyCode &&
       prevState.selection.from === nextState.selection.from - 1
     ) {
-      tr = applyStoredMarksAfterHardBreak(nextState, tr);
+      tr = applyStoredMarksAfterHardBreak(nextState, tr as Transform) as Transaction;
     }
   }
 
@@ -300,24 +300,24 @@ export function onUpdateAppendTransaction(
   // OPTIMIZED: Only process paste if content is small enough
   if (isPaste) {
     // Defer styling for large pastes
-      if (slice1 && slice1.content.childCount > 20) {
-        // Apply minimal styling or defer to next tick
-        tr = applyMinimalPasteStyling(
-          slice1,
-          prevState as EditorState,
-          nextState as EditorState,
-          csview,
-          tr
-        );
-      } else if (slice1) {
-        tr = optimizedPasteHandler(
-          slice1,
-          prevState as EditorState,
-          nextState as EditorState,
-          csview,
-          tr
-        );
-      }
+    if (slice1 && slice1.content.childCount > 20) {
+      // Apply minimal styling or defer to next tick
+      tr = applyMinimalPasteStyling(
+        slice1,
+        prevState as EditorState,
+        nextState as EditorState,
+        csview,
+        tr
+      );
+    } else if (slice1) {
+      tr = optimizedPasteHandler(
+        slice1,
+        prevState as EditorState,
+        nextState as EditorState,
+        csview,
+        tr
+      );
+    }
     tr = tr?.scrollIntoView();
   }
 
@@ -574,7 +574,7 @@ export function applyStoredMarksAfterHardBreak(
   marks.forEach((mark) => {
     tr = (tr as Transaction).addStoredMark(mark);
   });
-  return tr;
+  return tr as Transform;
 }
 export function remapCounterFlags(tr: LooseTr): void {
   // Depending on the window variables,
