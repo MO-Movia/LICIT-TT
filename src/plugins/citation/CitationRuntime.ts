@@ -60,7 +60,7 @@ export class CitationRuntime {
         this.citations = citations;
         return citations;
       },
-      (_err) => {
+      (_error_) => {
         return null;
       }
     );
@@ -81,7 +81,7 @@ export class CitationRuntime {
         this.citationByRefId = citation;
         return citation;
       },
-      (_err) => {
+      (_error_) => {
         return null;
       }
     );

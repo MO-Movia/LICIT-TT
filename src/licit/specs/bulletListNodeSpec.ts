@@ -31,7 +31,7 @@ const BulletListNodeSpec: NodeSpec = {
           dom.getAttribute(ATTRIBUTE_LIST_STYLE_TYPE) || null;
 
         const indent = dom.hasAttribute(ATTRIBUTE_INDENT)
-          ? parseInt(dom.getAttribute(ATTRIBUTE_INDENT), 10)
+          ? Number.parseInt(dom.getAttribute(ATTRIBUTE_INDENT), 10)
           : MIN_INDENT_LEVEL;
         return {
           indent,

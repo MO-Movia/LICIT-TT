@@ -58,8 +58,8 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
     const {commandGroups, editorState, title, theme} = this.props;
     const children = [];
     const jj = commandGroups.length - 1;
-    commandGroups.forEach((group, ii) => {
-      Object.keys(group).forEach((label) => {
+    for (const [ii, group] of commandGroups.entries()) {
+      for (const label of Object.keys(group)) {
         const command = group[label];
         if (command instanceof UICommand) {
           const {icon} = parseLabel(label, theme.toString());
@@ -69,11 +69,11 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
         } else if (Array.isArray(command)) {
           children.push(this._renderMenuButton(label, command, theme));
         }
-      });
+      };
       if (ii !== jj) {
         children.push(<CustomMenuItem.Separator key={`${String(ii)}-hr`} />);
       }
-    });
+    };
     return (
       <CustomMenu theme={theme} isHorizontal={isExpandButton(title)}>
         {children}
@@ -133,7 +133,7 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
         icon={icon}
         key={label}
         label={icon ? null : title}
-        sub={isDropdown ? false : true}
+        sub={!isDropdown}
         title={title}
       />
     );

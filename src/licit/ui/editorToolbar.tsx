@@ -445,8 +445,8 @@ class EditorToolbar extends React.PureComponent {
   _checkIfContentIsWrapped = (): void => {
     const ref = this._body;
     const el = ref && ReactDOM.findDOMNode(ref);
-    const startAnchor = el && el.firstChild;
-    const endAnchor = el && el.lastChild;
+    const startAnchor = el?.firstChild;
+    const endAnchor = el?.lastChild;
     if (startAnchor && endAnchor) {
       const wrapped =
         (startAnchor as HTMLElement).offsetTop <

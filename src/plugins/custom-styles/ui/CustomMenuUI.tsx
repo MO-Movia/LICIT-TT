@@ -12,6 +12,7 @@ import { uuid } from './Uuid';
 import { CustomStyleItem } from './CustomStyleItem';
 import { CustomStyleSubMenu } from './CustomStyleSubMenu';
 import { CustomStyleEditor } from './CustomStyleEditor';
+import type { Style } from '../StyleRuntime';
 import {
   applyLatestStyle,
   CustomStyleCommand,
@@ -57,6 +58,82 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
     },
   };
   theme = null;
+
+  normalizeSavedStyles(
+    result
+  ): Style[] {
+    const normalizedResult = Array.isArray(result)
+      ? result
+      : addStyleToList(result);
+    return normalizedResult as Style[];
+  }
+
+  closeStylePopup() {
+    this.props.editorView.focus();
+    this._stylePopup?.close();
+    this._stylePopup = null;
+  }
+
+  findMatchingStyle(
+    result: Style[],
+    styleName: string
+  ) {
+    return result.find((obj) => styleName === obj.styleName);
+  }
+
+  applySavedStyleResult(val, result, getTransform) {
+    if (!result) {
+      this.closeStylePopup();
+      return;
+    }
+
+    const normalizedResult = this.normalizeSavedStyles(result);
+    setStyles(normalizedResult);
+    const matchingStyle = this.findMatchingStyle(normalizedResult, val.styleName);
+    const tr = matchingStyle ? getTransform(matchingStyle) : null;
+    if (tr) {
+      this.props.editorView.dispatch(tr);
+    }
+    this.closeStylePopup();
+  }
+
+  saveStyleAndApply(val, getTransform) {
+    delete val.editorView;
+    saveStyle(val)
+      .then((result) => {
+        this.applySavedStyleResult(val, result, getTransform);
+      })
+      .catch(console.warn);
+  }
+
+  handleEditModeSave(val) {
+    this.saveStyleAndApply(val, (obj) =>
+      updateDocument(
+        this.props.editorState,
+        this.props.editorState.tr,
+        val.styleName,
+        obj
+      )
+    );
+  }
+
+  handleRenameModeSave(val) {
+    renameStyle(this._styleName, val.styleName)
+      .then((result) => {
+        if (null == result) {
+          return;
+        }
+        this.saveStyleAndApply(val, () =>
+          this.renameStyleInDocument(
+            this.props.editorState,
+            this.props.editorState.tr,
+            this._styleName,
+            val.styleName
+          )
+        );
+      })
+      .catch(console.warn);
+  }
 
   render() {
     const { dispatch, editorState, editorView, staticCommand, onCommand } =
@@ -326,83 +403,15 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
           if (this._stylePopup) {
             //handle save style object part here
             if (undefined !== val) {
-              const { dispatch } = this.props.editorView;
               // [FS] IRAD-1112 2020-12-14
               // Issue fix: Duplicate style created while modified the style name.
               delete val.runtime;
               if (1 === mode) {
                 // update
-                delete val.editorView;
-                let tr;
-                saveStyle(val)
-                  .then((result) => {
-                  if (result) {
-                    //in bladelicitruntime, the response of the saveStyle() changed from list to a object
-                    //so need to add that style object to the current style list
-                    if (!Array.isArray(result)) {
-                      result = addStyleToList(result);
-                    }
-                    setStyles(result);
-                    result.forEach((obj) => {
-                      if (val.styleName === obj.styleName) {
-                        tr = updateDocument(
-                          this.props.editorState,
-                          this.props.editorState.tr,
-                          val.styleName,
-                          obj
-                        );
-                      }
-                    });
-                    if (tr) {
-                      dispatch(tr);
-                    }
-                  }
-                  this.props.editorView.focus();
-                  this._stylePopup.close();
-                  this._stylePopup = null;
-                })
-                  .catch(console.warn);
+                this.handleEditModeSave(val);
               } else {
                 // rename
-                renameStyle(this._styleName, val.styleName)
-                  .then((result) => {
-                  // [FS] IRAD-1133 2021-01-06
-                  // Issue fix: After modify a custom style, the modified style not applied to the paragraph.
-
-                  if (null != result) {
-                    let tr;
-                    delete val.editorView;
-                    saveStyle(val)
-                      .then((result) => {
-                      if (result) {
-                        //in bladelicitruntime, the response of the saveStyle() changed from list to a object
-                        //so need to add that style object to the current style list
-                        if (!Array.isArray(result)) {
-                          result = addStyleToList(result);
-                        }
-                        setStyles(result);
-                        result.forEach((obj) => {
-                          if (val.styleName === obj.styleName) {
-                            tr = this.renameStyleInDocument(
-                              this.props.editorState,
-                              this.props.editorState.tr,
-                              this._styleName,
-                              val.styleName
-                            );
-                          }
-                        });
-                        if (tr) {
-                          dispatch(tr);
-                        }
-                      }
-                      this.props.editorView.focus();
-                      this._stylePopup.close();
-                      this._stylePopup = null;
-                    })
-                      .catch(console.warn);
-                  }
-                })
-                  .catch(console.warn);
+                this.handleRenameModeSave(val);
               }
             }
           }
@@ -433,18 +442,18 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
 
   // [FS] IRAD-1308 2020-04-21
   // To get the customstylename of the selected paragraph
-  getTheSelectedCustomStyle(editorState): string {
+  getTheSelectedCustomStyle(editorState) {
     const { selection, doc } = editorState;
     const { from, to } = selection;
     let customStyleName = RESERVED_STYLE_NONE;
     doc.nodesBetween(from, to, (node) => {
       if (this.isAllowedNode(node)) {
-        if (typeof node.attrs.styleName === 'string') {
+        if (node.attrs.styleName) {
           customStyleName = node.attrs.styleName;
         }
       }
     });
-    return String(customStyleName);
+    return customStyleName;
   }
 
   //[FS] IRAD-1085 2020-10-09

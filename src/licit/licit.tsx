@@ -276,11 +276,11 @@ const updateSpec = (
   const keysUpdate: string[] = [];
 
   // Check which keys need to be added
-  keys.forEach((key) => {
+  for (const key of keys) {
     if (!editorSchema[attrName][key]) {
       keysUpdate.push(key);
     }
-  });
+  };
 
   // Convert OrderedMap to array [name, spec, name, spec, ...]
   const specMap = schema.spec[attrName] as OrderedMap<unknown>;
@@ -292,7 +292,7 @@ const updateSpec = (
 
   // update current array with the latest info
   for (let i = 0; i < collection.length; i += 2) {
-    if (keysUpdate.find((element) => element === collection[i])) {
+    if (keysUpdate.some((element) => element === collection[i])) {
       existingSchema.spec[attrName] = (
         existingSchema.spec[attrName] as OrderedMap<unknown>
       ).update(collection[i] as string, collection[i + 1]);
@@ -328,11 +328,11 @@ export const updateSpecAttrs = (
         const attrsLicit = (spec as { attrs?: Record<string, unknown> })?.attrs;
         if (attrsLicit) {
           const attrKeys = Object.keys(attrsTipTap);
-          attrKeys.forEach((key) => {
+          for (const key of attrKeys) {
             if (!attrsLicit[key]) {
               attrsLicit[key] = attrsTipTap[key];
             }
-          });
+          };
         }
       }
     });

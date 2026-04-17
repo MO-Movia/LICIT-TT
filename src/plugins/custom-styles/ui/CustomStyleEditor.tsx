@@ -109,6 +109,37 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     this.getCustomStyles();
   }
 
+  toggleStyleState(style: string) {
+    const nextStyles = { ...this.state.styles };
+    nextStyles[style] =
+      nextStyles[style] === true ? undefined : !nextStyles[style];
+    return { styles: nextStyles };
+  }
+
+  renameStyleState(event) {
+    if (!event) {
+      return null;
+    }
+
+    const oldName = this.state.styleName;
+    const newName = event.target.value;
+    const styles = { ...this.state.styles };
+    if (styles.nextLineStyleName === oldName) {
+      styles.nextLineStyleName = newName;
+    }
+
+    return { styleName: newName, styles };
+  }
+
+  getStyleValueState(styleKey: string, value) {
+    return {
+      styles: {
+        ...this.state.styles,
+        [styleKey]: value,
+      },
+    };
+  }
+
   // To set the selected style values
   onStyleClick(style: string, event) {
     let state = null;
@@ -119,27 +150,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       case 'strike':
       case 'super':
       case 'underline':
-        // copy the current style values, and flip the matching value
-        state = { styles: { ...this.state.styles } };
-        if (state.styles[style] === true) {
-          state.styles[style] = undefined;
-        } else {
-          state.styles[style] = !state.styles[style];
-        }
-
+        state = this.toggleStyleState(style);
         break;
 
       case 'name':
-        if (event) {
-          const oldName = this.state.styleName;
-          const newName = event.target.value;
-          state = { styleName: newName, styles: null };
-          state.styles = { ...this.state.styles };
-          if (this.state.styles.nextLineStyleName === oldName) {
-            // Update next line style as well.
-            state.styles.nextLineStyleName = newName;
-          }
-        }
+        state = this.renameStyleState(event);
         break;
 
       case 'description':
@@ -152,22 +167,18 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       // Not able to set paragraph spacing before and after.
       case 'before':
         if (event) {
-          state = {
-            styles: {
-              ...this.state.styles,
-              paragraphSpacingBefore: event.target.value,
-            },
-          };
+          state = this.getStyleValueState(
+            'paragraphSpacingBefore',
+            event.target.value
+          );
         }
         break;
       case 'after':
         if (event) {
-          state = {
-            styles: {
-              ...this.state.styles,
-              paragraphSpacingAfter: event.target.value,
-            },
-          };
+          state = this.getStyleValueState(
+            'paragraphSpacingAfter',
+            event.target.value
+          );
         }
         break;
       default:
@@ -180,9 +191,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     }
   }
 
-  // Build styles to display the example piece
-  buildStyle() {
-    const style: React.CSSProperties = {};
+  applyBasePreviewStyle(style: React.CSSProperties) {
     if (this.state.styles.fontName) {
       style.fontFamily = this.state.styles.fontName;
     }
@@ -195,18 +204,6 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     if (this.state.styles.color) {
       style.color = this.state.styles.color as unknown as React.CSSProperties['color'];
     }
-    if (this.state.styles.underline) {
-      style.textDecoration =
-        undefined !== style.textDecoration
-          ? `${style.textDecoration}${' underline'}`
-          : 'underline';
-    }
-    if (this.state.styles.strike) {
-      style.textDecoration =
-        undefined !== style.textDecoration
-          ? `${style.textDecoration}${' line-through'}`
-          : 'line-through';
-    }
     if (this.state.styles.em) {
       style.fontStyle = 'italic';
     }
@@ -218,121 +215,168 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       style.textAlign = this.state.styles.align as React.CSSProperties['textAlign'];
     }
     if (this.state.styles.lineHeight) {
-      // [FS] IRAD-1104 2020-11-13
-      // Issue fix : Linespacing Double and Single not applied in the sample text paragraph
       style.lineHeight = getLineSpacingValue(
         this.state.styles.lineHeight as string
       );
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Paragraph space before is not applied in the sample text.
     if (this.state.styles.paragraphSpacingBefore) {
       style.marginTop = `${this.state.styles.paragraphSpacingBefore}px`;
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Paragraph space after is not applied in the sample text.
     if (this.state.styles.paragraphSpacingAfter) {
       style.marginBottom = `${this.state.styles.paragraphSpacingAfter}px`;
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Indent is not applied in the sample text.
+  }
+
+  appendTextDecoration(
+    style: React.CSSProperties,
+    decoration: string
+  ) {
+    style.textDecoration =
+      undefined !== style.textDecoration
+        ? `${style.textDecoration} ${decoration}`
+        : decoration;
+  }
+
+  applyTextDecorationPreviewStyle(style: React.CSSProperties) {
+    if (this.state.styles.underline) {
+      this.appendTextDecoration(style, 'underline');
+    }
+    if (this.state.styles.strike) {
+      this.appendTextDecoration(style, 'line-through');
+    }
+  }
+
+  getPreviewIndent() {
     if (!this.state.styles.isLevelbased) {
       if (
         typeof this.state.styles.indent === 'string' ||
         typeof this.state.styles.indent === 'number'
       ) {
-        style.marginLeft = `${parseInt(`${this.state.styles.indent}`, 10) * 2}px`;
+        return `${parseInt(`${this.state.styles.indent}`, 10) * 2}px`;
       }
-    } else {
-      const levelValue = document?.getElementById('levelValue');
-      if (
-        // this covers null & undefined
-        levelValue instanceof window.HTMLSelectElement &&
-        levelValue.value
-      ) {
-        style.marginLeft = `${parseInt(levelValue.value) * 2}px`;
-      }
+      return null;
     }
 
+    const levelValue = document?.getElementById('levelValue');
+    if (
+      levelValue instanceof window.HTMLSelectElement &&
+      levelValue.value
+    ) {
+      return `${parseInt(levelValue.value) * 2}px`;
+    }
+
+    return null;
+  }
+
+  setPreviewIndent(style: React.CSSProperties) {
+    const marginLeft = this.getPreviewIndent();
+    if (marginLeft) {
+      style.marginLeft = marginLeft;
+    }
+  }
+
+  clearElementChildren(element: HTMLElement) {
+    while (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+  }
+
+  createBoldPartialFragment() {
+    const fragment = document.createDocumentFragment();
+    if (this.state.styles.boldSentence) {
+      const [firstSentence, ...rest] = SAMPLE_TEXT.split('.');
+      const boldElement = document.createElement('strong');
+      boldElement.innerText = `${firstSentence}.`;
+      fragment.appendChild(boldElement);
+      fragment.appendChild(document.createTextNode(rest.join('.')));
+      return fragment;
+    }
+
+    const [firstWord, ...rest] = SAMPLE_TEXT.split(' ');
+    const boldElement = document.createElement('strong');
+    boldElement.innerText = firstWord;
+    fragment.appendChild(boldElement);
+    fragment.appendChild(document.createTextNode(` ${rest.join(' ')}`));
+    return fragment;
+  }
+
+  renderBoldPartialPreview(
+    sampleDiv: HTMLElement,
+    style: React.CSSProperties
+  ): string {
+    const fragment = this.createBoldPartialFragment();
+    this.clearElementChildren(sampleDiv);
+    const newContentContainer = document.createElement('div');
+    fragment.childNodes.forEach((child) => {
+      newContentContainer.appendChild(child.cloneNode(true));
+    });
+    sampleDiv.appendChild(newContentContainer);
+    style.fontWeight = 'normal';
+    return sampleDiv.innerText;
+  }
+
+  applyNumberingPreview(sampleDiv: HTMLElement) {
+    const numberingLevel = this.getNumberingLevel(
+      typeof this.state.styles.styleLevel === 'boolean'
+        ? Number(this.state.styles.styleLevel)
+        : this.state.styles.styleLevel,
+      typeof this.state.styles.prefixValue === 'string' ||
+        typeof this.state.styles.prefixValue === 'number'
+        ? this.state.styles.prefixValue
+        : ''
+    );
+    const numberingNode = document.createTextNode(numberingLevel);
+    if (this.state.styles.boldNumbering) {
+      const boldElement = document.createElement('strong');
+      boldElement.appendChild(numberingNode);
+      sampleDiv.prepend(boldElement);
+      return;
+    }
+    sampleDiv.prepend(numberingNode);
+  }
+
+  applyBulletPreview(sampleDiv: HTMLElement, textSample: string) {
+    const bulletDetails = getDetailsBullet(this.state.styles.bulletLevel);
+    const bulletSymbol = document.createElement('strong');
+    bulletSymbol.style.color = bulletDetails.color;
+    bulletSymbol.innerText = bulletDetails.symbol;
+
+    sampleDiv.innerHTML = '';
+    sampleDiv.appendChild(bulletSymbol);
+    sampleDiv.appendChild(document.createTextNode(textSample));
+  }
+
+  syncPreviewSample(style: React.CSSProperties) {
     const sampleDiv = document.getElementById('sampletextdiv');
-    if (sampleDiv) {
-      // [FS] IRAD-1394 2021-06-02
-      // Issue: numbering sample not working when select Bold first sentence
-      let textSample = SAMPLE_TEXT;
-      if (this.state.styles.boldPartial) {
-        const fragment = document.createDocumentFragment();
-        if (this.state.styles.boldSentence) {
-          const [firstSentence, ...rest] = SAMPLE_TEXT.split('.');
-          const boldElement = document.createElement('strong');
-          boldElement.innerText = `${firstSentence}.`;
-          fragment.appendChild(boldElement);
-          fragment.appendChild(document.createTextNode(rest.join('.')));
-        } else {
-          const [firstWord, ...rest] = SAMPLE_TEXT.split(' ');
-          const boldElement = document.createElement('strong');
-          boldElement.innerText = firstWord;
-          fragment.appendChild(boldElement);
-          fragment.appendChild(document.createTextNode(` ${rest.join(' ')}`));
-        }
-        // Clear previous content using a loop
-        while (sampleDiv.firstChild) {
-          sampleDiv.removeChild(sampleDiv.firstChild);
-        }
-        const newContentContainer = document.createElement('div');
-
-        // Populate the fragment dynamically
-        fragment.childNodes.forEach((child) => {
-          newContentContainer.appendChild(child.cloneNode(true));
-        });
-
-        // Append the fragment or new content to the sampleDiv
-        sampleDiv.appendChild(newContentContainer);
-        textSample = sampleDiv.innerText;
-
-        // [FS] IRAD-1473 2021-06-30
-        // Style Example not showing properly when select Bold and Bold First Sentence
-        style.fontWeight = 'normal';
-      } else {
-        sampleDiv.innerText = SAMPLE_TEXT;
-      }
-
-      if (
-        this.state.styles.styleLevel &&
-        (this.state.styles.hasNumbering || this.state.styles.isList)
-      ) {
-        const numberingLevel = this.getNumberingLevel(
-          typeof this.state.styles.styleLevel === 'boolean'
-            ? Number(this.state.styles.styleLevel)
-            : this.state.styles.styleLevel,
-          typeof this.state.styles.prefixValue === 'string' ||
-            typeof this.state.styles.prefixValue === 'number'
-            ? this.state.styles.prefixValue
-            : ''
-        );
-        const numberingNode = document.createTextNode(numberingLevel);
-        if (this.state.styles.boldNumbering) {
-          const boldElement = document.createElement('strong');
-          boldElement.appendChild(numberingNode);
-          // [FS] IRAD-1252 2024-11-19
-          // Bold the first sentence/word not working when apply numbering
-          sampleDiv.prepend(boldElement);
-        } else {
-          // [FS] IRAD-1252 2024-11-19
-          // Bold the first sentence/word not working when apply numbering
-          sampleDiv.prepend(numberingNode);
-        }
-      }
-      if (this.state.styles.styleLevel && this.state.styles.hasBullet) {
-        const bulletDetails = getDetailsBullet(this.state.styles.bulletLevel);
-        const bulletSymbol = document.createElement('strong');
-        bulletSymbol.style.color = bulletDetails.color;
-        bulletSymbol.innerText = bulletDetails.symbol;
-
-        sampleDiv.innerHTML = ''; // Clear previous content
-        sampleDiv.appendChild(bulletSymbol);
-        sampleDiv.appendChild(document.createTextNode(textSample));
-      }
+    if (!sampleDiv) {
+      return;
     }
+
+    let textSample = SAMPLE_TEXT;
+    if (this.state.styles.boldPartial) {
+      textSample = this.renderBoldPartialPreview(sampleDiv, style);
+    } else {
+      sampleDiv.innerText = SAMPLE_TEXT;
+    }
+
+    if (
+      this.state.styles.styleLevel &&
+      (this.state.styles.hasNumbering || this.state.styles.isList)
+    ) {
+      this.applyNumberingPreview(sampleDiv);
+    }
+    if (this.state.styles.styleLevel && this.state.styles.hasBullet) {
+      this.applyBulletPreview(sampleDiv, textSample);
+    }
+  }
+
+  // Build styles to display the example piece
+  buildStyle() {
+    const style: React.CSSProperties = {};
+    this.applyBasePreviewStyle(style);
+    this.applyTextDecorationPreviewStyle(style);
+    this.setPreviewIndent(style);
+    this.syncPreviewSample(style);
 
     return style;
   }

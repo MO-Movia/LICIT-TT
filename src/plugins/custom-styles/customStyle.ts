@@ -198,67 +198,52 @@ export function isPreviousLevelExists(previousLevel: number) {
 // To create a style object from the customstyles to show the styles in the example piece.
 export function getCustomStyle(customStyle) {
   const style: CSSStyle = {};
+  const styleHandlers = {
+    strong: () => {
+      if (!customStyle.boldPartial && customStyle.strong) {
+        style.fontWeight = 'bold';
+      }
+    },
+    em: () => {
+      if (customStyle.em) {
+        style.fontStyle = 'italic';
+      }
+    },
+    color: () => {
+      style.color = customStyle.color;
+    },
+    textHighlight: () => {
+      style.backgroundColor = customStyle.textHighlight;
+    },
+    fontSize: () => {
+      style.fontSize = customStyle.fontSize;
+    },
+    fontName: () => {
+      style.fontName = customStyle.fontName;
+    },
+    strike: () => {
+      if (customStyle.strike) {
+        style.textDecorationLine = 'line-through';
+      }
+    },
+    super: () => {
+      style.verticalAlign = 'super';
+    },
+    underline: () => {
+      if (customStyle.underline) {
+        style.textDecoration = 'underline';
+      }
+    },
+    textAlign: () => {
+      style.textAlign = customStyle.textAlign;
+    },
+    lineHeight: () => {
+      style.lineHeight = customStyle.lineHeight;
+    },
+  };
 
   for (const property in customStyle) {
-    switch (property) {
-      case 'strong':
-        // Deselected Bold, Italics and Underline are not removed from the example style near style name
-        if (!customStyle.boldPartial && customStyle[property]) {
-          style.fontWeight = 'bold';
-        }
-        break;
-
-      case 'em':
-        // Deselected Bold, Italics and Underline are not removed from the example style near style name
-        if (customStyle[property]) {
-          style.fontStyle = 'italic';
-        }
-        break;
-
-      case 'color':
-        style.color = customStyle[property];
-        break;
-
-      case 'textHighlight':
-        style.backgroundColor = customStyle[property];
-        break;
-
-      case 'fontSize':
-        style.fontSize = customStyle[property];
-        break;
-
-      case 'fontName':
-        style.fontName = customStyle[property];
-        break;
-      // Fix:icluded strike through in custom styles.
-      case 'strike':
-        if (customStyle[property]) {
-          style.textDecorationLine = 'line-through';
-        }
-        break;
-
-      case 'super':
-        style.verticalAlign = 'super';
-        break;
-
-      case 'underline':
-        // Deselected Bold, Italics and Underline are not removed from the example style near style name
-        if (customStyle[property]) {
-          style.textDecoration = 'underline';
-        }
-        break;
-
-      case 'textAlign':
-        style.textAlign = customStyle[property];
-        break;
-
-      case 'lineHeight':
-        style.lineHeight = customStyle[property];
-        break;
-
-      default:
-        break;
-    }
+    styleHandlers[property]?.();
   }
   return style;
 }

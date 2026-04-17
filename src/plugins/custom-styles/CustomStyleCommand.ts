@@ -286,16 +286,16 @@ export class CustomStyleCommand extends UICommand {
 
   // [FS] IRAD-1053 2020-10-22
   // returns the applied style of a paragraph
-  isCustomStyleApplied(editorState: EditorState): string {
+  isCustomStyleApplied(editorState: EditorState) {
     const { selection, doc } = editorState;
     const { from, to } = selection;
     let customStyleName = RESERVED_STYLE_NONE;
     doc.nodesBetween(from, to, (node) => {
-      if (typeof node.attrs.styleName === 'string') {
+      if (node.attrs.styleName) {
         customStyleName = node.attrs.styleName;
       }
     });
-    return String(customStyleName);
+    return customStyleName;
   }
 
   executeClearStyle(
@@ -343,7 +343,7 @@ export class CustomStyleCommand extends UICommand {
     view?: EditorView,
     event?: KeyboardEvent | MouseEvent
   ): boolean => {
-    let tr = state.tr;
+    const tr = state.tr;
     const { selection } = state;
     const startPos = selection.$from.before(
       selection.$from.depth === 0 ? 1 : selection.$from.depth
@@ -351,21 +351,60 @@ export class CustomStyleCommand extends UICommand {
     const endPos = selection.$to?.end();
     const node = getNode(state, startPos, endPos, tr);
     const newattrs = { ...(node ? node.attrs : {}) };
-    let isValidated = true;
+    const handled = this.handleExecuteMode(
+      state,
+      dispatch,
+      view,
+      event,
+      node,
+      startPos,
+      endPos,
+      newattrs,
+      selection
+    );
+    if (handled !== null) {
+      return handled;
+    }
+
+    const isValidated = this.validateStyleHierarchy(
+      state,
+      tr,
+      node,
+      startPos,
+      endPos
+    );
+    if (!isValidated) {
+      this.showAlert();
+      return false;
+    }
+
+    return this.applySelectedStyle(state, dispatch, view, tr);
+  };
+
+  handleExecuteMode(
+    state: EditorState,
+    dispatch: ((tr: Transform) => void) | undefined,
+    view: EditorView | undefined,
+    event: KeyboardEvent | MouseEvent | undefined,
+    node,
+    startPos: number,
+    endPos: number,
+    newattrs,
+    selection: Selection
+  ): boolean | null {
     if ('newstyle' === this._customStyle) {
       this.editWindow(state, view, 0);
       return false;
-    } else if ('editall' === this._customStyle) {
-      if (event && event.ctrlKey) {
+    }
+    if ('editall' === this._customStyle) {
+      if (event?.ctrlKey) {
         this.jsonEditor(view);
       } else {
         this.editWindow(state, view, 3);
       }
       return false;
     }
-    // [FS] IRAD-1053 2020-10-08
-    // to remove the custom styles applied in the selected paragraph
-    else if (
+    if (
       'clearstyle' === this._customStyle ||
       RESERVED_STYLE_NONE === this._customStyle
     ) {
@@ -378,52 +417,59 @@ export class CustomStyleCommand extends UICommand {
         newattrs,
         selection
       );
-    } else if ('reset' === this._customStyle) {
+    }
+    if ('reset' === this._customStyle) {
       this.resetNumber(state, dispatch, startPos, newattrs);
       return false;
     }
 
-    // [FS] IRAD-1213 2020-02-23
-    // validating the appropariate styles with corresponding levels are defined
-    // if no levels are defined no operation
-    //
-    if (
-      hasMismatchHeirarchy(
-        state,
-        tr,
-        node,
-        startPos,
-        endPos,
-        this._customStyle ? this._customStyle.styleName : ''
-        // this._customStyle ? (this._customStyle as Style).styleName : ''
-      )
-    ) {
-      isValidated = checkLevlsAvailable();
-    }
-    if (isValidated) {
-      tr = applyStyle(
-        this._customStyle,
-        'Default' === this._customStyle.styleName
-          ? 'Normal'
-          : this._customStyle.styleName,
-        state,
-        tr
-      ) as Transaction;
-      if (tr.docChanged || tr.storedMarksSet) {
-        const event = new KeyboardEvent('keydown', {
-          keyCode: 0,
-          bubbles: true,
-        });
-        view.dom?.dispatchEvent(event);
-        dispatch?.(tr);
-        return true;
-      }
-    } else {
-      this.showAlert();
+    return null;
+  }
+
+  validateStyleHierarchy(
+    state: EditorState,
+    tr: Transform,
+    node,
+    startPos: number,
+    endPos: number
+  ): boolean {
+    const hasMismatch = hasMismatchHeirarchy(
+      state,
+      tr,
+      node,
+      startPos,
+      endPos,
+      this._customStyle ? this._customStyle.styleName : ''
+    );
+    return hasMismatch ? checkLevlsAvailable() : true;
+  }
+
+  applySelectedStyle(
+    state: EditorState,
+    dispatch: ((tr: Transform) => void) | undefined,
+    view: EditorView | undefined,
+    tr: Transaction
+  ): boolean {
+    tr = applyStyle(
+      this._customStyle,
+      'Default' === this._customStyle.styleName
+        ? 'Normal'
+        : this._customStyle.styleName,
+      state,
+      tr
+    ) as Transaction;
+    if (!tr.docChanged && !tr.storedMarksSet) {
+      return false;
     }
 
-    return false;
-  };
+    const keyboardEvent = new KeyboardEvent('keydown', {
+      keyCode: 0,
+      bubbles: true,
+    });
+    view?.dom?.dispatchEvent(keyboardEvent);
+    dispatch?.(tr);
+    return true;
+  }
 
   showAlert() {
     const anchor = null;
@@ -464,22 +510,23 @@ export class CustomStyleCommand extends UICommand {
         node.attrs.styleName !== RESERVED_STYLE_NONE
       ) {
         // Check for overridden marks in text nodes inside the paragraph
-        node.forEach((child) => {
+        for (let i = 0; i < node.childCount; i++) {
+          const child = node.child(i);
           if (child.isText && child.marks.length > 0) {
             const marksToRemove = child.marks.filter(
               (mark) => mark.attrs.overridden !== true
             );
             _to = _from + child.nodeSize;
             if (marksToRemove.length > 0) {
-              marksToRemove.forEach((mark) => {
+              for (const mark of marksToRemove) {
                 if ('link' !== mark.type.name) {
                   tr = this.removeMarks(mark, tr, node, _from, _to);
                 }
-              });
+              };
             }
             _from = _to;
           }
-        });
+        };
       }
     });
     return tr;
@@ -513,9 +560,9 @@ export class CustomStyleCommand extends UICommand {
               // Issue fix: The edited styles are not affected the document
               if (3 === mode) {
                 // edit All
-                val.forEach((style) => {
+                for (const style of val) {
                   this.getCustomStyles(style, view);
-                });
+                };
               } else {
                 // new style
                 this.createNewStyle(val, tr, state, dispatch, doc);
@@ -558,7 +605,7 @@ export class CustomStyleCommand extends UICommand {
     // Issue: Allow to create custom style numbering level 2 without level 1
     if (
       styleHasNumbering(val) &&
-      !isValidHeirarchy(val.styleName, parseInt(val.styles.styleLevel))
+      !isValidHeirarchy(val.styleName, Number.parseInt(val.styles.styleLevel))
     ) {
       this.showAlert();
     } else {
@@ -622,11 +669,11 @@ export class CustomStyleCommand extends UICommand {
       if (styleName) {
         const { dispatch, state } = editorView;
         let tr;
-        result.forEach((obj) => {
+        for (const obj of result) {
           if (styleName === obj.styleName) {
             tr = updateDocument(state, state.tr, styleName, obj);
           }
-        });
+        };
         if (tr) {
           dispatch(tr);
         }
@@ -705,71 +752,52 @@ export function compareMarkWithStyle(
 export function getMarkByStyleName(styleName: string, schema: Schema): Mark[] {
   const styleProp = getCustomStyleByName(styleName);
   const marks: Mark[] = [];
-  let markType: Schema['marks'][string] | null = null;
-  let attrs: Record<string, unknown> | null = null;
-  if (styleProp?.styles) {
-    for (const property in styleProp.styles) {
-      switch (property) {
-        case STRONG:
-        case BOLDPARTIAL:
-          if (styleProp.styles[property]) {
-            markType = schema.marks[MARKSTRONG];
-            marks.push(markType.create(attrs));
-          }
-          break;
+  if (!styleProp?.styles) {
+    return marks;
+  }
 
-        case EM:
-          markType = schema.marks[MARKEM];
-          if (styleProp.styles[property]) marks.push(markType.create(attrs));
-          break;
-
-        case COLOR:
-          markType = schema.marks[MARKTEXTCOLOR];
-          attrs = styleProp.styles[property]
-            ? { color: styleProp.styles[property] }
-            : null;
-          marks.push(markType.create(attrs));
-          break;
-
-        case FONTSIZE:
-          markType = schema.marks[MARKFONTSIZE];
-          attrs = styleProp.styles[property]
-            ? { pt: styleProp.styles[property] }
-            : null;
-          if (markType) {
-            marks.push(markType.create(attrs));
-          }
-          break;
-
-        case FONTNAME:
-          markType = schema.marks[MARKFONTTYPE];
-          attrs = styleProp.styles[property]
-            ? { name: styleProp.styles[property] }
-            : null;
-          if (markType) {
-            marks.push(markType.create(attrs));
-          }
-          break;
-
-        case TEXTHL:
-          markType = schema.marks[MARKTEXTHIGHLIGHT];
-          attrs = styleProp.styles[property]
-            ? { highlightColor: styleProp.styles[property] }
-            : null;
-          marks.push(markType.create(attrs));
-          break;
-
-        case UNDERLINE:
-          markType = schema.marks[MARKUNDERLINE];
-          marks.push(markType.create(attrs));
-          break;
-
-        default:
-          break;
-      }
+  for (const property in styleProp.styles) {
+    const mark = createStyleMark(property, styleProp.styles[property], schema);
+    if (mark) {
+      marks.push(mark);
     }
   }
+
   return marks;
+}
+
+function createStyleMark(
+  property: string,
+  value,
+  schema: Schema
+): Mark | null {
+  switch (property) {
+    case STRONG:
+    case BOLDPARTIAL:
+      return value ? schema.marks[MARKSTRONG]?.create() : null;
+    case EM:
+      return value ? schema.marks[MARKEM]?.create() : null;
+    case COLOR:
+      return schema.marks[MARKTEXTCOLOR]?.create(
+        value ? { color: value } : null
+      );
+    case FONTSIZE:
+      return schema.marks[MARKFONTSIZE]?.create(
+        value ? { pt: value } : null
+      );
+    case FONTNAME:
+      return schema.marks[MARKFONTTYPE]?.create(
+        value ? { name: value } : null
+      );
+    case TEXTHL:
+      return schema.marks[MARKTEXTHIGHLIGHT]?.create(
+        value ? { highlightColor: value } : null
+      );
+    case UNDERLINE:
+      return schema.marks[MARKUNDERLINE]?.create();
+    default:
+      return null;
+  }
 }
 
 function getUpdatedAttrs(
@@ -824,6 +852,30 @@ function applyCommandAttrs(
   return newattrs;
 }
 
+function executeStyleCommand(
+  element: UICommand,
+  state: EditorState,
+  tr: Transaction | Transform,
+  startPos: number,
+  endPos: number,
+  isTableColumnCell = false
+): Transaction | Transform {
+  const handler = isTableColumnCell
+    ? element.executeCustomStyleForTable
+    : element.executeCustom;
+
+  if (!handler || typeof handler !== 'function') {
+    return tr;
+  }
+
+  const returnVal: unknown = isTableColumnCell
+    ? handler.call(element, state, tr, startPos, endPos)
+    : handler.call(element, state, tr, startPos, endPos);
+  return typeof returnVal === 'boolean'
+    ? tr
+    : (returnVal as Transaction | Transform);
+}
+
 export function applyStyleForTableColumnCell(
   styleProp: Style,
   styleName: string,
@@ -844,20 +896,17 @@ export function applyStyleForTableColumnCell(
   const _commands = getCustomStyleCommands(styleProp.styles);
   let newattrs = getUpdatedAttrs(node, styleProp, styleName);
 
-  _commands.forEach((element) => {
+  for (const element of _commands) {
     newattrs = applyCommandAttrs(element, node, styleProp, newattrs);
-    if (element.executeCustom && typeof element.executeCustom === 'function') {
-      const returnVal = element.executeCustomStyleForTable(
-        state,
-        tr,
-        startPos,
-        startPos + node.nodeSize
-      );
-      if (typeof returnVal != 'boolean') {
-        tr = returnVal;
-      }
-    }
-  });
+    tr = executeStyleCommand(
+      element,
+      state,
+      tr,
+      startPos,
+      startPos + node.nodeSize,
+      true
+    );
+  }
   const originalSelectionPos = state.selection?.from;
   const storedmarks = getMarkByStyleName(styleName, state.schema);
   newattrs.id = null === newattrs.id ? '' : null;
@@ -901,7 +950,7 @@ function applyStyleEx<T extends Transaction | Transform>(
 
   if (styleProp?.styles) {
     const _commands = getCustomStyleCommands(styleProp.styles);
-    const newattrs = { ...node.attrs };
+    let newattrs = { ...node.attrs };
 
     // Indent overriding not working on a paragraph where custom style is applied
     if (!node?.attrs?.overriddenIndent) {
@@ -914,62 +963,10 @@ function applyStyleEx<T extends Transaction | Transform>(
       newattrs.hangingIndent = true;
     }
 
-    _commands.forEach((element) => {
-      if (styleProp?.styles) {
-        // to set the node attribute for text-align
-        if (element instanceof TextAlignCommand) {
-          // if user override the align style then retian that align style
-          // using the overridenAlign property we can find align style overrided or not
-          if (String(node?.attrs?.overriddenAlign) === 'true') {
-            newattrs.align = node.attrs.overriddenAlignValue;
-          } else {
-            newattrs.align = styleProp.styles.align;
-          }
-          // to set the node attribute for line-height
-        } else if (element instanceof TextLineSpacingCommand) {
-          // Issue fix : Linespacing Double and Single not applied in the sample text paragraph
-          // if user override the lineSpacing style then retian that lineSpacing style
-          // using the overriddenLineSpacing property we can find lineSpacing style overrided or not
-          if (String(node?.attrs?.overriddenLineSpacing) === 'true') {
-            newattrs.lineSpacing = node?.attrs?.overriddenLineSpacingValue;
-          } else {
-            newattrs.lineSpacing = getLineSpacingValue(
-              styleProp.styles.lineHeight || ''
-            );
-          }
-        } else if (element instanceof ParagraphSpacingCommand) {
-          // Add in leading and trailing spacing (before and after a paragraph)
-          newattrs.paragraphSpacingAfter =
-            styleProp.styles.paragraphSpacingAfter || null;
-          newattrs.paragraphSpacingBefore =
-            styleProp.styles.paragraphSpacingBefore || null;
-        } else if (element instanceof IndentCommand) {
-          // [FS] IRAD-1162 2021-1-25
-          // Bug fix: indent not working along with level
-          // if user override the indent style then retian that indent style
-          // using the overriddenIndent property we can find indent style overrided or not
-
-          if (String(node?.attrs?.overriddenIndent) === 'true') {
-            newattrs.indent = node.attrs.overriddenIndentValue;
-          } else {
-            newattrs.indent = styleProp.styles.isLevelbased
-              ? styleProp.styles.styleLevel
-              : styleProp.styles.indent;
-          }
-        }
-      }
-
-      // to set the marks for the node
-      if (
-        element.executeCustom &&
-        typeof element.executeCustom === 'function'
-      ) {
-        const returnVal = element.executeCustom(state, tr, startPos, endPos);
-        if (typeof returnVal != 'boolean') {
-          tr = returnVal as T;
-        }
-      }
-    });
+    for (const element of _commands) {
+      newattrs = applyCommandAttrs(element, node, styleProp, newattrs);
+      tr = executeStyleCommand(element, state, tr, startPos, endPos) as T;
+    }
     const originalSelectionPos = state.selection?.from;
     const storedmarks = getMarkByStyleName(styleName, state.schema);
     newattrs.id = null === newattrs.id ? '' : null;
@@ -1019,114 +1016,151 @@ function hasMismatchHeirarchy(
 ) {
   const styleLevel = Number(getStyleLevel(styleName || ''));
   const currentLevel = getStyleLevel(node.attrs?.styleName);
-  nodesBeforeSelection.splice(0);
-  nodesAfterSelection.splice(0);
+  resetHierarchyNodes();
   const attrs = { ...node.attrs };
   attrs['styleName'] = styleName;
-  let previousLevel = null;
-  let levelDiff = 0;
-  let isAfter = false;
+  collectHierarchyNodes(tr, startPos, endPos);
 
-  let hasHeirarchyBroken = false;
-
-  // Manage heirachy for nodes of previous  position
-  // if (startPos !== 0) {
-  // Fix: document Load Error- Instead of state doc here give transaction doc,because when we apply changes
-  // dynamically through transactions the node position  get affected,
-  // so depending on state doc nodes' positions is incorrect.
-  tr.doc.descendants((node, pos) => {
-    if (isAllowedNode(node)) {
-      const nodeStyleLevel = getStyleLevel(node.attrs.styleName);
-      if (nodeStyleLevel) {
-        if (pos < startPos) {
-          nodesBeforeSelection.push({ pos, node });
-        } else if (pos >= endPos) {
-          nodesAfterSelection.push({ pos, node });
-        }
-      }
-    }
-    return true;
-  });
-  if (nodesBeforeSelection.length === 0 && nodesAfterSelection.length === 0) {
+  const hasNoSurroundingHierarchy =
+    nodesBeforeSelection.length === 0 && nodesAfterSelection.length === 0;
+  if (hasNoSurroundingHierarchy) {
     setNewElementObject(attrs, startPos, 0, false);
-    hasHeirarchyBroken = true;
   }
 
-  nodesBeforeSelection.forEach((item) => {
-    previousLevel = Number(getStyleLevel(item.node.attrs.styleName));
+  const previousLevel = getLastHierarchyLevel(nodesBeforeSelection);
+  let hasHeirarchyBroken = evaluatePreviousHierarchy(
+    attrs,
+    startPos,
+    styleLevel,
+    previousLevel,
+    currentLevel
+  ) || hasNoSurroundingHierarchy;
+
+  const afterHierarchyResult = evaluateNextHierarchy(
+    attrs,
+    endPos,
+    styleLevel,
+    previousLevel
+  );
+  if (afterHierarchyResult !== null) {
+    hasHeirarchyBroken = afterHierarchyResult;
+  }
+
+  return hasHeirarchyBroken;
+}
+
+function resetHierarchyNodes() {
+  nodesBeforeSelection.splice(0);
+  nodesAfterSelection.splice(0);
+}
+
+function collectHierarchyNodes(
+  tr: Transform,
+  startPos: number,
+  endPos: number
+) {
+  tr.doc.descendants((node, pos) => {
+    if (!isAllowedNode(node)) {
+      return;
+    }
+
+    const nodeStyleLevel = getStyleLevel(node.attrs.styleName);
+    if (!nodeStyleLevel) {
+      return;
+    }
+
+    if (pos < startPos) {
+      nodesBeforeSelection.push({ pos, node });
+    } else if (pos >= endPos) {
+      nodesAfterSelection.push({ pos, node });
+    }
   });
+}
+
+function getLastHierarchyLevel(nodeArray: NodeWithPos[]): number | null {
+  if (!nodeArray.length) {
+    return null;
+  }
+
+  return Number(
+    getStyleLevel(nodeArray[nodeArray.length - 1].node.attrs.styleName)
+  );
+}
+
+function evaluatePreviousHierarchy(
+  attrs,
+  startPos: number,
+  styleLevel: number,
+  previousLevel: number | null,
+  currentLevel
+): boolean {
   if (null === previousLevel && null == currentLevel) {
-    // No levels established before.
     if (styleLevel !== 1) {
       setNewElementObject(attrs, startPos, null, false);
-      hasHeirarchyBroken = true;
+      return true;
     }
-  } else {
-    //	If this is the first level, identify the level difference with previous level.
-    levelDiff = previousLevel ? styleLevel - previousLevel : styleLevel;
-
-    if (0 > levelDiff) {
-      // If NOT applying (same level OR adjacent level)
-
-      if (nodesAfterSelection.length === 0) {
-        isAfter = true;
-        previousLevel = Number(
-          getStyleLevel(
-            nodesBeforeSelection[nodesBeforeSelection.length - 1].node.attrs
-              .styleName
-          )
-        );
-      }
-      setNewElementObject(attrs, startPos, previousLevel, isAfter);
-      hasHeirarchyBroken = true;
-    }
-    if (levelDiff > 0) {
-      if (selectedNodes.length !== 1) {
-        previousLevel = Number(
-          getStyleLevel(selectedNodes[0].node.attrs.styleName)
-        );
-      }
-      setNewElementObject(attrs, startPos, previousLevel, false);
-    }
+    return false;
   }
 
-  if (0 < nodesAfterSelection.length) {
-    const selectedLevel = styleLevel;
-    let currentLevel = 0;
-    let found = false;
-    nodesAfterSelection.every((item) => {
-      if (!found) {
-        currentLevel = Number(getStyleLevel(item.node.attrs.styleName));
-        levelDiff = selectedLevel - currentLevel;
-
-        if (styleLevel > 1 && levelDiff >= 0) {
-          if (
-            nodesBeforeSelection.length > 0 &&
-            nodesBeforeSelection[nodesBeforeSelection.length - 1].node.attrs
-              .styleName !== RESERVED_STYLE_NONE
-          ) {
-            // do nothing
-          } else {
-            setNewElementObject(attrs, item.pos, 0, false);
-            found = true;
-            hasHeirarchyBroken = false;
-          }
-
-          // do nothing
-        } else if (0 === styleLevel) {
-          setNewElementObject(attrs, endPos, previousLevel, true);
-          hasHeirarchyBroken = false;
-        } else {
-          if (levelDiff < 0) {
-            setNewElementObject(attrs, endPos, selectedLevel, true);
-            found = true;
-          }
-          hasHeirarchyBroken = true;
-        }
-      }
-    });
+  const levelDiff = previousLevel ? styleLevel - previousLevel : styleLevel;
+  if (levelDiff < 0) {
+    const isAfter = nodesAfterSelection.length === 0;
+    const previousSelectionLevel = isAfter
+      ? getLastHierarchyLevel(nodesBeforeSelection)
+      : previousLevel;
+    setNewElementObject(attrs, startPos, previousSelectionLevel, isAfter);
+    return true;
   }
-  return hasHeirarchyBroken;
+
+  if (levelDiff > 0) {
+    const selectedLevel =
+      selectedNodes.length !== 1 && selectedNodes[0]
+        ? Number(getStyleLevel(selectedNodes[0].node.attrs.styleName))
+        : previousLevel;
+    setNewElementObject(attrs, startPos, selectedLevel, false);
+  }
+
+  return false;
+}
+
+function evaluateNextHierarchy(
+  attrs,
+  endPos: number,
+  styleLevel: number,
+  previousLevel: number | null
+): boolean | null {
+  if (!nodesAfterSelection.length) {
+    return null;
+  }
+
+  for (const item of nodesAfterSelection) {
+    const nextLevel = Number(getStyleLevel(item.node.attrs.styleName));
+    const levelDiff = styleLevel - nextLevel;
+
+    if (styleLevel > 1 && levelDiff >= 0) {
+      const previousNode = nodesBeforeSelection[nodesBeforeSelection.length - 1];
+      if (
+        previousNode &&
+        previousNode.node.attrs.styleName !== RESERVED_STYLE_NONE
+      ) {
+        return true;
+      }
+      setNewElementObject(attrs, item.pos, 0, false);
+      return false;
+    }
+
+    if (0 === styleLevel) {
+      setNewElementObject(attrs, endPos, previousLevel, true);
+      return false;
+    }
+
+    if (levelDiff < 0) {
+      setNewElementObject(attrs, endPos, styleLevel, true);
+    }
+    return true;
+  }
+
+  return null;
 }
 
 // [FS] IRAD-1387 2021-05-25
@@ -1138,56 +1172,69 @@ export function allowCustomLevelIndent(
   delta: number
 ) {
   const styleLevel = Number(getStyleLevel(styleName));
-  let allowIndent = false;
-  startPos = startPos < 2 ? 2 : startPos - 1;
+  const normalizedStartPos = startPos < 2 ? 2 : startPos - 1;
   if (delta > 0) {
-    for (let index = startPos; index >= 0; index--) {
-      const element = tr.doc.resolve(index);
-      if (element?.parent) {
-        const node = element.parent;
-        if (isAllowedNode(node)) {
-          if (RESERVED_STYLE_NONE !== node.attrs.styleName) {
-            const nodeStyleLevel = Number(getStyleLevel(node.attrs.styleName));
-            if (
-              nodeStyleLevel >= styleLevel ||
-              styleLevel - nodeStyleLevel === 1
-            ) {
-              allowIndent = true;
-              break;
-            } else {
-              index = index - node.nodeSize || 0; //NOSONAR Need to assign the index for the logic
-            }
-          }
-        } else {
-          index = index - node.nodeSize || 0; //NOSONAR Need to assign the index for the logic
-        }
-      }
+    return scanIndentBefore(tr, normalizedStartPos, styleLevel);
+  }
+  return scanIndentAfter(tr, normalizedStartPos + 1, styleLevel);
+}
+
+function getResolvedParentNode(tr: Transform, index: number): Node | null {
+  return tr.doc.resolve(index)?.parent || null;
+}
+
+function shouldSkipIndentNode(node: Node | null): boolean {
+  return !node || !isAllowedNode(node) || RESERVED_STYLE_NONE === node.attrs.styleName;
+}
+
+function scanIndentBefore(
+  tr: Transform,
+  startPos: number,
+  styleLevel: number
+): boolean {
+  for (let index = startPos; index >= 0; index--) {
+    const node = getResolvedParentNode(tr, index);
+    if (!node) {
+      continue;
     }
-  } else {
-    startPos = startPos + 1;
-    for (let index = startPos; index < tr.doc.nodeSize - 2; index++) {
-      const element = tr.doc.resolve(index);
-      if (element?.parent) {
-        const node = element.parent;
-        if (isAllowedNode(node)) {
-          if (RESERVED_STYLE_NONE !== node.attrs.styleName) {
-            const nodeStyleLevel = Number(getStyleLevel(node.attrs.styleName));
-            if (nodeStyleLevel >= styleLevel) {
-              allowIndent = true;
-              index = index - node.nodeSize; //NOSONAR Need to assign the index for the logic
-              break;
-            } else {
-              index = index + node.nodeSize; //NOSONAR Need to assign the index for the logic
-            }
-          }
-        } else {
-          index = index + node.nodeSize; //NOSONAR Need to assign the index for the logic
-        }
-      }
+    if (shouldSkipIndentNode(node)) {
+      index = index - node.nodeSize || 0;
+      continue;
     }
+
+    const nodeStyleLevel = Number(getStyleLevel(node.attrs.styleName));
+    if (nodeStyleLevel >= styleLevel || styleLevel - nodeStyleLevel === 1) {
+      return true;
+    }
+    index = index - node.nodeSize || 0;
   }
 
-  return allowIndent;
+  return false;
+}
+
+function scanIndentAfter(
+  tr: Transform,
+  startPos: number,
+  styleLevel: number
+): boolean {
+  for (let index = startPos; index < tr.doc.nodeSize - 2; index++) {
+    const node = getResolvedParentNode(tr, index);
+    if (!node) {
+      continue;
+    }
+    if (shouldSkipIndentNode(node)) {
+      index = index + node.nodeSize || 0;
+      continue;
+    }
+
+    const nodeStyleLevel = Number(getStyleLevel(node.attrs.styleName));
+    if (nodeStyleLevel >= styleLevel) {
+      return true;
+    }
+    index = index + node.nodeSize || 0;
+  }
+
+  return false;
 }
 
 export function manageElementsAfterSelection(
@@ -1196,40 +1243,65 @@ export function manageElementsAfterSelection(
   tr: Transform
 ): Transform {
   let selectedLevel = Number(MISSED_HEIRACHY_ELEMENT.previousLevel);
-  let subsequantLevel = 0;
   let counter = 0;
 
-  for (let index = 0; index < nodeArray.length; index++) {
-    const item = nodeArray[index];
-    subsequantLevel = Number(getStyleLevel(item.node.attrs.styleName));
-    if (subsequantLevel !== 0 && selectedLevel !== subsequantLevel) {
-      if (subsequantLevel - selectedLevel > 1) {
-        subsequantLevel = subsequantLevel - 1;
-        const style = getCustomStyleByLevel(subsequantLevel);
-        if (style) {
-          const newattrs = { ...item.node.attrs };
-          newattrs.styleName = style.styleName;
-          tr = tr.setNodeMarkup(item.pos, undefined, newattrs);
-          selectedLevel = subsequantLevel;
-        }
-        counter++;
-      } else {
-        index = nodeArray.length + 1;
-      }
-    } else if (
-      subsequantLevel !== 0 &&
-      counter === 0 &&
-      nodeArray.length === 0
-    ) {
-      const style = getCustomStyleByLevel(1);
-      if (style) {
-        const newattrs = { ...item.node.attrs };
-        newattrs.styleName = style.styleName;
-        tr = addElement(newattrs, state, tr, item.pos, false, 2, 0);
-      }
+  for (const item of nodeArray) {
+    const update = updateElementAfterSelection(
+      item,
+      state,
+      tr,
+      selectedLevel,
+      counter,
+      nodeArray.length
+    );
+    tr = update.tr;
+    selectedLevel = update.selectedLevel;
+    counter = update.counter;
+    if (update.shouldStop) {
+      break;
     }
   }
   return tr;
+}
+
+function updateElementAfterSelection(
+  item: NodeWithPos,
+  state: EditorState,
+  tr: Transform,
+  selectedLevel: number,
+  counter: number,
+  nodeArrayLength: number
+): { tr: Transform; selectedLevel: number; counter: number; shouldStop: boolean } {
+  let nextSelectedLevel = selectedLevel;
+  let nextCounter = counter;
+  const subsequantLevel = Number(getStyleLevel(item.node.attrs.styleName));
+
+  if (subsequantLevel !== 0 && selectedLevel !== subsequantLevel) {
+    if (subsequantLevel - selectedLevel > 1) {
+      const nextLevel = subsequantLevel - 1;
+      const style = getCustomStyleByLevel(nextLevel);
+      if (style) {
+        const newattrs = { ...item.node.attrs };
+        newattrs.styleName = style.styleName;
+        tr = tr.setNodeMarkup(item.pos, undefined, newattrs);
+        nextSelectedLevel = nextLevel;
+      }
+      nextCounter++;
+      return { tr, selectedLevel: nextSelectedLevel, counter: nextCounter, shouldStop: false };
+    }
+    return { tr, selectedLevel: nextSelectedLevel, counter: nextCounter, shouldStop: true };
+  }
+
+  if (subsequantLevel !== 0 && nextCounter === 0 && nodeArrayLength === 0) {
+    const style = getCustomStyleByLevel(1);
+    if (style) {
+      const newattrs = { ...item.node.attrs };
+      newattrs.styleName = style.styleName;
+      tr = addElement(newattrs, state, tr, item.pos, false, 2, 0);
+    }
+  }
+
+  return { tr, selectedLevel: nextSelectedLevel, counter: nextCounter, shouldStop: false };
 }
 // check the styles with specified levels are defined
 function checkLevlsAvailable() {
@@ -1469,25 +1541,25 @@ export function removeAllMarksExceptLink(
 ) {
   const tasks = [];
   tr?.doc.nodesBetween(from, to, (node, pos) => {
-    if (node.marks?.length > 0) {
-      node.marks.some((mark) => {
-        if (
-          !mark.attrs[ATTR_OVERRIDDEN] &&
-          'link' !== mark.type.name &&
-          'mark-hanging-indent' !== mark.type.name &&
-          'override' !== mark.type.name &&
-          'spacer' !== mark.type.name
-        ) {
-          tasks.push({
-            node,
-            pos,
-            mark,
-          });
-        }
-      });
-      return true;
+    if (!node.marks?.length) {
+      return;
     }
-    return true;
+
+    node.marks.forEach((mark) => {
+      if (
+        !mark.attrs[ATTR_OVERRIDDEN] &&
+        'link' !== mark.type.name &&
+        'mark-hanging-indent' !== mark.type.name &&
+        'override' !== mark.type.name &&
+        'spacer' !== mark.type.name
+      ) {
+        tasks.push({
+          node,
+          pos,
+          mark,
+        });
+      }
+    });
   });
   return handleRemoveMarks(tr, tasks);
 }
@@ -1596,65 +1668,62 @@ export function applyLineStyle(
   startPos: number
 ): Transaction | Transform {
   if (node) {
-    if (node.attrs?.styleName) {
-      const styleProp = getCustomStyleByName(node.attrs.styleName);
-      if (styleProp?.styles?.boldPartial) {
-        if (!tr) {
-          tr = state.tr;
-        }
-        tr = addMarksToLine(
-          tr,
-          state,
-          node,
-          startPos,
-          styleProp.styles.boldSentence
-        );
-      }
-    }
-  } else {
-    const { selection } = state;
-    let from, to;
-    if (selection instanceof CellSelection) {
-      // When selecting multiple cells
-      const $anchor = selection.$anchorCell;
-      const $head = selection.$headCell;
-
-      const firstCell = $anchor.pos < $head.pos ? $anchor : $head;
-      const lastCell = $anchor.pos < $head.pos ? $head : $anchor;
-      from = firstCell.pos;
-      to = lastCell.pos + lastCell.nodeAfter.nodeSize;
-    } else {
-      from = selection?.$from.before(
-        selection.$from.depth === 0 ? 1 : selection.$from.depth
-      );
-      to = selection?.$to?.end();
-    }
-
-    // [FS] IRAD-1168 2021-06-21
-    // FIX: multi-select paragraphs and apply a style with the bold the first sentence,
-    // only the last selected paragraph have bold first sentence.
-    tr.doc.nodesBetween(from, to, (node, pos) => {
-      if (node.content && node.content.size > 0) {
-        // Check styleName is available for node
-        if (node.attrs?.styleName) {
-          const styleProp = getCustomStyleByName(node.attrs.styleName);
-          if (styleProp?.styles?.boldPartial) {
-            if (!tr) {
-              tr = state.tr;
-            }
-            tr = addMarksToLine(
-              tr,
-              state,
-              node,
-              pos,
-              styleProp.styles.boldSentence
-            );
-          }
-        }
-      }
-    });
+    return applyBoldPartialStyleToNode(state, tr, node, startPos);
   }
+
+  const { from, to } = getSelectionBounds(state.selection);
+  tr.doc.nodesBetween(from, to, (currentNode, pos) => {
+    tr = applyBoldPartialStyleToNode(state, tr, currentNode, pos);
+  });
   return tr;
+}
+
+function getSelectionBounds(selection: Selection): { from: number; to: number } {
+  if (selection instanceof CellSelection) {
+    const $anchor = selection.$anchorCell;
+    const $head = selection.$headCell;
+    const firstCell = $anchor.pos < $head.pos ? $anchor : $head;
+    const lastCell = $anchor.pos < $head.pos ? $head : $anchor;
+    return {
+      from: firstCell.pos,
+      to: lastCell.pos + lastCell.nodeAfter.nodeSize,
+    };
+  }
+
+  return {
+    from: selection.$from.before(
+      selection.$from.depth === 0 ? 1 : selection.$from.depth
+    ),
+    to: selection.$to?.end(),
+  };
+}
+
+function applyBoldPartialStyleToNode(
+  state: EditorState,
+  tr: Transaction | Transform,
+  node: Node | null,
+  pos: number
+): Transaction | Transform {
+  if (!node?.content || node.content.size <= 0 || !node.attrs?.styleName) {
+    return tr;
+  }
+
+  const styleProp = getCustomStyleByName(node.attrs.styleName);
+  if (!styleProp?.styles?.boldPartial) {
+    return tr;
+  }
+
+  if (!tr) {
+    tr = state.tr;
+  }
+
+  return addMarksToLine(
+    tr,
+    state,
+    node,
+    pos,
+    styleProp.styles.boldSentence
+  );
 }
 // add bold marks to node
 export function addMarksToLine(
