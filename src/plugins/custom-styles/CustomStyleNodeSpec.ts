@@ -49,9 +49,67 @@ const STYLENAME = 'styleName';
 type toDOMFn = (node: Node) => DOMOutputSpec;
 type getAttrsFn = (p: Node | string | HTMLElement) => KeyValuePair;
 
+function getInlineStyleProperty(
+  dom: HTMLElement,
+  propertyName: string
+): string | null {
+  const inlineStyle = dom.getAttribute('style') || '';
+  if (!inlineStyle) {
+    return null;
+  }
+
+  const escapedProperty = propertyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regexp = new RegExp(`(?:^|;)\\s*${escapedProperty}\\s*:\\s*([^;]+)`, 'i');
+  const match = inlineStyle.match(regexp);
+  if (!match || !match[1]) {
+    return null;
+  }
+
+  const value = match[1].trim();
+  return value || null;
+}
+
+function resolveMarginValue(dom: HTMLElement, cssProperty: string): string | null {
+  const fromStyle =
+    cssProperty === 'margin-top' ? dom.style.marginTop : dom.style.marginBottom;
+  if (fromStyle) {
+    return fromStyle;
+  }
+
+  return (
+    getInlineStyleProperty(dom, cssProperty) ??
+    dom.getAttribute(cssProperty) ??
+    dom.getAttribute(
+      cssProperty === 'margin-top' ? 'marginTop' : 'marginBottom'
+    ) ??
+    null
+  );
+}
+
 function getAttrs(base: getAttrsFn | undefined, dom: HTMLElement) {
   const attrs = base(dom);
+  if (!attrs) {
+    return attrs;
+  }
   attrs[STYLENAME] = dom.getAttribute(STYLENAME);
+  const domMarginTop = resolveMarginValue(dom, 'margin-top');
+  if (
+    (attrs.marginTop === undefined ||
+      attrs.marginTop === null ||
+      attrs.marginTop === '') &&
+    domMarginTop
+  ) {
+    attrs.marginTop = domMarginTop;
+  }
+  const domMarginBottom = resolveMarginValue(dom, 'margin-bottom');
+  if (
+    (attrs.marginBottom === undefined ||
+      attrs.marginBottom === null ||
+      attrs.marginBottom === '') &&
+    domMarginBottom
+  ) {
+    attrs.marginBottom = domMarginBottom;
+  }
   return attrs;
 }
 
@@ -124,7 +182,9 @@ function getStyle(attrs) {
   return getStyleEx(
     attrs.align,
     attrs.lineSpacing,
-    attrs.styleName
+    attrs.styleName,
+    attrs.marginTop,
+    attrs.marginBottom
     // attrs.indent
   );
 }
@@ -179,7 +239,7 @@ function getBulletDetails(code) {
   return bulletData;
 }
 
-function getStyleEx(align, lineSpacing, styleName) {
+function getStyleEx(align, lineSpacing, styleName, marginTop, marginBottom) {
   let style = '';
   let styleLevel = 0;
   let indentOverriden = '';
@@ -278,6 +338,20 @@ function getStyleEx(align, lineSpacing, styleName) {
       }
     }
   }
+
+  // Preserve imported inline paragraph margins when explicitly provided.
+  // Keep !important so they can override styleName paragraph spacing defaults.
+  if (marginTop !== null && marginTop !== undefined && marginTop !== '') {
+    style += `margin-top: ${marginTop} !important;`;
+  }
+  if (
+    marginBottom !== null &&
+    marginBottom !== undefined &&
+    marginBottom !== ''
+  ) {
+    style += `margin-bottom: ${marginBottom} !important;`;
+  }
+
   return {
     style,
     styleLevel,

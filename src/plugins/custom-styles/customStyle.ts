@@ -42,6 +42,18 @@ function isValidStyleName(styleName?: string) {
   );
 }
 
+function shouldFallbackToNormalStyle(styleName?: string): boolean {
+  if (!styleName) {
+    return true;
+  }
+
+  const normalized = styleName.trim().toLowerCase();
+  return (
+    normalized === RESERVED_STYLE_NONE.toLowerCase() ||
+    normalized === 'default'
+  );
+}
+
 export function addStyleToList(style: Style): Style[] {
   if (0 < customStyles.length && style?.styleName) {
     const index = customStyles.findIndex(
@@ -82,10 +94,15 @@ export function getCustomStyleByName(name: string): Style {
         style = customStyles[i];
         has = true;
       }
-      // Marks are not getting applied to an undefined style.
-      else {
-        style = DEFAULT_NORMAL_STYLE;
-      }
+    }
+
+    // Imported docs may carry style names that do not exist in the runtime
+    // style list (e.g. class-derived names like CellHeading). Do not coerce
+    // those unknown names to Normal, or we inject Normal spacing unexpectedly.
+    if (!has) {
+      style = shouldFallbackToNormalStyle(name)
+        ? DEFAULT_NORMAL_STYLE
+        : ({ styleName: name, styles: {} } as Style);
     }
   } else {
     style = DEFAULT_NORMAL_STYLE;
