@@ -53,13 +53,13 @@ describe('TableCellEx Extension', () => {
     expect(node.spec.attrs).toHaveProperty('fontSize');
     expect(node.spec.attrs).toHaveProperty('letterSpacing');
     expect(node.spec.attrs).toHaveProperty('marginTop');
-    expect(node.spec.attrs).toHaveProperty('MarginBottom');
+    expect(node.spec.attrs).toHaveProperty('marginBottom');
     expect(node.spec.attrs?.cellWidth.default).toBe(null);
     expect(node.spec.attrs?.cellStyle.default).toBe('');
-    expect(node.spec.attrs?.fontSize.default).toBe('16px');
+    expect(node.spec.attrs?.fontSize.default).toBe(null);
     expect(node.spec.attrs?.letterSpacing.default).toBe('0px');
     expect(node.spec.attrs?.marginTop.default).toBe('0px');
-    expect(node.spec.attrs?.MarginBottom.default).toBe('0px');
+    expect(node.spec.attrs?.marginBottom.default).toBe('0px');
   });
 
   test('should render backgroundColor as string when vignette is true', () => {
@@ -75,7 +75,7 @@ describe('TableCellEx Extension', () => {
 
     expect(html).toContain('background-color: red');
     expect(html).toContain('width: 25px');
-    expect(html).toContain('font-size: 16px');
+    expect(html).not.toContain('font-size: 16px');
     expect(html).toContain('letter-spacing: 0px');
     expect(html).toContain('margin-top: 0px');
     expect(html).toContain('margin-bottom: 0px');
@@ -97,7 +97,7 @@ describe('TableCellEx Extension', () => {
     expect(cellAttrs?.fontSize).toBe('18px');
     expect(cellAttrs?.letterSpacing).toBe('1.5px');
     expect(cellAttrs?.marginTop).toBe('6px');
-    expect(cellAttrs?.MarginBottom).toBe('9px');
+    expect(cellAttrs?.marginBottom).toBe('9px');
   });
 
   test('should render cellStyle inline CSS when provided', () => {
@@ -222,5 +222,24 @@ describe('TableCellEx Extension', () => {
     );
     const html = editor.getHTML();
     expect(html).toContain('border-color: green');
+  });
+
+  test('should parse and render vertical-align for tableCell', () => {
+    editor.commands.setContent(
+      '<table><tr><td style="vertical-align: bottom">Cell</td></tr></table>'
+    );
+
+    let parsedVerticalAlign: string | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
+      if (node.type.name === 'tableCell') {
+        parsedVerticalAlign = node.attrs.verticalAlign;
+      }
+    });
+
+    expect(parsedVerticalAlign).toBe('bottom');
+
+    const html = editor.getHTML();
+    expect(html).toContain('vertical-align: bottom');
+    expect(html).toContain('valign="bottom"');
   });
 });

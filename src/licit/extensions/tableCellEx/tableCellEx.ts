@@ -3,13 +3,12 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {TableCell} from '@tiptap/extension-table-cell';
+import { TableCell } from '@tiptap/extension-table-cell';
 
 const DEFAULT_CELL_WIDTH = null;
-const DEFAULT_FONT_SIZE = '16px';
 const DEFAULT_LETTER_SPACING = '0px';
-const DEFAULT_MARGIN_TOP = '0px';
-const DEFAULT_MARGIN_BOTTOM = '0px';
+const DEFAULT_LINE_HEIGHT = 'normal';
+const DEFAULT_BORDER_WIDTH = '1px';
 const DEFAULT_CELL_STYLE = '';
 
 const normalizeCssSize = (value: unknown, fallback: string): string => {
@@ -52,8 +51,8 @@ export const TableCellEx = TableCell.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('cellWidth') ??
-              element.dataset.cellWidth ??
-              element.style.width,
+            element.dataset.cellWidth ??
+            element.style.width,
             DEFAULT_CELL_WIDTH
           );
         },
@@ -84,11 +83,11 @@ export const TableCellEx = TableCell.extend({
         },
       },
       fontSize: {
-        default: DEFAULT_FONT_SIZE,
+        default: null,
         renderHTML: (attributes) => {
           const fontSize = normalizeCssSize(
             attributes.fontSize,
-            DEFAULT_FONT_SIZE
+            null
           );
           return {
             fontSize,
@@ -98,12 +97,40 @@ export const TableCellEx = TableCell.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('fontSize') ??
-              element.dataset.fontSize ??
-              element.style.fontSize,
-            DEFAULT_FONT_SIZE
+            element.dataset.fontSize ??
+            element.style.fontSize,
+            null
           );
         },
       },
+
+      fontName: {
+        default: null,
+        renderHTML: (attributes) => {
+          if (!attributes.fontName) {
+            return {};
+          }
+
+          const fontName = normalizeCssSize(
+            attributes.fontName,
+            null
+          );
+
+          return {
+            fontName,
+            style: `font-family: ${fontName};`,
+          };
+        },
+        parseHTML: (element) => {
+          return normalizeCssSize(
+            element.getAttribute('fontName') ??
+            element.dataset.fontName ??
+            element.style.fontFamily,
+            null
+          );
+        },
+      },
+
       letterSpacing: {
         default: DEFAULT_LETTER_SPACING,
         renderHTML: (attributes) => {
@@ -119,18 +146,18 @@ export const TableCellEx = TableCell.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('letterSpacing') ??
-              element.dataset.letterSpacing ??
-              element.style.letterSpacing,
+            element.dataset.letterSpacing ??
+            element.style.letterSpacing,
             DEFAULT_LETTER_SPACING
           );
         },
       },
       marginTop: {
-        default: DEFAULT_MARGIN_TOP,
+        default: null,
         renderHTML: (attributes) => {
           const marginTop = normalizeCssSize(
             attributes.marginTop,
-            DEFAULT_MARGIN_TOP
+            null
           );
           return {
             marginTop,
@@ -140,31 +167,152 @@ export const TableCellEx = TableCell.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('marginTop') ??
-              element.dataset.marginTop ??
-              element.style.marginTop,
-            DEFAULT_MARGIN_TOP
+            element.dataset.marginTop ??
+            element.style.marginTop,
+            null
           );
         },
       },
-      MarginBottom: {
-        default: DEFAULT_MARGIN_BOTTOM,
+      marginBottom: {
+        default: null,
         renderHTML: (attributes) => {
           const marginBottom = normalizeCssSize(
-            attributes.MarginBottom,
-            DEFAULT_MARGIN_BOTTOM
+            attributes.marginBottom,
+            null
           );
           return {
-            MarginBottom: marginBottom,
+            marginBottom: marginBottom,
             style: `margin-bottom: ${marginBottom};`,
           };
         },
         parseHTML: (element) => {
           return normalizeCssSize(
-            element.getAttribute('MarginBottom') ??
-              element.getAttribute('marginBottom') ??
-              element.dataset.marginBottom ??
-              element.style.marginBottom,
-            DEFAULT_MARGIN_BOTTOM
+            element.getAttribute('marginBottom') ??
+            element.dataset.marginBottom ??
+            element.style.marginBottom,
+            null
+          );
+        },
+      },
+      paddingTop: {
+        default: null,
+        renderHTML: (attributes) => {
+          const paddingTop = normalizeCssSize(
+            attributes.paddingTop,
+            null
+          );
+          return {
+            paddingTop: paddingTop,
+            style: `padding-top: ${paddingTop};`,
+          };
+        },
+        parseHTML: (element) => {
+          return normalizeCssSize(
+            element.getAttribute('PaddingTop') ??
+            element.getAttribute('paddingTop') ??
+            element.dataset.paddingTop ??
+            element.style.paddingTop,
+            null
+          );
+        },
+      },
+      paddingBottom: {
+        default: null,
+        renderHTML: (attributes) => {
+          const paddingBottom = normalizeCssSize(
+            attributes.paddingBottom,
+            null
+          );
+          return {
+            paddingBottom: paddingBottom,
+            style: `padding-bottom: ${paddingBottom};`,
+          };
+        },
+        parseHTML: (element) => {
+          return normalizeCssSize(
+            element.getAttribute('paddingBottom') ??
+            element.dataset.paddingBottom ??
+            element.style.paddingBottom,
+            null
+          );
+        },
+      },
+      paddingRight: {
+        default: null,
+        renderHTML: (attributes) => {
+          const paddingRight = normalizeCssSize(
+            attributes.paddingRight,
+            null
+          );
+          return {
+            paddingRight: paddingRight,
+            style: `padding-right: ${paddingRight};`,
+          };
+        },
+        parseHTML: (element) => {
+          return normalizeCssSize(
+            element.getAttribute('paddingRight') ??
+            element.getAttribute('paddingRight') ??
+            element.dataset.paddingRight ??
+            element.style.paddingRight,
+            null
+          );
+        },
+      },
+
+      paddingLeft: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.paddingLeft
+            ? { style: `padding-left: ${attributes.paddingLeft}` }
+            : {};
+        },
+        parseHTML: (element) => {
+          return (
+            element.style.paddingLeft || null
+          );
+        },
+      },
+      lineHeight: {
+        default: DEFAULT_LINE_HEIGHT,
+        renderHTML: (attributes) => {
+          const lineHeight = normalizeCssSize(
+            attributes.lineHeight,
+            DEFAULT_LINE_HEIGHT
+          );
+          return {
+            lineHeight: lineHeight,
+            style: `line-height: ${lineHeight};`,
+          };
+        },
+        parseHTML: (element) => {
+          return normalizeCssSize(
+            element.getAttribute('lineHeight') ??
+            element.dataset.lineHeight ??
+            element.style.lineHeight,
+            DEFAULT_LINE_HEIGHT
+          );
+        },
+      },
+      borderWidth: {
+        default: DEFAULT_BORDER_WIDTH,
+        renderHTML: (attributes) => {
+          const borderWidth = normalizeCssSize(
+            attributes.borderWidth,
+            DEFAULT_BORDER_WIDTH
+          );
+          return {
+            borderWidth: borderWidth,
+            style: `border-width: ${borderWidth};`,
+          };
+        },
+        parseHTML: (element) => {
+          return normalizeCssSize(
+            element.getAttribute('borderWidth') ??
+            element.getAttribute('borderWidth') ??
+            element.dataset.borderWidth ??
+            element.style.borderWidth,
+            DEFAULT_BORDER_WIDTH
           );
         },
       },
@@ -173,7 +321,7 @@ export const TableCellEx = TableCell.extend({
         renderHTML: (attributes) => {
           if (!attributes.backgroundColor) {
             return {};
-          }        
+          }
           return {
             style: `background-color:  ${attributes.backgroundColor?.color || attributes.backgroundColor};`,
           };
@@ -186,7 +334,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderLeft
-            ? {style: `border-left: ${attributes.borderLeft}`}
+            ? { style: `border-left: ${attributes.borderLeft}` }
             : {};
         },
         parseHTML: (element) => element.style.borderLeft || null,
@@ -195,7 +343,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderRight
-            ? {style: `border-right: ${attributes.borderRight}`}
+            ? { style: `border-right: ${attributes.borderRight}` }
             : {};
         },
         parseHTML: (element) => element.style.borderRight || null,
@@ -204,7 +352,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderTop
-            ? {style: `border-top: ${attributes.borderTop}`}
+            ? { style: `border-top: ${attributes.borderTop}` }
             : {};
         },
         parseHTML: (element) => element.style.borderTop || null,
@@ -213,7 +361,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderBottom
-            ? {style: `border-bottom: ${attributes.borderBottom}`}
+            ? { style: `border-bottom: ${attributes.borderBottom}` }
             : {};
         },
         parseHTML: (element) => element.style.borderBottom || null,
@@ -232,6 +380,131 @@ export const TableCellEx = TableCell.extend({
         parseHTML: (element) => {
           return element.style.borderColor.replace(/['"]{1,10000}/g, '');
         },
+      },
+      borderLeftWidth: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderLeftWidth
+            ? { style: `border-left-width: ${attributes.borderLeftWidth}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderLeftWidth || null,
+      },
+      borderRightWidth: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderRightWidth
+            ? { style: `border-right-width: ${attributes.borderRightWidth}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderRightWidth || null,
+      },
+      borderTopWidth: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderTopWidth
+            ? { style: `border-top-width: ${3}px` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderTopWidth || null,
+      },
+      borderBottomWidth: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderBottomWidth
+            ? { style: `border-bottom-width: ${attributes.borderBottomWidth}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderBottomWidth || null,
+      },
+      borderLeftColor: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderLeftColor
+            ? { style: `border-left-color: ${attributes.borderLeftColor}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderLeftColor || null,
+      },
+      borderRightColor: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderRightColor
+            ? { style: `border-right-color: ${attributes.borderRightColor}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderRightColor || null,
+      },
+      borderTopColor: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderTopColor
+            ? { style: `border-top-color: ${attributes.borderTopColor}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderTopColor || null,
+      },
+      borderBottomColor: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderBottomColor
+            ? { style: `border-bottom-color: ${attributes.borderBottomColor}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderBottomColor || null,
+      },
+      borderBottomStyle: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderBottomStyle
+            ? { style: `border-bottom-style: ${attributes.borderBottomStyle}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderBottomStyle || null,
+      },
+      borderTopStyle: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderTopStyle
+            ? { style: `border-top-style: ${attributes.borderTopStyle}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderTopStyle || null,
+      },
+      borderLeftStyle: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderLeftStyle
+            ? { style: `border-left-style: ${attributes.borderLeftStyle}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderLeftStyle || null,
+      },
+      borderRightStyle: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.borderRightStyle
+            ? { style: `border-right-style: ${attributes.borderRightStyle}` }
+            : {};
+        },
+        parseHTML: (element) => element.style.borderRightStyle || null,
+      },
+      verticalAlign: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.verticalAlign
+            ? {
+              verticalAlign: attributes.verticalAlign,
+              valign: attributes.verticalAlign,
+              style: `vertical-align: ${attributes.verticalAlign}`,
+            }
+            : {};
+        },
+        parseHTML: (element) =>
+          element.style.verticalAlign ||
+          element.getAttribute('valign') ||
+          element.getAttribute('vAlign') ||
+          null,
       },
     };
   },
