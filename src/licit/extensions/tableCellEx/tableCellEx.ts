@@ -403,7 +403,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderTopWidth
-            ? { style: `border-top-width: ${3}px` }
+            ? { style: `border-top-width: ${attributes.borderTopWidth}` }
             : {};
         },
         parseHTML: (element) => element.style.borderTopWidth || null,

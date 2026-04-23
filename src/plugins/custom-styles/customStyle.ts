@@ -215,6 +215,12 @@ export function isPreviousLevelExists(previousLevel: number) {
 // To create a style object from the customstyles to show the styles in the example piece.
 export function getCustomStyle(customStyle) {
   const style: CSSStyle = {};
+  const styleWithMargins = style as CSSStyle & {
+    marginTop?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    marginRight?: string;
+  };
 
   for (const property in customStyle) {
     switch (property) {
@@ -271,6 +277,22 @@ export function getCustomStyle(customStyle) {
 
       case 'lineHeight':
         style.lineHeight = customStyle[property];
+        break;
+
+      case 'marginTop':
+        styleWithMargins.marginTop = customStyle[property];
+        break;
+
+      case 'marginBottom':
+        styleWithMargins.marginBottom = customStyle[property];
+        break;
+
+      case 'marginLeft':
+        styleWithMargins.marginLeft = customStyle[property];
+        break;
+
+      case 'marginRight':
+        styleWithMargins.marginRight = customStyle[property];
         break;
 
       default:

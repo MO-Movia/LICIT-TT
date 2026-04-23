@@ -70,18 +70,29 @@ function getInlineStyleProperty(
 }
 
 function resolveMarginValue(dom: HTMLElement, cssProperty: string): string | null {
-  const fromStyle =
-    cssProperty === 'margin-top' ? dom.style.marginTop : dom.style.marginBottom;
+  const fromStyleMap: Record<string, string> = {
+    'margin-top': dom.style.marginTop,
+    'margin-bottom': dom.style.marginBottom,
+    'margin-left': dom.style.marginLeft,
+    'margin-right': dom.style.marginRight,
+  };
+  const fromStyle = fromStyleMap[cssProperty] ?? '';
   if (fromStyle) {
     return fromStyle;
   }
 
+  const attrNameMap: Record<string, string> = {
+    'margin-top': 'marginTop',
+    'margin-bottom': 'marginBottom',
+    'margin-left': 'marginLeft',
+    'margin-right': 'marginRight',
+  };
+  const attrName = attrNameMap[cssProperty] ?? cssProperty;
+
   return (
     getInlineStyleProperty(dom, cssProperty) ??
     dom.getAttribute(cssProperty) ??
-    dom.getAttribute(
-      cssProperty === 'margin-top' ? 'marginTop' : 'marginBottom'
-    ) ??
+    dom.getAttribute(attrName) ??
     null
   );
 }
@@ -109,6 +120,24 @@ function getAttrs(base: getAttrsFn | undefined, dom: HTMLElement) {
     domMarginBottom
   ) {
     attrs.marginBottom = domMarginBottom;
+  }
+  const domMarginLeft = resolveMarginValue(dom, 'margin-left');
+  if (
+    (attrs.marginLeft === undefined ||
+      attrs.marginLeft === null ||
+      attrs.marginLeft === '') &&
+    domMarginLeft
+  ) {
+    attrs.marginLeft = domMarginLeft;
+  }
+  const domMarginRight = resolveMarginValue(dom, 'margin-right');
+  if (
+    (attrs.marginRight === undefined ||
+      attrs.marginRight === null ||
+      attrs.marginRight === '') &&
+    domMarginRight
+  ) {
+    attrs.marginRight = domMarginRight;
   }
   return attrs;
 }
@@ -184,7 +213,9 @@ function getStyle(attrs) {
     attrs.lineSpacing,
     attrs.styleName,
     attrs.marginTop,
-    attrs.marginBottom
+    attrs.marginBottom,
+    attrs.marginLeft,
+    attrs.marginRight
     // attrs.indent
   );
 }
@@ -239,7 +270,15 @@ function getBulletDetails(code) {
   return bulletData;
 }
 
-function getStyleEx(align, lineSpacing, styleName, marginTop, marginBottom) {
+function getStyleEx(
+  align,
+  lineSpacing,
+  styleName,
+  marginTop,
+  marginBottom,
+  marginLeft,
+  marginRight
+) {
   let style = '';
   let styleLevel = 0;
   let indentOverriden = '';
@@ -350,6 +389,16 @@ function getStyleEx(align, lineSpacing, styleName, marginTop, marginBottom) {
     marginBottom !== ''
   ) {
     style += `margin-bottom: ${marginBottom} !important;`;
+  }
+  if (marginLeft !== null && marginLeft !== undefined && marginLeft !== '') {
+    style += `margin-left: ${marginLeft} !important;`;
+  }
+  if (
+    marginRight !== null &&
+    marginRight !== undefined &&
+    marginRight !== ''
+  ) {
+    style += `margin-right: ${marginRight} !important;`;
   }
 
   return {
