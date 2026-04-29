@@ -75,7 +75,7 @@ describe('configCollab', () => {
       () =>
         ({
           destroy: jest.fn(),
-        }) as unknown as { destroy: jest.Mock }
+        })
     );
 
     const ref = {collaboration: false, currentUser: null as Record<string, unknown> | null};
@@ -92,7 +92,7 @@ describe('configCollab', () => {
       () =>
         ({
           destroy: jest.fn(),
-        }) as unknown as { destroy: jest.Mock }
+        })
     );
 
     const ref = {collaboration: false, currentUser: null as Record<string, unknown> | null};
@@ -108,7 +108,7 @@ describe('configCollab', () => {
       () =>
         ({
           destroy: jest.fn(),
-        }) as unknown as { destroy: jest.Mock }
+        })
     );
 
     const ref = {collaboration: false, currentUser: null as Record<string, unknown> | null};
@@ -124,7 +124,7 @@ describe('configCollab', () => {
       () =>
         ({
           destroy: jest.fn(),
-        }) as unknown as { destroy: jest.Mock }
+        })
     );
 
     const ref = {collaboration: false, currentUser: null as Record<string, unknown> | null};

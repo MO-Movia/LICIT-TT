@@ -449,7 +449,7 @@ describe('CustomStyleCommand', () => {
     };
     jest
       .spyOn(customstyles, 'getCustomStyleByName')
-      .mockReturnValue(null as unknown as Style);
+      .mockReturnValue(null);
     expect(
       customstylecommand.executeClearStyle(
         mockeditorstate as unknown as EditorState,
@@ -457,7 +457,7 @@ describe('CustomStyleCommand', () => {
         0,
         1,
         2,
-        {} as unknown as Selection
+        {}
       )
     ).toBeFalsy();
     expect(
@@ -467,7 +467,7 @@ describe('CustomStyleCommand', () => {
         0,
         1,
         2,
-        {} as unknown as Selection
+        {}
       )
     ).toBeFalsy();
   });
@@ -3351,7 +3351,7 @@ describe('addMarksToLine and manageElementsAfterSelection', () => {
     };
     expect(
       customstylecommand.getCustomStyles(
-        null as unknown as string,
+        null,
         editorview as unknown as EditorView
       )
     ).toBeUndefined();
@@ -4386,7 +4386,7 @@ describe('updateDocument', () => {
   it('updateDocument', () => {
     expect(
       updateDocument(
-        statemock as unknown as EditorState,
+        statemock,
         trmock as unknown as Transform,
         'Normal',
         styl as unknown as Style
@@ -4630,7 +4630,7 @@ describe('isCustomStyleAlreadyApplied and isLevelUpdated', () => {
     expect(
       isCustomStyleAlreadyApplied(
         '10Normal-@#$-10',
-        statemock as unknown as EditorState
+        statemock
       )
     ).toBeTruthy();
   });
@@ -4658,7 +4658,7 @@ describe('isCustomStyleAlreadyApplied and isLevelUpdated', () => {
     };
     expect(
       isLevelUpdated(
-        statemock as unknown as EditorState,
+        statemock,
         '10Normal-@#$-10',
         styl as unknown as Style
       )
@@ -4688,7 +4688,7 @@ describe('isCustomStyleAlreadyApplied and isLevelUpdated', () => {
     };
     expect(
       isLevelUpdated(
-        statemock as unknown as EditorState,
+        statemock,
         '10Normal-@#$-10',
         styl
       )
@@ -4718,7 +4718,7 @@ describe('isCustomStyleAlreadyApplied and isLevelUpdated', () => {
     };
     expect(
       isLevelUpdated(
-        statemock as unknown as EditorState,
+        statemock,
         '10Normal-@#$-10',
         styl as unknown as Style
       )
@@ -4727,7 +4727,7 @@ describe('isCustomStyleAlreadyApplied and isLevelUpdated', () => {
   it('should handle isLevelUpdated branch coverage when style undefined', () => {
     expect(
       isLevelUpdated(
-        statemock as unknown as EditorState,
+        statemock,
         '10Normal-@#$-10',
         undefined as unknown as Style
       )
@@ -5211,7 +5211,7 @@ describe('insertParagraph', () => {
         1,
         {} as unknown as Transform,
         1,
-        null as unknown as EditorState
+        null
       )
     ).toStrictEqual({});
   });
@@ -5383,7 +5383,7 @@ describe('applyLineStyle', () => {
             },
           },
         } as unknown as EditorState,
-        null as unknown as Transform,
+        null,
         mockNode as unknown as Node,
         0
       )

@@ -178,8 +178,8 @@ describe('VignetteView', () => {
     const result = view.updateEx.call(
       tableView,
       mockUpdate,
-      mockSelf as unknown as VignetteView,
-      {} as unknown as PMNode
+      mockSelf,
+      {}
     );
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSelf.updateBorder).toHaveBeenCalled();
@@ -193,8 +193,8 @@ describe('VignetteView', () => {
     const result = view.updateEx.call(
       {},
       mockUpdate,
-      mockSelf as unknown as VignetteView,
-      {} as unknown as PMNode
+      mockSelf,
+      {}
     );
     expect(mockSelf.updateBorder).not.toHaveBeenCalled();
     expect(result).toBe(false);

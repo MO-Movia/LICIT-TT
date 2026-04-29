@@ -15,7 +15,6 @@ import {
   hideCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
 import { createPopUp } from '../../commands';
-import type { PopUpHandle } from '../../commands';
 
 jest.mock('prosemirror-model');
 jest.mock('prosemirror-state');
@@ -170,7 +169,7 @@ describe('ImageSourceCommand', () => {
 
   describe('waitForUserInput', () => {
     it('should return immediately if popup exists', async () => {
-      command._popUp = { close: jest.fn(), update: jest.fn() } as unknown as PopUpHandle;
+      command._popUp = { close: jest.fn(), update: jest.fn() };
       const result = await command.waitForUserInput(
         mockState,
         mockDispatch,

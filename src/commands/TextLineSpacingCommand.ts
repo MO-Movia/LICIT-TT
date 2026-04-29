@@ -263,7 +263,7 @@ export class TextLineSpacingCommand extends UICommand {
           };
           tr = tr.setNodeMarkup(nodePos, null, newAttrs);
         }
-        dispatch?.(tr as Transaction);
+        dispatch?.(tr);
       }
       return true;
     } else {

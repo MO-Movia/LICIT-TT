@@ -5,7 +5,6 @@
 
 import { ExportPDFCommand } from './exportPdfCommand';
 import { EditorState } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
 import { ExportPDF } from './exportPdf';
 
@@ -348,7 +347,7 @@ describe('Export PDF Command', () => {
   it('should wait for input', async () => {
     const command = new ExportPDFCommand();
     expect(
-      await command.waitForUserInput(null as unknown as EditorState)
+      await command.waitForUserInput(null)
     ).toBeUndefined();
   });
 
@@ -370,7 +369,7 @@ describe('Export PDF Command', () => {
   it('should not executeWithUserInput', () => {
     const command = new ExportPDFCommand();
     expect(
-      command.executeWithUserInput(null as unknown as EditorState)
+      command.executeWithUserInput(null)
     ).toBeFalsy();
   });
 
@@ -378,8 +377,8 @@ describe('Export PDF Command', () => {
     const command = new ExportPDFCommand();
     expect(
       command.executeCustom(
-        null as unknown as EditorState,
-        null as unknown as Transform
+        null,
+        null
       )
     ).toBeNull();
   });

@@ -200,7 +200,8 @@ export class EnhancedTableFigureView implements NodeView {
       editorView: this.view,
     };
     const el = document.getElementById(this._id);
-    if (!el || el.dataset.active !== 'true') {
+    const isActive = el?.dataset?.active ?? el?.getAttribute?.('data-active');
+    if (!el || isActive !== 'true') {
       this._inlineEditor?.close?.(undefined);
       return;
     }

@@ -202,14 +202,14 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       style.fontWeight = 'bold';
     }
     if (this.state.styles.color) {
-      style.color = this.state.styles.color as unknown as React.CSSProperties['color'];
+      style.color = this.state.styles.color;
     }
     if (this.state.styles.em) {
       style.fontStyle = 'italic';
     }
     if (this.state.styles.textHighlight) {
       style.backgroundColor =
-        this.state.styles.textHighlight as unknown as React.CSSProperties['backgroundColor'];
+        this.state.styles.textHighlight;
     }
     if (this.state.styles.align) {
       style.textAlign = this.state.styles.align as React.CSSProperties['textAlign'];

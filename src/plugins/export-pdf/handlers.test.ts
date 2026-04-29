@@ -911,7 +911,7 @@ test('buildRefToPageMap ignores non-HTMLElement nodes', () => {
 
   const pages = [{ element: pageEl }];
 
-  const map = handler['buildRefToPageMap'](pages as TestPagedPage[]);
+  const map = handler['buildRefToPageMap'](pages);
 
   expect(map.size).toBe(0);
 });

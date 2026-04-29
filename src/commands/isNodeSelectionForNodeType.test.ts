@@ -47,7 +47,7 @@ describe('isNodeSelectionForNodeType', () => {
       },
     });
     const result = isNodeSelectionForNodeType(
-      null as unknown as Selection,
+      null,
       schema.nodes.paragraph
     );
     expect(result).toBe(false);

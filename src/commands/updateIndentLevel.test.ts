@@ -245,7 +245,7 @@ describe('updateIndentLevel', () => {
     jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
-      .mockReturnValue(tr as unknown as Transform);
+      .mockReturnValue(tr);
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
   });
@@ -304,7 +304,7 @@ describe('updateIndentLevel', () => {
     jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
-      .mockReturnValue(tr as unknown as Transform);
+      .mockReturnValue(tr);
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
   });
@@ -396,7 +396,7 @@ describe('updateIndentLevel', () => {
     jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
-      .mockReturnValue(tr as unknown as Transform);
+      .mockReturnValue(tr);
 
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
@@ -488,7 +488,7 @@ describe('updateIndentLevel', () => {
     jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
-      .mockReturnValue(tr as unknown as Transform);
+      .mockReturnValue(tr);
 
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
@@ -558,7 +558,7 @@ describe('updateIndentLevel', () => {
     jest.spyOn(isListNode, 'isListNode').mockReturnValue(true) as unknown as Node;
     jest
       .spyOn(consolidateListNodes, 'consolidateListNodes')
-      .mockReturnValue(tr as unknown as Transform);
+      .mockReturnValue(tr);
     const test = updateIndentLevel(state, tr, sc, 5, view);
     expect(test).toBeTruthy();
   });

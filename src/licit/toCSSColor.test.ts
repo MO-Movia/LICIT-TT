@@ -30,7 +30,7 @@ describe('colorUtils', () => {
   describe('toCSSColor', () => {
     it('should return an empty string for falsy input', () => {
       expect(toCSSColor('')).toBe('');
-      expect(toCSSColor(null as unknown as string)).toBe('');
+      expect(toCSSColor(null)).toBe('');
       expect(toCSSColor(undefined as unknown as string)).toBe('');
     });
 
@@ -72,7 +72,7 @@ describe('colorUtils', () => {
   describe('isTransparent', () => {
     it('should return true for empty or falsy input', () => {
       expect(isTransparent('')).toBe(true);
-      expect(isTransparent(null  as unknown as string)).toBe(true);
+      expect(isTransparent(null)).toBe(true);
       expect(isTransparent(undefined  as unknown as string)).toBe(true);
     });
 

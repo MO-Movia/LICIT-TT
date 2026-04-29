@@ -117,7 +117,7 @@ describe('FontSizeCommand', () => {
   });
 
   it('should handle when pt is undefined', () => {
-    plugin._pt = undefined as unknown as number;
+    plugin._pt = undefined;
     jest
       .spyOn(TextSelection, 'create')
       .mockReturnValue({} as unknown as TextSelection);

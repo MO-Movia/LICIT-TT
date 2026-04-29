@@ -284,10 +284,11 @@ function applyTextFormattingStyle(style: string, styles): string {
 
 function getReservedStyleLevel(styleName: string): number {
   const indices = styleName.split(RESERVED_STYLE_NONE_NUMBERING);
+  let styleLevel = 0;
   if (indices && 2 === indices.length) {
-        styleLevel = Number.parseInt(indices[1]);
+    styleLevel = Number.parseInt(indices[1], 10);
   }
-  return 0;
+  return styleLevel;
 }
 
 function createStyleData(align, lineSpacing) {

@@ -357,16 +357,16 @@ function handlePasteUpdateStyling(
   if (slice1 && slice1.content.childCount > 20) {
     tr = applyMinimalPasteStyling(
       slice1,
-      prevState as EditorState,
-      nextState as EditorState,
+      prevState,
+      nextState,
       csview,
       tr
     );
   } else if (slice1) {
     tr = optimizedPasteHandler(
       slice1,
-      prevState as EditorState,
-      nextState as EditorState,
+      prevState,
+      nextState,
       csview,
       tr
     );
@@ -741,7 +741,7 @@ export function applyStyleForNextParagraph(
   }
 
   const { $from } = nextState.selection;
-  if (!view || !isNewParagraph(prevState as EditorState, nextState as EditorState, view)) {
+  if (!view || !isNewParagraph(prevState, nextState, view)) {
     return null;
   }
 

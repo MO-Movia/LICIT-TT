@@ -3,7 +3,7 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { Schema, NodeSpec } from 'prosemirror-model';
+import { Schema } from 'prosemirror-model';
 import { Plugin } from 'prosemirror-state';
 import { getEffectiveSchema, LicitPlugin } from './convertFromJSON';
 
@@ -14,9 +14,9 @@ describe('getEffectiveSchema', () => {
     beforeEach(() => {
         defaultSchema = new Schema({
             nodes: {
-                doc: {} as NodeSpec,
-                paragraph: {} as NodeSpec,
-                text: {} as NodeSpec,
+                doc: {},
+                paragraph: {},
+                text: {},
             },
             marks: {},
         });
@@ -35,7 +35,7 @@ describe('getEffectiveSchema', () => {
             getEffectiveSchema: jest.fn((schema) => {
                 return new Schema({
                     nodes: schema.spec.nodes.append({
-                        customNode: {} as NodeSpec, // Properly define NodeSpec
+                        customNode: {}, // Properly define NodeSpec
                     }),
                     marks: schema.spec.marks,
                 });
@@ -87,7 +87,7 @@ describe('getEffectiveSchema', () => {
         const mockPlugin: LicitPlugin = {
             ...new Plugin({}),
             getEffectiveSchema: jest.fn((schema) => schema),
-            initKeyCommands: jest.fn(() => null as unknown as Plugin),
+            initKeyCommands: jest.fn(() => null),
             initButtonCommands: jest.fn(),
             getState: jest.fn()
         };

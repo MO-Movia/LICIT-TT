@@ -185,7 +185,7 @@ export class SentanceCaseCommand extends UICommand {
     for (const chunk of delimiterSeparatedChars) {
       let isParagraphStart = true;
       for (const char of chunk) {
-        if (!charectersToInclude.has(char)) {
+        if (!charectersToInclude.includes(char)) {
           isParagraphStart = false;
           break;
         }

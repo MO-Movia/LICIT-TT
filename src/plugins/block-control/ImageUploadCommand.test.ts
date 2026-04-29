@@ -158,7 +158,7 @@ describe('ImageSourceCommand', () => {
       command._popUp = {
         close: jest.fn(),
         update: jest.fn(),
-      } as PopUpHandle;
+      };
       const result = await command.waitForUserInput(
         state,
         mockDispatch,
@@ -234,7 +234,7 @@ describe('ImageSourceCommand', () => {
       (createPopUp as jest.Mock).mockReturnValue({
         close: jest.fn(),
         update: jest.fn(),
-      } as PopUpHandle);
+      });
 
       void command.waitForUserInput(state, mockDispatch, null);
 

@@ -549,7 +549,7 @@ describe('image upload place holder plugin', () => {
       getState: () => undefined,
     } as unknown as ImageUploadPlaceholderPlugin;
     expect(findImageUploadPlaceholder(placeholder, {} as EditorState,
-      {} as Record<string, unknown>)).toBeFalsy();
+      {})).toBeFalsy();
   });
 
   it('should handle apply', () => {

@@ -7,14 +7,21 @@ import {Node, MarkType, Mark} from 'prosemirror-model';
 import findActiveMark from './findActiveMark';
 
 // Mock data for ProseMirror Node and Mark
-const createMockNode = (marks: Mark[] = [], size: number = 1) =>
-  ({
-    nodeSize: size,
-    marks,
-    nodeAt: jest.fn(function (pos: number) {
-      return pos < size ? (this as unknown as Node) : null; // Returns null when position is out of range
-    }),
-  }) as unknown as Node;
+const createMockNode = (marks: Mark[] = [], size: number = 1) => {
+  const mockNode = {} as {
+    nodeSize: number;
+    marks: Mark[];
+    nodeAt: (pos: number) => Node | null;
+  };
+
+  mockNode.nodeSize = size;
+  mockNode.marks = marks;
+  mockNode.nodeAt = (pos: number): Node | null => {
+    return pos < size ? (mockNode as unknown as Node) : null;
+  };
+
+  return mockNode as unknown as Node;
+};
 
 const createMockMark = (type: string) =>
   ({
