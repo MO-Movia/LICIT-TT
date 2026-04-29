@@ -28,6 +28,7 @@ import {
 import { CitationSubMenu } from './CitationSubMenu';
 import { citationBuilder, CitableMaterial, Citation } from './Types';
 import { defaultCitationText } from './CitationBuilder';
+import { toAbsoluteFromStored } from './CitationPosition';
 
 type CBFn = () => void;
 
@@ -117,7 +118,14 @@ export class CitationView {
     }
 
     if (parentNode) {
-      this.updateMarks(false, parentNode, this.getFromValue(e), themarkPos);
+      const selectedRange = toAbsoluteFromStored({
+        ...this.node.attrs,
+        from: this.getFromValue(e),
+      });
+
+      if (selectedRange) {
+        this.updateMarks(false, parentNode, selectedRange.from, themarkPos);
+      }
     }
   }
 
@@ -152,6 +160,10 @@ export class CitationView {
   ): void {
     const citationNode: { pos: number; attrs: Attrs }[] = [];
     if (parentNode) {
+      const doc = this.outerView?.state.tr.doc;
+      if (!doc) {
+        return;
+      }
       const tr = this.outerView?.state.tr;
       parentNode.descendants((child, pos, _parent) => {
         if (child.type.name === CITATION_NOTE) {
@@ -166,11 +178,20 @@ export class CitationView {
         citationNode.forEach((cit) => {
           // to check the mouse is over correct citation if a paragraph have multiple citation
           // Copy and paste CITATION applied paragraph, CITATION highlight not showing
-          if (selectedMarkPos === Number(cit.attrs.from)) {
+          const absoluteRange = toAbsoluteFromStored(cit.attrs);
+
+          if (absoluteRange && selectedMarkPos === absoluteRange.from) {
+            if (
+              Number.isNaN(absoluteRange.from) ||
+              Number.isNaN(absoluteRange.to) ||
+              absoluteRange.from >= absoluteRange.to
+            ) {
+              return;
+            }
             // Citation text not highlighting when apply custom style
             tr?.setMeta(
               HIGHLIGHTDECO,
-              Decoration.inline(cit.attrs.from, cit.attrs.to, {
+              Decoration.inline(absoluteRange.from, absoluteRange.to, {
                 style: `background-color: ${MARK_TEXT_HIGHLIGHT_COLOR};`,
               })
             );
@@ -183,7 +204,7 @@ export class CitationView {
 
   scrollAction(tr) {
     if (tr) {
-      this.outerView?.dispatch(tr);
+      this.outerView?.dispatch(tr.scrollIntoView());
     }
   }
 
@@ -282,7 +303,14 @@ export class CitationView {
 
   updateNode(parentNode, themarkPos, e) {
     if (parentNode) {
-      this.updateMarks(true, parentNode, this.getFromValue(e), themarkPos);
+      const selectedRange = toAbsoluteFromStored({
+        ...this.node.attrs,
+        from: this.getFromValue(e),
+      });
+
+      if (selectedRange) {
+        this.updateMarks(true, parentNode, selectedRange.from, themarkPos);
+      }
     }
   }
 
@@ -444,10 +472,16 @@ export class CitationView {
     const { selection } = tr;
 
     if (CITATION_NOTE === this.getNameAfter(selection)) {
+      const absoluteRange = toAbsoluteFromStored(selection.$head.nodeAfter.attrs);
+
+      if (!absoluteRange) {
+        return;
+      }
+
       tr = this.removeCitationMark(
         tr,
-        selection.$head.nodeAfter?.attrs.from,
-        selection.$head.nodeAfter?.attrs.to
+        absoluteRange.from,
+        absoluteRange.to
       ) as Transaction;
       tr = tr.delete(selection.$head.pos, selection.$head.pos + 2);
       const parentPos = selection.$head.pos - selection.$head.parentOffset - 1;

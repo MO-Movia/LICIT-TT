@@ -3,7 +3,12 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
+import {
+  EditorState,
+  NodeSelection,
+  TextSelection,
+  Transaction,
+} from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { Transform } from 'prosemirror-transform';
 import {
@@ -13,6 +18,8 @@ import {
 import { PopUpHandle } from '../../commands';
 import { Node, ResolvedPos, Schema } from 'prosemirror-model';
 import { AddCitationCommandOptions } from './Types';
+import { schema, builders } from 'prosemirror-test-builder';
+import { CitationPlugin } from './CitationPlugin';
 
 type CitationProps = {
   documentTitle: string;
@@ -494,6 +501,141 @@ describe('AddCitationCommand', () => {
     const state = {} as unknown as EditorState;
     const tr = {} as unknown as Transform;
     expect(addctcomd.executeCustom(state, tr)).toBe(tr);
+  });
+  it('should execute custom style for table', () => {
+    const state = {} as unknown as EditorState;
+    const tr = {} as unknown as Transform;
+    expect(addctcomd.executeCustomStyleForTable(state, tr)).toBe(tr);
+  });
+  it('should calculate end of sentence when selected text already has delimiter', () => {
+    const state = {
+      selection: {
+        from: 1,
+        to: 6,
+        $to: { end: () => 12 },
+      },
+      doc: {
+        textBetween: jest
+          .fn()
+          .mockReturnValueOnce('Hello.')
+          .mockReturnValueOnce('. More text'),
+      },
+    } as unknown as EditorState;
+
+    expect(
+      addctcomd.findEndOfSentence(state, {
+        pos: 6,
+        parentOffset: 5,
+        parent: { nodeSize: 20 },
+      } as unknown as ResolvedPos)
+    ).toBe(6);
+  });
+  it('should calculate end of sentence from following paragraph text', () => {
+    const state = {
+      selection: {
+        from: 1,
+        to: 6,
+        $to: { end: () => 20 },
+        $head: {
+          parent: { nodeSize: 30 },
+        },
+      },
+      doc: {
+        textBetween: jest
+          .fn()
+          .mockReturnValueOnce('Hello')
+          .mockReturnValueOnce(' world! More text'),
+      },
+    } as unknown as EditorState;
+
+    expect(
+      addctcomd.findEndOfSentence(state, {
+        pos: 6,
+        parentOffset: 5,
+        parent: { nodeSize: 30 },
+      } as unknown as ResolvedPos)
+    ).toBe(13);
+  });
+  it('should fall back to parent end when no sentence delimiter is found', () => {
+    const state = {
+      selection: {
+        from: 1,
+        to: 6,
+        $to: { end: () => 20 },
+        $head: {
+          parent: { nodeSize: 14 },
+        },
+      },
+      doc: {
+        textBetween: jest
+          .fn()
+          .mockReturnValueOnce('Hello')
+          .mockReturnValueOnce(' without delimiter'),
+      },
+    } as unknown as EditorState;
+
+    expect(
+      addctcomd.findEndOfSentence(state, {
+        pos: 6,
+        parentOffset: 5,
+        parent: { nodeSize: 14 },
+      } as unknown as ResolvedPos)
+    ).toBe(13);
+  });
+  it('should return list attributes from the closest list ancestor', () => {
+    const $head = {
+      depth: 2,
+      path: [0, 0, 0, 0, 0, 42],
+      node: (depth: number) => {
+        if (depth === 1) {
+          return {
+            type: { name: 'ordered_list' },
+            attrs: { order: 3 },
+          };
+        }
+        return { type: { name: 'paragraph' }, attrs: {} };
+      },
+    } as unknown as ResolvedPos;
+
+    expect(addctcomd.getListAttributes($head)).toEqual({
+      listNodeAttr: { order: 3 },
+      listPos: 42,
+    });
+  });
+  it('should create a paragraph-relative citation footnote for selected text', () => {
+    const effSchema = new CitationPlugin().getEffectiveSchema(
+      new Schema({
+        nodes: schema.spec.nodes,
+        marks: schema.spec.marks,
+      })
+    );
+    const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
+    const state = EditorState.create({
+      doc: doc(p('Hello world.')),
+      schema: effSchema,
+    });
+    const selection = TextSelection.create(state.doc, 2, 7);
+    const selectedState = state.apply(state.tr.setSelection(selection));
+    const tr = addctcomd.createFootNoteForCitation(
+      { state: selectedState } as unknown as EditorView,
+      selectedState,
+      selectedState.tr,
+      citation as unknown as CitationProps
+    ) as Transaction;
+
+    let citationAttrs = null;
+    tr.doc.descendants((node) => {
+      if (node.type.name === 'citationnote') {
+        citationAttrs = node.attrs;
+      }
+    });
+
+    expect(citationAttrs).toMatchObject({
+      from: 1,
+      to: 6,
+      paragraphPos: 1,
+      positionMode: 'paragraph',
+    });
   });
   it('should handle showCitations correctly', () => {
     const mockEditorView = {} as unknown as EditorView;

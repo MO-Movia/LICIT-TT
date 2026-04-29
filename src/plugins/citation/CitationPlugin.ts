@@ -31,6 +31,7 @@ import {
   pluginKey,
 } from './Types';
 import { DarkThemeIcon, LightThemeIcon } from './images';
+import { POSITION_MODE_PARAGRAPH } from './CitationPosition';
 export const KEY_CITATION: {
   description: string;
   windows: string;
@@ -62,14 +63,27 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
             );
           return {
             ...opt,
-            decorations: commentDeco(doc, _state, undefined),
+            decorations: DecorationSet.empty,
             loaded: true,
           };
         },
-        apply(tr, _prev, _, newState) {
+        apply(tr, prev, _, newState) {
+
+          let decos = prev?.decorations || DecorationSet.empty;
+          decos = decos.map(tr.mapping, tr.doc);
+          let d = tr.getMeta(HIGHLIGHTDECO);
+          if (!d) {
+            const appended = tr.getMeta('appendedTransaction');
+            if (appended) {
+              d = appended.getMeta(HIGHLIGHTDECO);
+            }
+          }
+          if (d) {
+            decos = DecorationSet.create(tr.doc, [d]);
+          }
           return {
-            ..._prev,
-            decorations: commentDeco(tr.doc, newState, tr),
+            ...prev,
+            decorations: decos,
             loaded: this.getState(newState)?.loaded,
           };
         },
@@ -88,7 +102,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
           const pos =
             view.state.selection.from < 2 ? 0 : view.state.selection.from - 2;
           const node = view.state.tr.doc.nodeAt(pos);
-          if (node && CITATION_NOTE === node.type.name) {
+          if (CITATION_NOTE === node?.type.name) {
             event.preventDefault();
             retVal = true;
           }
@@ -105,7 +119,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
             });
             if (dropPos?.pos && 0 <= dropPos.pos - 2) {
               const node = view.state.tr.doc.nodeAt(dropPos.pos - 2);
-              if (node && CITATION_NOTE === node.type.name) {
+              if (CITATION_NOTE === node?.type.name) {
                 event.preventDefault();
                 retVal = true;
               }
@@ -136,7 +150,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
             const pos =
               view.state.selection.from < 2 ? 0 : view.state.selection.from - 2;
             const node = view.state.tr.doc.nodeAt(pos);
-            if (node && CITATION_NOTE === node.type.name) {
+            if (CITATION_NOTE === node?.type.name) {
               const allowedKeys = [
                 'Enter',
                 'ArrowRight',
@@ -159,8 +173,8 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
                   event.key === '.' ||
                   (event.key === 'Enter' &&
                     CITATION_NOTE ===
-                      view.state.tr.doc.nodeAt(view.state.selection.from)?.type
-                        .name)
+                    view.state.tr.doc.nodeAt(view.state.selection.from)?.type
+                      .name)
                 ) {
                   event.preventDefault();
                 }
@@ -169,8 +183,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
                 retVal = true;
               }
             } else if (
-              view.state.selection.$anchor.nodeAfter &&
-              CITATION_NOTE === view.state.selection.$anchor.nodeAfter.type.name
+              CITATION_NOTE === view.state.selection.$anchor.nodeAfter?.type.name
             ) {
               event.preventDefault();
             }
@@ -198,40 +211,71 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
   }
 
   handleAppendTransactions(
-    transactions: [Transaction],
-    prevState: EditorState,
+    transactions: readonly Transaction[],
+    _prevState: EditorState,
     nextState: EditorState
-  ): Transaction {
-    let tr: Transaction = null;
+  ): Transaction | null {
 
-    if (isDocChanged(transactions)) {
-      if (prevState.doc !== nextState.doc) {
-        const startPos = nextState.tr.selection.from;
-        let parentPos =
-          nextState.tr.selection.$head.pos -
-          nextState.tr.selection.$head.parentOffset -
-          1;
-        parentPos = parentPos < 0 ? 0 : parentPos;
-        const parentNode = nextState.tr.doc.nodeAt(parentPos);
-
-        if (
-          this._view &&
-          (DELKEYCODE === this._view['lastKeyCode'] ||
-            BACKSPACEKEYCODE === this._view['lastKeyCode'])
-        ) {
-          const node = prevState.tr.doc.nodeAt(startPos);
-          tr = this.getRow(
-            node,
-            prevState,
-            startPos,
-            parentNode,
-            parentPos,
-            nextState,
-            tr
-          ) as Transaction;
-        }
-      }
+    if (!transactions.some(tr => tr.docChanged)) {
+      return null;
     }
+
+    if (typeof nextState.doc?.descendants !== 'function') {
+      return null;
+    }
+
+    let tr = nextState.tr;
+    let modified = false;
+
+    nextState.doc.descendants((node, pos) => {
+      if (node.type.name !== CITATION_NOTE) return;
+
+      if (node.attrs.positionMode !== POSITION_MODE_PARAGRAPH) return;
+
+      let paragraphPos = Number(node.attrs.paragraphPos);
+      let from = Number(node.attrs.from);
+      let to = Number(node.attrs.to);
+
+      if (
+        node.attrs.paragraphPos === null ||
+        node.attrs.paragraphPos === undefined ||
+        Number.isNaN(paragraphPos) ||
+        Number.isNaN(from) ||
+        Number.isNaN(to)
+      ) return;
+
+      let absFrom = paragraphPos + from;
+      let absTo = paragraphPos + to;
+
+      transactions.forEach(txn => {
+        if (!txn.docChanged) return;
+        absFrom = txn.mapping.map(absFrom, -1);
+        absTo = txn.mapping.map(absTo, 1);
+        paragraphPos = txn.mapping.map(paragraphPos, -1);
+      });
+
+      const newFrom = absFrom - paragraphPos;
+      const newTo = absTo - paragraphPos;
+
+      if (
+        paragraphPos !== node.attrs.paragraphPos ||
+        newFrom !== from ||
+        newTo !== to
+      ) {
+        tr.setNodeMarkup(pos, undefined, {
+          ...node.attrs,
+          paragraphPos,
+          from: newFrom,
+          to: newTo,
+          positionMode: POSITION_MODE_PARAGRAPH,
+        });
+        modified = true;
+      }
+    });
+
+    if (!modified) return null;
+
+    tr.setMeta('addToHistory', false);
     return tr;
   }
 
@@ -278,8 +322,14 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
       }
     });
 
+    const relativeFrom = Number(from);
+    const absoluteFrom = Number.isNaN(relativeFrom)
+      ? relativeFrom
+      : relativeFrom + themarkPos + 1;
+
     return citationmarkNode.find((obj) => {
-      return obj.marks[0].attrs.pos === from;
+      const markPos = Number(obj.marks[0].attrs.pos);
+      return markPos === absoluteFrom || markPos === relativeFrom;
     });
   }
 
@@ -316,15 +366,15 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     return newCitationTag;
   }
 
-  initButtonCommands(theme: string):unknown {
-     let image = null;
-      if ('light' == theme) {
-        image = LightThemeIcon;
-      } else {
-        image = DarkThemeIcon;
-      }
+  initButtonCommands(theme: string): unknown {
+    let image = null;
+    if ('light' == theme) {
+      image = LightThemeIcon;
+    } else {
+      image = DarkThemeIcon;
+    }
     return {
-     [`[${image}] Add citation`]: this.addCitationCmd,
+      [`[${image}] Add citation`]: this.addCitationCmd,
     };
   }
 
@@ -332,7 +382,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     state: EditorState,
     dispatch: (tr: Transaction) => void,
     view: EditorView
-  ): boolean| Transform {
+  ): boolean | Transform {
     const plugin = new CitationPlugin();
     return plugin.addCitationCmd.execute(state, dispatch, view);
   }

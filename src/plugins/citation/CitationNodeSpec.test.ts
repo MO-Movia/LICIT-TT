@@ -32,6 +32,8 @@ const node: Node = {
     from: '0',
     isCitationObject: 'false',
     to:'9',
+    paragraphPos: 'null',
+    positionMode: 'null',
   },
 } as unknown as Node; // ignore missing elements
 

@@ -48,6 +48,8 @@ export type Citation = {
   pages?: string;
   publishedDateTitle?: string;
   from?: string;
+  paragraphPos?: string;
+  positionMode?: string;
   isCitationObject?: boolean;
   to?: string;
 };
@@ -76,6 +78,8 @@ export const citationFields: (keyof Citation)[] = [
   'pages',
   'publishedDateTitle',
   'from',
+  'paragraphPos',
+  'positionMode',
   'to',
 ];
 

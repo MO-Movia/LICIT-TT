@@ -1042,6 +1042,198 @@ describe('Citation Plugin', () => {
       )
     ).toBeNull();
   });
+  it('handleAppendTransactions should update paragraph-relative citation positions', () => {
+    const setNodeMarkup = jest.fn().mockReturnThis();
+    const setMeta = jest.fn().mockReturnThis();
+    const transaction = {
+      docChanged: true,
+      mapping: {
+        map: (pos: number) => pos + 2,
+      },
+    } as unknown as Transaction;
+    const nextState = {
+      doc: {
+        descendants: (cb) => {
+          cb(
+            {
+              type: { name: 'citationnote' },
+              attrs: {
+                paragraphPos: '10',
+                from: '2',
+                to: '5',
+                positionMode: 'paragraph',
+              },
+            },
+            20
+          );
+        },
+      },
+      tr: { setNodeMarkup, setMeta },
+    } as unknown as EditorState;
+
+    expect(
+      plugin.handleAppendTransactions(
+        [transaction],
+        {} as unknown as EditorState,
+        nextState
+      )
+    ).toBe(nextState.tr);
+    expect(setNodeMarkup).toHaveBeenCalledWith(
+      20,
+      undefined,
+      expect.objectContaining({
+        paragraphPos: 12,
+        from: 2,
+        to: 5,
+        positionMode: 'paragraph',
+      })
+    );
+    expect(setMeta).toHaveBeenCalledWith('addToHistory', false);
+  });
+  it('handleAppendTransactions should ignore non-paragraph citation positions', () => {
+    const nextState = {
+      doc: {
+        descendants: (cb) => {
+          cb(
+            {
+              type: { name: 'citationnote' },
+              attrs: {
+                paragraphPos: '10',
+                from: '2',
+                to: '5',
+                positionMode: 'global',
+              },
+            },
+            20
+          );
+        },
+      },
+      tr: {
+        setNodeMarkup: jest.fn().mockReturnThis(),
+        setMeta: jest.fn().mockReturnThis(),
+      },
+    } as unknown as EditorState;
+
+    expect(
+      plugin.handleAppendTransactions(
+        [
+          {
+            docChanged: true,
+            mapping: { map: (pos: number) => pos + 1 },
+          } as unknown as Transaction,
+        ],
+        {} as unknown as EditorState,
+        nextState
+      )
+    ).toBeNull();
+  });
+  it('handleAppendTransactions should ignore invalid paragraph-relative attrs', () => {
+    const nextState = {
+      doc: {
+        descendants: (cb) => {
+          cb(
+            {
+              type: { name: 'citationnote' },
+              attrs: {
+                paragraphPos: null,
+                from: '2',
+                to: '5',
+                positionMode: 'paragraph',
+              },
+            },
+            20
+          );
+        },
+      },
+      tr: {
+        setNodeMarkup: jest.fn().mockReturnThis(),
+        setMeta: jest.fn().mockReturnThis(),
+      },
+    } as unknown as EditorState;
+
+    expect(
+      plugin.handleAppendTransactions(
+        [
+          {
+            docChanged: true,
+            mapping: { map: (pos: number) => pos + 1 },
+          } as unknown as Transaction,
+        ],
+        {} as unknown as EditorState,
+        nextState
+      )
+    ).toBeNull();
+  });
+  it('findMarkObject should match absolute and legacy relative mark positions', () => {
+    const parentNode = {
+      descendants: (cb) => {
+        cb(
+          {
+            marks: [{ attrs: { pos: 8 } }],
+            nodeSize: 3,
+          },
+          2
+        );
+        cb(
+          {
+            marks: [{ attrs: { pos: 4 } }],
+            nodeSize: 2,
+          },
+          4
+        );
+      },
+    };
+
+    expect(plugin.findMarkObject(parentNode, 3, 4)).toMatchObject({
+      pos: 6,
+      diff: 3,
+    });
+    expect(plugin.findMarkObject(parentNode, 3, 'not-a-number')).toBeUndefined();
+  });
+  it('getRow should remove the matched citation text highlight mark', () => {
+    const tr = {
+      removeMark: jest.fn().mockReturnThis(),
+    } as unknown as Transaction;
+    const nextState = {
+      tr,
+      schema: {
+        marks: {
+          'mark-text-highlight': {},
+        },
+      },
+    } as unknown as EditorState;
+    const prevState = {
+      tr: {
+        doc: {
+          nodeAt: () => ({ type: { name: 'citationnote' } }),
+        },
+      },
+    } as unknown as EditorState;
+    const parentNode = {
+      descendants: (cb) => {
+        cb(
+          {
+            marks: [{ attrs: { pos: 8 } }],
+            nodeSize: 3,
+          },
+          2
+        );
+      },
+    };
+
+    expect(
+      plugin.getRow(
+        { attrs: { from: 4 } },
+        prevState,
+        5,
+        parentNode,
+        3,
+        nextState,
+        null
+      )
+    ).toBe(tr);
+    expect(tr.removeMark).toHaveBeenCalledWith(6, 9, {});
+  });
 
   //////////////////////
 
