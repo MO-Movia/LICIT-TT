@@ -386,6 +386,7 @@ class EditorToolbar extends React.PureComponent {
     const {editorState, editorView, disabled, dispatchTransaction} = this.props;
     const theme = this.context;
     const {icon, title} = parseLabel(label, theme ? theme.toString() : 'dark');
+    const dropdownIndicator = icon ? '?' : title;
     return (
       <CommandMenuButton
         commandGroups={commandGroups}
@@ -395,7 +396,7 @@ class EditorToolbar extends React.PureComponent {
         editorView={editorView}
         icon={icon}
         key={label}
-        label={icon ? null : title}
+        label={icon ? dropdownIndicator : title}
         title={title}
       />
     );

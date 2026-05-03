@@ -31,6 +31,10 @@ export class CustomButton extends React.PureComponent<CustomButtonProps> {
           <PointerSurface {...pointerProps} className={klass}>
             {icon}
             {label}
+
+            {pointerProps.hasChild && (
+              <span className="custom-button-dropdown-caret">?</span>
+            )}
           </PointerSurface>
         </TooltipSurface>
       </ThemeProvider>
