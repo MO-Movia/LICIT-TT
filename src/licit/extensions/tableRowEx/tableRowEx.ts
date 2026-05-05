@@ -4,32 +4,7 @@
  */
 
 import TableRow from '@tiptap/extension-table-row';
-
-const NUMERIC_VALUE_PATTERN = /^-?\d+(\.\d+)?$/;
-
-const normalizeValue = (value: unknown): string | null => {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  if (typeof value !== 'string' && typeof value !== 'number') {
-    return null;
-  }
-
-  const normalized = `${value}`.trim();
-  return normalized.length ? normalized : null;
-};
-
-const normalizeCssSize = (value: unknown): string | null => {
-  const normalized = normalizeValue(value);
-  if (!normalized) {
-    return null;
-  }
-
-  return NUMERIC_VALUE_PATTERN.test(normalized)
-    ? `${normalized}px`
-    : normalized;
-};
+import {normalizeCssSize, normalizeValue} from '../table.utils';
 
 export const TableRowEx = TableRow.extend({
   addAttributes() {
