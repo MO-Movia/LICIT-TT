@@ -106,8 +106,11 @@ export class ImageInlineEditor extends React.PureComponent {
     );
   }
 
-  prepButtons(ImgValues) {
-    let buttons;
+  prepButtons(ImgValues: Record<string, PropValue> | string): React.ReactNode[] {
+    let buttons: React.ReactNode[] = [];
+    if (!ImgValues || typeof ImgValues !== 'object') {
+      return buttons;
+    }
     const align = this.props.value ? this.props.value.align : null;
     const onClick = this._onClick;
     const {editorView} = this.props;

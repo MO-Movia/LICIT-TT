@@ -523,7 +523,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       if (value) value.mode = 3;
 
       this.setState(
-        (prevState) => ({ ...prevState, ...value }),
+        (prevState: typeof this.state) => ({ ...prevState, ...value }),
         () => {
           const isReservedStyleNone =
             this.state.styleName === RESERVED_STYLE_NONE;
@@ -703,7 +703,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     if (this.state.mode > 0 && this.isCustomStyleAlreadyApplied() && !isList) {
       this.showAlert();
     } else {
-      this.setState((prevState) => ({
+      this.setState((prevState: typeof this.state) => ({
         ...prevState,
         selectedStyle,
         styles: {
@@ -2020,7 +2020,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     // FIX: edited custom styles not applied to the document
     if (3 === this.state.mode) {
       // Update the state with the new state object
-      this.setState((prev) => ({
+      this.setState((prev: typeof this.state) => ({
         ...prev,
         customStyles: customStyles ?? [],
       }));

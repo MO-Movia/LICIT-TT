@@ -40,8 +40,11 @@ import TextSubMarkSpec from './specs/textSubMarkSpec';
 import TextUnderlineMarkSpec from './specs/textUnderlineMarkSpec';
 import HangingIndentMarkSpec from './specs/hangingIndentMarkSpec';
 import OverrideMarkSpec from './specs/overrideMarkSpec';
+import LetterSpacingMarkSpec from './specs/LetterSpacingMarkSpec.js';
 const MARK_OVERRIDE = 'override';
 const MARK_HANGING_INDENT = 'mark-hanging-indent';
+const MARK_LETTER_SPACING = 'mark-letter-spacing';
+
 export function updateEditorMarks(
   specMarks: OrderedMap<MarkSpec>
 ): OrderedMap<MarkSpec> {
@@ -62,6 +65,7 @@ export function updateEditorMarks(
   specMarks = specMarks.addToEnd(MARK_UNDERLINE, TextUnderlineMarkSpec);
   specMarks = specMarks.addToEnd(MARK_OVERRIDE, OverrideMarkSpec);
   specMarks = specMarks.addToEnd(MARK_HANGING_INDENT, HangingIndentMarkSpec);
+  specMarks = specMarks.addToEnd(MARK_LETTER_SPACING, LetterSpacingMarkSpec);
 
   return specMarks;
 }

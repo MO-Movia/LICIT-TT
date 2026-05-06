@@ -35,7 +35,7 @@ function setFontType(
 }
 
 export class FontTypeCommand extends UICommand {
-  _label = null;
+  _label: React.ReactNode = null;
   _name = '';
   _popUp = null;
 
@@ -45,7 +45,7 @@ export class FontTypeCommand extends UICommand {
     this._label = name ? <span style={{fontFamily: name}}>{name}</span> : null;
   }
 
-  renderLabel = (_state: EditorState) => {
+  renderLabel = (_state: EditorState): React.ReactNode => {
     return this._label;
   };
 

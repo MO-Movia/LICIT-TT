@@ -78,9 +78,9 @@ export function clearMarks(tr: Transform, schema: Schema): Transform {
   const slice = selection instanceof TextSelection ? selection.content().content : null;
   if (slice?.childCount > 1) {
 
-    slice.content.forEach(node => {
+    for (const node of slice.content) {
       extractParagraphs(node, paragraphsWithStyle, otherParagraphs);
-    });
+    };
 
     if (otherParagraphs.length > 0) {
       return tr;
@@ -110,23 +110,64 @@ export function clearMarks(tr: Transform, schema: Schema): Transform {
   });
 
 
-  tasks.forEach((job) => {
+  for (const job of tasks) {
     const { mark } = job;
     // [FS] IRAD-1043 2020-10-27
     // Issue fix on when clear the format of a selected word, the entire paragraphs style removed
     tr = tr.removeMark(from, to, mark.type);
-  });
+  };
 
-  overrideMarkstoRemove.forEach((overridenMarkType) => {
+  for (const overridenMarkType of overrideMarkstoRemove) {
     const { mark } = overridenMarkType;
     tr = tr.removeMark(from, to, mark);
 
-  });
-  marksToAdd.forEach((marks) => {
+  };
+  for (const marks of marksToAdd) {
     const { markType, attrs } = marks;
     tr = tr.addMark(from, to, attrs ? markType.create(attrs) : markType.create());
 
+  };
+
+  // Reset indent and align attributes for nodes inside the selection when clearing formats.
+  const nodesToReset: { node: Node; pos: number }[] = [];
+  doc.nodesBetween(from, to, (node, pos) => {
+    if (node?.attrs) {
+      const indentVal = node.attrs.indent;
+      const overriddenIndent = !!node.attrs.overriddenIndent;
+      const overriddenIndentVal = node.attrs.overriddenIndentValue;
+
+      const alignVal = node.attrs.align;
+      const overriddenAlign = node.attrs.overriddenAlign;
+      const overriddenAlignVal = node.attrs.overriddenAlignValue;
+
+      const needsIndentReset = (indentVal !== undefined && String(indentVal) !== '0') || overriddenIndent || (overriddenIndentVal !== undefined && overriddenIndentVal !== null);
+      const needsAlignReset = (alignVal !== undefined && String(alignVal) !== 'left') || (overriddenAlign !== undefined && overriddenAlign !== null) || (overriddenAlignVal !== undefined && overriddenAlignVal !== null);
+
+      if (needsIndentReset || needsAlignReset) {
+        nodesToReset.push({ node, pos });
+      }
+    }
+    return true;
+
   });
+
+  nodesToReset.forEach(({ node, pos }) => {
+    style = getStyleByName(node.attrs.styleName);
+
+    const newAttrs = {
+      ...node.attrs,
+      // indent defaults
+      indent: style?.styles['indent'],
+      overriddenIndent: false,
+      overriddenIndentValue: null,
+      // align defaults
+      align: style?.styles['align'],
+      overriddenAlign: null,
+      overriddenAlignValue: null,
+    };
+    tr = tr.setNodeMarkup(pos, node.type, newAttrs, node.marks);
+  });
+
   return tr;
 }
 
@@ -141,7 +182,10 @@ export function extractParagraphs(node: Node, normalParagraphs: Node[], otherPar
       otherParagraphs.push(node);
     }
   } else if (node.content) {
-    node.content.forEach(child => extractParagraphs(child, normalParagraphs, otherParagraphs));
+    for (let i = 0; i < node.content.childCount; i++) {
+      const child = node.content.child(i);
+      extractParagraphs(child, normalParagraphs, otherParagraphs);
+    }
   }
 }
 export function comapreMarks(style: Style, mark: Mark, marksToAdd, pos: number, node: Node, schema: Schema): boolean {
@@ -233,7 +277,7 @@ function getMissingMarks_Styles(
 
 function AddMissingMarks_Styles(styleMarks: string[], marksToAdd, pos: number, node: Node, schema: Schema) {
 
-  styleMarks?.forEach((styleKey) => {
+  for (const styleKey of styleMarks ?? []) {
     const markType = schema.marks[styleKey];
     if (!markType) return;
 
@@ -253,7 +297,7 @@ function AddMissingMarks_Styles(styleMarks: string[], marksToAdd, pos: number, n
       default:
         break;
     }
-  });
+  };
 
 }
 
@@ -290,9 +334,9 @@ export function clearHeading(tr: Transform, schema: Schema): Transform {
     return tr;
   }
 
-  tasks.forEach((job) => {
+  for (const job of tasks) {
     const { node, pos } = job;
     tr = tr.setNodeMarkup(pos, paragraph, node.attrs, node.marks);
-  });
+  };
   return tr;
 }

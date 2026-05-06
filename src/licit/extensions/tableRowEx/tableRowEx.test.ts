@@ -4,10 +4,11 @@
  */
 
 import {Editor} from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import type {Node as PMNode} from 'prosemirror-model';
+import {StarterKit} from '@tiptap/starter-kit';
 import {Table} from '@tiptap/extension-table';
-import TableHeader from '@tiptap/extension-table-header';
-import TableCell from '@tiptap/extension-table-cell';
+import {TableHeader} from '@tiptap/extension-table-header';
+import {TableCell} from '@tiptap/extension-table-cell';
 import {TableRowEx} from './tableRowEx';
 
 describe('TableRowEx Extension', () => {

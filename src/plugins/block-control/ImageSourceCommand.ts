@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { Fragment } from 'prosemirror-model';
+import { Fragment, Schema } from 'prosemirror-model';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
@@ -19,7 +19,12 @@ import type { ImageProps } from './Types';
 
 
 // Command to insert the Enhanced Table/Figure node (for image)
-export function insertEnhancedImageFigure(tr, schema, imageUrl, altText = '') {
+export function insertEnhancedImageFigure(
+  tr: Transaction,
+  schema: Schema,
+  imageUrl: string,
+  altText = ''
+): Transaction {
   const { selection } = tr;
   const { from, to } = selection;
   if (from !== to) {
@@ -73,7 +78,7 @@ export function insertEnhancedImageFigure(tr, schema, imageUrl, altText = '') {
 export class ImageSourceCommand extends UICommand {
   _popUp?: PopUpHandle;
 
-  getEditor(): typeof React.Component {
+  getEditor(): typeof React.Component | undefined {
     return undefined;
   }
 
@@ -118,11 +123,11 @@ export class ImageSourceCommand extends UICommand {
     if (dispatch) {
       const { selection, schema } = state;
       let { tr } = state;
-      tr = view ? (hideCursorPlaceholder(view.state) as Transaction) : tr;
+      tr = view ? (hideCursorPlaceholder(view.state) as unknown as Transaction) : tr;
       tr = tr.setSelection(selection);
       if (inputs) {
         const { src } = inputs;
-        tr = insertEnhancedImageFigure(tr, schema, src) as Transaction;
+        tr = insertEnhancedImageFigure(tr, schema, src);
       }
       dispatch(tr);
       view?.focus();

@@ -95,15 +95,16 @@ function addCustomMark(
   if (!node?.childCount) return tr; // Ensure the node exists and has children
 
   let from = pos + 1; // Start at first child
-  node.forEach((child) => {
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
     const to = from + child.nodeSize;
     const existingMark = child.marks.find((mark) => mark.type === markType);
     const newMark = existingMark
-      ? markType.create({...existingMark.attrs})
+      ? markType.create({ ...existingMark.attrs })
       : markType.create(attrs);
     tr = tr.addMark(from, to, newMark);
     from = to;
-  });
+  }
 
   return tr;
 }
@@ -250,34 +251,34 @@ export function updateMarksAttrs(
         switch (nodesMarkType?.type.name) {
           case 'mark-text-color': {
             const defTextColor = style?.styles?.color || '#000000';
-            if (defTextColor !== value.toString()) {
-              attrs = value ? {color: value, overridden: true} : null;
-            } else {
+            if (defTextColor === value.toString()) {
               attrs = value ? {color: value, overridden: false} : null;
+            } else {
+              attrs = value ? {color: value, overridden: true} : null;
             }
             break;
           }
           case 'mark-font-size':
-            if (style?.styles?.fontSize !== value?.toString()) {
-              attrs = value ? {pt: value, overridden: true} : null;
-            } else {
+            if (style?.styles?.fontSize === value?.toString()) {
               attrs = value ? {pt: value, overridden: false} : null;
+            } else {
+              attrs = value ? {pt: value, overridden: true} : null;
             }
             break;
           case 'mark-font-type':
-            if (style?.styles?.fontName !== value?.toString()) {
-              attrs = value ? {name: value, overridden: true} : null;
-            } else {
+            if (style?.styles?.fontName === value?.toString()) {
               attrs = value ? {name: value, overridden: false} : null;
+            } else {
+              attrs = value ? {name: value, overridden: true} : null;
             }
             break;
           case 'mark-text-highlight': {
             const defHiglightColor = style?.styles?.textHighlight || '#ffffff';
 
-            if (defHiglightColor !== value?.toString()) {
-              attrs = value ? {highlightColor: value, overridden: true} : null;
-            } else {
+            if (defHiglightColor === value?.toString()) {
               attrs = value ? {highlightColor: value, overridden: false} : null;
+            } else {
+              attrs = value ? {highlightColor: value, overridden: true} : null;
             }
             break;
           }

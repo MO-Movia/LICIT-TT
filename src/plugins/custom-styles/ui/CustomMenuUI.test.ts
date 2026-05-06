@@ -714,7 +714,7 @@ describe('Custom Menu UI', () => {
       },
     } as unknown as Transform);
     expect(
-      custommenuui.removeCustomStyleName(state, 'AFDP_Bullet', (x) => {
+      custommenuui.removeCustomStyleName(state, 'AFDP_Bullet', (x: Transform) => {
         return x;
       })
     ).toBe(true);

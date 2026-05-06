@@ -5,11 +5,10 @@
 
 import * as React from 'react';
 
-import PopUpManager from './PopUpManager';
+import popUpManager, {type PopUpDetails} from './PopUpManager';
 import {atAnchorBottomLeft, atViewportCenter} from './PopUpPosition';
 import {uuid} from './uuid';
 
-import type {PopUpDetails} from './PopUpManager';
 import type {Rect} from './rects';
 
 type PositionHandler = (anchorRect?: Rect, bodyRect?: Rect) => Rect;
@@ -58,12 +57,12 @@ export class PopUp extends React.PureComponent<PopUpProps> {
 
   componentDidMount(): void {
     this._bridge = {getDetails: this._getDetails};
-    PopUpManager.register(this._bridge);
+    popUpManager.register(this._bridge);
   }
 
   componentWillUnmount(): void {
     if (this._bridge) {
-      PopUpManager.unregister(this._bridge);
+      popUpManager.unregister(this._bridge);
     }
   }
 

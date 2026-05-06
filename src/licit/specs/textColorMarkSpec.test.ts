@@ -4,11 +4,13 @@
  */
 
 import TextColorMarkSpec from './textColorMarkSpec'; // Adjust the import path as needed
-import toCSSColor from '../toCSSColor'; // Adjust the import path as needed
+import {toCSSColor} from '../toCSSColor'; // Adjust the import path as needed
 import {Attrs, Mark, MarkType} from 'prosemirror-model';
 
 // Mocking toCSSColor function for testing purposes
-jest.mock('../toCSSColor', () => jest.fn());
+jest.mock('../toCSSColor', () => ({
+  toCSSColor: jest.fn(),
+}));
 
 describe('TextColorMarkSpec', () => {
   describe('parseDOM', () => {

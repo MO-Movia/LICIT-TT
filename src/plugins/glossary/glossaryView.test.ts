@@ -3,12 +3,12 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {GlossaryPlugin} from './index';
 import {schema, builders} from 'prosemirror-test-builder';
 import {EditorState} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {Schema} from 'prosemirror-model';
 import {GlossaryView} from './glossaryView';
+import {GlossaryNodeSpec} from './glossaryNodeSpec';
 
 describe('Glossary Plugin Extended', () => {
   const glossary = {
@@ -21,19 +21,10 @@ describe('Glossary Plugin Extended', () => {
   };
 
   const mySchema = new Schema({
-    nodes: schema.spec.nodes,
+    nodes: schema.spec.nodes.addToEnd('glossary', GlossaryNodeSpec),
     marks: schema.spec.marks,
   });
-  const plugin = new GlossaryPlugin({
-    glossaryService: {
-      openManagementDialog: (): Promise<null> => {
-        return Promise.resolve(null);
-      },
-    },
-  });
-  const effSchema = plugin.getEffectiveSchema(mySchema);
-
-  const newGlossaryNode = effSchema.node(effSchema.nodes.glossary, glossary);
+  const newGlossaryNode = mySchema.node(mySchema.nodes.glossary, glossary);
   const {doc, p} = builders(mySchema, {p: {nodeType: 'paragraph'}});
   let gView: GlossaryView;
   beforeEach(() => {
@@ -42,8 +33,7 @@ describe('Glossary Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newGlossaryNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);
@@ -70,8 +60,7 @@ describe('Glossary Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newGlossaryNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);
@@ -93,8 +82,7 @@ describe('Glossary Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newGlossaryNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);

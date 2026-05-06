@@ -6,11 +6,12 @@
 import { CitationDialog, CitationDialogProps } from './CitationDialog';
 import React from 'react';
 import { DOMOutputSpec, Mark, MarkSpec, Schema } from 'prosemirror-model';
-import { CitationPlugin, defaultCitationText } from './index';
+import { defaultCitationText } from './CitationBuilder';
 import { schema, builders } from 'prosemirror-test-builder';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { Citation } from './Types';
+import { CitationNodeSpec } from './CitationNodeSpec';
 
 describe('CitationDialog', () => {
   const citation = {
@@ -78,9 +79,10 @@ describe('CitationDialog', () => {
     nodes: schema.spec.nodes,
     marks: marks,
   });
-  const plugin = new CitationPlugin();
-
-  const effSchema = plugin.getEffectiveSchema(modSchema);
+  const effSchema = new Schema({
+    nodes: modSchema.spec.nodes.addToEnd('citationnote', CitationNodeSpec),
+    marks: modSchema.spec.marks,
+  });
   const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
 
   document.body.appendChild(document.createElement('div'));
@@ -94,7 +96,7 @@ describe('CitationDialog', () => {
   const state = EditorState.create({
     doc: doc(p(before, newCitationNode, after)),
     schema: effSchema,
-    plugins: [plugin],
+    plugins: [],
   });
 
   const dom = document.createElement('div');

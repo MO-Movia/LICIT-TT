@@ -36,7 +36,7 @@ describe('TextEditorBox  (ReactDOM)', () => {
     });
 
 
-    it('shows error on invalid JSON', async () => {
+    it('shows error on invalid JSON', () => {
         ReactDOM.render(<TextEditorBox close={jest.fn()} />, container);
 
         const textarea = container.querySelector('textarea');
@@ -45,7 +45,7 @@ describe('TextEditorBox  (ReactDOM)', () => {
         textarea.value = 'invalid json';
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
-        await saveBtn.click();
+        saveBtn.click();
 
         expect(container.textContent).toMatch(/Failed to save custom styles/);
     });

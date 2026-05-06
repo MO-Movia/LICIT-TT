@@ -33,12 +33,25 @@ interface Props {
 }
 
 interface State {
-  sections: React.ReactElement<any>[];
+  sections: React.ReactElement[];
   sectionNodeStructure: SectionNodeStructure[];
   flattenedSectionNodeStructure: FlatSectionNodeStructure[];
   sectionNodesToExclude: string[];
   storedStyles: StoredStyle[];
 }
+
+type EditorViewLike = {
+  state?: {
+    doc?: {
+      attrs?: {
+        objectMetaData?: {
+          type?: string;
+          name?: string;
+        };
+      };
+    };
+  };
+};
 
 export class PreviewForm extends React.PureComponent<Props, State> {
   private static general: boolean = false;
@@ -59,7 +72,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     text: string;
     color: string;
   } | null = null;
-  public sectionListElements: React.ReactElement<any>[] = [];
+  public sectionListElements: React.ReactElement[] = [];
   private _popUp = null;
 
   static isGeneral() {
@@ -484,7 +497,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     );
   }
 
-  public render(): React.ReactElement<any> {
+  public render(): React.ReactElement {
     const getButtonStyle = (color: string): React.CSSProperties => ({
       backgroundColor: color,
       color: '#fff',
@@ -1139,13 +1152,13 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     }
   }
 
-  private isAfttpDoc(editorView): boolean {
+  private isAfttpDoc(editorView: EditorViewLike): boolean {
   const docType =
     editorView?.state?.doc?.attrs?.objectMetaData?.type ?? '';
   return typeof docType === 'string' && docType.includes('Afttp');
  }
 
-  public getDocumentTitle(editorView): string {
+  public getDocumentTitle(editorView: EditorViewLike): string {
     return editorView?.state?.doc?.attrs?.objectMetaData?.name ?? '';
   }
 

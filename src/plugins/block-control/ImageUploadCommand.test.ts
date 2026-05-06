@@ -19,8 +19,8 @@ import { createPopUp, PopUpHandle } from '../../commands';
 
 // Mock dependencies
 jest.mock('./CursorPlaceholderPlugin', () => ({
-  showCursorPlaceholder: jest.fn((state) => state.tr),
-  hideCursorPlaceholder: jest.fn((state) => state.tr),
+  showCursorPlaceholder: jest.fn((state: { tr: unknown }) => state.tr),
+  hideCursorPlaceholder: jest.fn((state: { tr: unknown }) => state.tr),
 }));
 
 jest.mock('../../commands', () => ({

@@ -121,7 +121,7 @@ export class SearchInfoIcon extends React.PureComponent<SearchInfoProps, SearchI
 
   getCacheIcons(): FaIcons[] {
     const ccList = localStorage.getItem(SELECTEDINFOICON);
-    return ccList ? JSON.parse(ccList) : [];
+    return ccList ? (JSON.parse(ccList) as FaIcons[]) : [];
   }
 }
 

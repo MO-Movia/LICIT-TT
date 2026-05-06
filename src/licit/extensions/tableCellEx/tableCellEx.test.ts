@@ -107,7 +107,7 @@ test('should render backgroundColor as string when vignette is true', () => {
 
   test('should render nested color value when vignette is false', () => {
     // Add backgroundColor as object
-    editor.state.doc.descendants((node, _pos) => {
+    editor.state.doc.descendants((node: PMNode, _pos) => {
       if (node.type.name === 'tableCell') {
         editor
           .chain()
@@ -132,7 +132,7 @@ test('should render backgroundColor as string when vignette is true', () => {
     editor.commands.setContent(htmlWithBgColor);
 
     let found = false;
-    editor.state.doc.descendants((node) => {
+    editor.state.doc.descendants((node: PMNode) => {
       if (
         node.type.name === 'tableCell' &&
         node.attrs.backgroundColor === 'blue'
@@ -150,7 +150,7 @@ test('should render backgroundColor as string when vignette is true', () => {
     );
 
     let backgroundColor = '';
-    editor.state.doc.descendants((node) => {
+    editor.state.doc.descendants((node: PMNode) => {
       if (node.type.name === 'tableCell') {
         backgroundColor = node.attrs.backgroundColor;
       }
@@ -196,9 +196,10 @@ test('should render backgroundColor as string when vignette is true', () => {
       '<table><tr><td style="border-left: 2px solid red; border-right: 3px dashed blue">Cell</td></tr></table>'
     );
 
-    let left, right;
+    let left: string | undefined;
+    let right: string | undefined;
 
-    editor.state.doc.descendants((node) => {
+    editor.state.doc.descendants((node: PMNode) => {
       if (node.type.name === 'tableCell') {
         left = node.attrs.borderLeft;
         right = node.attrs.borderRight;

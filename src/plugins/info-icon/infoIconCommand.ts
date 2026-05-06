@@ -12,7 +12,7 @@ import {InfoIconDialog} from './infoIconDialog';
 import { createPopUp } from '../../commands';
 import type { PopUpHandle } from '../../commands';
 import {getNode} from './constants';
-import {DOMSerializer, Fragment} from 'prosemirror-model';
+import {DOMSerializer, Fragment, Schema} from 'prosemirror-model';
 
 export class InfoIconCommand extends UICommand {
   _popUp: PopUpHandle | null = null;
@@ -131,13 +131,13 @@ export class InfoIconCommand extends UICommand {
     return newAttrs;
   }
 
-  getFragm(infoIcon) {
+  getFragm(infoIcon: {editorView: {state: {schema: Schema; doc: {content: unknown}}}}) {
     return DOMSerializer.fromSchema(
       infoIcon.editorView.state.schema
-    ).serializeFragment(this.getDocContent(infoIcon));
+    ).serializeFragment(this.getDocContent(infoIcon) as Fragment);
   }
 
-  getDocContent(infoIcon) {
+  getDocContent(infoIcon: {editorView: {state: {doc: {content: unknown}}}}): unknown {
     return infoIcon.editorView.state.doc.content;
   }
 

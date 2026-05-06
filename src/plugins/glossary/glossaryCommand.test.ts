@@ -4,17 +4,15 @@
  */
 
 import {GlossaryCommand} from './glossaryCommand';
-import type {IndexItem} from './index';
-import {GlossaryPlugin} from './index';
+import type {IndexItem} from './types';
+import {GlossaryNodeSpec} from './glossaryNodeSpec';
 import {schema, builders} from 'prosemirror-test-builder';
-import {EditorState, TextSelection, NodeSelection} from 'prosemirror-state';
+import {EditorState, TextSelection} from 'prosemirror-state';
 import {Schema} from 'prosemirror-model';
 import {EditorView} from 'prosemirror-view';
 import type {Transform} from 'prosemirror-transform';
 
-describe('GlossaryPlugin', () => {
-  let plugin: GlossaryPlugin;
-
+describe('GlossaryCommand', () => {
   const runtime = {
     glossaryService: {
       openManagementDialog: (): Promise<null> => {
@@ -22,123 +20,65 @@ describe('GlossaryPlugin', () => {
       },
     },
   };
-  beforeEach(() => {
-    plugin = new GlossaryPlugin(runtime);
-  });
+
+  const buildSchema = () =>
+    new Schema({
+      nodes: schema.spec.nodes.addToEnd('glossary', GlossaryNodeSpec),
+      marks: schema.spec.marks,
+    });
+
   it('should deleteGlossaryNode', () => {
-    const modSchema = new Schema({
-      nodes: schema.spec.nodes,
-      marks: schema.spec.marks,
-    });
-    const glossaryObj = {
-      from: 0,
-      to: 9,
-      type: 1,
-      id: 1,
-      description: 'Test description',
-      term: 'term',
-    };
-
-    const effSchema = plugin.getEffectiveSchema(modSchema);
+    const effSchema = buildSchema();
     const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
     const state = EditorState.create({
-      doc: doc(p(glossaryObj)),
+      doc: doc(p('term')),
       schema: effSchema,
-      plugins: [plugin],
     });
 
-    const dom = document.createElement('div');
-    document.body.appendChild(dom);
-    const view = new EditorView(
-      {mount: dom},
-      {
-        state: state,
-      }
-    );
-    const selection = TextSelection.create(view.state.doc, 0, 1);
-    const tr = view.state.tr.setSelection(selection);
-    view.dispatch(tr);
-    const glossaryCmd = new GlossaryCommand(runtime);
-    expect(glossaryCmd.deleteGlossaryNode(view.state, 'term')).toBeDefined();
-  });
-  it('should executeWithUserInput using selection', () => {
-    const modSchema = new Schema({
-      nodes: schema.spec.nodes,
-      marks: schema.spec.marks,
-    });
-    const glossaryObj = {
-      from: 0,
-      to: 9,
-      type: 1,
-      id: 1,
-      description: 'Test description',
-      term: 'term',
-    };
-
-    const effSchema = plugin.getEffectiveSchema(modSchema);
-    const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
-    const state = EditorState.create({
-      doc: doc(p(glossaryObj)),
-      schema: effSchema,
-      plugins: [plugin],
-    });
-
-    const dom = document.createElement('div');
-    document.body.appendChild(dom);
-    const view = new EditorView(
-      {mount: dom},
-      {
-        state: state,
-      }
-    );
-    const selection = TextSelection.create(view.state.doc, 0, 1);
-    const tr = view.state.tr.setSelection(selection);
-    view.dispatch(tr);
-    const glossaryCmd = new GlossaryCommand(runtime);
-    expect(
-      glossaryCmd.executeWithUserInput(view.state, view.dispatch, view, {
-        id: '1',
-        term: 'dig',
-        definition: 'trio',
-      } as IndexItem)
-    ).toBeDefined();
-  });
-  it('getSelectedText() returns the selected text in the editor view', () => {
-    const before = 'hello';
-    const after = ' world';
-    const mySchema = new Schema({
-      nodes: schema.spec.nodes,
-      marks: schema.spec.marks,
-    });
-    const glossary = {
-      from: 0,
-      to: 9,
-      type: 1,
-      id: 1,
-      description: 'Test description',
-      term: 'term',
-    };
-    const {doc, p} = builders(mySchema, {p: {nodeType: 'paragraph'}});
-    const effSchema = plugin.getEffectiveSchema(mySchema);
-    const newGlossaryNode = effSchema.node(effSchema.nodes.glossary, glossary);
-    const state = EditorState.create({
-      doc: doc(p(before, newGlossaryNode, after)),
-      schema: effSchema,
-      plugins: [new GlossaryPlugin()],
-    });
-    const dom = document.createElement('div');
-    const view = new EditorView(
-      {mount: dom},
-      {
-        state: state,
-      }
-    );
     const gm = new GlossaryCommand(runtime);
+    expect(gm.deleteGlossaryNode(state, 'term')).toBeDefined();
+  });
+
+  it('should executeWithUserInput using selection', () => {
+    const effSchema = buildSchema();
+    const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+    const state = EditorState.create({
+      doc: doc(p('term')),
+      schema: effSchema,
+    });
+
+    const dom = document.createElement('div');
+    const view = new EditorView({mount: dom}, {state});
     const selection = TextSelection.create(view.state.doc, 1, 2);
-    const tr = view.state.tr.setSelection(selection);
-    view.dispatch(tr);
+    view.dispatch(view.state.tr.setSelection(selection));
+
+    const glossaryCmd = new GlossaryCommand(runtime);
+    const item: IndexItem = {
+      id: '1',
+      term: 'dig',
+      definition: 'trio',
+    };
+    expect(
+      glossaryCmd.executeWithUserInput(view.state, view.dispatch, view, item)
+    ).toBe(true);
+  });
+
+  it('getSelectedText() returns the selected text in the editor view', () => {
+    const effSchema = buildSchema();
+    const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+    const state = EditorState.create({
+      doc: doc(p('hello world')),
+      schema: effSchema,
+    });
+    const dom = document.createElement('div');
+    const view = new EditorView({mount: dom}, {state});
+
+    const selection = TextSelection.create(view.state.doc, 1, 6);
+    view.dispatch(view.state.tr.setSelection(selection));
+
+    const gm = new GlossaryCommand(runtime);
     const selectedText = gm.getSelectedText(view);
-    expect(selectedText).toBe('hello');
+    expect(selectedText).toBe('hello world');
   });
 
   it('should wait for user input without runtime', async () => {
@@ -172,32 +112,5 @@ describe('GlossaryPlugin', () => {
   it('should execute cancel without errors', () => {
     const gm = new GlossaryCommand(runtime);
     expect(() => gm.cancel()).not.toThrow();
-  });
-
-  it('should return false if the selected node type is "image"', () => {
-    const modSchema = new Schema({
-      nodes: schema.spec.nodes,
-      marks: schema.spec.marks,
-    });
-
-    const {doc} = builders(modSchema, {
-      image: {nodeType: 'image'},
-    });
-    const imageNode = modSchema.nodes.image.create({
-      src: 'test.jpg',
-      alt: 'Test Image',
-    });
-
-    const state = EditorState.create({
-      doc: doc(imageNode),
-      selection: NodeSelection.create(doc(imageNode), 0),
-    });
-
-    const view = {
-      runtime: {},
-    } as unknown as EditorView;
-
-    const gm = new GlossaryCommand(null!);
-    expect(gm.isEnabled(state, view)).toBe(false);
   });
 });

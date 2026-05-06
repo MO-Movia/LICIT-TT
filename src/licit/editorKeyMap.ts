@@ -5,7 +5,7 @@
 
 import browser from './browser';
 
-import { makeKeyMapWithCommon } from '../core';
+import { KeyMapDescription, makeKeyMapWithCommon } from '../core';
 
 interface Keymap {
   mac: string;
@@ -55,7 +55,7 @@ export const KEY_TOGGLE_STRIKETHROUGH = makeKeyMapWithCommon(
 export const ALL_KEYS = [KEY_SPLIT_LIST_ITEM, KEY_TOGGLE_BOLD, KEY_TOGGLE_ITALIC, KEY_TOGGLE_UNDERLINE, KEY_TOGGLE_STRIKETHROUGH];
 
  
-export function findKeymapByDescription(description: string): any {
+export function findKeymapByDescription(description: string): KeyMapDescription {
   const matches = ALL_KEYS.filter((keymap) => {
     return keymap.description.toUpperCase() === description.toUpperCase();
   });

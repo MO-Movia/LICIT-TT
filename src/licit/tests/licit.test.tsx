@@ -9,9 +9,12 @@ import React from 'react';
 import {Licit, LicitHandle} from '../licit';
 import {Extension} from '@tiptap/core';
 import {createRoot} from 'react-dom/client';
+import prosemirrorDevTools from 'prosemirror-dev-tools';
+import {WebrtcProvider} from 'y-webrtc';
 
 // Mock prosemirror-dev-tools
 jest.mock('prosemirror-dev-tools', () => ({
+  __esModule: true,
   default: jest.fn(),
 }));
 
@@ -33,6 +36,16 @@ jest.mock('y-webrtc', () => ({
 jest.mock('y-protocols/awareness', () => ({
   Awareness: jest.fn(),
 }));
+
+jest.mock('../commands/docLayoutCommand', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => ({
+    waitForUserInput: jest.fn().mockResolvedValue({}),
+    executeWithUserInput: jest.fn().mockReturnValue(false),
+  })),
+}));
+
+import DocLayoutCommand from '../commands/docLayoutCommand';
 
 const waitForValue = async (
   getter: () => unknown,
@@ -114,10 +127,31 @@ describe('Licit Editor Component', () => {
 
       expect(container).toBeDefined();
     });
+
+    it('should accept runtime, toolbarConfig, and plugins props', async () => {
+      const container = document.createElement('div');
+      const root = createRoot(container);
+      const runtime = {name: 'runtime'} as unknown as import('../types').EditorRuntime;
+      const toolbarConfig = [] as unknown as import('../types').ToolbarMenuConfig[];
+      const plugins = [] as unknown as import('prosemirror-state').Plugin[];
+      root.render(
+        <Licit
+          runtime={runtime}
+          toolbarConfig={toolbarConfig}
+          plugins={plugins}
+        />
+      );
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(container.firstChild).toBeDefined();
+    });
   });
 });
 
 describe('Ref Methods', () => {
+  beforeEach(() => {
+    const ctor = DocLayoutCommand as unknown as jest.Mock;
+    ctor.mockClear();
+  });
 
   it('should expose getContent method via ref', async () => {
     const ref = React.createRef<LicitHandle>();
@@ -161,6 +195,77 @@ describe('Ref Methods', () => {
     expect(ref.current?.editor).toBeDefined();
     expect(ref.current?.editorView).toBeDefined();
   });
+
+  it('should expose isNodeHasAttribute via ref', async () => {
+    const ref = React.createRef<LicitHandle>();
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    root.render(<Licit ref={ref} />);
+
+    const handle = (await waitForValue(() => ref.current, 10000)) as LicitHandle;
+    const node = {attrs: {flag: true, other: false}} as unknown as import('prosemirror-model').Node;
+    expect(handle.isNodeHasAttribute(node, 'flag')).toBe(true);
+    expect(handle.isNodeHasAttribute(node, 'other')).toBe(false);
+    expect(handle.isNodeHasAttribute(node, 'missing')).toBeUndefined();
+  });
+
+  it('goToEnd should focus the editor', async () => {
+    const ref = React.createRef<LicitHandle>();
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    root.render(<Licit ref={ref} />);
+
+    const handle = (await waitForValue(() => ref.current, 10000)) as LicitHandle;
+    const view = handle.editorView;
+    expect(view).not.toBeNull();
+    if (!view) {
+      throw new Error('Expected editor view to be available');
+    }
+    const focusSpy = jest.spyOn(view, 'focus');
+    handle.goToEnd();
+    expect(focusSpy).toHaveBeenCalled();
+  });
+
+  it('pageLayout triggers DocLayoutCommand workflow', async () => {
+    const ref = React.createRef<LicitHandle>();
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    root.render(<Licit ref={ref} />);
+
+    const handle = (await waitForValue(() => ref.current, 10000)) as LicitHandle;
+    handle.pageLayout();
+
+    const ctor = DocLayoutCommand as unknown as jest.Mock;
+    const instance = ctor.mock.results[0]?.value as {
+      waitForUserInput: jest.Mock;
+      executeWithUserInput: jest.Mock;
+    };
+    expect(instance.waitForUserInput).toHaveBeenCalled();
+    await Promise.resolve();
+    expect(instance.executeWithUserInput).toHaveBeenCalled();
+  });
+
+  it('pageLayout handles waitForUserInput rejection', async () => {
+    const ctor = DocLayoutCommand as unknown as jest.Mock;
+    ctor.mockImplementationOnce(() => ({
+      waitForUserInput: jest.fn().mockRejectedValue(new Error('fail')),
+      executeWithUserInput: jest.fn(),
+    }));
+    const ref = React.createRef<LicitHandle>();
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    root.render(<Licit ref={ref} />);
+
+    const handle = (await waitForValue(() => ref.current, 10000)) as LicitHandle;
+    handle.pageLayout();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const instance = ctor.mock.results[0]?.value as {
+      waitForUserInput: jest.Mock;
+      executeWithUserInput: jest.Mock;
+    };
+    expect(instance.waitForUserInput).toHaveBeenCalled();
+    expect(instance.executeWithUserInput).not.toHaveBeenCalled();
+  });
 });
 
 describe('Callbacks', () => {
@@ -190,6 +295,25 @@ describe('Callbacks', () => {
     }
 
     expect(onChange).toHaveBeenCalled();
+  });
+
+  it('should initialize dev tools when debug is true', async () => {
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    root.render(<Licit debug={true} />);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(prosemirrorDevTools).toHaveBeenCalled();
+  });
+
+  it('should configure collaboration when docID provided', async () => {
+    (WebrtcProvider as unknown as jest.Mock).mockImplementation(() => ({
+      destroy: jest.fn(),
+    }));
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    root.render(<Licit docID="doc-a" collabServiceURL="ws://example" />);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(WebrtcProvider).toHaveBeenCalled();
   });
 
   it('should pass correct parameters to onChange', async () => {

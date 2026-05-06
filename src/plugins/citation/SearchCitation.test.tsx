@@ -1,8 +1,4 @@
 /* eslint-disable */
-import {CitationPlugin} from './CitationPlugin';
-import {schema, builders} from 'prosemirror-test-builder';
-import {EditorState} from 'prosemirror-state';
-import {EditorView} from 'prosemirror-view';
 import {SearchCitation, SearchCitationProps} from './SearchCitation';
 
 const citation = {

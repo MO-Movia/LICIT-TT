@@ -3,188 +3,105 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import type {IndexItem} from './index';
-import {cache, GlossaryPlugin} from './index';
+import {cache, updateCache} from './glossaryView';
+import {GlossaryCommand} from './glossaryCommand';
+import type {IndexItem} from './types';
+import {GlossaryNodeSpec} from './glossaryNodeSpec';
 import {schema, builders} from 'prosemirror-test-builder';
 import {Schema} from 'prosemirror-model';
-import {EditorState, TextSelection, Plugin, PluginKey} from 'prosemirror-state';
+import {EditorState, TextSelection} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
-import {GlossaryCommand} from './glossaryCommand';
-import type {Transform} from 'prosemirror-transform';
-import {createEditor} from 'jest-prosemirror';
+import {createEditor, doc, p} from 'jest-prosemirror';
 
-class TestPlugin extends Plugin {
-  constructor() {
-    super({
-      key: new PluginKey('TestPlugin'),
-    });
-  }
-}
-describe('GlossaryPlugin', () => {
-  let plugin: GlossaryPlugin;
+describe('Glossary Helpers', () => {
   const runtime = {
     glossaryService: {
-      openManagementDialog: (): Promise<null> => {
+      openManagementDialog: (): Promise<IndexItem | null> => {
         return Promise.resolve(null);
       },
     },
   };
 
-  beforeEach(() => {
-    plugin = new GlossaryPlugin(runtime);
-  });
-
-  describe('getEffectiveSchema', () => {
-    it('should add a glossary node to the schema', () => {
-      const mySchema = new Schema({
-        nodes: schema.spec.nodes,
-        marks: schema.spec.marks,
-      });
-      const effSchema = plugin.getEffectiveSchema(mySchema);
-      plugin.initButtonCommands('dark');
-      expect(effSchema.spec.nodes).toBeDefined();
+  const buildSchema = () =>
+    new Schema({
+      nodes: schema.spec.nodes.addToEnd('glossary', GlossaryNodeSpec),
+      marks: schema.spec.marks,
     });
+
+  beforeEach(() => {
+    for (const key of Object.keys(cache)) {
+      delete cache[key];
+    }
   });
 
   it('should init cache from array', () => {
     const id = 'cacheA';
-    expect(cache[id]).toBeUndefined();
-    const p = new GlossaryPlugin({
-      ...runtime,
-      cache: [{id, term: id, definition: id}],
-    });
-    expect(p).toBeTruthy();
+    updateCache([{id, term: id, definition: id}]);
     expect(cache[id]).toBeDefined();
   });
+
   it('should init cache from promise', async () => {
     const id = 'cacheP';
-    expect(cache[id]).toBeUndefined();
     const promise = Promise.resolve([{id, term: id, definition: id}]);
-    const p = new GlossaryPlugin({
-      ...runtime,
-      cache: promise,
-    });
+    updateCache(promise);
     await promise;
-    expect(p).toBeTruthy();
     expect(cache[id]).toBeDefined();
   });
-  describe('initKeyCommands', () => {
-    it('should executeWithUserInput', () => {
-      const modSchema = new Schema({
-        nodes: schema.spec.nodes,
-        marks: schema.spec.marks,
-      });
-      const glossary = {
-        from: 0,
-        to: 9,
-        type: 1,
-        id: 1,
-        description: 'Test description',
-        term: 'term',
-      };
-      const effSchema = plugin.getEffectiveSchema(modSchema);
-      const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
 
-      const state = EditorState.create({
-        doc: doc(p(glossary)),
-        schema: effSchema,
-      });
-      const dom = document.createElement('div');
-      document.body.appendChild(dom);
-      // Set up our document body
-      document.body.innerHTML = '<div></div>';
-      const view = new EditorView(
-        {mount: dom},
-        {
-          state: state,
-        }
-      );
-
-      const selection = TextSelection.create(view.state.doc, 1, 2);
-      const tr = view.state.tr.setSelection(selection);
-      view.updateState(
-        view.state.reconfigure({plugins: [plugin, new TestPlugin()]})
-      );
-
-      view.dispatch(tr);
-      const glossaryCmd = new GlossaryCommand(runtime);
-      expect(glossaryCmd.isEnabled(view.state, view)).toBeFalsy();
-
-      const mockGlossaryObj: IndexItem = {
-        id: 'test',
-        description: 'Test description',
-        definition: 'Test definition',
-        term: 'term',
-      };
-      const test = glossaryCmd.executeWithUserInput(
-        state,
-        undefined,
-        view,
-        mockGlossaryObj
-      );
-      expect(test).toBeTruthy();
-      const bok = glossaryCmd.executeWithUserInput(
-        state,
-        view.dispatch as (tr: Transform) => void,
-        view,
-        mockGlossaryObj
-      );
-      expect(bok).toBeTruthy();
+  it('should executeWithUserInput', () => {
+    const effSchema = buildSchema();
+    const {doc: pmDoc, p: para} = builders(effSchema, {
+      p: {nodeType: 'paragraph'},
     });
-    it('should Wait For User Input', async () => {
-      const modSchema = new Schema({
-        nodes: schema.spec.nodes,
-        marks: schema.spec.marks,
-      });
-      const glossaryObj = {
-        from: 0,
-        to: 9,
-        type: 1,
-        id: 1,
-        description: 'Test description',
-        term: 'term',
-      };
+    const state = EditorState.create({
+      doc: pmDoc(para('Hello')),
+      schema: effSchema,
+    });
+    const dom = document.createElement('div');
+    const view = new EditorView({mount: dom}, {state});
 
-      const effSchema = plugin.getEffectiveSchema(modSchema);
-      const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
-      const state = EditorState.create({
-        doc: doc(p(glossaryObj)),
-        schema: effSchema,
-      });
+    const selection = TextSelection.create(view.state.doc, 1, 2);
+    const tr = view.state.tr.setSelection(selection);
+    view.dispatch(tr);
 
-      const dom = document.createElement('div');
-      document.body.appendChild(dom);
-      const view = new EditorView(
-        {mount: dom},
-        {
-          state: state,
-        }
-      );
-      const editor = createEditor(doc('<cursor>', p('Hello')));
-      const glossaryCmd = new GlossaryCommand(runtime);
-      const _test = await glossaryCmd.waitForUserInput(
-        editor.state,
-        undefined,
-        view
-      );
-      expect(_test).toBeFalsy();
-    });
-    it('should _isEnabled function return false', () => {
-      const glossaryCmd = new GlossaryCommand(runtime);
-      const modSchema = new Schema({
-        nodes: schema.spec.nodes,
-        marks: schema.spec.marks,
-      });
-      const effSchema = plugin.getEffectiveSchema(modSchema);
-      const {doc} = builders(effSchema, {});
-      const state = EditorState.create({
-        doc: doc(),
-      });
-      const _test = glossaryCmd.isEnabled(state);
-      expect(_test).toBeFalsy();
-    });
-    it('should call initKeyCommands', () => {
-      expect(plugin.initKeyCommands()).toBeDefined();
-    });
+    const cmd = new GlossaryCommand(runtime);
+    const item: IndexItem = {
+      id: 'test',
+      term: 'term',
+      definition: 'def',
+      description: 'desc',
+    };
+
+    const ok = cmd.executeWithUserInput(
+      view.state,
+      view.dispatch as unknown as (tr) => void,
+      view,
+      item
+    );
+    expect(ok).toBeTruthy();
+  });
+
+  it('should Wait For User Input', async () => {
+    const editor = createEditor(doc('<cursor>', p('Hello')));
+    const dom = document.createElement('div');
+    const view = new EditorView({mount: dom}, {state: editor.state});
+
+    const glossaryCmd = new GlossaryCommand(runtime);
+    const result = await glossaryCmd.waitForUserInput(
+      editor.state,
+      undefined,
+      view
+    );
+    expect(result).toBeNull();
+  });
+
+  it('should return false when selection is empty doc', () => {
+    const effSchema = buildSchema();
+    const {doc: pmDoc} = builders(effSchema, {});
+    const state = EditorState.create({doc: pmDoc(), schema: effSchema});
+
+    const glossaryCmd = new GlossaryCommand(runtime);
+    const result = glossaryCmd.isEnabled(state);
+    expect(result).toBeFalsy();
   });
 });

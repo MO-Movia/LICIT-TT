@@ -159,7 +159,7 @@ export function createPopUp(
 ): PopUpHandle {
   const rootId = popUpParams.popUpId ?? uuid();
 
-  let handle = null;
+  let handle: PopUpHandle | null = null;
   let currentViewProps = viewProps || {};
 
   popUpParams = popUpParams || {};

@@ -44,18 +44,20 @@ export type Style = {
 };
 
 let styles: Style[] = [];
-export function setRuntime(runtime) {
+type RuntimeType = Record<string, unknown> | null;
+
+export function setRuntime(runtime: RuntimeType): void {
     // This function is intentionally empty. It serves as a placeholder for future development.
     // Add code here as needed.
     RuntimeService.Runtime = runtime;
 }
 
 export abstract class RuntimeService {
-    private static runtime;
-    public static get Runtime() {
+    private static runtime: RuntimeType = null;
+    public static get Runtime(): RuntimeType {
         return this.runtime;
     }
-    public static set Runtime(runtime) {
+    public static set Runtime(runtime: RuntimeType) {
         this.runtime = runtime;
     }
 }

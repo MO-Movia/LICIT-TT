@@ -1,7 +1,5 @@
 /* eslint-disable */
 
-import {InfoIconPlugin} from './index';
-
 import {schema, builders} from 'prosemirror-test-builder';
 import {EditorState} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
@@ -9,7 +7,7 @@ import {Schema, Node} from 'prosemirror-model';
 import {InfoIconView, CBFn} from './infoIconView';
 import { createPopUp } from '../../commands';
 import {InfoIconDialog} from './infoIconDialog';
-import {sanitizeURL} from './plugins/menu/sanitizeURL';
+import {InfoIconNodeSpec} from './infoIconNodeSpec';
 
 describe('Info Plugin Extended', () => {
   const info = {
@@ -20,14 +18,10 @@ describe('Info Plugin Extended', () => {
   };
 
   const mySchema = new Schema({
-    nodes: schema.spec.nodes,
+    nodes: schema.spec.nodes.addToEnd('infoicon', InfoIconNodeSpec),
     marks: schema.spec.marks,
   });
-  const plugin = new InfoIconPlugin();
-  const effSchema = plugin.getEffectiveSchema(mySchema);
-
-  const newInfoIconNode = effSchema.node(effSchema.nodes.infoicon, info);
-  plugin.initButtonCommands('dark');
+  const newInfoIconNode = mySchema.node(mySchema.nodes.infoicon, info);
   const {doc, p} = builders(mySchema, {p: {nodeType: 'paragraph'}});
 
   it('Infoiconview call createInfoIconTooltip', () => {
@@ -36,8 +30,7 @@ describe('Info Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newInfoIconNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);
@@ -84,8 +77,7 @@ describe('Info Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newInfoIconNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);
@@ -126,8 +118,7 @@ describe('Info Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newInfoIconNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);
@@ -168,8 +159,7 @@ describe('Info Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newInfoIconNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);
@@ -184,8 +174,10 @@ describe('Info Plugin Extended', () => {
       view,
       undefined as any
     );
-    const node = new Node();
-
+    const node = cView.node.type.create({
+      ...cView.node.attrs,
+      description: 'different',
+    });
     expect(cView.update(node)).toBe(false);
   });
   it('should return true if sameMarkup returns true', () => {
@@ -194,8 +186,7 @@ describe('Info Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newInfoIconNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);
@@ -266,8 +257,7 @@ describe('Info Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newInfoIconNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);
@@ -305,8 +295,7 @@ describe('Info Plugin Extended', () => {
 
     const state = EditorState.create({
       doc: doc(p(before, newInfoIconNode, after)),
-      schema: effSchema,
-      plugins: [plugin],
+      schema: mySchema,
     });
     const dom = document.createElement('div');
     document.body.appendChild(dom);

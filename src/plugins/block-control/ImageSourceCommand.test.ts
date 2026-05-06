@@ -5,6 +5,7 @@
 
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import type { Schema } from 'prosemirror-model';
 import {
   ImageSourceCommand,
   insertEnhancedImageFigure,
@@ -14,6 +15,7 @@ import {
   hideCursorPlaceholder,
 } from './CursorPlaceholderPlugin';
 import { createPopUp } from '../../commands';
+import type { PopUpHandle } from '../../commands';
 
 jest.mock('prosemirror-model');
 jest.mock('prosemirror-state');
@@ -23,7 +25,17 @@ jest.mock('../../commands');
 
 describe('insertEnhancedImageFigure', () => {
   let mockTr: Transaction;
-  let mockSchema: any;
+  type MockSchema = {
+    nodes: {
+      enhanced_table_figure?: { create: jest.Mock };
+      enhanced_table_figure_body?: { create: jest.Mock };
+      simple_image?: { create: jest.Mock };
+      enhanced_table_figure_capco?: { create: jest.Mock };
+      paragraph?: { createAndFill: jest.Mock };
+      text?: jest.Mock;
+    };
+  };
+  let mockSchema: MockSchema;
   const imageUrl = 'https://example.com/image.jpg';
   const altText = 'Test image';
 
@@ -71,7 +83,7 @@ describe('insertEnhancedImageFigure', () => {
     } as unknown as Transaction;
     const result = insertEnhancedImageFigure(
       mockTr,
-      mockSchema,
+      mockSchema as unknown as Schema,
       imageUrl,
       altText
     );
@@ -83,7 +95,7 @@ describe('insertEnhancedImageFigure', () => {
     delete mockSchema.nodes.enhanced_table_figure;
     const result = insertEnhancedImageFigure(
       mockTr,
-      mockSchema,
+      mockSchema as unknown as Schema,
       imageUrl,
       altText
     );
@@ -94,7 +106,7 @@ describe('insertEnhancedImageFigure', () => {
     delete mockSchema.nodes.simple_image;
     const result = insertEnhancedImageFigure(
       mockTr,
-      mockSchema,
+      mockSchema as unknown as Schema,
       imageUrl,
       altText
     );
@@ -142,7 +154,7 @@ describe('ImageSourceCommand', () => {
     });
 
     it('should return true for non-text selection', () => {
-      mockState.selection = {} as any;
+      mockState.selection = {} as unknown as EditorState['selection'];
       expect(command.isEnabled(mockState, mockView)).toBe(true);
     });
 
@@ -158,7 +170,7 @@ describe('ImageSourceCommand', () => {
 
   describe('waitForUserInput', () => {
     it('should return immediately if popup exists', async () => {
-      command._popUp = {} as any;
+      command._popUp = { close: jest.fn(), update: jest.fn() } as unknown as PopUpHandle;
       const result = await command.waitForUserInput(
         mockState,
         mockDispatch,

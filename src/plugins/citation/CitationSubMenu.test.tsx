@@ -1,6 +1,5 @@
 /* eslint-disable */
 
-import { CitationPlugin } from './CitationPlugin';
 import { schema, builders } from 'prosemirror-test-builder';
 import { EditorState } from 'prosemirror-state';
 import { DOMOutputSpec, Mark, MarkSpec, Schema } from 'prosemirror-model';
@@ -9,6 +8,7 @@ import { CitationView } from './CitationView';
 import { CitationSubMenu } from './CitationSubMenu';
 import React from 'react';
 import { CapcoService } from './Constants';
+import { CitationNodeSpec } from './CitationNodeSpec';
 
 describe('Citation Plugin', () => {
   const citation = {
@@ -81,9 +81,10 @@ describe('Citation Plugin', () => {
     marks: marks,
   });
 
-  const plugin = new CitationPlugin();
-  const effSchema = plugin.getEffectiveSchema(modSchema);
-  plugin.initButtonCommands('dark');
+  const effSchema = new Schema({
+    nodes: modSchema.spec.nodes.addToEnd('citationnote', CitationNodeSpec),
+    marks: modSchema.spec.marks,
+  });
   const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
 
   it('should render Citation Sub Menu', () => {
@@ -100,7 +101,6 @@ describe('Citation Plugin', () => {
     const state = EditorState.create({
       doc: doc(p(before, newCitationNode, after)),
       schema: effSchema,
-      plugins: [plugin],
     });
 
     const dom = document.createElement('div');

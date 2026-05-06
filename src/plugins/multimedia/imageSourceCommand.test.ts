@@ -22,8 +22,8 @@ import * as CursorPlaceholderPlugin from './CursorPlaceholderPlugin';
 
 // Mock the CursorPlaceholderPlugin
 jest.mock('./CursorPlaceholderPlugin', () => ({
-  showCursorPlaceholder: jest.fn((state) => state.tr),
-  hideCursorPlaceholder: jest.fn((state) => state.tr),
+  showCursorPlaceholder: jest.fn((state: { tr: unknown }) => state.tr),
+  hideCursorPlaceholder: jest.fn((state: { tr: unknown }) => state.tr),
 }));
 
 // Mock createPopUp

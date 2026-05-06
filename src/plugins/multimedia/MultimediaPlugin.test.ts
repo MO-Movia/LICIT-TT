@@ -24,7 +24,7 @@ import {VideoFromURLCommand} from './VideoFromURLCommand';
 import {SelectionObserver} from './ui/SelectionObserver';
 import {uuid} from './ui/uuid';
 import {CustomNodeView, EditorFocused} from './ui/CustomNodeView';
-import ImageFromURLCommand from './ImageFromURLCommand';
+import {ImageFromURLCommand} from './ImageFromURLCommand';
 import {EditorRuntime, ImageLike} from './Types';
 
 class TestPlugin extends Plugin {
@@ -146,6 +146,19 @@ describe('MultimediaPlugin', () => {
         attrs: attrs,
       })
     );
+  });
+
+  it('returns different menu labels for light and dark themes', () => {
+    const plugin = new MultimediaPlugin();
+    const lightMenu = plugin.initButtonCommands('light') as Record<string, unknown>;
+    const darkMenu = plugin.initButtonCommands('dark') as Record<string, unknown>;
+
+    const lightKey = Object.keys(lightMenu)[0];
+    const darkKey = Object.keys(darkMenu)[0];
+
+    expect(lightKey).toContain('Insert MultiMedia');
+    expect(darkKey).toContain('Insert MultiMedia');
+    expect(lightKey).not.toEqual(darkKey);
   });
 
   it('__isEnabled in VideoSourceCommand', () => {

@@ -439,9 +439,9 @@ describe('customstyledropdowncommand', () => {
   const spyhas = jest.spyOn(cusstyles, 'hasStyleRuntime').mockReturnValue(true);
   const customstyledropdowncommand = new CustomstyleDropDownCommand(props);
 
-  it('should handle getCommandGroups when hasStyleRuntime is true', async () => {
+  it('should handle getCommandGroups when hasStyleRuntime is true', () => {
     const spy = jest.spyOn(cusstyles, 'getStylesAsync').mockResolvedValue([]);
-    const commandGroups = await customstyledropdowncommand.getCommandGroups();
+    const commandGroups = customstyledropdowncommand.getCommandGroups();
     const headingCommands = commandGroups[0];
     expect(headingCommands).not.toHaveProperty('A Apply Stylefff');
     expect(headingCommands).not.toHaveProperty('A11-Rename');
@@ -871,9 +871,9 @@ describe('customstyledropdowncommand 1', () => {
   };
   jest.spyOn(cusstyles, 'hasStyleRuntime').mockReturnValue(false);
   const customstyledropdowncommand = new CustomstyleDropDownCommand(props);
-  it('should handle getCommandGroups when hasStyleRuntime is false', async () => {
+  it('should handle getCommandGroups when hasStyleRuntime is false', () => {
     jest.spyOn(cusstyles, 'getStylesAsync').mockResolvedValue([]);
-    const commandGroups = await customstyledropdowncommand.getCommandGroups();
+    const commandGroups = customstyledropdowncommand.getCommandGroups();
     const headingCommands = commandGroups[0];
     expect(headingCommands).toBeDefined();
   });

@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { EditorState } from "prosemirror-state";
+import { EditorState, Transaction } from "prosemirror-state";
 import { Transform } from "prosemirror-transform";
 import { EditorView } from "prosemirror-view";
 import { UICommand } from '../../core';
@@ -39,7 +39,7 @@ export class SentanceCaseCommand extends UICommand {
     _view: EditorView | undefined
   ): boolean => {
     const { from, to, $anchor } = state.selection;
-    let tr = state.tr;
+    let tr: Transaction = state.tr;
     let prevNode = null;
     let paragraphContent = "";
     tr = this.toLower(state, tr);
@@ -74,7 +74,7 @@ export class SentanceCaseCommand extends UICommand {
     return true;
   };
 
-  parseSelectedText(txt: string) {
+  parseSelectedText(txt: string): string {
     let retString = "";
     const regex = /\s/; // Regex to split the string on one or more whitespace characters
     const txtArray = txt.split(regex);
@@ -100,7 +100,7 @@ export class SentanceCaseCommand extends UICommand {
     }
   }
 
-  processPreviousContent(prevCont: string, currentString: string) {
+  processPreviousContent(prevCont: string, currentString: string): boolean {
     let isParagrphStart = false;
     if (prevCont && prevCont.trim().length > 0) {
       let delimeitorSepChars;
@@ -148,7 +148,7 @@ export class SentanceCaseCommand extends UICommand {
     return isParagrphStart;
   }
 
-  checkPreviousNode(str: string, currentString: string) {
+  checkPreviousNode(str: string, currentString: string): string {
     // Checking previous content so that we can identify if it is the first letter of the sentence
     if (this.processPreviousContent(str, currentString)) {
       return this.capitalizeFirstParagraphCharacter(currentString);
@@ -157,7 +157,7 @@ export class SentanceCaseCommand extends UICommand {
     }
   }
 
-  capitalizeFirstParagraphCharacter(inputString) {
+  capitalizeFirstParagraphCharacter(inputString: string): string {
     // Capitalizing the starting letter of a paragraph
     const regex = /^([^a-zA-Z]*[a-z])(.*)/;
     const matches = inputString.match(regex);
@@ -176,10 +176,11 @@ export class SentanceCaseCommand extends UICommand {
     return inputString;
   }
 
-  checkDelimeter(strs) {
+  checkDelimeter(strs: string[] | string): void {
     // Checking Delimeters to see if it is a sentence
     const regex = /[?}>)\]]/g;
-    for (const element of strs) {
+    const values = Array.isArray(strs) ? strs : [strs];
+    for (const element of values) {
       const matches = element.match(regex);
       if (matches) {
         return;
@@ -187,7 +188,7 @@ export class SentanceCaseCommand extends UICommand {
     }
   }
 
-  toLower(state: EditorState, tr) {
+  toLower(state: EditorState, tr: Transaction): Transaction {
     //  Conversion of selected text to lower case
     const { from, to } = state.selection;
     state.doc.nodesBetween(from, to, (node, pos) => {
