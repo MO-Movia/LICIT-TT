@@ -219,7 +219,9 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
   }
 
   isDocChanged(transactions: Transaction[]): boolean {
-    return transactions.some((transaction) => transaction.docChanged);
+    return transactions.some((transaction) => {
+      return transaction.docChanged && !transaction.getMeta('styleInitialLoad');
+    });
   }
 
   getObjectMetaDataFromCutObj(objectId: string, cutObjectIds: CutObjectInfo[]) {

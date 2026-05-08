@@ -140,6 +140,9 @@ export class CustomstylePlugin extends Plugin {
         const ref = { firstTime, loaded };
         if (!loaded) {
           tr = onInitAppendTransaction(ref, tr, nextState);
+          if (tr?.docChanged) {
+            tr.setMeta('styleInitialLoad', true);
+          }
         } else if (isDocChanged(transactions)) {
           tr = onUpdateAppendTransaction(
             ref,
