@@ -38,22 +38,10 @@ export function getDefaultMenuItems(handlers): FloatingMenuItem[] {
       onClick: handlers.copyRich,
     },
     {
-      id: 'copy-plain',
-      label: 'Copy Without Formatting',
-      isEnabled: handlers.enableCopy,
-      onClick: handlers.copyPlain,
-    },
-    {
       id: 'paste',
       label: 'Paste (Ctrl + V)',
       isEnabled: handlers.enablePaste,
       onClick: handlers.paste,
-    },
-    {
-      id: 'paste-plain',
-      label: 'Paste As Plain Text',
-      isEnabled: handlers.enablePaste,
-      onClick: handlers.pastePlain,
     },
     {
       id: 'paste-ref',

@@ -27,9 +27,6 @@ interface SliceModel {
   to: string;
   ids: string[];
 }
-export const KEY_COPY = makeKeyMapWithCommon('FloatingMenuPlugin', 'Mod-c');
-export const KEY_CUT = makeKeyMapWithCommon('FloatingMenuPlugin', 'Mod-x');
-export const KEY_PASTE = makeKeyMapWithCommon('FloatingMenuPlugin', 'Mod-v');
 export const KEY_PASTE_REF = makeKeyMapWithCommon('FloatingMenuPlugin', 'Mod-Alt-v');
 
 interface UrlConfig {
@@ -146,33 +143,12 @@ export class FloatingMenuPlugin extends Plugin {
     return createKeyMapPlugin([
       {
         map: {
-          [KEY_COPY.common]: (_state, _dispatch, view) =>
-            copySelectionRich(view, this),
-        },
-        name: 'CopySlicePluginKeyCommands',
-      },
-      {
-        map: {
-          [KEY_CUT.common]: (_state, _dispatch, view) =>
-            copySelectionRich(view, this),
-        },
-        name: 'CutSlicePluginKeyCommands',
-      },
-      {
-        map: {
-          [KEY_PASTE.common]: (_state, _dispatch, view) =>
-            pasteFromClipboard(view, this),
-        },
-        name: 'PasteSlicePluginKeyCommands',
-      },
-      {
-        map: {
           [KEY_PASTE_REF.common]: (_state, _dispatch, view) =>
             pasteAsReference(view, this),
         },
         name: 'PasteReferencePluginKeyCommands',
       },
-    ], 'FloutingMenu Items') as Plugin[];
+    ], 'FloatingMenu Items') as Plugin[];
   }
 
   getEffectiveSchema(schema: Schema): Schema {
@@ -272,29 +248,6 @@ export function createSliceObject(editorView: EditorView): SliceModel {
   return sliceModel;
 }
 
-export function copySelectionPlain(
-  view: EditorView,
-  plugin: FloatingMenuPlugin
-) {
-  if (!view.hasFocus()) {
-    view.focus();
-  }
-  const { from, to } = view.state.selection;
-  if (from === to) return;
-
-  const slice = view.state.doc.slice(from, to);
-  const text = slice.content.textBetween(0, slice.content.size, '\n');
-
-  navigator.clipboard
-    .writeText(text)
-    .then(() => { })
-    .catch((err) => console.error('Clipboard write failed:', err));
-  if (plugin._popUpHandle?.close) {
-    plugin._popUpHandle.close(null);
-    plugin._popUpHandle = null;
-  }
-}
-
 export async function pasteFromClipboard(
   view: EditorView,
   plugin: FloatingMenuPlugin
@@ -361,47 +314,6 @@ export async function pasteAsReference(
       plugin._popUpHandle.close(null);
       plugin._popUpHandle = null;
     }
-  }
-}
-
-export async function pasteAsPlainText(
-  view: EditorView,
-  plugin: FloatingMenuPlugin
-) {
-  try {
-    if (!view.hasFocus()) view.focus();
-
-    const text = await navigator.clipboard.readText();
-    let plainText = text;
-
-    try {
-      const parsed = JSON.parse(text);
-      const slice = Slice.fromJSON(view.state.schema, parsed);
-
-      const frag = slice.content;
-      plainText = '';
-      frag.forEach((node) => { // NOSONAR not an iterable
-        plainText += node.textContent + '\n';
-      });
-      plainText = plainText.trim();
-    } catch {
-      // Not JSON → just keep as is
-    }
-
-    const { state } = view;
-    const tr = state.tr.insertText(
-      plainText,
-      state.selection.from,
-      state.selection.to
-    );
-    view.dispatch(tr.scrollIntoView());
-  } catch (err) {
-    console.error('Plain text paste failed:', err);
-  }
-
-  if (plugin._popUpHandle?.close) {
-    plugin._popUpHandle.close(null);
-    plugin._popUpHandle = null;
   }
 }
 
@@ -554,9 +466,7 @@ export function createMenuCallbacks(
     enableCitationAndComment: () => !view.state.selection.empty,
     enableTagAndInfoicon: () => true,
     copyRich: () => copySelectionRich(view, plugin),
-    copyPlain: () => copySelectionPlain(view, plugin),
     paste: () => pasteFromClipboard(view, plugin),
-    pastePlain: () => pasteAsPlainText(view, plugin),
     pasteAsReference: () => pasteAsReference(view, plugin),
     createCitation: () => createCitationHandler(view),
     createInfoIcon: () => createInfoIconHandler(view),
