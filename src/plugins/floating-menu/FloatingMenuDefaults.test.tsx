@@ -22,9 +22,7 @@ describe('getDefaultMenuItems', () => {
       createCitation: jest.fn(),
       createInfoIcon: jest.fn(),
       copyRich: jest.fn(),
-      copyPlain: jest.fn(),
       paste: jest.fn(),
-      pastePlain: jest.fn(),
       pasteAsReference: jest.fn(),
       createSlice: jest.fn(),
       showReferences: jest.fn(),
@@ -42,9 +40,7 @@ describe('getDefaultMenuItems', () => {
       'Create Citation',
       'Create Infoicon',
       'Copy (Ctrl + C)',
-      'Copy Without Formatting',
       'Paste (Ctrl + V)',
-      'Paste As Plain Text',
       'Paste As Reference (Ctrl + Alt + V)',
       'Create Referent',
       'Insert Reference',
@@ -85,9 +81,7 @@ describe('getDefaultMenuItems', () => {
     items.find((i) => i.id === 'citation').onClick();
     items.find((i) => i.id === 'info').onClick();
     items.find((i) => i.id === 'copy').onClick();
-    items.find((i) => i.id === 'copy-plain').onClick();
     items.find((i) => i.id === 'paste').onClick();
-    items.find((i) => i.id === 'paste-plain').onClick();
     items.find((i) => i.id === 'paste-ref').onClick();
     items.find((i) => i.id === 'slice').onClick();
     items.find((i) => i.id === 'insert-ref').onClick();
@@ -97,9 +91,7 @@ describe('getDefaultMenuItems', () => {
     expect(handlers.createCitation).toHaveBeenCalled();
     expect(handlers.createInfoIcon).toHaveBeenCalled();
     expect(handlers.copyRich).toHaveBeenCalled();
-    expect(handlers.copyPlain).toHaveBeenCalled();
     expect(handlers.paste).toHaveBeenCalled();
-    expect(handlers.pastePlain).toHaveBeenCalled();
     expect(handlers.pasteAsReference).toHaveBeenCalled();
     expect(handlers.createSlice).toHaveBeenCalled();
     expect(handlers.showReferences).toHaveBeenCalled();
