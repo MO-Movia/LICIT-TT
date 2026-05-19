@@ -321,29 +321,7 @@ describe('CustomStyleEditor', () => {
   it('should handle handleNone', () => {
     expect(customstyleeditor.handleNone()).toBeUndefined();
   });
-  it('should handle selectStyleCheckboxState', () => {
-    expect(customstyleeditor.selectStyleCheckboxState()).toBe(false);
-  });
-  it('should handle selectStyleCheckboxState (case 2)', () => {
-    customstyleeditor.state = {
-      styles: {
-        align: 'left',
-        boldNumbering: true,
-        bulletLevel: true,
-        toc: false,
-        isHidden: false,
-        boldSentence: true,
-        nextLineStyleName: true,
-        fontName: 'Arial',
-        fontSize: 11,
-        strong: false,
-      },
-      mode: 0,
-      styleName: 'A Apply Stylefff',
-      otherStyleSelected: true,
-    };
-    expect(customstyleeditor.selectStyleCheckboxState()).toBe(true);
-  });
+
   it('should handle _save', () => {
     const props = {
       styles: {

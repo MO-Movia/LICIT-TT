@@ -164,11 +164,12 @@ export class EnhancedTableFigureView implements NodeView {
 
   updateNotesTrigger() {
     let notesExists = false;
-    this.node.forEach(child => {
+    for (let i = 0; i < this.node.childCount; i++) {
+      const child = this.node.child(i);
       if (child.type.name === 'enhanced_table_figure_notes') {
         notesExists = true;
       }
-    });
+    };
     this.addNotesButton.style.display =
       !notesExists && this.view.editable && (this.node.attrs.figureType === 'table' || this.node.attrs.figureType === 'figure') ? 'block' : 'none';
   }
@@ -200,7 +201,7 @@ export class EnhancedTableFigureView implements NodeView {
       editorView: this.view,
     };
     const el = document.getElementById(this._id);
-    if (!el || el.dataset.active !== 'true') {
+    if (!el || el.dataset?.active !== 'true') {
       this._inlineEditor?.close?.(undefined);
       return;
     }

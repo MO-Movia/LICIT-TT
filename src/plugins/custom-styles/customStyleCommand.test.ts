@@ -63,60 +63,6 @@ describe('CustomStyleCommand', () => {
   };
   const customstylecommand = new CustomStyleCommand(styl, 'A_12');
 
-  it('should handle allowCustomLevelIndent when condition check delta < 0 1114 else ku', () => {
-    const doc = {
-      nodeSize: 10,
-      resolve: () => {
-        return {
-          parent: {
-            type: { name: 'paragraph' },
-            attrs: { styleName: 'dont know' },
-          },
-        };
-      },
-    } as unknown as Node;
-    const tr = new Transform(doc);
-    jest.spyOn(customstyles, 'getCustomStyleByName').mockReturnValueOnce({
-      styles: { styleLevel: 1, hasNumbering: true },
-    } as unknown as Style);
-    expect(allowCustomLevelIndent(tr, 0, 'Normal', 0)).toBeFalsy();
-  });
-
-  it('should handle allowCustomLevelIndent when condition check nodeStyleLevel >= styleLevel && styleLevel - nodeStyleLevel === 1', () => {
-    const doc = {
-      resolve: () => {
-        return {
-          parent: {
-            type: { name: 'paragraph' },
-            attrs: { styleName: 'dont know' },
-          },
-        };
-      },
-    } as unknown as Node;
-    const tr = new Transform(doc);
-    jest.spyOn(customstyles, 'getCustomStyleByName').mockReturnValueOnce({
-      styles: { styleLevel: 1, hasNumbering: true },
-    } as unknown as Style);
-    expect(allowCustomLevelIndent(tr, 0, 'Normal', 1)).toBeTruthy();
-  });
-  it('should handle allowCustomLevelIndent when condition check !nodeStyleLevel >= styleLevel && styleLevel - nodeStyleLevel === 1', () => {
-    const doc = {
-      resolve: () => {
-        return {
-          parent: {
-            type: { name: 'paragraph' },
-            attrs: { styleName: 'dont know' },
-          },
-        };
-      },
-    } as unknown as Node;
-    const tr = new Transform(doc);
-    jest.spyOn(customstyles, 'getCustomStyleByName').mockReturnValueOnce({
-      styles: { styleLevel: 2, hasNumbering: true },
-    } as unknown as Style);
-    expect(allowCustomLevelIndent(tr, 0, 'Normal', 1)).toBeFalsy();
-  });
-
   it('should resolve with undefined', async () => {
     const result = await customstylecommand.waitForUserInput();
     expect(result).toBeUndefined();

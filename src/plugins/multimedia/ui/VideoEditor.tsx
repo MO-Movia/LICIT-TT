@@ -25,7 +25,7 @@ export class VideoEditor extends React.PureComponent<
   VideoEditorState
 > {
   state: VideoEditorState = {
-    ...(this.props.initialValue || {}),
+    ...this.props.initialValue,
     validValue: null,
     src: 'https://www.youtube.com/embed/',
   };
@@ -116,7 +116,7 @@ export class VideoEditor extends React.PureComponent<
         width = response.data.width;
         setValues(src, width, height, true);
       })
-      .catch((_rejected) => {
+      .catch((_error_) => {
         setValues(src, width, height, true);
       });
   };
@@ -132,7 +132,7 @@ export class VideoEditor extends React.PureComponent<
 
   _getYouTubeId = (url: string) => {
     const arr = url.split(/(vi\/|v%3D|v=|\/v\/|youtu\.be\/|\/embed\/)/);
-    return undefined !== arr[2] ? arr[2].split(/[^\w-]/i)[0] : arr[0];
+    return undefined === arr[2] ? arr[0] : arr[2].split(/[^\w-]/i)[0];
   };
 
   _onWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {

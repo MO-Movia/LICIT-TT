@@ -20,7 +20,8 @@ const SPEC = {
       return DecorationSet.empty;
     },
     apply(tr, set: DecorationSet): DecorationSet {
-      set = set.map(tr.mapping, tr.doc);
+      // ProseMirror DecorationSet.map(mapping, doc) — not Array.map
+      set = set.map(tr.mapping, tr.doc);    // NOSONAR
       const action = tr.getMeta(this);
       if (!action) {
         return set;

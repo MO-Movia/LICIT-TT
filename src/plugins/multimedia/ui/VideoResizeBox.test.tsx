@@ -245,4 +245,86 @@ describe('Video Resize Box control', () => {
     );
     expect(spy).toHaveBeenCalled();
   });
+
+  it('should throw when _syncSize runs without an element', () => {
+    videoresizeboxcontrol.props = {
+      boxID: 'boxid',
+      direction: 'right',
+      height: 10,
+      onResizeEnd: () => undefined,
+      width: 10,
+    };
+    videoresizeboxcontrol._active = true;
+    videoresizeboxcontrol._el = undefined;
+
+    expect(() => videoresizeboxcontrol._syncSize()).toThrow(
+      'Resizable element not initialized.'
+    );
+  });
+
+  it('should throw when _syncSize receives an invalid direction', () => {
+    videoresizeboxcontrol.props = {
+      boxID: 'boxid',
+      direction: 'diagonal' as ResizeHadleDirection,
+      height: 10,
+      onResizeEnd: () => undefined,
+      width: 10,
+    };
+    videoresizeboxcontrol._active = true;
+    videoresizeboxcontrol._el = document.createElement('div');
+
+    expect(() => videoresizeboxcontrol._syncSize()).toThrow(
+      "Resize function for direction 'diagonal' not found."
+    );
+  });
+
+  it('should throw when _start cannot find the resize element', () => {
+    jest.spyOn(document, 'getElementById').mockReturnValue(null);
+    videoresizeboxcontrol._active = false;
+    videoresizeboxcontrol.props = {
+      boxID: 'boxid',
+      direction: 'bottom',
+      height: 10,
+      onResizeEnd: () => undefined,
+      width: 10,
+    };
+
+    expect(() =>
+      videoresizeboxcontrol._start(
+        new MouseEvent('click', {
+          clientX: 10,
+          clientY: 10,
+        }) as unknown as React.MouseEvent
+      )
+    ).toThrow("Element with ID 'boxid' not found.");
+  });
+
+  it('should throw when _end is active but element is missing', () => {
+    videoresizeboxcontrol._active = true;
+    videoresizeboxcontrol._el = undefined;
+
+    expect(() => videoresizeboxcontrol._end()).toThrow(
+      'Resizable element not initialized.'
+    );
+  });
+
+  it('should throw when _onMouseUp is called without an active element', () => {
+    videoresizeboxcontrol.props = {
+      boxID: 'boxid',
+      direction: 'top_right',
+      height: 10,
+      onResizeEnd: () => undefined,
+      width: 10,
+    };
+    videoresizeboxcontrol._el = undefined;
+
+    expect(() =>
+      videoresizeboxcontrol._onMouseUp(
+        new MouseEvent('mouseup', {
+          clientX: 20,
+          clientY: 20,
+        })
+      )
+    ).toThrow('Resizable element not initialized.');
+  });
 });

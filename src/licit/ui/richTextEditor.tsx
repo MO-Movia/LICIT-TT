@@ -10,8 +10,6 @@ import {Editor, EditorContent} from '@tiptap/react';
 import EditorFrameset from './editorFrameset';
 import EditorToolbar from './editorToolbar';
 import Frag from './frag';
-import uuid from './uuid';
-
 import type {EditorFramesetProps} from './editorFrameset';
 import type {EditorProps} from './editor';
 import {Transaction} from 'prosemirror-state';
@@ -34,13 +32,10 @@ class RichTextEditor extends React.PureComponent<
 
   declare state: RichTextEditorState;
 
-  _id: string;
-
-  constructor(props: RichTextEditorProps, context: Record<string, unknown>) {
-    super(props, context);
-    this._id = uuid();
+  constructor(props: RichTextEditorProps) {
+    super(props);
     this.state = {
-      contentHeight: NaN,
+      contentHeight: Number.NaN,
       contentOverflowHidden: false,
       editorView: null,
     } as RichTextEditorState;

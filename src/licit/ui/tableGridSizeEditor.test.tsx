@@ -166,4 +166,63 @@ it('should handle _onMouseMove and update grid size correctly', () => {
   rafSpy.mockRestore();
 });
 
+it('should ignore mouse enter when currentTarget is not an HTMLElement', () => {
+  const closeMock = jest.fn();
+  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const addSpy = jest.spyOn(document, 'addEventListener');
+
+  instance._onMouseEnter({
+    currentTarget: {},
+    clientX: 10,
+    clientY: 10,
+  } as unknown as React.MouseEvent);
+
+  expect(addSpy).not.toHaveBeenCalledWith('mousemove', expect.any(Function), true);
+});
+
+it('should not request a frame when mouse position does not change', () => {
+  const closeMock = jest.fn();
+  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const rafSpy = jest.spyOn(global, 'requestAnimationFrame');
+
+  instance._bodyEl = null;
+  instance._mx = 25;
+  instance._my = 35;
+  instance._onMouseMove(new MouseEvent('mousemove', {
+    clientX: 25,
+    clientY: 35,
+    screenX: 5,
+    screenY: 5,
+  }));
+
+  expect(rafSpy).not.toHaveBeenCalled();
+});
+
+it('should not update state when the grid size does not change', () => {
+  const closeMock = jest.fn();
+  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const setStateSpy = jest.spyOn(instance, 'setState');
+
+  instance.state = { rows: 1, cols: 1 };
+  instance._ex = 0;
+  instance._ey = 0;
+  instance._mx = 1;
+  instance._my = 1;
+  instance._updateGridSize();
+
+  expect(setStateSpy).not.toHaveBeenCalled();
+});
+
+it('should cancel animation frame on unmount even when mouse never entered', () => {
+  const closeMock = jest.fn();
+  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const cancelSpy = jest.spyOn(global, 'cancelAnimationFrame');
+
+  instance._entered = false;
+  instance._rafID = 9;
+  instance.componentWillUnmount();
+
+  expect(cancelSpy).toHaveBeenCalledWith(9);
+});
+
 });

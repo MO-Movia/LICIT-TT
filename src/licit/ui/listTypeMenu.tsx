@@ -8,7 +8,6 @@ import { UICommand } from '../../core';
 import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
-import uuid from './uuid';
 
 // [FS] IRAD-1039 2020-09-24
 // UI to show the list buttons
@@ -16,21 +15,13 @@ import uuid from './uuid';
 class ListTypeMenu extends React.PureComponent {
   _activeCommand: UICommand = null;
   declare props: {
-    className?: string;
     commandGroups: Array<UICommand>;
-    disabled?: boolean;
     dispatch: (tr: Transform) => void;
     editorState: EditorState;
     editorView: EditorView;
     onCommand;
-    icon?: string | React.ReactElement;
-    label?: string | React.ReactElement;
-    title?: string;
     theme?: string;
   };
-
-  _menu = null;
-  _id = uuid();
 
   state = {
     expanded: false,
@@ -42,8 +33,8 @@ class ListTypeMenu extends React.PureComponent {
     const theme = this.props.theme;
     const className = 'buttonsize ' + theme;
     const cont_classname = 'ol-container ' + theme;
-    commandGroups.forEach((group, _ii) => {
-      Object.keys(group).forEach((label) => {
+    for (const group of commandGroups) {
+      for (const label of Object.keys(group)) {
         const command = group[label];
         children.push(
           <button
@@ -56,8 +47,8 @@ class ListTypeMenu extends React.PureComponent {
             {command.label}
           </button>
         );
-      });
-    });
+      };
+    };
     return <div className={cont_classname}>{children}</div>;
   }
 

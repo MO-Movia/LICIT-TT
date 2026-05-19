@@ -12,16 +12,11 @@ const cached: Record<string, React.ReactElement> = {};
 const CSS_CDN_URL = '//fonts.googleapis.com/icon?family=Material+Icons';
 const CSS_FONT = 'Material Icons';
 
-void (async function () {
-  // Inject CSS Fonts reuqired for toolbar icons.
-  const fontSupported = await canUseCSSFont(CSS_FONT);
-  if (!fontSupported) {
-    console.warn('Add CSS from ', CSS_CDN_URL);
-    // [FS] IRAD-1061 2020-09-19
-    // Now loaded locally, so that it work in closed network as well.
-    //injectStyleSheet(CSS_CDN_URL);
-  }
-})();
+const fontSupported = await canUseCSSFont(CSS_FONT);
+
+if (!fontSupported) {
+  console.warn('Add CSS from ', CSS_CDN_URL);
+}
 
 export class SuperscriptIcon extends React.PureComponent {
   render(): React.ReactElement {

@@ -155,8 +155,7 @@ function getMarkContent(type, schema, nodeAttrs, toDOM) {
 function getRequiredMarks(marks, markName, schema) {
   const mark = getMarkContent(markName, schema, getMarkAttrs, toMarkDOM);
   if (mark) {
-    marks.push(mark);
-    marks.push(schema[SPEC]['marks'][markName]);
+    marks.push(mark, schema[SPEC]['marks'][markName]);
   }
 }
 export function createMarkAttributes(mark, existingAttr) {

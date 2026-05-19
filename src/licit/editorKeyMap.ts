@@ -56,10 +56,9 @@ export const ALL_KEYS = [KEY_SPLIT_LIST_ITEM, KEY_TOGGLE_BOLD, KEY_TOGGLE_ITALIC
 
  
 export function findKeymapByDescription(description: string): KeyMapDescription {
-  const matches = ALL_KEYS.filter((keymap) => {
+  return ALL_KEYS.find((keymap) => {
     return keymap.description.toUpperCase() === description.toUpperCase();
   });
-  return matches[0];
 }
 
 export function findShortcutByDescription(description: string): string {

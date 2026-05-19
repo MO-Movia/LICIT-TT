@@ -17,9 +17,10 @@ interface FloatingMenuProps {
 export class FloatingMenu extends React.PureComponent<FloatingMenuProps> {
   render(): React.ReactNode {
     const { context, items, isReadonly } = this.props;
-    const readOnlyArray =['comment','tag','copy','copy-plain','slice']
+    const readOnlySet = new Set(['comment','tag','copy','copy-plain','slice']);
+
     const visibleItems = isReadonly
-      ? items.filter(item => readOnlyArray.includes(item.id))
+      ? items.filter(item => readOnlySet.has(item.id))
       : items;
 
     return (

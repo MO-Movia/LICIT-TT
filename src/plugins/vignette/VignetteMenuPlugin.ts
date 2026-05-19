@@ -35,14 +35,14 @@ export class VignetteView {
   }
 
   setCustomMenu(editorView: EditorView) {
-    editorView['pluginViews'].forEach((pluginView) => {
+    for (const pluginView of editorView['pluginViews']) {
       if (
         // 'TableCellTooltipView' has property _cellElement
         Object.hasOwn(pluginView, '_menu')
       ) {
         pluginView['_menu'] = this.getMenu.bind(this);
       }
-    });
+    };
   }
 
   setCustomTableNodeViewUpdate(editorView: EditorView) {
@@ -120,14 +120,14 @@ export class VignetteView {
   ): Array<{[key: string]: UICommand}> {
     const vignette = VignetteView.isVignette(state, actionNode);
 
-    cmdGrps.forEach((cmdGrp) => {
-      Object.entries(cmdGrp).forEach((entry) => {
+    for (const cmdGrp of cmdGrps) {
+      for (const entry of Object.entries(cmdGrp)) {
         entry[1].isEnabled = this.isEnabledEx.bind(
           entry[1],
           entry[1].isEnabled
         );
-      });
-    });
+      };
+    };
     return vignette ? VIGNETTE_COMMANDS_GROUP : cmdGrps;
   }
 

@@ -232,9 +232,9 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     decoration: string
   ) {
     style.textDecoration =
-      undefined !== style.textDecoration
-        ? `${style.textDecoration} ${decoration}`
-        : decoration;
+      undefined === style.textDecoration
+        ? decoration
+        : `${style.textDecoration} ${decoration}`;
   }
 
   applyTextDecorationPreviewStyle(style: React.CSSProperties) {
@@ -247,22 +247,31 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
   }
 
   getPreviewIndent() {
-    if (!this.state.styles.isLevelbased) {
-      if (
-        typeof this.state.styles.indent === 'string' ||
-        typeof this.state.styles.indent === 'number'
-      ) {
-        return `${parseInt(`${this.state.styles.indent}`, 10) * 2}px`;
+    const { styles } = this.state;
+
+    if (!styles.isLevelbased) {
+      const { indent } = styles;
+
+      if (typeof indent === 'number') {
+        return `${indent * 2}px`;
       }
+
+      if (typeof indent === 'string') {
+        const parsed = Number.parseInt(indent, 10);
+        return Number.isNaN(parsed) ? null : `${parsed * 2}px`;
+      }
+
       return null;
     }
 
     const levelValue = document?.getElementById('levelValue');
+
     if (
-      levelValue instanceof window.HTMLSelectElement &&
+      levelValue instanceof globalThis.HTMLSelectElement &&
       levelValue.value
     ) {
-      return `${parseInt(levelValue.value) * 2}px`;
+      const parsed = Number.parseInt(levelValue.value, 10);
+      return Number.isNaN(parsed) ? null : `${parsed * 2}px`;
     }
 
     return null;
@@ -277,7 +286,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
 
   clearElementChildren(element: HTMLElement) {
     while (element.firstChild) {
-      element.removeChild(element.firstChild);
+      element.firstChild.remove();
     }
   }
 
@@ -307,9 +316,9 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     const fragment = this.createBoldPartialFragment();
     this.clearElementChildren(sampleDiv);
     const newContentContainer = document.createElement('div');
-    fragment.childNodes.forEach((child) => {
+    for (const child of fragment.childNodes) {
       newContentContainer.appendChild(child.cloneNode(true));
-    });
+    };
     sampleDiv.appendChild(newContentContainer);
     style.fontWeight = 'normal';
     return sampleDiv.innerText;
@@ -384,7 +393,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
   // get the numbering corresponding to the level
   getNumberingLevel(level: string | number, prefixValue: string | number) {
     let levelStyle = '';
-    for (let i = 0; i < parseInt(`${level}`); i++) {
+    for (let i = 0; i < Number.parseInt(`${level}`); i++) {
       if (i === 0 && prefixValue) {
         levelStyle = levelStyle + prefixValue + '1.';
       } else {
@@ -555,7 +564,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
         hiddenDiv.style.display = 'block';
       }
       const selectedStyle = document.getElementById('nextStyleValue');
-      if (selectedStyle instanceof window.HTMLSelectElement) {
+      if (selectedStyle instanceof globalThis.window.HTMLSelectElement) {
         this.setState((prevState) => ({
           otherStyleSelected: true,
           styles: {
@@ -836,16 +845,6 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
   }
 
   // [FS] IRAD-1201 2021-02-17
-  // to check if the "select style" option selected by user
-  selectStyleCheckboxState() {
-    let chceked = false;
-    if (this.state.styles.nextLineStyleName) {
-      chceked =
-        this.state.styles.nextLineStyleName !== RESERVED_STYLE_NONE &&
-        this.state.styles.nextLineStyleName !== this.state.styleName;
-    }
-    return chceked;
-  }
 
   componentDidMount() {
     const acc = document.getElementsByClassName('molsp-licit-accordion');
@@ -2215,7 +2214,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
 
       display = 'block';
       const selectedStyle = document.getElementById('nextStyleValue');
-      if (selectedStyle instanceof window.HTMLSelectElement) {
+      if (selectedStyle instanceof globalThis.window.HTMLSelectElement) {
         selectedStyle.value = nextLineStyleName;
       }
     } else {

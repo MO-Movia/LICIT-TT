@@ -68,7 +68,7 @@ type LooseView = {
   state?: EditorState;
   input?: { lastKeyCode?: number };
 };
-
+type CSView = CustomStyleView | LooseView | null;
 let slice1: Slice | null = null;
 
 function getSelectionCursor(
@@ -202,7 +202,7 @@ export function onUpdateAppendTransaction(
   tr: LooseTr,
   nextState: LooseState,
   prevState: LooseState,
-  csview: CustomStyleView | LooseView | null,
+  csview: CSView,
   transactions: readonly Transaction[],
   slice1: SliceLike
 ): LooseTr {
@@ -234,7 +234,7 @@ function handleUpdateKeyStyling(
   prevState: LooseState,
   nextState: LooseState,
   tr: LooseTr,
-  csview: CustomStyleView | LooseView | null
+  csview: CSView
 ): LooseTr {
   if (!csview) {
     return tr;
@@ -347,7 +347,7 @@ function handlePasteUpdateStyling(
   slice1: SliceLike,
   prevState: LooseState,
   nextState: LooseState,
-  csview: CustomStyleView | LooseView | null,
+  csview: CSView,
   tr: LooseTr
 ): LooseTr {
   if (!isPaste) {
@@ -380,7 +380,7 @@ function applyMinimalPasteStyling(
   slice1: SliceLike,
   prevState: LooseState,
   nextState: LooseState,
-  csview: CustomStyleView | LooseView,
+  csview: CSView,
   tr: LooseTr
 ): LooseTr {
   // Only set styleName attributes without calling expensive style functions
@@ -426,7 +426,7 @@ function optimizedPasteHandler(
   slice1: SliceLike,
   prevState: LooseState,
   nextState: LooseState,
-  csview: CustomStyleView | LooseView,
+  csview: CSView,
   tr: LooseTr
 ): LooseTr {
   const demoPos = prevState.selection.from;
@@ -466,16 +466,14 @@ function optimizedPasteHandler(
     let styleName: string;
     if (hasParentAttrs) {
       styleName = parentNode.attrs.styleName ?? 'Normal';
+    } else if (currentNode?.type?.name === 'table') {
+      styleName = sliceNode.attrs.styleName ?? 'Normal';
     } else {
-      if (currentNode?.type?.name === 'table') {
-        styleName = sliceNode.attrs.styleName ?? 'Normal';
-      } else {
-        styleName =
-          null === sliceNode?.attrs?.styleName
-            ? targetNode?.attrs?.styleName
-            : sliceNode?.attrs?.styleName;
-        styleName = styleName ?? RESERVED_STYLE_NONE;
-      }
+      styleName =
+        null === sliceNode?.attrs?.styleName
+          ? targetNode?.attrs?.styleName
+          : sliceNode?.attrs?.styleName;
+      styleName = styleName ?? RESERVED_STYLE_NONE;
     }
 
     nodeInfos.push({
@@ -495,32 +493,32 @@ function optimizedPasteHandler(
   });
 
   // STEP 2: Apply all setNodeMarkup calls first (these are fast)
-  nodeInfos.forEach((info) => {
+  for (const info of nodeInfos) {
     if (info.needsMarkup) {
       const newattrs = { ...info.node.attrs, styleName: info.styleName };
       tr = tr.setNodeMarkup(info.pos, undefined, newattrs);
     }
-  });
+  };
 
   // STEP 3: Group nodes by style to reduce applyLatestStyle/applyStyleToEachNode calls
   const styleGroups = new Map<string, SliceNodeInfo[]>();
-  nodeInfos.forEach((info) => {
+  for (const info of nodeInfos) {
     const key = `${info.styleName}-${info.hasParentAttrs}`;
     if (!styleGroups.has(key)) {
       styleGroups.set(key, []);
     }
     styleGroups.get(key).push(info);
-  });
+  };
 
   // STEP 4: Apply styles once per group instead of per node
   const opt = 1;
-  styleGroups.forEach((infos) => {
+  for (const infos of styleGroups.values()) {
     const info = infos[0];
 
     if (info.hasParentAttrs) {
       // Apply to all nodes in this group at once
       const styleProp = getCustomStyleByName(info.styleName);
-      infos.forEach((nodeInfo) => {
+      for (const nodeInfo of infos) {
         tr = applyStyleToEachNode(
           nextState as EditorState,
           nodeInfo.pos,
@@ -529,10 +527,10 @@ function optimizedPasteHandler(
           styleProp,
           info.styleName
         ) as Transaction;
-      });
+      };
     } else {
       // Apply to each node individually (but at least they're grouped)
-      infos.forEach((nodeInfo) => {
+      for (const nodeInfo of infos) {
         tr = applyLatestStyle(
           info.styleName ?? '',
           nextState as EditorState,
@@ -543,9 +541,9 @@ function optimizedPasteHandler(
           null,
           opt
         ) as Transaction;
-      });
+      };
     }
-  });
+  };
 
   return tr;
 }
@@ -559,15 +557,23 @@ function forEachSliceNode(
     return;
   }
   if (typeof content.forEach === 'function') {
-    content.forEach(callback);
+    const size = content.childCount;
+    for (let i = 0; i < size; i++) {
+      const node = content.child(i);
+      callback(node, i);
+    }
     return;
   }
   if (Array.isArray(content?.content)) {
-    content.content.forEach(callback);
+    for (const [index, item] of content.content.entries()) {
+      callback(item, index);
+    }
     return;
   }
   if (Array.isArray(content)) {
-    (content as Node[]).forEach(callback);
+    for (const [index, item] of (content as Node[]).entries()) {
+      callback(item, index);
+    }
   }
 }
 
@@ -697,9 +703,7 @@ export function applyStyleForEmptyParagraph(
       : nextState.selection?.$from.depth
   );
   const endPos = nextState.selection?.$to?.end();
-  if (null === tr) {
-    tr = nextState.tr;
-  }
+  tr ??= nextState.tr;
 
   const node = nextState.tr?.doc?.nodeAt(startPos);
   const style = getCustomStyleByName(node?.attrs?.styleName);
@@ -731,7 +735,7 @@ export function applyStyleForNextParagraph(
   prevState: LooseState,
   nextState: LooseState,
   tr: LooseTr,
-  view: CustomStyleView | LooseView | null
+  view: CSView
 ): LooseTr {
   if (!tr) {
     tr = nextState.tr;
@@ -826,15 +830,15 @@ function addStoredMarksForNextParagraph(
   const marks = getMarkByStyleName(styleName, schema);
   nextNode.descendants((child) => {
     if (child.type.name === 'text') {
-      marks.forEach((mark) => {
+      for (const mark of marks) {
         tr = tr.addStoredMark(mark);
-      });
+      };
     }
   });
   if (nextNode.content.size === 0) {
-    marks.forEach((mark) => {
+    for (const mark of marks) {
       tr = tr.addStoredMark(mark);
-    });
+    };
   }
   return tr;
 }
@@ -941,7 +945,7 @@ function resetNodeAttrs(
 function isNewParagraph(
   prevState: LooseState,
   nextState: LooseState,
-  view: CustomStyleView | LooseView
+  view: CSView
 ): boolean {
   let bOk = false;
   if (
@@ -1016,19 +1020,21 @@ export function applyHangingIndentTransform(
   let counter = 0;
   let emptyChild: Node | null = null;
   // Scan once for spacers and existing hanging-indents
-  node.content.forEach((child) => {
+  for (let i = 0; i < node.content.childCount; i++) {
+  const child = node.content.child(i);
     if (child.marks.some((m) => m?.type.name === 'spacer')) {
       foundSpacer = true;
     }
     if (child.marks.some((m) => m?.type.name === 'mark-hanging-indent')) {
       foundHangingIndent = !isPaste;
     }
-  });
+  };
 
   // Skip if no spacer or already has hanging-indent
   if (!foundSpacer || foundHangingIndent) return tr;
 
-  node.content.forEach((child) => {
+for (let i = 0; i < node.content.childCount; i++) {
+  const child = node.content.child(i);
     let _node = child;
     counter++;
     // Remove the *first* spacer-marked text node
@@ -1036,7 +1042,7 @@ export function applyHangingIndentTransform(
       spacerRemoved = true;
       if (counter === 1) isParagraphStartsWithTab = true;
       emptyChild = child;
-      return;
+      continue;
     }
 
     // Remove existing spacer marks
@@ -1061,7 +1067,7 @@ export function applyHangingIndentTransform(
     // Ensure hangingIndent is the *outermost* mark
 
     newContent.push(_node);
-  });
+  };
   if (isParagraphStartsWithTab && newContent.length === 0) {
     const existingMarks = emptyChild?.marks.filter(
       (m) => m.type.name !== 'spacer'

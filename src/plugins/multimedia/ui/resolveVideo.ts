@@ -4,7 +4,7 @@
  */
 
 import {isOffline} from './isOffline';
-import url from 'url';
+import url from 'node:url';
 import {VideoEditorState} from './VideoEditor';
 
 export type VideoResult = {

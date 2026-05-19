@@ -15,49 +15,60 @@ import {
 export class CustomStyleSubMenu extends React.PureComponent<
   {
     command: UICommand;
-    theme?:string;
+    theme?: string;
     disabled?: boolean;
     close: (value: unknown) => void;
   },
   unknown
 > {
-  render(): React.ReactElement<unknown> {
-    const { command,theme } = this.props;
-    const showmenu = RESERVED_STYLE_NONE != (command as CustomStyleCommand)._customStyleName;
+  render(): React.ReactElement {
+    const { command, theme } = this.props;
+    const styleName = (command as CustomStyleCommand)._customStyleName;
+    const showMenu = styleName !== RESERVED_STYLE_NONE;
+
     const className = 'molsp-dropdown-content ' + theme;
     const divClassName = cx(className, {
-      'div-height-large': showmenu,
-      'div-height-small': !showmenu,
+      'div-height-large': showMenu,
+      'div-height-small': !showMenu,
     });
 
     return (
-      <div className={divClassName} data-cy="cyStyleEditDropdown" id="mo-submenu">
-        <a
+      <div
+        className={divClassName}
+        data-cy="cyStyleEditDropdown"
+        id="mo-submenu"
+      >
+        <button
+          type="button"
           onClick={() => this.onButtonClick({ type: 'modify', command })}
         >
           Modify Style..
-        </a>
-        {RESERVED_STYLE_NONE != (command as CustomStyleCommand)._customStyleName && (
+        </button>
+
+        {showMenu && (
           <>
-            <a
+            <button
+              type="button"
               onClick={() => this.onButtonClick({ type: 'rename', command })}
             >
               Rename Style..
-            </a>
-            <a
+            </button>
+
+            <button
+              type="button"
               data-cy="cyStyleEditReset"
               onClick={() => this.onButtonClick({ type: 'remove', command })}
             >
               Reset Style to Normal..
-            </a>
+            </button>
           </>
         )}
       </div>
     );
   }
 
-  //handles the option button click, close the popup with selected values
-  onButtonClick(val) {
+  // handles the option button click, close the popup with selected values
+  onButtonClick = (val: unknown) => {
     this.props.close(val);
-  }
+  };
 }

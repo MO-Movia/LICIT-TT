@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {ImageUploadPlaceholderPlugin, customEditorView, findImageUploadPlaceholder, uploadImageFiles } from './ImageUploadPlaceholderPlugin';
 import { Schema } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';

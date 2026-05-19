@@ -22,8 +22,4 @@ export class AlertInfo extends React.PureComponent<{
       </div>
     );
   }
-
-  _cancel = (): void => {
-    this.props.close();
-  };
 }

@@ -56,7 +56,7 @@ const ResizeDirection = {
 };
 type ImageResizwBoxProps = {
   boxID: string;
-  config;
+  config; //NOSONAR
   direction: string;
   height: number;
   onResizeEnd: (w: number, height: number) => void;
@@ -90,7 +90,19 @@ export class ImageResizeBoxControl extends React.PureComponent {
       [direction]: true,
     });
 
-    return <span className={className} onMouseDown={this._onMouseDown} />;
+    return (
+      <span
+        className={className}
+        onMouseDown={this._onMouseDown}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            this._onMouseDown(e as unknown as React.MouseEvent);
+          }
+        }}
+      />
+    );
   }
 
   _syncSize = (): void => {

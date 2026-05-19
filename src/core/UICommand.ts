@@ -22,7 +22,7 @@ export const EventType = {
 export abstract class UICommand {
   static readonly EventType = EventType;
    
-  static theme: string;
+  static theme: string; //NOSONAR
 
   protected _editor: Editor | null = null;
   // Getter for the editor instance

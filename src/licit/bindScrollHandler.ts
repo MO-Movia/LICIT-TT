@@ -42,7 +42,7 @@ export default function bindScrollHandler(
         el?.removeEventListener('scroll', onScroll, false);
       }
       onScroll = null;
-      if (rid) window.cancelAnimationFrame(rid);
+      if (rid) globalThis.window.cancelAnimationFrame(rid);
       rid = 0;
     },
   };

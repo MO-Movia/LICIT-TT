@@ -868,9 +868,14 @@ function executeStyleCommand(
     return tr;
   }
 
-  const returnVal: unknown = isTableColumnCell
-    ? handler.call(element, state, tr, startPos, endPos)
-    : handler.call(element, state, tr, startPos, endPos);
+  const returnVal: unknown = handler.call(
+    element,
+    state,
+    tr,
+    startPos,
+    endPos
+  );
+
   return typeof returnVal === 'boolean'
     ? tr
     : (returnVal as Transaction | Transform);
@@ -1083,7 +1088,7 @@ function getLastHierarchyLevel(nodeArray: NodeWithPos[]): number | null {
   }
 
   return Number(
-    getStyleLevel(nodeArray[nodeArray.length - 1].node.attrs.styleName)
+    getStyleLevel(nodeArray.at(-1).node.attrs.styleName)
   );
 }
 
@@ -1138,7 +1143,7 @@ function evaluateNextHierarchy(
     const levelDiff = styleLevel - nextLevel;
 
     if (styleLevel > 1 && levelDiff >= 0) {
-      const previousNode = nodesBeforeSelection[nodesBeforeSelection.length - 1];
+      const previousNode = nodesBeforeSelection.at(-1);
       if (
         previousNode &&
         previousNode.node.attrs.styleName !== RESERVED_STYLE_NONE
@@ -1192,21 +1197,31 @@ function scanIndentBefore(
   startPos: number,
   styleLevel: number
 ): boolean {
-  for (let index = startPos; index >= 0; index--) {
+  let index = startPos;
+
+  while (index >= 0) {
     const node = getResolvedParentNode(tr, index);
+
     if (!node) {
+      index--;
       continue;
     }
+
     if (shouldSkipIndentNode(node)) {
-      index = index - node.nodeSize || 0;
+      index -= node.nodeSize || 0;
       continue;
     }
 
     const nodeStyleLevel = Number(getStyleLevel(node.attrs.styleName));
-    if (nodeStyleLevel >= styleLevel || styleLevel - nodeStyleLevel === 1) {
+
+    if (
+      nodeStyleLevel >= styleLevel ||
+      styleLevel - nodeStyleLevel === 1
+    ) {
       return true;
     }
-    index = index - node.nodeSize || 0;
+
+    index -= node.nodeSize || 0;
   }
 
   return false;
@@ -1217,21 +1232,28 @@ function scanIndentAfter(
   startPos: number,
   styleLevel: number
 ): boolean {
-  for (let index = startPos; index < tr.doc.nodeSize - 2; index++) {
+  let index = startPos;
+
+  while (index < tr.doc.nodeSize - 2) {
     const node = getResolvedParentNode(tr, index);
+
     if (!node) {
+      index++;
       continue;
     }
+
     if (shouldSkipIndentNode(node)) {
-      index = index + node.nodeSize || 0;
+      index += node.nodeSize || 0;
       continue;
     }
 
     const nodeStyleLevel = Number(getStyleLevel(node.attrs.styleName));
+
     if (nodeStyleLevel >= styleLevel) {
       return true;
     }
-    index = index + node.nodeSize || 0;
+
+    index += node.nodeSize || 0;
   }
 
   return false;
@@ -1440,7 +1462,7 @@ export function getStyleLevel(styleName: string) {
     } else if (styleName.includes(RESERVED_STYLE_NONE_NUMBERING)) {
       const indices = styleName.split(RESERVED_STYLE_NONE_NUMBERING);
       if (indices && 2 === indices.length) {
-        styleLevel = parseInt(indices[1]);
+        styleLevel = Number.parseInt(indices[1], 10);
       }
     }
   }
@@ -1509,9 +1531,10 @@ export function removeAllMarksExceptLinkForTableColumnCell(
   }
   let offset = pos + 1;
   const tasks = [];
-  node.forEach((child) => {
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
     if (child.isText && child.marks?.length > 0) {
-      child.marks.forEach((mark) => {
+      for (const mark of child.marks) {
         if (
           !mark.attrs[ATTR_OVERRIDDEN] &&
           'link' !== mark.type.name &&
@@ -1523,10 +1546,10 @@ export function removeAllMarksExceptLinkForTableColumnCell(
             mark,
           });
         }
-      });
+      };
     }
     offset += child.nodeSize;
-  });
+  };
 
   // });
   return handleRemoveMarks(tr, tasks);
@@ -1545,7 +1568,7 @@ export function removeAllMarksExceptLink(
       return;
     }
 
-    node.marks.forEach((mark) => {
+    for (const mark of node.marks) {
       if (
         !mark.attrs[ATTR_OVERRIDDEN] &&
         'link' !== mark.type.name &&
@@ -1559,19 +1582,19 @@ export function removeAllMarksExceptLink(
           mark,
         });
       }
-    });
+    };
   });
   return handleRemoveMarks(tr, tasks);
 }
 
 export function handleRemoveMarks(tr: Transform, tasks) {
-  tasks.forEach((job) => {
+  for (const job of tasks) {
     const { mark } = job;
     if (!mark.attrs[ATTR_OVERRIDDEN]) {
       const to = job.pos + job.node?.nodeSize;
       tr = tr.removeMark(job.pos, to, mark.type);
     }
-  });
+  };
   return tr;
 }
 
@@ -1629,7 +1652,7 @@ export function applyStyleToEachNode(
 ): Transaction | Transform {
   const way = 0;
   if (positions.length > 0) {
-    positions.forEach((pos) => {
+    for (const pos of positions) {
       const node = tr.doc.nodeAt(pos);
       findParagraphsInNode(node, pos, (paraNode, paraPos) => {
         if (
@@ -1647,7 +1670,7 @@ export function applyStyleToEachNode(
           );
         }
       });
-    });
+    };
   } else {
     tr.doc.nodesBetween(from, to, (node, startPos) => {
       if (node.type.name === 'paragraph') {
@@ -1691,10 +1714,10 @@ function getSelectionBounds(selection: Selection): { from: number; to: number } 
   }
 
   return {
-    from: selection.$from.before(
+    from: selection?.$from.before(
       selection.$from.depth === 0 ? 1 : selection.$from.depth
     ),
-    to: selection.$to?.end(),
+    to: selection?.$to?.end(),
   };
 }
 
@@ -1850,9 +1873,7 @@ export function getNode(
       node.type.name === 'paragraph' ||
       node.type.name === 'enhanced_table_figure_notes'
     ) {
-      if (null == selectedNode) {
-        selectedNode = node;
-      }
+      selectedNode ??= node;
       selectedNodes.push({ pos: startPos, node });
     }
   });

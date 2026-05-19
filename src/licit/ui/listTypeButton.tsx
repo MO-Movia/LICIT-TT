@@ -17,9 +17,9 @@ type ListTypeButtonType = {
   className?: string;
   commandGroups: Array<UICommand>;
   disabled?: boolean;
-  dispatch: (tr: Transform) => void;
-  editorState: EditorState;
-  editorView: EditorView;
+  dispatch: (tr: Transform) => void; //NOSONAR
+  editorState: EditorState; //NOSONAR
+  editorView: EditorView; //NOSONAR
   icon?: string | React.ReactElement;
   label?: string | React.ReactElement;
   title?: string;

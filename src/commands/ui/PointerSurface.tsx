@@ -11,7 +11,7 @@ import {EditorView} from 'prosemirror-view';
 import { UICommand } from '../../core';
 
 export type PointerSurfaceProps = {
-  active?: boolean;
+  active?: boolean; //NOSONAR
   children?;
   className?: string;
   disabled?: boolean;
@@ -22,7 +22,7 @@ export type PointerSurfaceProps = {
   title?: string;
   // value?: any;
   value?: string | number | Record<string, unknown> | EditorView | UICommand;
-  hasChild?: boolean;
+  hasChild?: boolean; //NOSONAR
 };
 
 export class PointerSurface extends React.PureComponent {

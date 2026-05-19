@@ -8,12 +8,9 @@ import {Node} from 'prosemirror-model';
 import {Decoration} from 'prosemirror-view';
 import {NodeSelection} from 'prosemirror-state';
 import React from 'react';
-import ReactDOM from 'react-dom';
-
 import {CustomNodeView} from './CustomNodeView';
 import {Icon} from './Icon';
 import {ImageResizeBox, MIN_SIZE} from './ImageResizeBox';
-
 import {
   createPopUp,
   atAnchorBottomCenter,
@@ -457,21 +454,18 @@ export class ImageViewBody extends React.PureComponent<
     editorView.dispatch(tr);
   };
 
-  _onBodyRef = (ref?: React.ReactInstance): void => {
+  _bodyEl: HTMLElement | null = null;
+  _onBodyRef = (ref?: HTMLElement): void => {
     if (ref) {
       this._body = ref;
-      // Mounting
-      const el = ReactDOM.findDOMNode(ref);
-      if (el instanceof HTMLElement) {
-        observe(el, this._onBodyResize);
-      }
+      this._bodyEl = ref;
+      observe(ref, this._onBodyResize);
     } else {
-      // Unmounting.
-      const el = this._body && ReactDOM.findDOMNode(this._body);
-      if (el instanceof HTMLElement) {
-        unobserve(el);
+      if (this._bodyEl) {
+        unobserve(this._bodyEl);
       }
       this._body = null;
+      this._bodyEl = null;
     }
   };
 
@@ -480,8 +474,8 @@ export class ImageViewBody extends React.PureComponent<
     if (_info.contentRect) {
       mActualWidth = _info.contentRect.width;
     }
-    const width = this._body
-      ? getMaxResizeWidth(ReactDOM.findDOMNode(this._body))
+    const width = this._bodyEl
+      ? getMaxResizeWidth(this._bodyEl)
       : MAX_SIZE;
 
     this.setState({

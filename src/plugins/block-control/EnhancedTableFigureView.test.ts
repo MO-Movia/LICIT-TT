@@ -13,7 +13,16 @@ jest.mock('prosemirror-view');
 jest.mock('prosemirror-state');
 jest.mock('./EnhancedTableCommands');
 jest.mock('../../commands');
-jest.mock('./ui/ImageInlineEditor');
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+jest.mock('./ui/ImageInlineEditor', () => ({
+  __esModule: true,
+  ImageInlineEditor: jest.fn(() => null),
+}));
 
 describe('EnhancedTableFigureView', () => {
   let mockNode: ProseMirrorNode;

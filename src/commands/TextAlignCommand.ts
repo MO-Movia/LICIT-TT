@@ -18,10 +18,6 @@ type TextAlignTask = {
   nodeType: NodeType;
 };
 
-function isNodeType(nodeType: NodeType | null | undefined): nodeType is NodeType {
-  return Boolean(nodeType);
-}
-
 function getAllowedTextAlignNodeTypes(schema: Schema): Set<NodeType> {
   const { nodes } = schema;
   const blockquote = nodes[BLOCKQUOTE];
@@ -30,7 +26,9 @@ function getAllowedTextAlignNodeTypes(schema: Schema): Set<NodeType> {
   const paragraph = nodes[PARAGRAPH];
 
   return new Set(
-    [blockquote, heading, listItem, paragraph].filter(isNodeType)
+    [blockquote, heading, listItem, paragraph].filter(
+      (n): n is NodeType => n !== null && n !== undefined
+    )
   );
 }
 

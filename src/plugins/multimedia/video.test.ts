@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {createEditor, doc, p} from 'jest-prosemirror';
 import {EditorState, Transaction} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';

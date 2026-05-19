@@ -22,8 +22,9 @@ const SPEC = {
     },
 
     apply(tr, set) {
+      const plugin = this;
       set = set.map(tr.mapping, tr.doc);
-      const action = tr.getMeta(this);
+      const action = tr.getMeta(plugin);
 
       if (!action) {
         return set as DecorationSet;
@@ -60,10 +61,9 @@ const SPEC = {
 class SelectionPlaceholderPlugin extends Plugin {
   constructor() {
     super(SPEC);
-    if (singletonInstance) {
-      return singletonInstance as SelectionPlaceholderPlugin;
+    if (!singletonInstance) {
+      singletonInstance = this as SelectionPlaceholderPlugin;
     }
-    singletonInstance = this as SelectionPlaceholderPlugin;
   }
 }
 

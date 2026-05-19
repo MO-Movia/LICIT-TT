@@ -21,8 +21,9 @@ export const SPEC = {
       return DecorationSet.empty;
     },
     apply(tr, set) {
+      const plugin = this;
       set = set.map(tr.mapping, tr.doc);
-      const action = tr.getMeta(this);
+      const action = tr.getMeta(plugin);
       if (!action) {
         return set as DecorationSet;
       }
@@ -50,12 +51,16 @@ export const SPEC = {
 };
 
 class CursorPlaceholderPlugin extends Plugin {
-  constructor() {
+   constructor() {
     super(SPEC);
-    if (singletonInstance) {
-      return singletonInstance as CursorPlaceholderPlugin;
+    singletonInstance = this;
+  }
+
+  static getInstance(): CursorPlaceholderPlugin {
+    if (!singletonInstance) {
+      singletonInstance = new CursorPlaceholderPlugin();
     }
-    singletonInstance = this as CursorPlaceholderPlugin;
+    return singletonInstance;
   }
 }
 

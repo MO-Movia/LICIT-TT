@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import url from 'url';
+import url from 'node:url';
 
 import {isOffline} from './isOffline';
 

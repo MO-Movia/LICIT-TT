@@ -14,14 +14,11 @@ const cached: Record<string, React.ReactElement> = {};
 const CSS_CDN_URL = '//fonts.googleapis.com/icon?family=Material+Icons';
 const CSS_FONT = 'Material Icons';
 
-void (async function () {
-  // Inject CSS Fonts reuqired for toolbar icons.
-  const fontSupported = await canUseCSSFont(CSS_FONT);
-  if (!fontSupported) {
-    console.warn('Add CSS from ', CSS_CDN_URL);
+const fontSupported = await canUseCSSFont(CSS_FONT);
 
-  }
-})();
+if (!fontSupported) {
+  console.warn('Add CSS from ', CSS_CDN_URL);
+}
 
 class SuperscriptIcon extends React.PureComponent {
   render(): React.ReactElement {

@@ -19,7 +19,6 @@ type TableCellMenuProps = {
 };
 
 class TableCellMenu extends React.PureComponent<TableCellMenuProps> {
-  _menu = null;
 
   declare props: TableCellMenuProps;
 
