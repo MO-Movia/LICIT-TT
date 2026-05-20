@@ -132,7 +132,7 @@ it('should handle _onMouseMove and update grid size correctly', () => {
   const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
 
   // mock ref and internal state to simulate a valid mounted element
-  instance._ref = document.createElement('div');
+  instance._bodyEl = document.createElement('div');
   instance._mx = 10;
   instance._my = 10;
   instance._rafID = 1;

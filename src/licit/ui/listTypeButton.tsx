@@ -25,14 +25,19 @@ type ListTypeButtonType = {
   title?: string;
   theme?: string;
 };
-class ListTypeButton extends React.PureComponent<ListTypeButtonType> {
+
+type ListTypeButtonState = {
+  expanded: boolean;
+};
+
+class ListTypeButton extends React.PureComponent<ListTypeButtonType, ListTypeButtonState>{
   public static readonly contextType = ThemeContext;
   declare props: ListTypeButtonType;
 
   _menu = null;
   _id = uuid();
 
-  state = {
+  state: ListTypeButtonState = {
     expanded: false,
   };
 
@@ -71,17 +76,17 @@ class ListTypeButton extends React.PureComponent<ListTypeButtonType> {
     this._hideMenu();
   }
 
-  _onClick = (): void => {
-    const expanded = !this.state.expanded;
-    this.setState({
-      expanded,
-    });
+_onClick = (): void => {
+  this.setState((prevState) => {
+    const expanded = !prevState.expanded;
     if (expanded) {
       this._showMenu();
     } else {
       this._hideMenu();
     }
-  };
+    return { expanded };
+  });
+};
 
   _hideMenu = (): void => {
     const menu = this._menu;

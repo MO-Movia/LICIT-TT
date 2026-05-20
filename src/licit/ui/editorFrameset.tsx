@@ -26,8 +26,8 @@ function toCSS(val?: number | string): string {
     // instead of auto...
     return undefined;
   }
-  if (Number.isNaN(val)) {
-    return String(val);
+  if (isNaN(val as number)) {
+    return `${val}`;
   }
   return `${val}vh`;
 }

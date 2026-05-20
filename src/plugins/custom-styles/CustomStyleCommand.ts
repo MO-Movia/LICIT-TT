@@ -1138,34 +1138,31 @@ function evaluateNextHierarchy(
     return null;
   }
 
-  for (const item of nodesAfterSelection) {
-    const nextLevel = Number(getStyleLevel(item.node.attrs.styleName));
-    const levelDiff = styleLevel - nextLevel;
+  const item = nodesAfterSelection[0];
+  const nextLevel = Number(getStyleLevel(item.node.attrs.styleName));
+  const levelDiff = styleLevel - nextLevel;
 
-    if (styleLevel > 1 && levelDiff >= 0) {
-      const previousNode = nodesBeforeSelection.at(-1);
-      if (
-        previousNode &&
-        previousNode.node.attrs.styleName !== RESERVED_STYLE_NONE
-      ) {
-        return true;
-      }
-      setNewElementObject(attrs, item.pos, 0, false);
-      return false;
+  if (styleLevel > 1 && levelDiff >= 0) {
+    const previousNode = nodesBeforeSelection.at(-1);
+    if (
+      previousNode &&
+      previousNode.node.attrs.styleName !== RESERVED_STYLE_NONE
+    ) {
+      return true;
     }
-
-    if (0 === styleLevel) {
-      setNewElementObject(attrs, endPos, previousLevel, true);
-      return false;
-    }
-
-    if (levelDiff < 0) {
-      setNewElementObject(attrs, endPos, styleLevel, true);
-    }
-    return true;
+    setNewElementObject(attrs, item.pos, 0, false);
+    return false;
   }
 
-  return null;
+  if (0 === styleLevel) {
+    setNewElementObject(attrs, endPos, previousLevel, true);
+    return false;
+  }
+
+  if (levelDiff < 0) {
+    setNewElementObject(attrs, endPos, styleLevel, true);
+  }
+  return true;
 }
 
 // [FS] IRAD-1387 2021-05-25

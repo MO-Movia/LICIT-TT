@@ -85,7 +85,6 @@ function getMaxResizeWidth(el): number {
 export class VideoViewBody extends React.PureComponent {
   declare props: NodeViewProps;
 
-  _body?: React.ReactInstance;
   _id = uuid();
   _inlineEditor?: PopUpHandle;
   _mounted = false;
@@ -273,6 +272,7 @@ export class VideoViewBody extends React.PureComponent {
               id={`${this._id}-img`}
               src={src}
               width={width}
+              title={`image-${this._id}`}
             />
             {errorView}
           </span>
@@ -396,7 +396,6 @@ export class VideoViewBody extends React.PureComponent {
   _bodyEl: HTMLElement | null = null;
   _onBodyRef = (ref?: React.ReactInstance): void => {
     if (ref) {
-      this._body = ref;
       // Mounting
       const el = (ref as unknown as HTMLElement);
       if (el instanceof HTMLElement) {
@@ -408,7 +407,6 @@ export class VideoViewBody extends React.PureComponent {
       if (this._bodyEl instanceof HTMLElement) {
         unobserve(this._bodyEl);
       }
-      this._body = null;
       this._bodyEl = null;
     }
   };

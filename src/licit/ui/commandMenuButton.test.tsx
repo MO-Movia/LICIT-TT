@@ -73,14 +73,16 @@ describe('CommandMenuButton', () => {
 
   // Simulate first click (expands)
   instance._onClick();
-  expect(setStateSpy).toHaveBeenNthCalledWith(1, { expanded: true });
+  const firstCall = setStateSpy.mock.calls[0][0] as Function;
+  expect(firstCall({ expanded: false })).toEqual({ expanded: true });
 
   // Manually reflect the state change (React would normally do this)
   instance.state.expanded = true;
 
   // Simulate second click (collapses)
   instance._onClick();
-  expect(setStateSpy).toHaveBeenNthCalledWith(2, { expanded: false });
+  const secondCall = setStateSpy.mock.calls[1][0] as Function;
+  expect(secondCall({ expanded: true })).toEqual({ expanded: false });
 });
 
   test('should call createPopUp when _showMenu is triggered', () => {

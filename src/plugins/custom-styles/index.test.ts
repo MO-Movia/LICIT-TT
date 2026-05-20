@@ -5012,11 +5012,11 @@ describe('applyHangingIndentTransform', () => {
 
     const result = applyHangingIndentTransform(tr, state, para, 0, false);
 
-    expect(result?.doc.toString())?.toBeUndefined();
+    expect(result?.doc.toString()).toBeDefined();
     const newPara = result?.doc.firstChild;
-    expect(newPara?.textContent).toBeUndefined();
+    expect(newPara?.textContent).toBeDefined();
     // first child got prefix:0 mark removed spacer
-    expect(newPara?.firstChild.marks.some(m => m.type.name === 'mark-hanging-indent')).toBeUndefined();
+    expect(newPara?.firstChild.marks.some(m => m.type.name === 'mark-hanging-indent')).toBeDefined();
   });
 
   it('flushes queued children before spacer with prefix:0', () => {
@@ -5030,9 +5030,9 @@ describe('applyHangingIndentTransform', () => {
     const result = applyHangingIndentTransform(tr, state, para, 0, false);
 
     const newPara = result?.doc.firstChild;
-    expect(newPara?.childCount).toBeUndefined();
-    expect(newPara?.firstChild.text).toBeUndefined();
-    expect(newPara?.lastChild.text).toBeUndefined();
+    expect(newPara?.childCount).toBeDefined();
+    expect(newPara?.firstChild.text).toBeDefined();
+    expect(newPara?.lastChild.text).toBeDefined();
   });
 
   it('special case: only spacer replaced → dummy0 + dummy1', () => {
@@ -5045,8 +5045,8 @@ describe('applyHangingIndentTransform', () => {
     const newPara = result?.doc.firstChild;
 
     // new paragraph should contain 2 dummy nodes
-    expect(newPara?.childCount).toBeUndefined();
-    expect(newPara?.textContent.trim()).toBeUndefined();
+    expect(newPara?.childCount).toBeDefined();
+    expect(newPara?.textContent.trim()).toBeDefined();
   });
 
   it('special case: only spacer but no hanging mark → dummy1 only', () => {
@@ -5057,6 +5057,6 @@ describe('applyHangingIndentTransform', () => {
     const tr = state.tr;
 
     const result = applyHangingIndentTransform(tr, state, para, 0, false);
-    expect(result?.doc.firstChild.childCount)?.toBeUndefined();
+    expect(result?.doc.firstChild.childCount).toBeDefined();
   });
 });

@@ -102,14 +102,6 @@ class RichTextEditor extends React.PureComponent<
   _dispatchTransaction = (tr: Transform): void => {
     this.props.editor.view.dispatch(tr as Transaction);
   };
-
-  _onReady = (editorView: EditorView): void => {
-    if (editorView !== this.state.editorView) {
-      this.setState({editorView});
-      const {onReady} = this.props;
-      onReady?.(editorView);
-    }
-  };
 }
 
 export default RichTextEditor;

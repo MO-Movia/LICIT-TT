@@ -87,10 +87,9 @@ export class VideoResizeBoxControl extends React.PureComponent {
     });
 
     return (
-      <span
+      <button
         className={className}
         onMouseDown={this._onMouseDown}
-        role="button"
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {

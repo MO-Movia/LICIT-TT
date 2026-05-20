@@ -52,7 +52,6 @@ class TableGridSizeEditor extends React.PureComponent<
   _mx = 0;
   _my = 0;
   _rafID = 0;
-  _ref = null;
   _entered = false;
 
   declare props: {
@@ -139,7 +138,6 @@ class TableGridSizeEditor extends React.PureComponent<
   }
 
   _onRef = (ref: HTMLElement): void => {
-    this._ref = ref;
     this._bodyEl = ref;
   };
 
