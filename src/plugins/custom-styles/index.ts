@@ -39,9 +39,7 @@ const ENTERKEYCODE = 13;
 const BACKSPACEKEYCODE = 8;
 const PARA_POSITION_DIFF = 4;
 const ATTR_STYLE_NAME = 'styleName';
-type CustomStyleView = Plugin['spec']['view'] extends (
-  view: infer T
-) => unknown
+type CustomStyleView = Plugin['spec']['view'] extends (view: infer T) => unknown
   ? T & { input?: { lastKeyCode?: number } }
   : { state: EditorState; input?: { lastKeyCode?: number } };
 
@@ -74,10 +72,15 @@ let slice1: Slice | null = null;
 function getSelectionCursor(
   selection: Selection | null | undefined
 ): { pos?: number } | null {
-  return (selection as Selection & { $cursor?: { pos?: number } })?.$cursor ?? null;
+  return (
+    (selection as Selection & { $cursor?: { pos?: number } })?.$cursor ?? null
+  );
 }
 
-const isNodeHasAttribute = (node: Node | null | undefined, attrName: string): boolean => {
+const isNodeHasAttribute = (
+  node: Node | null | undefined,
+  attrName: string
+): boolean => {
   return attrName in (node?.attrs || {});
 };
 const requiredAddAttr = (node: Node | null | undefined): boolean => {
@@ -142,28 +145,21 @@ export class CustomstylePlugin extends Plugin {
           tr = onInitAppendTransaction(ref, tr, nextState);
         } else if (isDocChanged(transactions)) {
           // Avoid infinite recursion: skip when any plugin-generated update already is present.
-          const hasPluginTransaction = transactions.some((t) =>
-            t.getMeta('customStylePlugin')
+
+          tr = onUpdateAppendTransaction(
+            ref,
+            tr,
+            nextState,
+            prevState,
+            csview,
+            transactions,
+            slice1
           );
-          if (!hasPluginTransaction) {
-            tr = onUpdateAppendTransaction(
-              ref,
-              tr,
-              nextState,
-              prevState,
-              csview,
-              transactions,
-              slice1
-            );
-          }
-          firstTime = ref.firstTime;
-          loaded = ref.loaded;
-          if (tr?.docChanged) {
-            slice1 = null;
-          }
         }
-        if (tr) {
-          tr.setMeta('customStylePlugin', true);
+        firstTime = ref.firstTime;
+        loaded = ref.loaded;
+        if (tr?.docChanged) {
+          slice1 = null;
         }
         return tr;
       },
@@ -239,12 +235,9 @@ export function onUpdateAppendTransaction(
           return tr;
         }
         const { schema } = nextState;
-        const para = findParentNodeClosestToPos(
-          selectionHead,
-          (node: Node) => {
-            return node.type === schema.nodes.paragraph;
-          }
-        );
+        const para = findParentNodeClosestToPos(selectionHead, (node: Node) => {
+          return node.type === schema.nodes.paragraph;
+        });
         if (para) {
           let styleName = para.node.attrs.styleName;
           if (RESERVED_STYLE_NONE === styleName || undefined === styleName) {
@@ -290,7 +283,10 @@ export function onUpdateAppendTransaction(
       ENTERKEYCODE === csview.input.lastKeyCode &&
       prevState.selection.from === nextState.selection.from - 1
     ) {
-      tr = applyStoredMarksAfterHardBreak(nextState, tr as Transform) as Transaction;
+      tr = applyStoredMarksAfterHardBreak(
+        nextState,
+        tr as Transform
+      ) as Transaction;
     }
   }
 
@@ -651,7 +647,12 @@ function applyLineStyleForBoldPartial(
     if (validateStyleName(node)) {
       const style = getCustomStyleByName(node.attrs.styleName);
       if (style?.styles?.boldPartial) {
-        tr = applyLineStyle(nextState as EditorState, tr, node, pos) as Transaction;
+        tr = applyLineStyle(
+          nextState as EditorState,
+          tr,
+          node,
+          pos
+        ) as Transaction;
       }
       if (style?.styles?.indentPosition) {
         tr = applyHangingIndentTransform(
@@ -722,7 +723,10 @@ export function applyStyleForNextParagraph(
     return tr;
   }
   const { $from } = nextState.selection;
-  if (view && isNewParagraph(prevState as EditorState, nextState as EditorState, view)) {
+  if (
+    view &&
+    isNewParagraph(prevState as EditorState, nextState as EditorState, view)
+  ) {
     const prevParagraph = findPreviousParagraph($from);
     const required = requiredAddAttr(prevParagraph);
     if (required) {
@@ -927,8 +931,7 @@ export function applyNormalIfNoStyle(
       const docLen = tr.doc.content.size;
       // Validate end position.
       const end = Math.min(pos + contentLen, docLen);
-      const styleName =
-        child.attrs.styleName ?? RESERVED_STYLE_NONE;
+      const styleName = child.attrs.styleName ?? RESERVED_STYLE_NONE;
       tr = applyLatestStyle(
         styleName,
         nextState as EditorState,
@@ -1020,9 +1023,8 @@ export function applyHangingIndentTransform(
     newContent.push(_node);
   });
   if (isParagraphStartsWithTab && newContent.length === 0) {
-    const existingMarks = emptyChild?.marks.filter(
-      (m) => m.type.name !== 'spacer'
-    ) ?? [];
+    const existingMarks =
+      emptyChild?.marks.filter((m) => m.type.name !== 'spacer') ?? [];
     const prefix = state.schema.marks['mark-hanging-indent'].create({
       prefix: 0,
     });
@@ -1035,9 +1037,8 @@ export function applyHangingIndentTransform(
     newContent.push(dummy1);
   }
   if (newContent?.length === 1 && spacerRemoved) {
-    const existingMarks = emptyChild?.marks.filter(
-      (m) => m.type.name !== 'spacer'
-    ) ?? [];
+    const existingMarks =
+      emptyChild?.marks.filter((m) => m.type.name !== 'spacer') ?? [];
     const prefix1 = state.schema.marks['mark-hanging-indent'].create({
       prefix: 1,
     });
@@ -1047,9 +1048,7 @@ export function applyHangingIndentTransform(
   // Recreate updated paragraph
   const newParagraph = node.type.create(node.attrs, newContent);
   tr.replaceWith(pos, pos + node.nodeSize, newParagraph);
-  tr.setSelection(
-    TextSelection.create(tr.doc, state.selection?.from)
-  );
+  tr.setSelection(TextSelection.create(tr.doc, state.selection?.from));
 
   return tr;
 }
