@@ -29,7 +29,7 @@ import {
 import { RESERVED_STYLE_NONE } from './CustomStyleNodeSpec';
 import { getLineSpacingValue } from '../../commands';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
-import { Node, Schema, Slice } from 'prosemirror-model';
+import { Mark, Node, Schema, Slice } from 'prosemirror-model';
 import { CustomstyleDropDownCommand } from './ui/CustomstyleDropDownCommand';
 import { applyEffectiveSchema } from './EditorSchema';
 import type { StyleRuntime } from './StyleRuntime';
@@ -56,6 +56,16 @@ type SliceNodeInfo = {
   isTable: boolean;
   hasParentAttrs: boolean;
   needsMarkup: boolean;
+};
+type HangingIndentScan = {
+  hasSpacer: boolean;
+  hasHangingIndent: boolean;
+};
+type HangingIndentContentState = {
+  content: Node[];
+  spacerRemoved: boolean;
+  startsWithTab: boolean;
+  spacerChild: Node | null;
 };
 type LooseState = {
   doc?: Node;
@@ -315,9 +325,11 @@ function reapplyParagraphStyle(
     styleName,
     nextState as EditorState,
     tr,
-    para.node,
-    para.pos,
-    para.pos + para.node.nodeSize - 1
+    {
+      node: para.node,
+      startPos: para.pos,
+      endPos: para.pos + para.node.nodeSize - 1,
+    }
   ) as Transaction;
 
   return tr.setSelection(
@@ -357,16 +369,16 @@ function handlePasteUpdateStyling(
   if (slice1 && slice1.content.childCount > 20) {
     tr = applyMinimalPasteStyling(
       slice1,
-      prevState as EditorState,
-      nextState as EditorState,
+      prevState,
+      nextState,
       csview,
       tr
     );
   } else if (slice1) {
     tr = optimizedPasteHandler(
       slice1,
-      prevState as EditorState,
-      nextState as EditorState,
+      prevState,
+      nextState,
       csview,
       tr
     );
@@ -439,10 +451,39 @@ function optimizedPasteHandler(
       : csview.state.selection.$from.depth
   );
 
-  // STEP 1: Collect all node information without applying styles
-  const nodeInfos: SliceNodeInfo[] = [];
+  // STEP 1: Collect node information
+  const nodeInfos = collectNodeInfos(
+    slice1,
+    demoPos,
+    hasParentAttrs,
+    currentPos,
+    csview,
+    nextState,
+    parentNode
+  );
 
-  forEachSliceNode(slice1, (sliceNode, index) => {
+  // STEP 2: Apply fast markups first
+  tr = applyAllMarkups(nodeInfos, tr);
+
+  // STEP 3 & 4: Group by style and apply styles per group
+  tr = applyGroupedStyles(nodeInfos, nextState, tr);
+
+  return tr;
+}
+
+function collectNodeInfos(
+  slice: SliceLike,
+  demoPos: number,
+  hasParentAttrs: boolean,
+  startPos: number,
+  csview: CSView,
+  nextState: LooseState,
+  parentNode: Node
+): SliceNodeInfo[] {
+  const infos: SliceNodeInfo[] = [];
+  let currentPos = startPos;
+
+  forEachSliceNode(slice, (sliceNode, index) => {
     if (sliceNode.type.name === 'table' || sliceNode.type.name === 'doc') {
       return;
     }
@@ -476,7 +517,7 @@ function optimizedPasteHandler(
       styleName = styleName ?? RESERVED_STYLE_NONE;
     }
 
-    nodeInfos.push({
+    infos.push({
       pos: currentPos,
       endPos:
         hasParentAttrs || currentNode?.type?.name === 'table'
@@ -492,15 +533,24 @@ function optimizedPasteHandler(
     currentPos = endPos;
   });
 
-  // STEP 2: Apply all setNodeMarkup calls first (these are fast)
+  return infos;
+}
+
+function applyAllMarkups(nodeInfos: SliceNodeInfo[], tr: LooseTr): LooseTr {
   for (const info of nodeInfos) {
     if (info.needsMarkup) {
       const newattrs = { ...info.node.attrs, styleName: info.styleName };
       tr = tr.setNodeMarkup(info.pos, undefined, newattrs);
     }
-  };
+  }
+  return tr;
+}
 
-  // STEP 3: Group nodes by style to reduce applyLatestStyle/applyStyleToEachNode calls
+function applyGroupedStyles(
+  nodeInfos: SliceNodeInfo[],
+  nextState: LooseState,
+  tr: LooseTr
+): LooseTr {
   const styleGroups = new Map<string, SliceNodeInfo[]>();
   for (const info of nodeInfos) {
     const key = `${info.styleName}-${info.hasParentAttrs}`;
@@ -508,15 +558,12 @@ function optimizedPasteHandler(
       styleGroups.set(key, []);
     }
     styleGroups.get(key).push(info);
-  };
+  }
 
-  // STEP 4: Apply styles once per group instead of per node
   const opt = 1;
   for (const infos of styleGroups.values()) {
     const info = infos[0];
-
     if (info.hasParentAttrs) {
-      // Apply to all nodes in this group at once
       const styleProp = getCustomStyleByName(info.styleName);
       for (const nodeInfo of infos) {
         tr = applyStyleToEachNode(
@@ -527,23 +574,24 @@ function optimizedPasteHandler(
           styleProp,
           info.styleName
         ) as Transaction;
-      };
+      }
     } else {
-      // Apply to each node individually (but at least they're grouped)
       for (const nodeInfo of infos) {
         tr = applyLatestStyle(
           info.styleName ?? '',
           nextState as EditorState,
           tr,
-          nodeInfo.node,
-          nodeInfo.pos,
-          nodeInfo.endPos,
-          null,
-          opt
+          {
+            node: nodeInfo.node,
+            startPos: nodeInfo.pos,
+            endPos: nodeInfo.endPos,
+            opt,
+          },
+          null
         ) as Transaction;
-      };
+      }
     }
-  };
+  }
 
   return tr;
 }
@@ -591,9 +639,11 @@ export function applyStyleForPreviousEmptyParagraph(
         prevNode?.attrs?.styleName,
         nextState as EditorState,
         tr,
-        prevNode,
-        tr.selection.$head.before(),
-        tr.selection.$from.end(),
+        {
+          node: prevNode,
+          startPos: tr.selection.$head.before(),
+          endPos: tr.selection.$from.end(),
+        },
         null
       ) as Transaction;
     }
@@ -626,9 +676,11 @@ export function applyStyles(state: LooseState, tr?: LooseTr): LooseTr {
         styleName,
         state as EditorState,
         tr,
-        child,
-        pos,
-        end
+        {
+          node: child,
+          startPos: pos,
+          endPos: end,
+        }
       ) as Transaction;
     }
   });
@@ -719,11 +771,13 @@ export function applyStyleForEmptyParagraph(
           node.attrs.styleName ?? RESERVED_STYLE_NONE,
           nextState as EditorState,
           tr,
-          node,
-          startPos,
-          endPos,
-          null,
-          opt
+          {
+            node,
+            startPos,
+            endPos,
+            opt,
+          },
+          null
         ) as Transaction;
       }
     }
@@ -980,11 +1034,13 @@ export function applyNormalIfNoStyle(
         styleName,
         nextState as EditorState,
         tr,
-        child,
-        pos,
-        end + 1,
-        null,
-        typeof opt === 'boolean' ? Number(opt) : opt
+        {
+          node: child,
+          startPos: pos,
+          endPos: end + 1,
+          opt: typeof opt === 'boolean' ? Number(opt) : opt,
+        },
+        null
       ) as Transaction;
     }
   });
@@ -1010,90 +1066,14 @@ export function applyHangingIndentTransform(
   pos: number,
   isPaste: boolean
 ): Transaction {
-  if (!node || node.type.name !== 'paragraph') return tr;
+  if (node?.type.name !== 'paragraph') return tr;
 
-  const newContent: Node[] = [];
-  let spacerRemoved = false;
-  let foundSpacer = false;
-  let foundHangingIndent = false;
-  let isParagraphStartsWithTab = false;
-  let counter = 0;
-  let emptyChild: Node | null = null;
-  // Scan once for spacers and existing hanging-indents
-  for (let i = 0; i < node.content.childCount; i++) {
-  const child = node.content.child(i);
-    if (child.marks.some((m) => m?.type.name === 'spacer')) {
-      foundSpacer = true;
-    }
-    if (child.marks.some((m) => m?.type.name === 'mark-hanging-indent')) {
-      foundHangingIndent = !isPaste;
-    }
-  };
+  const scan = scanHangingIndentMarks(node, isPaste);
 
   // Skip if no spacer or already has hanging-indent
-  if (!foundSpacer || foundHangingIndent) return tr;
+  if (!scan.hasSpacer || scan.hasHangingIndent) return tr;
 
-for (let i = 0; i < node.content.childCount; i++) {
-  const child = node.content.child(i);
-    let _node = child;
-    counter++;
-    // Remove the *first* spacer-marked text node
-    if (!spacerRemoved && child.marks.some((m) => m.type.name === 'spacer')) {
-      spacerRemoved = true;
-      if (counter === 1) isParagraphStartsWithTab = true;
-      emptyChild = child;
-      continue;
-    }
-
-    // Remove existing spacer marks
-    const existingMarks = child.marks.filter((m) => m.type.name !== 'spacer');
-
-    // Create hangingIndent mark
-    const hangingIndentMark = state.schema.marks['mark-hanging-indent'].create({
-      prefix: spacerRemoved ? 1 : 0,
-    });
-    if (isParagraphStartsWithTab) {
-      const prefix1 = state.schema.marks['mark-hanging-indent'].create({
-        prefix: 0,
-      });
-      const dummy1 = state.schema.text(' ', [...existingMarks, prefix1]);
-      newContent.push(dummy1);
-      _node = _node.mark([hangingIndentMark, ...existingMarks]);
-      isParagraphStartsWithTab = false;
-    } else {
-      _node = _node.mark([hangingIndentMark, ...existingMarks]);
-    }
-
-    // Ensure hangingIndent is the *outermost* mark
-
-    newContent.push(_node);
-  };
-  if (isParagraphStartsWithTab && newContent.length === 0) {
-    const existingMarks = emptyChild?.marks.filter(
-      (m) => m.type.name !== 'spacer'
-    ) ?? [];
-    const prefix = state.schema.marks['mark-hanging-indent'].create({
-      prefix: 0,
-    });
-    const dummy = state.schema.text(' ', [...existingMarks, prefix]);
-    newContent.push(dummy);
-    const prefix1 = state.schema.marks['mark-hanging-indent'].create({
-      prefix: 1,
-    });
-    const dummy1 = state.schema.text(' ', [...existingMarks, prefix1]);
-    newContent.push(dummy1);
-  }
-  if (newContent?.length === 1 && spacerRemoved) {
-    const existingMarks = emptyChild?.marks.filter(
-      (m) => m.type.name !== 'spacer'
-    ) ?? [];
-    const prefix1 = state.schema.marks['mark-hanging-indent'].create({
-      prefix: 1,
-    });
-    const dummy1 = state.schema.text(' ', [...existingMarks, prefix1]);
-    newContent.push(dummy1);
-  }
-  // Recreate updated paragraph
+  const newContent = buildHangingIndentContent(node, state);
   const newParagraph = node.type.create(node.attrs, newContent);
   tr.replaceWith(pos, pos + node.nodeSize, newParagraph);
   tr.setSelection(
@@ -1101,4 +1081,142 @@ for (let i = 0; i < node.content.childCount; i++) {
   );
 
   return tr;
+}
+
+function scanHangingIndentMarks(
+  node: Node,
+  isPaste: boolean
+): HangingIndentScan {
+  const scan = {
+    hasSpacer: false,
+    hasHangingIndent: false,
+  };
+
+  for (let i = 0; i < node.content.childCount; i++) {
+    const child = node.content.child(i);
+    scan.hasSpacer ||= hasMark(child, 'spacer');
+    scan.hasHangingIndent ||= hasMark(child, 'mark-hanging-indent') && !isPaste;
+  }
+
+  return scan;
+}
+
+function buildHangingIndentContent(
+  node: Node,
+  state: EditorState
+): Node[] {
+  const contentState: HangingIndentContentState = {
+    content: [],
+    spacerRemoved: false,
+    startsWithTab: false,
+    spacerChild: null,
+  };
+
+  for (let i = 0; i < node.content.childCount; i++) {
+    const child = node.content.child(i);
+    // Remove the *first* spacer-marked text node
+    if (removeFirstSpacer(child, contentState, i)) {
+      continue;
+    }
+
+    appendHangingIndentChild(child, state, contentState);
+  }
+
+  appendMissingHangingIndentContent(state, contentState);
+  return contentState.content;
+}
+
+function removeFirstSpacer(
+  child: Node,
+  contentState: HangingIndentContentState,
+  index: number
+): boolean {
+  if (contentState.spacerRemoved || !hasMark(child, 'spacer')) {
+    return false;
+  }
+
+  contentState.spacerRemoved = true;
+  contentState.startsWithTab = index === 0;
+  contentState.spacerChild = child;
+  return true;
+}
+
+function appendHangingIndentChild(
+  child: Node,
+  state: EditorState,
+  contentState: HangingIndentContentState
+): void {
+  const existingMarks = removeSpacerMarks(child.marks);
+  const hangingIndentMark = createHangingIndentMark(
+    state,
+    contentState.spacerRemoved ? 1 : 0
+  );
+
+  if (contentState.startsWithTab) {
+    contentState.content.push(createHangingIndentText(state, existingMarks, 0));
+    contentState.startsWithTab = false;
+  }
+
+  // Ensure hangingIndent is the *outermost* mark
+  contentState.content.push(
+    child.mark([hangingIndentMark, ...existingMarks])
+  );
+}
+
+function appendMissingHangingIndentContent(
+  state: EditorState,
+  contentState: HangingIndentContentState
+): void {
+  if (contentState.startsWithTab && contentState.content.length === 0) {
+    appendHangingIndentTextPair(state, contentState);
+    return;
+  }
+
+  if (contentState.content.length === 1 && contentState.spacerRemoved) {
+    const existingMarks = getSpacerChildMarks(contentState);
+    contentState.content.push(createHangingIndentText(state, existingMarks, 1));
+  }
+}
+
+function appendHangingIndentTextPair(
+  state: EditorState,
+  contentState: HangingIndentContentState
+): void {
+  const existingMarks = getSpacerChildMarks(contentState);
+  contentState.content.push(
+    createHangingIndentText(state, existingMarks, 0),
+    createHangingIndentText(state, existingMarks, 1),
+  );
+}
+
+function getSpacerChildMarks(
+  contentState: HangingIndentContentState
+): readonly Mark[] {
+  return removeSpacerMarks(contentState.spacerChild?.marks ?? []);
+}
+
+function createHangingIndentText(
+  state: EditorState,
+  marks: readonly Mark[],
+  prefix: number
+): Node {
+  return state.schema.text(' ', [
+    ...marks,
+    createHangingIndentMark(state, prefix),
+  ]);
+}
+
+function createHangingIndentMark(
+  state: EditorState,
+  prefix: number
+): Mark {
+  return state.schema.marks['mark-hanging-indent'].create({ prefix });
+}
+
+function removeSpacerMarks(marks: readonly Mark[]): readonly Mark[] {
+  return marks.filter((mark) => mark.type.name !== 'spacer');
+}
+
+function hasMark(node: Node, markName: string): boolean {
+  return node.marks.some((mark) => mark?.type.name === markName);
 }

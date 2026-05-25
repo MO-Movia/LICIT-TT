@@ -16,6 +16,14 @@ interface MyNode {
   };
 }
 
+type ToggleMarkUpdateContext = {
+  node: Node;
+  pos: number;
+  startPos: number;
+  endPos: number;
+  style: Style;
+};
+
 function markApplies(
   doc: Node,
   ranges: readonly SelectionRange[],
@@ -313,14 +321,11 @@ function getToggleMarkAttrs(
 
 function applyToggleMarkUpdate(
   tr: Transform,
-  node: Node,
-  pos: number,
-  startPos: number,
-  endPos: number,
   markType: MarkType,
   overrideMarkType: MarkType | undefined,
-  style: Style
+  context: ToggleMarkUpdateContext
 ): void {
+  const {node, pos, startPos, endPos, style} = context;
   if (!overrideMarkType || !node.isText || pos > startPos) {
     return;
   }
@@ -410,13 +415,15 @@ export function updateToggleMarks(
 
     applyToggleMarkUpdate(
       tr,
-      node,
-      pos,
-      _startPos,
-      endPos.pos,
       markType,
       overrideMarkType,
-      style
+      {
+        node,
+        pos,
+        startPos: _startPos,
+        endPos: endPos.pos,
+        style,
+      }
     );
   });
 }

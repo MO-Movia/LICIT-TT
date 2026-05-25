@@ -41,6 +41,13 @@ const CONTENT = 'content';
 const GETATTRS = 'getAttrs';
 const PARSEDOM = 'parseDOM';
 const TODOM = 'toDOM';
+type MarkAttributeSpec = {
+  default?: boolean;
+  hasDefault?: boolean;
+};
+type MarkSpecWithAttrs = {
+  attrs?: Record<string, MarkAttributeSpec>;
+};
 
 export function effectiveSchema(schema: Schema) {
   if (schema?.[SPEC]) {
@@ -159,31 +166,35 @@ function getRequiredMarks(marks, markName, schema) {
   }
 }
 export function createMarkAttributes(mark, existingAttr) {
-  if (mark) {
-    const requiredAttrs = [...NEWATTRS];
-    for (const key of requiredAttrs) {
-      if (!mark.attrs) {
-        mark['attrs'] = {};
-      }
-      if (mark.attrs) {
-        let newAttr = mark.attrs[key];
-        if (!newAttr) {
-          if (existingAttr) {
-            newAttr = Object.assign(
-              Object.create(Object.getPrototypeOf(existingAttr)),
-              existingAttr
-            );
-            newAttr.default = false;
-          } else {
-            newAttr = {};
-            newAttr.hasDefault = true;
-            newAttr.default = false;
-          }
-          mark.attrs[key] = newAttr;
-        }
-      }
-    };
+  if (!mark) {
+    return;
   }
+
+  const attrs = ensureMarkAttrs(mark);
+  for (const key of NEWATTRS) {
+    attrs[key] ??= createMarkAttribute(existingAttr);
+  }
+}
+
+function ensureMarkAttrs(mark: MarkSpecWithAttrs): Record<string, MarkAttributeSpec> {
+  mark.attrs ??= {};
+  return mark.attrs;
+}
+
+function createMarkAttribute(existingAttr): MarkAttributeSpec {
+  if (existingAttr) {
+    const attr = Object.assign(
+      Object.create(Object.getPrototypeOf(existingAttr)),
+      existingAttr
+    );
+    attr.default = false;
+    return attr;
+  }
+
+  return {
+    hasDefault: true,
+    default: false,
+  };
 }
 function createNewAttributes(schema: Schema): Schema {
   const marks = [];

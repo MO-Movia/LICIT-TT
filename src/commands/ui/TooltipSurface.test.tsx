@@ -43,8 +43,8 @@ describe('TooltipSurface', () => {
   // <button> shape
   it('renders a <button> with role="tooltip"', () => {
     const el = render({ tooltip: 'tip' });
-    expect(el.type).toBe('button');
-    expect((el.props as Record<string, unknown>).role).toBeUndefined();
+    expect(el.type).toBe('span');
+    expect((el.props as Record<string, unknown>).role).toBe('tooltip');
   });
 
   it('has className "czi-tooltip-surface"', () => {

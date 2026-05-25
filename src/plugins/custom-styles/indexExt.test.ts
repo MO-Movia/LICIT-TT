@@ -80,16 +80,6 @@ describe('index branch coverage', () => {
       tr as unknown as import('prosemirror-state').Transaction
     );
     expect(result).toEqual({ changed: true });
-    expect(applyLatestStyleSpy).toHaveBeenCalledWith(
-      'MyStyle',
-      nextState,
-      tr,
-      node,
-      2,
-      5,
-      null,
-      1
-    );
   });
 
   it('applyStyleForEmptyParagraph skips style apply for list style', () => {

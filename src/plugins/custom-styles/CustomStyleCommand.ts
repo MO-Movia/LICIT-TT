@@ -87,6 +87,12 @@ export const BOLDPARTIAL = 'boldPartial';
 type NodeWithPos = { pos?: number; node: Node };
 type MutableAttrs = Record<string, unknown>;
 type AddElementResult = { tr: Transform; level: number; counter: number };
+type ApplyStyleContext = {
+  node: Node;
+  startPos: number;
+  endPos: number;
+  opt?: number;
+};
 const MISSED_HEIRACHY_ELEMENT = {
   isAfter: '',
   attrs: { styleName: '', styleLevel: 0 },
@@ -350,16 +356,13 @@ export class CustomStyleCommand extends UICommand {
     );
     const endPos = selection.$to?.end();
     const node = getNode(state, startPos, endPos, tr);
-    const newattrs = { ...(node ? node.attrs : {}) };
     const handled = this.handleExecuteMode(
       state,
       dispatch,
       view,
       event,
-      node,
       startPos,
       endPos,
-      newattrs,
       selection
     );
     if (handled !== null) {
@@ -386,12 +389,12 @@ export class CustomStyleCommand extends UICommand {
     dispatch: ((tr: Transform) => void) | undefined,
     view: EditorView | undefined,
     event: KeyboardEvent | MouseEvent | undefined,
-    node,
     startPos: number,
     endPos: number,
-    newattrs,
     selection: Selection
   ): boolean | null {
+    const node = getNode(state, startPos, endPos, state.tr);
+    const newattrs = { ...(node ? node.attrs : {}) };
     if ('newstyle' === this._customStyle) {
       this.editWindow(state, view, 0);
       return false;
@@ -502,33 +505,60 @@ export class CustomStyleCommand extends UICommand {
       selection.$from.depth === 0 ? 1 : selection.$from.depth
     );
     const to = selection.$to?.end();
-    let _from = from;
-    let _to = to;
+    const range = { from, to };
     doc.nodesBetween(from, to, (node) => {
-      if (
-        node.attrs.styleName &&
-        node.attrs.styleName !== RESERVED_STYLE_NONE
-      ) {
-        // Check for overridden marks in text nodes inside the paragraph
-        for (let i = 0; i < node.childCount; i++) {
-          const child = node.child(i);
-          if (child.isText && child.marks.length > 0) {
-            const marksToRemove = child.marks.filter(
-              (mark) => mark.attrs.overridden !== true
-            );
-            _to = _from + child.nodeSize;
-            if (marksToRemove.length > 0) {
-              for (const mark of marksToRemove) {
-                if ('link' !== mark.type.name) {
-                  tr = this.removeMarks(mark, tr, node, _from, _to);
-                }
-              };
-            }
-            _from = _to;
-          }
-        };
+      if (this.hasCustomStyle(node)) {
+        tr = this.removeNodeStyleMarks(node, tr, range);
       }
     });
+    return tr;
+  }
+
+  hasCustomStyle(node: Node): boolean {
+    return (
+      !!node.attrs.styleName &&
+      node.attrs.styleName !== RESERVED_STYLE_NONE
+    );
+  }
+
+  removeNodeStyleMarks(
+    node: Node,
+    tr: Transform,
+    range: { from: number; to: number }
+  ): Transform {
+    // Check for overridden marks in text nodes inside the paragraph
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (!this.hasRemovableTextMarks(child)) {
+        continue;
+      }
+
+      range.to = range.from + child.nodeSize;
+      tr = this.removeEligibleMarks(child.marks, tr, node, range.from, range.to);
+      range.from = range.to;
+    };
+    return tr;
+  }
+
+  hasRemovableTextMarks(node: Node): boolean {
+    return node.isText && node.marks.length > 0;
+  }
+
+  removeEligibleMarks(
+    marks: readonly Mark[],
+    tr: Transform,
+    node: Node,
+    from: number,
+    to: number
+  ): Transform {
+    const marksToRemove = marks.filter(
+      (mark) => mark.attrs.overridden !== true
+    );
+    for (const mark of marksToRemove) {
+      if ('link' !== mark.type.name) {
+        tr = this.removeMarks(mark, tr, node, from, to);
+      }
+    };
     return tr;
   }
 
@@ -616,31 +646,31 @@ export class CustomStyleCommand extends UICommand {
           if (!Array.isArray(result)) {
             result = addStyleToList(result);
           }
-        setStyles(result);
-        // Issue fix: Created custom style Numbering not applied to paragraph.
-        tr = tr.setSelection(TextSelection.create(doc, 0, 0));
-        // Apply created styles to document
-        const { selection } = state;
-        const startPos = selection.$from.before(1);
-        const endPos = selection.$to.after(1);
-        const node = getNode(state, startPos, endPos, tr);
-        // [FS] IRAD-1238 2021-03-08
-        // Fix: Shows alert message 'This Numberings breaks hierarchy, Previous levels are missing' on create styles
-        // if a numbering applied in editor.
-        if (!styleHasNumbering(val) || isValidHeirarchy(val.styleName, 0)) {
-          // to add previous heirarchy levels
-          hasMismatchHeirarchy(
-            state,
-            tr,
-            node,
-            startPos,
-            endPos,
-            val.styleName
-          );
-          tr = applyStyle(val, val.styleName, state, tr) as Transaction;
-          dispatch(tr);
-        }
-      })
+          setStyles(result);
+          // Issue fix: Created custom style Numbering not applied to paragraph.
+          tr = tr.setSelection(TextSelection.create(doc, 0, 0));
+          // Apply created styles to document
+          const { selection } = state;
+          const startPos = selection.$from.before(1);
+          const endPos = selection.$to.after(1);
+          const node = getNode(state, startPos, endPos, tr);
+          // [FS] IRAD-1238 2021-03-08
+          // Fix: Shows alert message 'This Numberings breaks hierarchy, Previous levels are missing' on create styles
+          // if a numbering applied in editor.
+          if (!styleHasNumbering(val) || isValidHeirarchy(val.styleName, 0)) {
+            // to add previous heirarchy levels
+            hasMismatchHeirarchy(
+              state,
+              tr,
+              node,
+              startPos,
+              endPos,
+              val.styleName
+            );
+            tr = applyStyle(val, val.styleName, state, tr) as Transaction;
+            dispatch(tr);
+          }
+        })
         .catch(console.warn);
     }
   }
@@ -666,19 +696,19 @@ export class CustomStyleCommand extends UICommand {
   getCustomStyles(styleName: string, editorView: EditorView) {
     getStylesAsync()
       .then((result) => {
-      if (styleName) {
-        const { dispatch, state } = editorView;
-        let tr;
-        for (const obj of result) {
-          if (styleName === obj.styleName) {
-            tr = updateDocument(state, state.tr, styleName, obj);
+        if (styleName) {
+          const { dispatch, state } = editorView;
+          let tr;
+          for (const obj of result) {
+            if (styleName === obj.styleName) {
+              tr = updateDocument(state, state.tr, styleName, obj);
+            }
+          };
+          if (tr) {
+            dispatch(tr);
           }
-        };
-        if (tr) {
-          dispatch(tr);
         }
-      }
-    })
+      })
       .catch(console.error);
   }
 
@@ -933,12 +963,10 @@ function applyStyleEx<T extends Transaction | Transform>(
   styleName: string,
   state: EditorState,
   tr: T,
-  node: Node,
-  startPos: number,
-  endPos: number,
-  _way: number,
-  opt?: number
+  context: ApplyStyleContext
 ): T {
+  const { node, startPos, opt } = context;
+  let { endPos } = context;
   const loading = !styleProp;
   // Custom style is applied from menu the endpos is correct ie nodesize is calculating correct
   // when loading the document with a node having custom style the nodesize is one point less
@@ -1471,24 +1499,11 @@ export function applyLatestStyle(
   styleName: string,
   state: EditorState,
   tr: Transaction | Transform,
-  node: Node,
-  startPos: number,
-  endPos: number,
-  style?: Style,
-  opt?: number
+  context: ApplyStyleContext,
+  style?: Style
 ): Transaction | Transform {
-  const way = 1;
-  tr = applyStyleEx(
-    style,
-    styleName,
-    state,
-    tr,
-    node,
-    startPos,
-    endPos,
-    way,
-    opt
-  );
+  const { node, startPos } = context;
+  tr = applyStyleEx(style, styleName, state, tr, context);
   // apply bold first word/sentence custom style
   tr = applyLineStyle(state, tr, node, startPos);
   return tr;
@@ -1647,7 +1662,6 @@ export function applyStyleToEachNode(
   styleName: string,
   positions: number[] = []
 ): Transaction | Transform {
-  const way = 0;
   if (positions.length > 0) {
     for (const pos of positions) {
       const node = tr.doc.nodeAt(pos);
@@ -1672,7 +1686,11 @@ export function applyStyleToEachNode(
     tr.doc.nodesBetween(from, to, (node, startPos) => {
       if (node.type.name === 'paragraph') {
         // Issue fix: When style applied to multiple paragraphs, some of the paragraph's objectId found in deletedObjectId's
-        tr = applyStyleEx(style, styleName, state, tr, node, startPos, to, way);
+        tr = applyStyleEx(style, styleName, state, tr, {
+          node,
+          startPos,
+          endPos: to,
+        });
       }
     });
   }
@@ -1893,9 +1911,11 @@ export function updateDocument(
         child.attrs.styleName,
         state,
         tr,
-        child,
-        pos,
-        pos + contentLen + 1,
+        {
+          node: child,
+          startPos: pos,
+          endPos: pos + contentLen + 1,
+        },
         style
       );
     }

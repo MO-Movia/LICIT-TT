@@ -292,7 +292,4 @@ export class InfoIconDialog extends React.PureComponent<
       }
     }
   }
-
-
-
 }

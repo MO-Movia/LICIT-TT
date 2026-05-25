@@ -346,11 +346,13 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
         newNode?.attrs?.styleName,
         editorState,
         tr,
-        newNode,
-        pos,
-        pos + node.nodeSize - 1,
-        null,
-        1
+        {
+          node: newNode,
+          startPos: pos,
+          endPos: pos + node.nodeSize - 1,
+          opt: 1,
+        },
+        null
       );
     };
 

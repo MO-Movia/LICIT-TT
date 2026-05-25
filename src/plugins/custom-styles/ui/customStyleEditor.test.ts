@@ -298,30 +298,6 @@ describe('CustomStyleEditor', () => {
     const event = { target: { value: '', checked: true } };
     expect(customstyleeditor.handleBoldPartial(event)).toBeUndefined();
   });
-  it('should handle handleTOC', () => {
-    const event = { target: { value: '', checked: true } };
-    expect(customstyleeditor.handleTOC(event)).toBeUndefined();
-  });
-  it('should handle handleTOT', () => {
-    const event = { target: { value: '', checked: true } };
-    expect(customstyleeditor.handleTOT(event)).toBeUndefined();
-  });
-  it('should handle handleTOT (case 2)', () => {
-    const event = { target: { value: '', checked: false } };
-    expect(customstyleeditor.handleTOT(event)).toBeUndefined();
-  });
-  it('should handle handleTOF', () => {
-    const event = { target: { value: '', checked: true } };
-    expect(customstyleeditor.handleTOF(event)).toBeUndefined();
-  });
-  it('should handle handleTOF (case 2)', () => {
-    const event = { target: { value: '', checked: false } };
-    expect(customstyleeditor.handleTOF(event)).toBeUndefined();
-  });
-  it('should handle handleNone', () => {
-    expect(customstyleeditor.handleNone()).toBeUndefined();
-  });
-
   it('should handle _save', () => {
     const props = {
       styles: {

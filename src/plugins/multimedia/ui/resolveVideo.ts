@@ -4,7 +4,6 @@
  */
 
 import {isOffline} from './isOffline';
-import url from 'url';
 import {VideoEditorState} from './VideoEditor';
 
 export type VideoResult = {
@@ -65,9 +64,12 @@ function processPromise(
     return;
   }
 
-  const parsedURL = url.parse(srcStr);
-  // Removed the port validation from here
-  const protocol = parsedURL.protocol;
+  let protocol: string | null = null;
+  try {
+    protocol = new URL(srcStr, globalThis.location.href).protocol;
+  } catch {
+    protocol = null;
+  }
   if (!/(http:|https:|data:)/.test(protocol || globalThis.location.protocol)) {
     resolve(result);
     return;

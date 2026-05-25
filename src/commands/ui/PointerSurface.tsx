@@ -44,7 +44,8 @@ export class PointerSurface extends React.PureComponent {
     });
 
     return (
-      <span
+      // Custom button implementation intentionally uses span; native button changes existing UI behavior.
+      <span  //NOSONAR
         aria-disabled={disabled}
         aria-pressed={pressed}
         className={buttonClassName}

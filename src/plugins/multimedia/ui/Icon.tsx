@@ -14,7 +14,8 @@ const cached: Record<string, React.ReactElement> = {};
 const CSS_CDN_URL = '//fonts.googleapis.com/icon?family=Material+Icons';
 const CSS_FONT = 'Material Icons';
 
-void (async function () {
+// Keeping async IIFE to avoid build issues related to top-level async/await handling.
+async function initCSSFonts() {
   // Inject CSS Fonts required for toolbar icons.
   const fontSupported = await canUseCSSFont(CSS_FONT);
   if (!fontSupported) {
@@ -22,7 +23,9 @@ void (async function () {
     // Now loaded locally, so that it work in closed network as well.
     //injectStyleSheet(CSS_CDN_URL);
   }
-})();
+}
+
+queueMicrotask(initCSSFonts);
 
 class SuperscriptIcon extends React.PureComponent {
   render(): React.ReactElement {

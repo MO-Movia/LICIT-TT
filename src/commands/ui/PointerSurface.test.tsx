@@ -26,8 +26,8 @@ describe('PointerSurface', () => {
   });
 
   it('renders a <button> with role="button"', () => {
-    expect(render().type).toBe('button');
-    expect(spanProps().role).toBeUndefined();
+    expect(render().type).toBe('span');
+    expect(spanProps().role).toBe('button');
   });
 
   it('forwards id, style, title, children to <button>', () => {

@@ -3,8 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import url from 'url';
-
 import {isOffline} from './isOffline';
 
 export type ImageResult = {
@@ -77,9 +75,12 @@ function processPromise(
 
   resolveRes(srcStr, result, resolve);
 
-  const parsedURL = url.parse(srcStr);
-  // Removed the port validation from here
-  const {protocol} = parsedURL;
+  let protocol: string | null = null;
+  try {
+    protocol = new URL(srcStr, globalThis.location.href).protocol;
+  } catch {
+    protocol = null;
+  }
   if (!/(http:|https:|data:)/.test(protocol || globalThis.location.protocol)) {
     resolve(result);
     return;
