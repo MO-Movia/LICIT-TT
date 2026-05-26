@@ -312,4 +312,614 @@ describe('Info Plugin Extended', () => {
     const result = cView.getNodePosEx(100, 200);
     expect(result).toBe(12);
   });
+
+  it('getNodePosEx returns null when posAtCoords returns null', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    jest.spyOn(view, 'posAtCoords').mockReturnValue(null);
+    const result = cView.getNodePosEx(100, 200);
+    expect(result).toBeNull();
+  });
+
+  it('showSourceText does not call open when dom.classList is falsy', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    // Mock dom.classList to be falsy
+    cView.dom = document.createElement('div');
+    Object.defineProperty(cView.dom, 'classList', {
+      value: null,
+      writable: true,
+    });
+
+    const openSpy = jest.spyOn(cView, 'open');
+    const event = new MouseEvent('mouseover');
+    cView.showSourceText(event);
+    
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it('getNodePosition handles offsetY < 1', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const getNodePosExSpy = jest.spyOn(cView, 'getNodePosEx');
+    getNodePosExSpy.mockReturnValue(10);
+
+    const event = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'offsetY', {
+      value: 0,
+    });
+    Object.defineProperty(event, 'clientY', {
+      value: 100,
+    });
+    Object.defineProperty(event, 'clientX', {
+      value: 50,
+    });
+
+    const result = cView.getNodePosition(event);
+    expect(result).toBeUndefined();
+  });
+
+  it('selectNode with no target className', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const targetElement = document.createElement('div');
+    targetElement.className = 'someOtherClass';
+
+    const event = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'target', {
+      value: targetElement,
+    });
+    Object.defineProperty(event, 'currentTarget', {
+      value: cView.dom,
+    });
+
+    const openSpy = jest.spyOn(cView, 'open');
+    cView.selectNode(event);
+    
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it('open method with empty tooltip', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const event = new MouseEvent('mouseover', {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'clientX', {
+      value: 100,
+    });
+    Object.defineProperty(event, 'clientY', {
+      value: 100,
+    });
+    Object.defineProperty(event, 'currentTarget', {
+      value: cView.dom,
+    });
+
+    // Spy on getElementsByClassName to control tooltips
+    const originalGetElementsByClassName = document.getElementsByClassName;
+    document.getElementsByClassName = jest.fn(() => []) as any;
+
+    cView.open(event);
+
+    // Restore
+    document.getElementsByClassName = originalGetElementsByClassName;
+  });
+
+  it('setContentRight with offsetParent tagName TD', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const event = new MouseEvent('mouseover', {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'clientX', {
+      value: 100,
+    });
+    Object.defineProperty(event, 'clientY', {
+      value: 100,
+    });
+
+    const parent = document.createElement('div');
+    parent.style.width = '1200px';
+    Object.defineProperty(parent, 'clientWidth', {
+      value: 1100,
+    });
+    Object.defineProperty(parent, 'getBoundingClientRect', {
+      value: () => ({ left: 0 }),
+    });
+
+    const tooltip = document.createElement('div');
+    Object.defineProperty(tooltip, 'clientWidth', {
+      value: 500,
+    });
+
+    const ttContent = document.createElement('div');
+
+    const td = document.createElement('td');
+    Object.defineProperty(event, 'currentTarget', {
+      value: { offsetParent: td },
+    });
+
+    cView.setContentRight(event, parent, tooltip, ttContent);
+    expect(tooltip.style.position).toBe('fixed');
+  });
+
+  it('adjustTooltipPosition with TD offsetParent', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const event = new MouseEvent('mouseover', {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'clientY', {
+      value: 100,
+    });
+
+    const td = document.createElement('td');
+    Object.defineProperty(event, 'currentTarget', {
+      value: { offsetParent: td },
+    });
+
+    const tooltip = document.createElement('div');
+    cView.adjustTooltipPosition(event, tooltip);
+    
+    expect(tooltip.style.top).toBe('110px');
+  });
+
+  it('isInfoIconNode returns false for non-infoicon node', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const result = cView.isInfoIconNode(0);
+    expect(result).toBe(false);
+  });
+
+  it('parentNodeType returns true when type name is infoicon', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const pNode = { type: { name: 'infoicon' } };
+    const result = cView.parentNodeType(pNode);
+    expect(result).toBe(true);
+  });
+
+  it('parentNodeType returns false when pNode is null', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const result = cView.parentNodeType(null);
+    expect(result).toBe(null);
+  });
+
+  it('onCancel closes popup and focuses view', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const focusSpy = jest.spyOn(view, 'focus');
+    cView.onCancel(view);
+    
+    expect(focusSpy).toHaveBeenCalled();
+  });
+
+  it('createInfoObject returns correct structure', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const result = cView.createInfoObject(view, 1);
+    expect(result.mode).toBe(1);
+    expect(result.editorView).toBe(view);
+  });
+
+  it('destroy removes event listeners', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const removeEventListenerSpy = jest.spyOn(cView.dom, 'removeEventListener');
+    cView.destroy();
+    
+    expect(removeEventListenerSpy).toHaveBeenCalled();
+  });
+
+  it('isInfoIconNode returns true when node type is infoicon', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const result = cView.isInfoIconNode(6);
+    expect(result).toBe(true);
+  });
+
+  it('onEditInfo closes submenu and creates popup', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    cView._popUp_subMenu = createPopUp(
+      InfoIconDialog,
+      cView.createInfoObject(view, 1),
+      {
+        modal: true,
+        IsChildDialog: false,
+        autoDismiss: false,
+      }
+    );
+
+    const closeSpy = jest.spyOn(cView._popUp_subMenu, 'close');
+    cView.onEditInfo(view);
+    
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('updateInfoObject updates node attributes', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const tr = view.state.tr;
+    const infoIcon = {
+      infoIcon: 'newIcon',
+      editorView: view,
+    };
+
+    const result = cView.updateInfoObject(tr, infoIcon);
+    expect(result).toBeDefined();
+  });
+
+  it('addClickListenerToLinks handles links', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const tooltipContent = document.createElement('div');
+    const link1 = document.createElement('a');
+    link1.href = 'https://example.com';
+    tooltipContent.appendChild(link1);
+
+    cView.addClickListenerToLinks(tooltipContent);
+    
+    expect(tooltipContent.getElementsByTagName('a').length).toBe(1);
+  });
+
+  it('onInfoSubMenuMouseOut destroys popup', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const destroySpy = jest.spyOn(cView, 'destroyPopup');
+    cView.onInfoSubMenuMouseOut();
+    
+    expect(destroySpy).toHaveBeenCalled();
+  });
+
+  it('isPNodeNull returns true when node is null', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const result = cView.isPNodeNull(null);
+    expect(result).toBe(true);
+  });
+
+  it('setContentRight handles right positioning for TD', () => {
+    const before = 'hello';
+    const after = ' world';
+
+    const state = EditorState.create({
+      doc: doc(p(before, newInfoIconNode, after)),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({mount: dom}, {state});
+
+    const cView = new InfoIconView(
+      view.state.doc.nodeAt(6),
+      view,
+      undefined as any
+    );
+
+    const event = new MouseEvent('mouseover', {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'clientX', {
+      value: 800,
+    });
+
+    const parent = document.createElement('div');
+    Object.defineProperty(parent, 'clientWidth', {
+      value: 1000,
+    });
+    Object.defineProperty(parent, 'getBoundingClientRect', {
+      value: () => ({ left: 100 }),
+    });
+
+    const tooltip = document.createElement('div');
+    Object.defineProperty(tooltip, 'clientWidth', {
+      value: 500,
+    });
+
+    const ttContent = document.createElement('div');
+    const td = document.createElement('td');
+    Object.defineProperty(event, 'currentTarget', {
+      value: { offsetParent: td },
+    });
+
+    cView.setContentRight(event, parent, tooltip, ttContent);
+    expect(tooltip.style.right).toBeTruthy();
+  });
 });
