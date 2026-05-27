@@ -9,9 +9,10 @@ import {
   atAnchorTopCenter,
 } from '../../../commands';
 import React from 'react';
-import {Icon} from './Icon';
-import {EditorView} from 'prosemirror-view';
-import {CropImagePopup, CropDataPropValue} from './CropImagePopup';
+import { Icon } from './Icon';
+import { EditorView } from 'prosemirror-view';
+import { CropImagePopup, CropDataPropValue } from './CropImagePopup';
+import { UICommand } from '../../../core';
 
 export type PropValue = {
   value?: string;
@@ -29,7 +30,7 @@ type parseLabeltype = {
 type AlignKey = 'LEFT' | 'CENTER' | 'RIGHT';
 type FloatKey = 'FLOAT_LEFT' | 'FLOAT_RIGHT';
 type AlterKey = 'EDIT' | 'DELETE' | 'CROP';
-const ImageAlignValues: {[key in AlignKey]: PropValue} = {
+const ImageAlignValues: { [key in AlignKey]: PropValue } = {
   LEFT: {
     value: 'left',
     text: 'Left',
@@ -46,7 +47,7 @@ const ImageAlignValues: {[key in AlignKey]: PropValue} = {
     label: '[format_align_right] Right Align',
   },
 };
-const ImageFloatValues: {[key in FloatKey]: PropValue} = {
+const ImageFloatValues: { [key in FloatKey]: PropValue } = {
   FLOAT_LEFT: {
     value: 'float-left',
     text: 'Float left',
@@ -59,7 +60,7 @@ const ImageFloatValues: {[key in FloatKey]: PropValue} = {
     label: '[format_textdirection_l_to_r] Right Align',
   },
 };
-const ImageAlterValues: {[key in AlterKey]: PropValue} = {
+const ImageAlterValues: { [key in AlterKey]: PropValue } = {
   EDIT: {
     value: 'edit',
     text: 'Edit',
@@ -92,16 +93,18 @@ export class ImageInlineEditor extends React.PureComponent {
     expanded: false,
     srcc: null,
   };
-
+  theme = UICommand.theme;
   render(): React.ReactNode {
     const alignButtons = this.prepButtons(ImageAlignValues);
     const floatButtons = this.prepButtons(ImageFloatValues);
     const alterButtons = this.prepButtons(ImageAlterValues);
+    const editorClasssName = 'molm-czi-inline-editor ' + this.theme;
+    const buttonClasssName = 'molm-czi-custom-buttons ' + this.theme;
     return (
-      <div className="molm-czi-inline-editor">
-        <span className="molm-czi-custom-buttons">{alignButtons}</span>
-        <span className="molm-czi-custom-buttons">{floatButtons}</span>
-        <span className="molm-czi-custom-buttons">{alterButtons}</span>
+      <div className={editorClasssName}>
+        <span className={buttonClasssName}>{alignButtons}</span>
+        <span className={buttonClasssName}>{floatButtons}</span>
+        <span className={buttonClasssName}>{alterButtons}</span>
       </div>
     );
   }
@@ -113,15 +116,15 @@ export class ImageInlineEditor extends React.PureComponent {
     }
     const align = this.props.value ? this.props.value.align : null;
     const onClick = this._onClick;
-    const {editorView} = this.props;
-    this.setState({srcc: this.props.value?.src});
+    const { editorView } = this.props;
+    this.setState({ srcc: this.props.value?.src });
     if (ImgValues === ImageAlterValues) {
       const onAlter = this._onAlter;
       const onRemove = this._onRemove;
       const onCrop = this._onCrop;
       buttons = Object.keys(ImageAlterValues).map((key) => {
-        const {text, label} = ImageAlterValues[key];
-        const {icon} = this.parseLabel(label);
+        const { text, label, value } = ImageAlterValues[key];
+        const { icon } = this.parseLabel(label, value);
         const handler =
           {
             EDIT: onAlter,
@@ -134,13 +137,14 @@ export class ImageInlineEditor extends React.PureComponent {
             onClick={handler}
             title={text}
             value={editorView}
+            theme={this.theme}
           />
         );
       });
     } else {
       buttons = Object.keys(ImgValues).map((key) => {
-        const {value, text, label} = ImgValues[key];
-        const {icon} = this.parseLabel(label, value);
+        const { value, text, label } = ImgValues[key];
+        const { icon } = this.parseLabel(label, value);
 
         return (
           <CustomButton
@@ -150,6 +154,7 @@ export class ImageInlineEditor extends React.PureComponent {
             onClick={onClick}
             title={text}
             value={value}
+            theme={this.theme}
           />
         );
       });
@@ -163,7 +168,7 @@ export class ImageInlineEditor extends React.PureComponent {
       const icon = matched[1];
       const label = matched[2];
       if (value) {
-        const klass = 'molm-custom-align-icon-' + value;
+        const klass = 'molm-custom-align-icon ' + value + ` ${this.theme}`;
         return {
           icon: <span className={klass}>{value}</span>,
           title: label || null,
@@ -181,21 +186,21 @@ export class ImageInlineEditor extends React.PureComponent {
   }
 
   _onClick = (align?: string) => {
-    this.props.onSelect({align: align});
+    this.props.onSelect({ align: align });
   };
 
   _onAlter = (): void => {
     //Handle Edit
   };
   _onRemove = (view: EditorView): void => {
-    const {dispatch} = view;
+    const { dispatch } = view;
     let tr = view.state.tr;
     tr = tr.deleteSelection();
     dispatch(tr);
   };
   _onCrop = (view: EditorView): void => {
     const state = view.state;
-    const {from} = state.selection;
+    const { from } = state.selection;
 
     const pos = from;
     const node = state.doc.nodeAt(pos);

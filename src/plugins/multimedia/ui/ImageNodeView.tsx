@@ -4,30 +4,30 @@
  */
 
 import cx from 'classnames';
-import {Node} from 'prosemirror-model';
-import {Decoration} from 'prosemirror-view';
-import {NodeSelection} from 'prosemirror-state';
+import { Node } from 'prosemirror-model';
+import { Decoration } from 'prosemirror-view';
+import { NodeSelection } from 'prosemirror-state';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import {CustomNodeView} from './CustomNodeView';
-import {Icon} from './Icon';
-import {ImageResizeBox, MIN_SIZE} from './ImageResizeBox';
+import { CustomNodeView } from './CustomNodeView';
+import { Icon } from './Icon';
+import { ImageResizeBox, MIN_SIZE } from './ImageResizeBox';
 
 import {
   createPopUp,
   atAnchorBottomCenter,
   PopUpHandle,
 } from '../../../commands';
-import {observe, unobserve} from './ResizeObserver';
-import {resolveImage} from './resolveImage';
-import {uuid} from './uuid';
+import { observe, unobserve } from './ResizeObserver';
+import { resolveImage } from './resolveImage';
+import { uuid } from './uuid';
 
-import type {EditorRuntime} from '../Types';
-import type {NodeViewProps} from './CustomNodeView';
-import type {ResizeObserverEntry} from './ResizeObserver';
-import {ImageInlineEditor} from './ImageInlineEditor';
-import {FP_WIDTH} from '../Constants';
+import type { EditorRuntime } from '../Types';
+import type { NodeViewProps } from './CustomNodeView';
+import type { ResizeObserverEntry } from './ResizeObserver';
+import { ImageInlineEditor } from './ImageInlineEditor';
+import { FP_WIDTH } from '../Constants';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const EMPTY_SRC =
@@ -70,7 +70,7 @@ function getMaxResizeWidth(el): number {
     node = node.parentElement;
   }
   if ((node?.offsetParent?.offsetWidth || 0) > 0) {
-    const {offsetParent} = node;
+    const { offsetParent } = node;
     const style = el.ownerDocument.defaultView.getComputedStyle(offsetParent);
     let width = offsetParent.clientWidth - IMAGE_MARGIN * 2;
     if (style.boxSizing === 'border-box') {
@@ -92,7 +92,7 @@ async function resolveURL(
   if (!runtime) {
     return src;
   }
-  const {canProxyImageSrc, getProxyImageSrc} = runtime;
+  const { canProxyImageSrc, getProxyImageSrc } = runtime;
   if (src && getProxyImageSrc && canProxyImageSrc?.(src)) {
     const wait =
       !document.body.classList.contains('export-pdf-mode') &&
@@ -164,8 +164,8 @@ export class ImageViewBody extends React.PureComponent<
 
   componentDidUpdate(prevProps: NodeViewProps): void {
     const prevSrc = prevProps.node.attrs.src;
-    const {node} = this.props;
-    const {src} = node.attrs;
+    const { node } = this.props;
+    const { src } = node.attrs;
     if (prevSrc !== src) {
       // A new image is provided, resolve it.
       void this._resolveOriginalSize().catch(console.warn);
@@ -174,20 +174,20 @@ export class ImageViewBody extends React.PureComponent<
   }
 
   render(): React.ReactElement {
-    const {originalSize, maxSize} = this.state;
-    const {editorView, node, selected, focused} = this.props;
-    const {readOnly} = editorView;
-    const {attrs} = node;
-    const {align, crop, rotate} = attrs;
+    const { originalSize, maxSize } = this.state;
+    const { editorView, node, selected, focused } = this.props;
+    const { readOnly } = editorView;
+    const { attrs } = node;
+    const { align, crop, rotate } = attrs;
 
-    const retVal = this.assignVal(originalSize, focused, readOnly);
+    const retVal = this.assignVal(focused, readOnly, attrs.src);
     const loading = retVal.loading;
     const active = retVal.active;
     const src = retVal.src;
     const aspectRatio = retVal.aspectRatio;
     const error = retVal.error;
 
-    let {width, height} = attrs;
+    let { width, height } = attrs;
     const dimensions = this.calcWidthAndHeight(
       width,
       height,
@@ -242,7 +242,7 @@ export class ImageViewBody extends React.PureComponent<
       clipStyle.position = 'relative';
       clipStyle.display = 'inline-block';
     } else if (crop) {
-      const cropped = {...crop};
+      const cropped = { ...crop };
       if (scale !== 1) {
         scale = maxSize.width / cropped.width;
         cropped.width *= scale;
@@ -303,10 +303,10 @@ export class ImageViewBody extends React.PureComponent<
               style={
                 attrs.cropData
                   ? {
-                      position: 'absolute',
-                      top: `-${attrs.cropData.top}px`,
-                      left: `-${attrs.cropData.left}px`,
-                    }
+                    position: 'absolute',
+                    top: `-${attrs.cropData.top}px`,
+                    left: `-${attrs.cropData.left}px`,
+                  }
                   : undefined
               }
               width={width}
@@ -319,14 +319,15 @@ export class ImageViewBody extends React.PureComponent<
     );
   }
 
-  assignVal(originalSize: OriginalSize, focused: boolean, readOnly: boolean) {
+  assignVal(focused: boolean, readOnly: boolean, currentSrc: string) {
     // It's only active when the image's fully loaded.
-    const loading = originalSize === DEFAULT_ORIGINAL_SIZE;
-    const active = !loading && focused && !readOnly && originalSize.complete;
-    const src = originalSize.src;
-    const aspectRatio = loading ? 1 : originalSize.width / originalSize.height;
-    const error = !loading && !originalSize.complete;
-    return {loading, active, src, aspectRatio, error};
+    const loading = false;
+    const active = focused && !readOnly;
+    // Keep displaying current src while original size resolves.
+    const src = currentSrc || '';
+    const aspectRatio = 1;
+    const error = false;
+    return { loading, active, src, aspectRatio, error };
   }
   isUnaltered(active: boolean, crop: null, rotate: null) {
     return active && !crop && !rotate;
@@ -346,7 +347,7 @@ export class ImageViewBody extends React.PureComponent<
       width = originalSize.width || IMAGE_PLACEHOLDER_SIZE;
       height = originalSize.height || IMAGE_PLACEHOLDER_SIZE;
     }
-    return {width, height};
+    return { width, height };
   }
 
   _renderInlineEditor(): void {
@@ -356,7 +357,7 @@ export class ImageViewBody extends React.PureComponent<
       return;
     }
 
-    const {node} = this.props;
+    const { node } = this.props;
     const editorProps = {
       value: node.attrs,
       onSelect: this._onChange,
@@ -406,11 +407,11 @@ export class ImageViewBody extends React.PureComponent<
       originalSize.width = MIN_SIZE;
       originalSize.height = MIN_SIZE;
     }
-    this.setState({originalSize});
+    this.setState({ originalSize });
   };
 
   _onResizeEnd = (width: number, height: number): void => {
-    const {getPos, node, editorView} = this.props;
+    const { getPos, node, editorView } = this.props;
     const pos = getPos();
     if (pos) {
       const attrs = {
@@ -420,7 +421,7 @@ export class ImageViewBody extends React.PureComponent<
         height,
       };
       let tr = editorView.state.tr;
-      const {selection} = editorView.state;
+      const { selection } = editorView.state;
       tr = tr.setNodeMarkup(pos, null, attrs);
       // Upgrade outdated packages.
       // reset selection to original using the latest doc.
@@ -434,13 +435,13 @@ export class ImageViewBody extends React.PureComponent<
     }
   };
 
-  _onChange = (value?: {align: string}): void => {
+  _onChange = (value?: { align: string }): void => {
     if (!this._mounted) {
       return;
     }
 
     const align = value ? value.align : null;
-    const {getPos, node, editorView} = this.props;
+    const { getPos, node, editorView } = this.props;
     const pos = getPos();
     const attrs = {
       ...node.attrs,
@@ -448,7 +449,7 @@ export class ImageViewBody extends React.PureComponent<
     };
 
     let tr = editorView.state.tr;
-    const {selection} = editorView.state;
+    const { selection } = editorView.state;
     tr = tr.setNodeMarkup(pos, null, attrs);
     // Upgrade outdated packages.
     // reset selection to original using the latest doc.
@@ -515,7 +516,7 @@ export class ImageNodeView extends CustomNodeView {
   }
 
   _updateDOM(el: HTMLElement): void {
-    const {align} = this.props.node.attrs;
+    const { align } = this.props.node.attrs;
     let className = 'molm-czi-image-view';
     if (align) {
       className += ' align-' + align;

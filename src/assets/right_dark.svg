@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+    id="background"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 34 34">
+
+    <defs>
+        <style>
+            .cls-1 {
+                fill: none;
+            }
+
+            .cls-2 {
+                fill: #c7c7c7;
+            }
+
+            .cls-3 {
+                fill: none;
+                stroke: rgb(232, 181, 26);
+                stroke-width: 1.4;
+                stroke-linejoin: round;
+            }
+        </style>
+    </defs>
+
+    <rect class="cls-1" width="34" height="34"/>
+
+    <!-- Top bar -->
+    <rect class="cls-2" x="0" y="0" width="34" height="5"/>
+
+    <!-- Bottom bar -->
+    <rect class="cls-2" x="0" y="29" width="34" height="5"/>
+
+    <!-- Right aligned colored rounded rectangle -->
+    <rect
+        class="cls-3"
+        x="12"
+        y="10"
+        width="20"
+        height="14"
+        rx="1.8"
+        ry="1.8"/>
+</svg>
