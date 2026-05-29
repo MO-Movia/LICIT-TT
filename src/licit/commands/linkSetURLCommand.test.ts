@@ -8,6 +8,7 @@ import LinkSetURLCommand from './linkSetURLCommand';
 import { Transform } from 'prosemirror-transform';
 import { Schema } from 'prosemirror-model';
 import { EditorViewEx } from '../constants';
+import { RuntimeService } from '../../commands';
 
 jest.mock('../../commands', () => {
   const actual =
@@ -36,6 +37,7 @@ jest.mock('../plugins/selectionPlaceholderPlugin', () => {
 describe('LinkSetURLCommand', () => {
   afterEach(() => {
     jest.clearAllMocks(); // Clear mocks after each test
+    RuntimeService.Runtime = null;
   });
 
   const lsc = new LinkSetURLCommand();
@@ -47,7 +49,14 @@ describe('LinkSetURLCommand', () => {
         content: 'block+',
       },
       paragraph: {
-        attrs: { lineSpacing: { default: 'test' } },
+        attrs: {
+          lineSpacing: { default: 'test' },
+          styleName: { default: null },
+          objectId: { default: null },
+          selectionId: { default: null },
+          capco: { default: null },
+          reset: { default: null },
+        },
         content: 'text*',
         group: 'block',
       },
@@ -214,8 +223,38 @@ describe('LinkSetURLCommand', () => {
     ).toBeDefined();
   });
 
+  it('should include generated table numbering and capco in inner link labels', () => {
+    const linkDoc = mySchema.node('doc', null, [
+      mySchema.node(
+        'paragraph',
+        { styleName: 'Chapter', objectId: 'chapter-1' },
+        [mySchema.text('CHAPTER 1')]
+      ),
+      mySchema.node(
+        'paragraph',
+        { styleName: 'Table Caption', objectId: 'table-1', capco: 'TBD' },
+        [mySchema.text('TABLE123')]
+      ),
+    ]);
+
+    const result = lsc.fetchInnerLinkSelectionIds(
+      { state: { doc: linkDoc } } as unknown as EditorViewEx,
+      [{ name: 'Chapter', level: 1 }],
+      [],
+      [{ name: 'Table Caption', level: 2, prefix: 'TABLE A', tot: true }]
+    );
+
+    expect(result.tables[0]).toEqual({
+      id: '#table-1',
+      label: 'TABLE A1.1 (TBD) TABLE123',
+    });
+  });
+
   it('_popup should contain close once it created', async () => {
     lsc._popUp = null;
+    RuntimeService.Runtime = {
+      openLinkDialog: jest.fn(),
+    };
     const response = lsc.waitForUserInput(
       {
         doc: { nodeAt: () => {} },
@@ -230,7 +269,10 @@ describe('LinkSetURLCommand', () => {
     }
 
     // Assert that the resolve function was called with the expected value
-    await expect(response).resolves.toBe('mocked value');
+    await expect(response).resolves.toEqual({
+      href: 'mocked value',
+      linkDisplayText: 'mocked value',
+    });
   });
 
   describe('Marktype null', () => {
