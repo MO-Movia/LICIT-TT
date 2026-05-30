@@ -11,7 +11,7 @@ import {
   TextSelection,
   Transaction,
 } from 'prosemirror-state';
-import { canJoin, Transform } from 'prosemirror-transform';
+import { Transform } from 'prosemirror-transform';
 import {
   applyLatestStyle,
   getMarkByStyleName,
@@ -217,16 +217,6 @@ export function onUpdateAppendTransaction(
   // custom style for next line
   if (csview) {
     if (BACKSPACEKEYCODE === csview.input.lastKeyCode) {
-      const selection = nextState.selection;
-      const $from = selection?.$from;
-      if (selection?.empty && $from?.parentOffset === 0 && $from.depth > 0) {
-        const cut = $from.before();
-        if (canJoin(nextState.doc, cut)) {
-          tr = tr.join(cut).scrollIntoView();
-          return tr;
-        }
-      }
-
       const paraPositionDiff =
         prevState.selection.from - nextState.selection.from;
       if (paraPositionDiff === 2 || paraPositionDiff === 0) {
@@ -248,7 +238,7 @@ export function onUpdateAppendTransaction(
           }
           tr = applyLatestStyle(
             styleName,
-            nextState as EditorState,
+            nextState,
             tr,
             para.node,
             para.pos,
@@ -267,7 +257,9 @@ export function onUpdateAppendTransaction(
       tr = applyStyleForNextParagraph(prevState, nextState, tr, csview);
     } else if (
       ENTERKEYCODE === csview.input.lastKeyCode &&
-      getSelectionCursor(tr.selection)?.pos === tr.selection.$from.start()
+      getSelectionCursor(tr.selection)?.pos === tr.selection.$from.start() &&
+      tr.selection.empty &&
+      tr.selection.$from.node().content.size === 0
     ) {
       tr = applyStyleForPreviousEmptyParagraph(nextState, tr);
       const cursorPosition = getSelectionCursor(prevState.selection)?.pos;
@@ -298,21 +290,9 @@ export function onUpdateAppendTransaction(
     // Defer styling for large pastes
     if (slice1 && slice1.content.childCount > 20) {
       // Apply minimal styling or defer to next tick
-      tr = applyMinimalPasteStyling(
-        slice1,
-        prevState as EditorState,
-        nextState as EditorState,
-        csview,
-        tr
-      );
+      tr = applyMinimalPasteStyling(slice1, prevState, nextState, csview, tr);
     } else if (slice1) {
-      tr = optimizedPasteHandler(
-        slice1,
-        prevState as EditorState,
-        nextState as EditorState,
-        csview,
-        tr
-      );
+      tr = optimizedPasteHandler(slice1, prevState, nextState, csview, tr);
     }
     tr = tr?.scrollIntoView();
   }
@@ -570,7 +550,7 @@ export function applyStoredMarksAfterHardBreak(
   marks.forEach((mark) => {
     tr = (tr as Transaction).addStoredMark(mark);
   });
-  return tr as Transform;
+  return tr;
 }
 export function remapCounterFlags(tr: LooseTr): void {
   // Depending on the window variables,
@@ -736,16 +716,11 @@ export function applyStyleForNextParagraph(
         align: prevParagraph.attrs.align,
       };
 
-      const nextNodePos = nextState.selection.from - 1;
+      const nextNodePos = $from.start();
       const nextNode = nextState.doc.nodeAt(nextNodePos);
-
-      let IsActiveNode = false;
-      if (
-        nextNodePos > prevState.selection.from &&
-        nextNodePos < nextState.selection.from
-      ) {
-        IsActiveNode = true;
-      }
+      const IsActiveNode =
+        nextNodePos >= prevState.selection.from &&
+        nextNodePos <= nextState.selection.from;
 
       if (nextNode && IsActiveNode && nextNode.type.name === 'paragraph') {
         const posList = prevState.selection.from - 1;

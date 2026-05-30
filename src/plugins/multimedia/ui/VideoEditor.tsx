@@ -6,7 +6,6 @@
 import React from 'react';
 import { preventEventDefault, CustomButton } from '../../../commands';
 
-import axios from 'axios';
 import { resolveVideo } from './resolveVideo';
 
 export type VideoEditorProps = {
