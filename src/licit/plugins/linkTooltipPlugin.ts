@@ -25,6 +25,9 @@ import LinkTooltip from '../ui/linkTooltip';
 import { EditorViewEx } from '../constants';
 import sanitizeURL from '../sanitizeURL';
 import scrollIntoView from 'smooth-scroll-into-view-if-needed';
+import LinkSetURLCommand from '../commands/linkSetURLCommand';
+
+const linkSetURLCommand = new LinkSetURLCommand();
 
 // https://prosemirror.net/examples/tooltip/
 const SPEC = {
@@ -39,8 +42,35 @@ const SPEC = {
         }
         return false;
       },
+      mouseover: (view: EditorView, event: MouseEvent): boolean => {
+        const anchorEl =
+          event.target instanceof Element
+            ? event.target.closest('a[href]')
+            : null;
+        if (anchorEl) {
+          (view.dom as HTMLElement & {
+            _linkTooltipView?: LinkTooltipView;
+          })._linkTooltipView?._handleMouseOver(view, anchorEl);
+        }
+        return false;
+      },
+      mouseout: (view: EditorView, event: MouseEvent): boolean => {
+        const anchorEl =
+          event.target instanceof Element
+            ? event.target.closest('a[href]')
+            : null;
+        if (
+          anchorEl &&
+          !(event.relatedTarget instanceof Node && anchorEl.contains(event.relatedTarget))
+        ) {
+          (view.dom as HTMLElement & {
+            _linkTooltipView?: LinkTooltipView;
+          })._linkTooltipView?._scheduleClose();
+        }
+        return false;
+      },
     },
-    handleClickOn: (view, pos, node, nodePos, event, direct) => {
+    handleClickOn: (view, pos, node, _nodePos, event, direct) => {
       if (!direct) {
         return false;
       }
@@ -54,8 +84,10 @@ const SPEC = {
         return false;
       }
 
-      const pluginView = view.dom._linkTooltipView;
-      return pluginView?._handleClick(view, linkMark, event);
+      const pluginView = (view.dom as HTMLElement & {
+        _linkTooltipView?: LinkTooltipView;
+      })._linkTooltipView;
+      return pluginView?._handleClick(view, linkMark, event) ?? false;
     },
   },
   view(editorView: EditorView) {
@@ -78,9 +110,13 @@ export class LinkTooltipView {
   _popup = null;
   _editor = null;
   _view = null;
+  _linkSelection = null;
+  _closeTimer = null;
+  _tooltipEl = null;
+  _isTooltipHovered = false;
 
   constructor(editorView: EditorView) {
-    this.update(editorView as EditorViewEx, null);
+    this.update(editorView, null);
     this._view = editorView;
   }
 
@@ -96,8 +132,17 @@ export class LinkTooltipView {
     if (!markType) {
       return;
     }
-    const { from, to } = selection;
-    const result = findNodesWithSameMark(doc, from, to, markType);
+    if (!this._popup) {
+      return;
+    }
+
+    const { from, to } = this._linkSelection ?? selection;
+    const result = findNodesWithSameMark(
+      doc,
+      from,
+      getInclusiveSelectionTo(from, to),
+      markType
+    );
 
     if (!result) {
       this.destroy();
@@ -117,9 +162,19 @@ export class LinkTooltipView {
       return;
     }
 
+    this._showTooltip(view, result, anchorEl);
+  }
+
+  _showTooltip = (view: EditorView, result, anchorEl: Element): void => {
+    this._clearCloseTimer();
+    this._linkSelection = TextSelection.create(
+      view.state.doc,
+      result.from.pos,
+      result.to.pos + 1
+    );
     const popup = this._popup;
     const viewPops = {
-      editorState: state,
+      editorState: view.state,
       editorView: view,
       href: result.mark.attrs.href,
       onCancel: this._onCancel,
@@ -140,11 +195,65 @@ export class LinkTooltipView {
         onClose: this._onClose,
         position: atAnchorTopCenter,
       });
+      this._bindTooltipHoverEvents();
     }
-  }
+  };
+
+  _handleMouseOver = (view: EditorView, anchorEl: Element): void => {
+    const markType = view.state.schema.marks[MARK_LINK];
+    if (!markType) {
+      return;
+    }
+    const pos = view.posAtDOM(anchorEl, 0);
+    const result = findNodesWithSameMark(view.state.doc, pos, pos, markType);
+    if (result) {
+      this._showTooltip(view, result, anchorEl);
+    }
+  };
+
+  _bindTooltipHoverEvents = (): void => {
+    this._tooltipEl = document.querySelector('.czi-link-tooltip-body');
+    this._tooltipEl?.addEventListener('mouseenter', this._handleTooltipMouseEnter);
+    this._tooltipEl?.addEventListener('mousemove', this._handleTooltipMouseEnter);
+    this._tooltipEl?.addEventListener('mousedown', this._handleTooltipMouseEnter);
+    this._tooltipEl?.addEventListener('mouseleave', this._scheduleClose);
+  };
+
+  _handleTooltipMouseEnter = (): void => {
+    this._isTooltipHovered = true;
+    this._clearCloseTimer();
+  };
+
+  _scheduleClose = (): void => {
+    this._isTooltipHovered = false;
+    this._clearCloseTimer();
+    this._closeTimer = window.setTimeout(() => {
+      if (!this._isTooltipHovered) {
+        this._closePopup();
+      }
+    }, 500);
+  };
+
+  _clearCloseTimer = (): void => {
+    if (this._closeTimer !== null) {
+      window.clearTimeout(this._closeTimer);
+      this._closeTimer = null;
+    }
+  };
+
+  _closePopup = (): void => {
+    this._clearCloseTimer();
+    this._tooltipEl?.removeEventListener('mouseenter', this._handleTooltipMouseEnter);
+    this._tooltipEl?.removeEventListener('mousemove', this._handleTooltipMouseEnter);
+    this._tooltipEl?.removeEventListener('mousedown', this._handleTooltipMouseEnter);
+    this._tooltipEl?.removeEventListener('mouseleave', this._scheduleClose);
+    this._tooltipEl = null;
+    this._isTooltipHovered = false;
+    this._popup?.close();
+  };
 
   destroy() {
-    this._popup?.close();
+    this._closePopup();
     this._editor?.close();
   }
 
@@ -156,6 +265,7 @@ export class LinkTooltipView {
   _onClose = (): void => {
     this._anchorEl = null;
     this._editor = null;
+    this._linkSelection = null;
     this._popup = null;
   };
 
@@ -166,9 +276,18 @@ export class LinkTooltipView {
 
     const { state } = view;
     const { schema, doc, selection } = state;
-    const { from, to } = selection;
+    const linkSelection = this._linkSelection ?? selection;
+    const { from, to } = linkSelection;
     const markType = schema.marks[MARK_LINK];
-    const result = findNodesWithSameMark(doc, from, to, markType);
+    if (!markType) {
+      return;
+    }
+    const result = findNodesWithSameMark(
+      doc,
+      from,
+      getInclusiveSelectionTo(from, to),
+      markType
+    );
     if (!result) {
       return;
     }
@@ -184,7 +303,7 @@ export class LinkTooltipView {
     this._editor = {
       close: (value?: string) => {
         this._editor = null;
-        this._onEditEnd(view, selection as TextSelection, value);
+        this._onEditEnd(view, linkSelection as TextSelection, value);
       },
     };
 
@@ -194,29 +313,36 @@ export class LinkTooltipView {
           link: string,
           popupString: string,
           applyLink?: (href?: string, linkDisplayText?: string) => void,
-          closeLinkTool?: () => void
+          closeLinkTool?: () => void,
+          linkItems?: Awaited<ReturnType<LinkSetURLCommand['showTocList']>>
         ) => void;
       }
       | null;
 
     if (runtime?.openLinkDialog) {
-      runtime.openLinkDialog(
-        href,
-        selectedText,
-        (nextHref?: string, linkDisplayText?: string) => {
-          this._editor = null;
-          this._onEditEnd(
-            view,
-            selection as TextSelection,
-            nextHref,
-            linkDisplayText
-          );
-        },
-        () => {
-          this._editor = null;
-          this._onEditEnd(view, selection as TextSelection);
+      void linkSetURLCommand.showTocList(view).then((linkItems) => {
+        if (!this._editor) {
+          return;
         }
-      );
+        runtime.openLinkDialog(
+          href,
+          selectedText,
+          (nextHref?: string, linkDisplayText?: string) => {
+            this._editor = null;
+            this._onEditEnd(
+              view,
+              linkSelection as TextSelection,
+              nextHref,
+              linkDisplayText
+            );
+          },
+          () => {
+            this._editor = null;
+            this._onEditEnd(view, linkSelection as TextSelection);
+          },
+          linkItems
+        );
+      });
       return;
     }
 
@@ -230,10 +356,11 @@ export class LinkTooltipView {
       return;
     }
 
+    const selection = this._linkSelection ?? state.selection;
     const result = findNodesWithSameMark(
       state.doc,
-      state.selection.from,
-      state.selection.to,
+      selection.from,
+      getInclusiveSelectionTo(selection.from, selection.to),
       markType
     );
     if (result) {
@@ -242,10 +369,15 @@ export class LinkTooltipView {
   };
 
   _onRemove = (view: EditorView): void => {
-    this._onEditEnd(view, view.state.selection as TextSelection, null);
+    this._onEditEnd(
+      view,
+      (this._linkSelection ?? view.state.selection) as TextSelection,
+      null
+    );
   };
 
   _handleClick(view: EditorView, mark, event?: MouseEvent): boolean {
+    this._closePopup();
     const href = mark.attrs['href'];
     const selectionId = this.getInnerLinkSelectionId(mark.attrs);
     let tocItemPos = null;
@@ -328,8 +460,11 @@ export class LinkTooltipView {
   };
 
 
-  getInnerlinkSelected_position = (view: EditorView, selectionId): void => {
-    let tocItemPos = null;
+  getInnerlinkSelected_position = (
+    view: EditorView,
+    selectionId
+  ): {position: number; textContent: string} | null => {
+    let tocItemPos: {position: number; textContent: string} | null = null;
     if (selectionId) {
       const targetSelectionId = this.normalizeSelectionId(selectionId);
       view.state.tr.doc.descendants((node, pos) => {
@@ -363,7 +498,7 @@ export class LinkTooltipView {
         const result = findNodesWithSameMark(
           tr.doc,
           initialSelection.from,
-          initialSelection.to,
+          getInclusiveSelectionTo(initialSelection.from, initialSelection.to),
           markType
         );
         if (result) {
@@ -434,6 +569,10 @@ function shouldReplaceLinkText(
 
 function normalizeUrlText(value: string): string {
   return value.replace(/^https?:\/\//i, '').replace(/\/$/i, '');
+}
+
+function getInclusiveSelectionTo(from: number, to: number): number {
+  return to > from ? to - 1 : to;
 }
 
 export default LinkTooltipPlugin;

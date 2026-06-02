@@ -11,6 +11,7 @@ import {
   findNodesWithSameMark,
   MARK_LINK,
   RuntimeService,
+  createPopUp,
 } from '../../commands';
 
 jest.mock('../../commands', () => {
@@ -95,6 +96,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     if (editorView) {
       editorView.destroy();
       editorView = null;
@@ -226,7 +228,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
     expect(true).toBe(true);
   });
 
-  it('calls _onEdit through the angular link dialog callback', () => {
+  it('calls _onEdit through the angular link dialog callback with link items', async () => {
     const markType = editorView.state.schema.marks[MARK_LINK];
     (
       findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
@@ -242,8 +244,47 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
     };
 
     pluginView._onEdit?.(editorView);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     expect(RuntimeService.Runtime.openLinkDialog).toHaveBeenCalled();
+    expect(RuntimeService.Runtime.openLinkDialog).toHaveBeenCalledWith(
+      'https://example.com',
+      expect.any(String),
+      expect.any(Function),
+      expect.any(Function),
+      expect.objectContaining({
+        paragraphs: expect.arrayContaining([
+          expect.objectContaining({
+            label: expect.stringContaining('ABCDE12345'),
+          }),
+        ]),
+      })
+    );
     expect(true).toBe(true);
+  });
+
+  it('uses an inclusive end position when editing a stored link selection', () => {
+    const markType = editorView.state.schema.marks[MARK_LINK];
+    (
+      findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+    ).mockReturnValue({
+      mark: markType.create({href: 'https://example.com'}),
+      from: {node: null, pos: 5},
+      to: {node: null, pos: 9},
+    });
+    RuntimeService.Runtime = {
+      openLinkDialog: jest.fn(),
+    };
+    pluginView._linkSelection = TextSelection.create(editorView.state.doc, 5, 10);
+
+    pluginView._onEdit?.(editorView);
+
+    expect(findNodesWithSameMark).toHaveBeenCalledWith(
+      editorView.state.doc,
+      5,
+      9,
+      markType
+    );
   });
 
   it('jumps to an inner link target when href contains a selection id', () => {
@@ -308,6 +349,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
   it('calls destroy() when domAtPos returns null (covers !domFound)', () => {
     const mockDestroy = jest.spyOn(pluginView, 'destroy');
+    pluginView._popup = {close: jest.fn(), update: jest.fn()};
 
     // Get link mark type from schema
     const markType = editorView.state.schema.marks[MARK_LINK];
@@ -330,7 +372,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
     // Mock domAtPos to simulate no DOM element found
     const mockDomAtPos: EditorView['domAtPos'] = () =>
-      null as unknown as {node: Node; offset: number};
+      null;
 
     // Mock view instance preserving EditorView prototype
     const mockView: EditorView = Object.assign(
@@ -364,8 +406,9 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
     expect(mockPopup.update).not.toHaveBeenCalled();
   });
 
-  it('calls destroy() when lookUpElement returns null (covers !anchorEl)', () => {
+it('calls destroy() when lookUpElement returns null (covers !anchorEl)', () => {
   const mockDestroy = jest.spyOn(pluginView, 'destroy');
+  pluginView._popup = {close: jest.fn(), update: jest.fn()};
 
   // Mock domAtPos to return a valid node so that lookUpElement is actually called
   const mockDomAtPos: EditorView['domAtPos'] = () => ({
@@ -402,6 +445,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
 it('returns early when anchorEl is the same as this._anchorEl (covers equality branch)', () => {
   const mockDestroy = jest.spyOn(pluginView, 'destroy');
+  pluginView._popup = {close: jest.fn(), update: jest.fn()};
 
   // Create a shared anchor element
   const sameAnchor = document.createElement('a');
@@ -450,6 +494,59 @@ it('returns early when anchorEl is the same as this._anchorEl (covers equality b
   expect(lookUpElement).toHaveBeenCalledTimes(1); // called exactly once in this run
   expect(mockDestroy).not.toHaveBeenCalled(); // early return — no destroy()
   expect(pluginView._anchorEl).toBe(sameAnchor); // cached anchor unchanged
+});
+
+it('opens the link tooltip when linked text is hovered', () => {
+  const anchor = document.createElement('a');
+  const markType = editorView.state.schema.marks[MARK_LINK];
+  const popup = {close: jest.fn(), update: jest.fn()};
+  (createPopUp as jest.Mock).mockReturnValueOnce(popup);
+  (
+    findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+  ).mockReturnValue({
+    mark: markType.create({href: 'https://example.com'}),
+    from: {node: null, pos: 5},
+    to: {node: null, pos: 8},
+  });
+  const mockView = {
+    ...editorView,
+    posAtDOM: jest.fn().mockReturnValue(5),
+    state: editorView.state,
+  } as unknown as EditorView;
+
+  pluginView._handleMouseOver(mockView, anchor);
+
+  expect(createPopUp).toHaveBeenCalled();
+  expect(pluginView._anchorEl).toBe(anchor);
+});
+
+it('closes an open tooltip when linked text is clicked', () => {
+  const close = jest.fn();
+  pluginView._popup = {close, update: jest.fn()};
+  pluginView._handleClick(
+    editorView,
+    editorView.state.schema.marks[MARK_LINK].create({href: ''})
+  );
+
+  expect(close).toHaveBeenCalled();
+});
+
+it('keeps the tooltip open when the pointer moves from the link into its actions', () => {
+  jest.useFakeTimers();
+  const tooltipBody = document.createElement('div');
+  tooltipBody.className = 'czi-link-tooltip-body';
+  document.body.appendChild(tooltipBody);
+  const close = jest.fn();
+  pluginView._popup = {close, update: jest.fn()};
+
+  pluginView._bindTooltipHoverEvents();
+  pluginView._scheduleClose();
+  tooltipBody.dispatchEvent(new MouseEvent('mouseenter'));
+  jest.advanceTimersByTime(500);
+
+  expect(close).not.toHaveBeenCalled();
+  tooltipBody.remove();
+  jest.useRealTimers();
 });
 
 
