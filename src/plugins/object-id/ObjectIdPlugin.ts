@@ -155,6 +155,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
           return null;
         }
 
+        const capcoPos = transactions.find(t => t.getMeta("capcoChangedPos") !== undefined)?.getMeta("capcoChangedPos");
         // Separate undo/redo from regular transactions
         const undoRedoTransactions = transactions.filter(t =>
           t.getMeta('history')?.undo || t.getMeta('history')?.redo
@@ -164,7 +165,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
         );
 
         if (undoRedoTransactions.length > 0) {
-          tr = this.handleUndoRedo(prevState, nextState, tr, docChanged);
+          tr = this.handleUndoRedo(prevState, nextState, tr, docChanged, capcoPos);
         }
         if (regularTransactions.length > 0 && (!this.loaded || docChanged)) {
           this.loaded = true;
@@ -175,7 +176,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
           }
 
           tr = this.trackDeletedObjectId(prevState, nextState, tr);
-          tr = this.setDirtyFlagOnChange(prevState, nextState, tr, docChanged);
+          tr = this.setDirtyFlagOnChange(prevState, nextState, tr, docChanged, capcoPos);
         }
         if (tr && nextState.tr) {
           tr.storedMarks = nextState.tr.storedMarks;
@@ -274,10 +275,11 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     prevState: EditorState,
     nextState: EditorState,
     tr: Transaction | null,
-    docChanged: boolean
+    docChanged: boolean,
+    capcoPos: number
   ): Transaction | null {
     tr = this.trackDeletedObjectId(prevState, nextState, tr);
-    tr = this.setDirtyFlagOnChange(prevState, nextState, tr, docChanged);
+    tr = this.setDirtyFlagOnChange(prevState, nextState, tr, docChanged, capcoPos);
     if (tr && nextState.tr) tr.storedMarks = nextState.tr.storedMarks;
     return tr;
   }
@@ -573,7 +575,8 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     prevState: EditorState,
     nextState: EditorState,
     tr: Transaction,
-    docChanged: boolean
+    docChanged: boolean,
+    capcoPos: number
   ): Transaction {
     let isDirty = false;
     let isOnLoad = false;
@@ -586,56 +589,84 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     ) {
       return tr;
     }
-
-    const para = this.getParentBySelection(
-      nextState.doc,
-      selection,
-      schema.nodes.paragraph
-    );
-    const para1 = this.getParentBySelection(
-      prevState.doc,
-      prevState.selection,
-      schema.nodes.paragraph
-    );
-
-    if (tr) {
-      const curSelection = tr['curSelection'];
-      if (curSelection) {
-        const para2 = this.getParentBySelection(
-          tr.doc,
-          curSelection,
-          schema.nodes.paragraph
-        );
-        isDirty = !!para2?.node.attrs.dirty;
+    let para = null;
+    let para1 = null;
+    if (null != capcoPos) {
+      para = nextState.doc.nodeAt(capcoPos);
+      para1 = prevState.doc.nodeAt(capcoPos);
+      if (para) {
+        if (!isDirty) {
+          isDirty = !!para1?.attrs.dirty;
+        }
+        if (para && docChanged && (!isDirty && !para.attrs.dirty)) {
+          tr ??= nextState.tr;
+          tr = tr.setNodeMarkup(capcoPos, null, {
+            ...para.attrs,
+            dirty: true,
+          });
+        }
       }
-    }
 
-    if (!isDirty) {
-      isDirty = !!para1?.node.attrs.dirty;
     }
-    if (para && para1) {
-      // on document load the last paragraph becomes dirty, to avoid that we check the position between the two paragraphs
-      isOnLoad = para.pos - para1.pos > 3;
-    }
-    if (para && docChanged && !isOnLoad && (!isDirty && !para.node.attrs.dirty)) {
-      tr ??= nextState.tr;
-      tr = tr.setNodeMarkup(para.pos, null, {
-        ...para.node.attrs,
-        dirty: true,
-      });
-    }
-    if (para) {
-      const parentTable = this.getParentByPosition(
+    else {
+      para = this.getParentBySelection(
         nextState.doc,
-        para.pos,
-        schema.nodes.table
+        selection,
+        schema.nodes.paragraph
       );
-      if (parentTable && !parentTable.node.attrs.dirty) {
+      para1 = this.getParentBySelection(
+        prevState.doc,
+        prevState.selection,
+        schema.nodes.paragraph
+
+      );
+
+      if (tr) {
+        let para2 = null;
+        if (capcoPos) {
+          para2 = tr.doc.nodeAt(capcoPos);
+        }
+        else {
+          const curSelection = tr['curSelection'];
+          if (curSelection) {
+            para2 = this.getParentBySelection(
+              tr.doc,
+              curSelection,
+              schema.nodes.paragraph
+
+            );
+          }
+          isDirty = !!para2?.node.attrs.dirty;
+        }
+      }
+
+      if (!isDirty) {
+        isDirty = !!para1?.node.attrs.dirty;
+      }
+      if (para && para1) {
+        // on document load the last paragraph becomes dirty, to avoid that we check the position between the two paragraphs
+        isOnLoad = para.pos - para1.pos > 3;
+      }
+      if (para && docChanged && !isOnLoad && (!isDirty && !para.node.attrs.dirty)) {
         tr ??= nextState.tr;
-        tr = tr.setNodeMarkup(parentTable.pos, null, {
-          ...parentTable.node.attrs,
+        tr = tr.setNodeMarkup(para.pos, null, {
+          ...para.node.attrs,
           dirty: true,
         });
+      }
+      if (para) {
+        const parentTable = this.getParentByPosition(
+          nextState.doc,
+          para.pos,
+          schema.nodes.table
+        );
+        if (parentTable && !parentTable.node.attrs.dirty) {
+          tr ??= nextState.tr;
+          tr = tr.setNodeMarkup(parentTable.pos, null, {
+            ...parentTable.node.attrs,
+            dirty: true,
+          });
+        }
       }
     }
     return tr;
