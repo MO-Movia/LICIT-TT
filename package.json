@@ -174,7 +174,7 @@
     "smooth-scroll-into-view-if-needed": "1.1.28",
     "tippy.js": "^6.3.7",
     "url": "^0.11.3",
-    "uuid": "11.0.0",
+    "uuid": "13.0.0",
     "y-indexeddb": "^9.0.6",
     "y-protocols": "^1.0.0",
     "y-webrtc": "^10.2.3",
