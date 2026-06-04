@@ -70,7 +70,7 @@ describe('index branch coverage', () => {
 
     const result = applyStyleForEmptyParagraph(
       nextState as never,
-      tr as unknown as import('prosemirror-state').Transaction
+      tr
     );
     expect(result).toEqual({ changed: true });
     expect(applyLatestStyleSpy).toHaveBeenCalledWith(
@@ -123,7 +123,7 @@ describe('index branch coverage', () => {
       prevState as never,
       nextState as never,
       {} as never,
-      view as never
+      view
     );
     expect(result).toBeNull();
   });
@@ -174,14 +174,14 @@ describe('index branch coverage', () => {
     jest.spyOn(customStyle, 'getCustomStyleByName').mockReturnValue({
       styleName: 'Heading1',
       styles: { nextLineStyleName: 'Default', isList: true, lineHeight: '1.5' },
-    } as never);
+    });
     jest.spyOn(command, 'getMarkByStyleName').mockReturnValue([{} as never]);
 
     const result = applyStyleForNextParagraph(
       prevState as never,
       nextState as never,
       tr as never,
-      view as never
+      view
     );
 
     expect(result).toBe(tr);

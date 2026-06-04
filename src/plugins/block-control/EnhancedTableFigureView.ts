@@ -35,11 +35,11 @@ export class EnhancedTableFigureView implements NodeView {
 
     // Main container
     this.dom = document.createElement('div');
-    this.dom.setAttribute('id', this._id);
+    this.dom.id = this._id;
     this.dom.className = 'enhanced-table-figure';
-    this.dom.setAttribute('data-type', 'enhanced-table-figure');
-    this.dom.setAttribute('data-id', node.attrs.id);
-    this.dom.setAttribute('data-figure-type', node.attrs.figureType);
+    this.dom.dataset.type = 'enhanced-table-figure';
+    this.dom.dataset.id = String(node.attrs.id);
+    this.dom.dataset.figureType = String(node.attrs.figureType);
     this.dom.style.position = 'relative';
     this.dom.style.overflow = 'visible';
 
@@ -138,10 +138,10 @@ export class EnhancedTableFigureView implements NodeView {
 
     // Update the node reference and attributes
     this.node = node;
-    this.dom.setAttribute('data-id', node.attrs.id);
-    this.dom.setAttribute('data-figure-type', node.attrs.figureType);
-    this.dom.setAttribute('data-orientation', node.attrs.orientation);
-    this.dom.setAttribute('data-maximized', node.attrs.maximized ? 'true' : 'false');
+    this.dom.dataset.id = String(node.attrs.id);
+    this.dom.dataset.figureType = String(node.attrs.figureType);
+    this.dom.dataset.orientation = String(node.attrs.orientation);
+    this.dom.dataset.maximized = node.attrs.maximized ? 'true' : 'false';
 
     // Update class names while preserving important classes
     const baseClasses = ['enhanced-table-figure'];
@@ -175,12 +175,12 @@ export class EnhancedTableFigureView implements NodeView {
 
   selectNode() {
     this.dom.classList.add('ProseMirror-selectednode');
-    this.dom.setAttribute('data-active', 'true');
+    this.dom.dataset.active = 'true';
     this._renderInlineEditor();
   }
 
   deselectNode() {
-    this.dom.setAttribute('data-active', undefined);
+    delete this.dom.dataset.active;
     this._inlineEditor?.close?.(undefined);
     this.dom.classList.remove('ProseMirror-selectednode');
   }
@@ -200,7 +200,8 @@ export class EnhancedTableFigureView implements NodeView {
       editorView: this.view,
     };
     const el = document.getElementById(this._id);
-    if (!el || el.getAttribute('data-active') !== 'true') {
+    const isActive = el?.dataset?.active ?? el?.getAttribute?.('data-active');
+    if (!el || isActive !== 'true') {
       this._inlineEditor?.close?.(undefined);
       return;
     }

@@ -46,7 +46,7 @@ export class LinkTooltipView {
   _editor = null;
 
   constructor(editorView: EditorView) {
-    this.update(editorView as EditorViewEx, null);
+    this.update(editorView, null);
   }
 
   update(view: EditorViewEx, _lastState: EditorState): void {

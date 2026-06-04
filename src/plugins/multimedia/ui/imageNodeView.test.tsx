@@ -73,7 +73,7 @@ describe('ImageNodeView', () => {
       align: 'left',
       fitToParent: 'fit',
     },
-  }) as unknown as Node;
+  });
   const imagenodeview = new ImageNodeView(
     mockImageNode,
     editorfocused,
@@ -156,7 +156,7 @@ describe('Image view body', () => {
       align: 'left',
       fitToParent: 'fit',
     },
-  }) as unknown as Node;
+  });
 
   const mockPopupHandle = {
     close: () => undefined,
@@ -642,8 +642,8 @@ describe('Image view body', () => {
   it('should handle calcWidthAndHeight', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
-        null as unknown as number,
-        null as unknown as number,
+        null,
+        null,
         1,
         {width: 1, height: 1, src: ''}
       )
@@ -652,12 +652,12 @@ describe('Image view body', () => {
   it('should handle calcWidthAndHeight (case 2)', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
-        null as unknown as number,
-        null as unknown as number,
+        null,
+        null,
         1,
         {
-          width: null as unknown as number,
-          height: null as unknown as number,
+          width: null,
+          height: null,
           src: '',
         }
       )

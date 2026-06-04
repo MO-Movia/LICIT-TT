@@ -63,12 +63,12 @@ describe('CommandMenuButton', () => {
   });
 
   test('initial state should not be expanded', () => {
-    const instance = new (CommandMenuButton as  unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     expect(instance.state.expanded).toBe(false);
   });
 
   test('should toggle expanded state on click', () => {
-  const instance = new (CommandMenuButton as  unknown as typeof CommandMenuButton)(mockProps);
+  const instance = new (CommandMenuButton)(mockProps);
   const setStateSpy = jest.spyOn(instance, 'setState');
 
   // Simulate first click (expands)
@@ -84,7 +84,7 @@ describe('CommandMenuButton', () => {
 });
 
   test('should call createPopUp when _showMenu is triggered', () => {
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     instance._showMenu();
 
     expect(createPopUp).toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe('CommandMenuButton', () => {
 
   test('should close popup on _hideMenu', () => {
     const closeMock = jest.fn();
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     instance._menu = { close: closeMock };
     instance._hideMenu();
 
@@ -101,14 +101,14 @@ describe('CommandMenuButton', () => {
   });
 
   test('should set expanded to false on _onCommand', () => {
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     instance.setState({ expanded: true });
     instance._onCommand();
     expect(instance.state.expanded).toBe(false);
   });
 
   test('should nullify menu on _onClose', () => {
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     instance._menu = { dummy: true };
     instance._onClose();
     expect(instance._menu).toBeNull();
@@ -116,14 +116,14 @@ describe('CommandMenuButton', () => {
   });
 
   test('should set _menu to null on unmount', () => {
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     const hideMenuSpy = jest.spyOn(instance, '_hideMenu');
     instance.componentWillUnmount();
     expect(hideMenuSpy).toHaveBeenCalled();
   });
 
 test('should pass correct theme to CustomButton', () => {
-  const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+  const instance = new (CommandMenuButton)(mockProps);
   const rendered = instance.render() as unknown as React.ReactElement<{
     theme: string;
     className: string;

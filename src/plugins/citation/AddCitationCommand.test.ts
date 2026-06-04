@@ -39,7 +39,7 @@ type CitationProps = {
   isCitationObject: boolean;
   sourceText: string;
 };
-const citation = {
+const citation: CitationProps = {
   overallDocumentCapco: 'TBD',
   author: 'Jerry Rodgers',
   authorTitle: 'Author',
@@ -211,7 +211,7 @@ describe('AddCitationCommand', () => {
       addctcomd.saveCitationUseObject(
         mockeditorstate as unknown as EditorState,
         tr as unknown as Transform,
-        { isCitationObject: false } as unknown as CitationProps
+        { isCitationObject: false }
       )
     ).toStrictEqual(tr);
   });
@@ -295,7 +295,7 @@ describe('AddCitationCommand', () => {
         } as unknown as EditorState,
         undefined as unknown as () => undefined,
         {} as unknown as EditorView,
-        citation as unknown as CitationProps
+        citation
       )
     ).toBeFalsy();
   });
@@ -315,7 +315,7 @@ describe('AddCitationCommand', () => {
         {
           focus: () => undefined,
         } as unknown as EditorView,
-        null as unknown as CitationProps
+        null
       )
     ).toBeDefined();
   });
@@ -339,7 +339,7 @@ describe('AddCitationCommand', () => {
         {
           focus: () => undefined,
         } as unknown as EditorView,
-        null as unknown as CitationProps
+        null
       )
     ).toBeDefined();
   });
@@ -361,7 +361,7 @@ describe('AddCitationCommand', () => {
         } as unknown as EditorState,
         () => undefined,
         undefined as unknown as EditorView,
-        {} as unknown as CitationProps
+        {}
       )
     ).toBeDefined();
   });
@@ -521,7 +521,7 @@ describe('AddCitationCommand', () => {
       editorView: mockEditorView,
       isCitationObject: true,
       sourceText: 'Source Text',
-    } as unknown as CitationProps;
+    };
     addctcomd.citationBuilder = jest.fn().mockReturnValue('Mock citation text');
     addctcomd.showCitations(mockCitation);
 

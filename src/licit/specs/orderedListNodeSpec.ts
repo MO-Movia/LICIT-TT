@@ -50,11 +50,11 @@ const OrderedListNodeSpec: NodeSpec = {
           dom.getAttribute(ATTRIBUTE_COUNTER_RESET) || undefined;
 
         const start = dom.hasAttribute('start')
-          ? parseInt(dom.getAttribute('start'), 10)
+          ? Number.parseInt(dom.getAttribute('start'), 10)
           : 1;
 
         const indent = dom.hasAttribute(ATTRIBUTE_INDENT)
-          ? parseInt(dom.getAttribute(ATTRIBUTE_INDENT), 10)
+          ? Number.parseInt(dom.getAttribute(ATTRIBUTE_INDENT), 10)
           : MIN_INDENT_LEVEL;
 
         const name = dom.getAttribute('name') || undefined;

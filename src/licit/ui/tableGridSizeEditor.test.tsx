@@ -129,7 +129,7 @@ it('removes mousemove listener on unmount', () => {
 
 it('should handle _onMouseMove and update grid size correctly', () => {
   const closeMock = jest.fn();
-  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const instance = new TableGridSizeEditor({ close: closeMock });
 
   // mock ref and internal state to simulate a valid mounted element
   instance._ref = document.createElement('div');

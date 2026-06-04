@@ -87,9 +87,9 @@ describe('VignetteCommand', () => {
 
   test('waitForUserInput should resolve undefined', async () => {
     const result = await cmd.waitForUserInput(
-      mockState as unknown as EditorState,
+      mockState,
       mockDispatch,
-      mockView as unknown as EditorView,
+      mockView,
       {} as React.SyntheticEvent<Element, Event>
     );
     expect(result).toBeUndefined();
@@ -164,7 +164,7 @@ describe('VignetteCommand', () => {
   test('insertParagraph returns tr unchanged when from !== to', () => {
     const badTr = { selection: { from: 1, to: 2 } };
     const result = cmd.insertParagraph(
-      mockState as unknown as EditorState,
+      mockState,
       badTr as unknown as Transaction
     );
     expect(result).toBe(badTr);

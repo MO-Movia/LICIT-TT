@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {ImageInlineEditor, ImageInlineEditorValue} from './ImageInlineEditor';
+import {ImageInlineEditor} from './ImageInlineEditor';
 import {EditorState} from 'prosemirror-state';
 import {schema} from 'prosemirror-test-builder';
 import {MultimediaPlugin} from '../index';
@@ -79,7 +79,7 @@ describe('ImageInlineEditor', () => {
     const imageinlineeditor = new ImageInlineEditor(() => undefined);
     imageinlineeditor.props = {
       onSelect: (val) => val.align,
-      value: null as unknown as ImageInlineEditorValue,
+      value: null,
       editorView: view1,
     };
     expect(imageinlineeditor.prepButtons('align_test')).toBeDefined();

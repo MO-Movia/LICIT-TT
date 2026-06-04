@@ -36,9 +36,7 @@ export default function findActiveFontSize(state: EditorState): string {
     const storedMarks =
       tr.storedMarks ||
       state.storedMarks ||
-      ((selection as TextSelection).$cursor &&
-        (selection as TextSelection).$cursor.marks &&
-        (selection as TextSelection).$cursor.marks()) ||
+      (selection as TextSelection).$cursor?.marks?.() ||
       [];
     const sm = storedMarks.find((m) => m.type === markType);
     return sm ? String(sm.attrs.pt || defaultSize) : defaultSize;

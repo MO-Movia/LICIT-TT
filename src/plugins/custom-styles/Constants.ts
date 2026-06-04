@@ -39,7 +39,7 @@ export function getNode(from: number, to: number, tr: Transform): Node | null {
   tr.doc.nodesBetween(from, to, (node) => {
     if (node.type.name === 'paragraph' || node.type.name === 'enhanced_table_figure_notes') {
       if (null === selectedNode) {
-        selectedNode = node;
+        selectedNode ??= node;
       }
     }
   });

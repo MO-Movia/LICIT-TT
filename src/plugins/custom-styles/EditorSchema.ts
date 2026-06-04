@@ -104,9 +104,9 @@ function createStyleNodeAttributes(schema: Schema) {
 
   const contentArr = [paragraphContent, schema.nodes.paragraph];
 
-  contentArr.forEach((content) => {
+  for (const content of contentArr) {
     createAttribute(content, STYLEKEY, null);
-  });
+  };
 }
 
 function getAnExistingAttribute(schema: Schema): unknown {
@@ -162,7 +162,7 @@ function getRequiredMarks(marks, markName, schema) {
 export function createMarkAttributes(mark, existingAttr) {
   if (mark) {
     const requiredAttrs = [...NEWATTRS];
-    requiredAttrs.forEach((key) => {
+    for (const key of requiredAttrs) {
       if (!mark.attrs) {
         mark['attrs'] = {};
       }
@@ -183,15 +183,15 @@ export function createMarkAttributes(mark, existingAttr) {
           mark.attrs[key] = newAttr;
         }
       }
-    });
+    };
   }
 }
 function createNewAttributes(schema: Schema): Schema {
   const marks = [];
   const existingAttr = getAnExistingAttribute(schema);
-  ALLOWED_MARKS.forEach((name) => {
+  for (const name of ALLOWED_MARKS) {
     getRequiredMarks(marks, name, schema);
-  });
+  };
   for (const mark of marks) {
     createMarkAttributes(mark, existingAttr);
   }

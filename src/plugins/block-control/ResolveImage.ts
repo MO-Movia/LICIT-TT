@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import url from 'url';
+import url from 'node:url';
 
 export type ImageResult = {
   complete: boolean;
@@ -88,8 +88,7 @@ function processPromise(
   const dispose = () => {
     if (img) {
       if (isImgInstance(img)) {
-        const pe = img.parentNode;
-        pe?.removeChild(img);
+        img.remove();
       }
       img.onload = null;
       img.onerror = null;
@@ -127,7 +126,7 @@ function processPromise(
   document.body.appendChild(img);
 }
 function isOffline(): boolean {
-  if (Object.prototype.hasOwnProperty.call(window.navigator, 'onLine')) {
+  if (Object.hasOwn(window.navigator, 'onLine')) {
     return !window.navigator.onLine;
   }
   return false;

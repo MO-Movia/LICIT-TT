@@ -171,7 +171,7 @@ describe('TableColorCommand (typed)', () => {
   });
 
   it('should not create popup when already open', async () => {
-    command._popUp = {close: jest.fn()} as MockPopup;
+    command._popUp = {close: jest.fn()};
 
     const evt: FakeReactEvent = {
       type: 'mouseenter',
@@ -227,7 +227,7 @@ it('calls setCellBorders when success is true', () => {
 
   it('cancel closes popup if exists', () => {
     const close = jest.fn();
-    command._popUp = {close} as MockPopup;
+    command._popUp = {close};
 
     command.cancel();
     expect(close).toHaveBeenCalledWith(undefined);

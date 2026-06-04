@@ -4,7 +4,7 @@
  */
 
 import { Node, NodeType, Schema } from 'prosemirror-model';
-import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
+import { EditorState, Selection, TextSelection, Transaction } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
 import * as React from 'react';
@@ -12,7 +12,112 @@ import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
 import { UICommand } from '../core';
 import { getSelectionRange, isColumnCellSelected, getSelectedCellPositions, findParagraphsInNode } from './isNodeSelectionForNodeType';
 
+type TextAlignTask = {
+  node: Node;
+  pos: number;
+  nodeType: NodeType;
+};
 
+function isNodeType(nodeType: NodeType | null | undefined): nodeType is NodeType {
+  return Boolean(nodeType);
+}
+
+function getAllowedTextAlignNodeTypes(schema: Schema): Set<NodeType> {
+  const { nodes } = schema;
+  const blockquote = nodes[BLOCKQUOTE];
+  const listItem = nodes[LIST_ITEM];
+  const heading = nodes[HEADING];
+  const paragraph = nodes[PARAGRAPH];
+
+  return new Set(
+    [blockquote, heading, listItem, paragraph].filter(isNodeType)
+  );
+}
+
+function addTextAlignTask(
+  tasks: TextAlignTask[],
+  allowedNodeTypes: Set<NodeType>,
+  node: Node,
+  pos: number,
+  alignment: string
+): void {
+  const align = node.attrs.align ?? null;
+  if (align === alignment || !allowedNodeTypes.has(node.type)) {
+    return;
+  }
+
+  tasks.push({
+    node,
+    pos,
+    nodeType: node.type,
+  });
+}
+
+function collectColumnCellTextAlignTasks(
+  tr: Transform,
+  selection: Selection,
+  allowedNodeTypes: Set<NodeType>,
+  alignment: string
+): TextAlignTask[] {
+  const tasks: TextAlignTask[] = [];
+  const positions = getSelectedCellPositions(selection);
+
+  for (const pos of positions) {
+    const cellNode = tr.doc.nodeAt(pos);
+    if (!cellNode) {
+      continue;
+    }
+
+    findParagraphsInNode(cellNode, pos, (paragraphNode, paragraphPos) => {
+      addTextAlignTask(
+        tasks,
+        allowedNodeTypes,
+        paragraphNode,
+        paragraphPos,
+        alignment
+      );
+    });
+  }
+
+  return tasks;
+}
+
+function collectSelectionTextAlignTasks(
+  doc: Transaction['doc'],
+  selection: Selection,
+  allowedNodeTypes: Set<NodeType>,
+  alignment: string
+): TextAlignTask[] {
+  const tasks: TextAlignTask[] = [];
+  const { from, to } = getSelectionRange(selection);
+
+  doc.nodesBetween(from, to, (node, pos) => {
+    addTextAlignTask(tasks, allowedNodeTypes, node, pos, alignment);
+    return true;
+  });
+
+  return tasks;
+}
+
+function getTextAlignAttrs(node: Node, alignment: string) {
+  const { attrs } = node;
+  if (alignment) {
+    return {
+      ...attrs,
+      align: alignment,
+      overriddenAlign: true,
+      overriddenAlignValue: alignment
+    };
+  }
+
+  const isOverridden = attrs.overriddenAlign ?? null;
+  return {
+    ...attrs,
+    align: isOverridden ? attrs.align : null,
+    overriddenAlign: isOverridden ? attrs.overriddenAlign : null,
+    overriddenAlignValue: isOverridden ? attrs.overriddenAlignValue : null
+  };
+}
 
 export function setTextAlign(
   tr: Transform,
@@ -23,51 +128,10 @@ export function setTextAlign(
   if (!selection || !doc) {
     return tr;
   }
-  const tasks: {
-    node: Node;
-    pos: number;
-    nodeType: NodeType;
-  }[] = [];
-  const { nodes } = schema;
-  const blockquote = nodes[BLOCKQUOTE];
-  const listItem = nodes[LIST_ITEM];
-  const heading = nodes[HEADING];
-  const paragraph = nodes[PARAGRAPH];
-  const allowedNodeTypes = new Set([blockquote, heading, listItem, paragraph]);
-
-  if (isColumnCellSelected(selection)) {
-    const positions = getSelectedCellPositions(selection);
-    if (positions.length > 0) {
-      for (const pos of positions) {
-        const node = tr.doc.nodeAt(pos);
-        findParagraphsInNode(node, pos, (paraNode, paraPos) => {
-          const align = paraNode.attrs.align ?? null;
-          if (align !== alignment && allowedNodeTypes.has(paraNode.type)) {
-            tasks.push({
-              node: paraNode,
-              pos: paraPos,
-              nodeType: paraNode.type,
-            });
-          }
-        });
-      };
-    }
-  }
-  else {
-    const { from, to } = getSelectionRange(selection);
-    doc.nodesBetween(from, to, (node, pos, _parentNode) => {
-      const nodeType = node.type;
-      const align = node.attrs.align || null;
-      if (align !== alignment && allowedNodeTypes.has(nodeType)) {
-        tasks.push({
-          node,
-          pos,
-          nodeType,
-        });
-      }
-      return true;
-    });
-  }
+  const allowedNodeTypes = getAllowedTextAlignNodeTypes(schema);
+  const tasks = isColumnCellSelected(selection)
+    ? collectColumnCellTextAlignTasks(tr, selection, allowedNodeTypes, alignment)
+    : collectSelectionTextAlignTasks(doc, selection, allowedNodeTypes, alignment);
 
   if (!tasks.length) {
     return tr;
@@ -75,25 +139,9 @@ export function setTextAlign(
 
   for (const job of tasks) {
     const { node, pos, nodeType } = job;
-    let { attrs } = node;
-    if (alignment) {
-      attrs = {
-        ...attrs,
-        align: alignment,
-        overriddenAlign: true,
-        overriddenAlignValue: alignment
-      };
-    } else {
-      const isOverridden = attrs.overriddenAlign ?? null;
-      attrs = {
-        ...attrs,
-        align: isOverridden ? attrs.align : null,
-        overriddenAlign: isOverridden ? attrs.overriddenAlign : null,
-        overriddenAlignValue: isOverridden ? attrs.overriddenAlignValue : null
-      };
-    }
+    const attrs = getTextAlignAttrs(node, alignment);
     tr.setNodeMarkup(pos, nodeType, attrs, node.marks);
-  };
+  }
 
   return tr;
 }

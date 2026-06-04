@@ -483,7 +483,7 @@ export class CitationDialog extends React.PureComponent<
     fieldName: K,
     e: React.ChangeEvent<HTMLInputElement>
   ) {
-    const stateUpdate: Citation = {} as Citation;
+    const stateUpdate: Citation = {};
     stateUpdate[fieldName] = e.target.value;
     switch (fieldName) {
       case 'referenceId':

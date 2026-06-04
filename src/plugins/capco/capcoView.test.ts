@@ -9,7 +9,7 @@ import { CapcoView } from './capcoView';
 import { CapcoPlugin } from './index';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { Node, Schema } from 'prosemirror-model';
+import { Schema } from 'prosemirror-model';
 import { builders } from 'prosemirror-test-builder';
 import { effectiveSchema, CAPCOMODE } from './editorSchema';
 
@@ -134,7 +134,7 @@ describe('Glossary Plugin Extended', () => {
         state: state,
       }
     );
-    gView = new CapcoView(view.state.doc.nodeAt(0) as unknown as Node, view);
+    gView = new CapcoView(view.state.doc.nodeAt(0), view);
   });
 
   it('should require toDom defined', () => {
@@ -144,7 +144,7 @@ describe('Glossary Plugin Extended', () => {
   it('should ignore mutations', () => {
     expect(
       () =>
-        new CapcoView(null as unknown as Node, null as unknown as EditorView)
+        new CapcoView(null, null)
     ).toThrow();
   });
 
@@ -163,7 +163,7 @@ describe('Glossary Plugin Extended', () => {
       }
     );
     const gView = new CapcoView(
-      view.state.doc.nodeAt(0) as unknown as Node,
+      view.state.doc.nodeAt(0),
       view
     );
 
@@ -185,13 +185,13 @@ describe('Glossary Plugin Extended', () => {
         state: state,
       }
     );
-    gView = new CapcoView(view.state.doc.nodeAt(0) as unknown as Node, view);
-    const node = view.state.doc.nodeAt(1) as unknown as Node;
+    gView = new CapcoView(view.state.doc.nodeAt(0), view);
+    const node = view.state.doc.nodeAt(1);
     expect(gView.update(node)).toBe(false);
   });
 
   it('stopEvent should return false', () => {
-    expect(gView.stopEvent(null as unknown as Event)).toBe(false);
+    expect(gView.stopEvent(null)).toBe(false);
   });
 
   it('adds CAPCOMODEKEY to doc node attrs', () => {

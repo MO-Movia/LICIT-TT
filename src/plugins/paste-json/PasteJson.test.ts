@@ -37,7 +37,7 @@ describe('PasteJSONFPlugin', () => {
       plugin,
       '',
       false,
-      undefined as unknown as EditorView
+      undefined
     );
     expect(transformedText).toBe('');
   });
@@ -107,7 +107,7 @@ describe('PasteJSONFPlugin', () => {
     const transformedSlice = plugin.props.transformPasted?.call(
       plugin,
       slice,
-      undefined as unknown as EditorView
+      undefined
     );
     expect(transformedSlice).toBe(slice);
     expect(plugin.slice).toBeUndefined();
@@ -124,7 +124,7 @@ describe('PasteJSONFPlugin', () => {
     const transformedSlice = plugin.props.transformPasted?.call(
       plugin,
       slice,
-      undefined as unknown as EditorView
+      undefined
     );
     expect(transformedSlice).toBe(slice);
     expect(plugin.slice).toBeUndefined();
@@ -139,7 +139,7 @@ describe('PasteJSONFPlugin', () => {
       plugin,
       text,
       false,
-      undefined as unknown as EditorView
+      undefined
     );
 
     expect(transformedText).toBe(text);

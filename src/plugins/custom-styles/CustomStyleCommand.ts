@@ -286,16 +286,16 @@ export class CustomStyleCommand extends UICommand {
 
   // [FS] IRAD-1053 2020-10-22
   // returns the applied style of a paragraph
-  isCustomStyleApplied(editorState: EditorState) {
+  isCustomStyleApplied(editorState: EditorState): string {
     const { selection, doc } = editorState;
     const { from, to } = selection;
     let customStyleName = RESERVED_STYLE_NONE;
     doc.nodesBetween(from, to, (node) => {
-      if (node.attrs.styleName) {
+      if (typeof node.attrs.styleName === 'string') {
         customStyleName = node.attrs.styleName;
       }
     });
-    return customStyleName;
+    return String(customStyleName);
   }
 
   executeClearStyle(

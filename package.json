@@ -104,9 +104,9 @@
     "build:css": "npx copyfiles -u 1 src/**/*.css dist && npx copyfiles -u 1 src/styles.css dist",
     "build:fonts": "npx copyfiles -u 2 src/fonts/**/* dist/fonts",
     "build:assets": "npx copyfiles -u 2 src/assets/**/* dist/assets",
-    "build:ts": "tsc -p tsconfig.prod.json && npx tsc-alias -p tsconfig.json",
+    "build:ts": "tsc -p tsconfig.prod.json",
     "ci:build": "npm run build:clean && npm run build:ts && npm run build:css && npm run build:fonts && npm run build:assets && npx copyfiles package.json README.md LICENSE dist",
-    "lint": "eslint src --max-warnings=595",
+    "lint": "eslint src --max-warnings=4",
     "test": "jest --coverage --onlyChanged",
     "test:coverage": "jest --coverage --silent",
     "verify": "npm run lint -- --fix && npm run ci:build && npm run test:coverage && echo 'All Tests Passed!'"

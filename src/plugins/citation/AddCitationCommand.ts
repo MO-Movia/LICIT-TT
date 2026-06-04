@@ -269,7 +269,7 @@ export class AddCitationCommand extends UICommand {
   }
 
   findEndOfSentence(state: EditorState, $head: ResolvedPos) {
-    const sentenceDelimiter = ['.', '!', '?'];
+    const sentenceDelimiter = new Set(['.', '!', '?']);
     let hasDelimiter = false;
     const selectionEnd = state.selection.to;
     const selectionStart = state.selection.from;
@@ -279,7 +279,7 @@ export class AddCitationCommand extends UICommand {
       .trimEnd();
 
     for (const char of selectionText) {
-      if (sentenceDelimiter.includes(char)) {
+      if (sentenceDelimiter.has(char)) {
         parentStart = selectionEnd - 1;
         hasDelimiter = true;
       } else {
@@ -293,7 +293,7 @@ export class AddCitationCommand extends UICommand {
 
     for (let i = 0; i < parentText.length; i++) {
       const char = parentText[i];
-      if (sentenceDelimiter.includes(char)) {
+      if (sentenceDelimiter.has(char)) {
         if (hasDelimiter) {
           return selectionEnd + i;
         } else {

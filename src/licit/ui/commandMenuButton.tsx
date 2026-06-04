@@ -6,9 +6,11 @@
 import cx from 'classnames';
 import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
+import {EditorView} from 'prosemirror-view';
 import * as React from 'react';
 
-import CommandMenu from './commandMenu';
+import CustomMenu from './customMenu';
+import CustomMenuItem from './customMenuItem';
 import {
   CustomButton,
   createPopUp,
@@ -17,11 +19,20 @@ import {
 } from '../../commands';
 import { UICommand } from '../../core';
 import uuid from './uuid';
-import {isExpandButton} from './editorToolbarConfig';
+import {isExpandButton, parseLabel} from './toolbarLabelUtils';
 import {EditorViewEx} from '../constants';
 export interface Arr {
   [key: string]: UICommand;
 }
+type CommandMenuProps = {
+  commandGroups: Array<Arr>;
+  dispatch: (tr: Transform) => void;
+  editorState: EditorState;
+  editorView?: EditorView;
+  onCommand?: () => void;
+  title?: string;
+  theme?: string;
+};
 type PropsType = {
   className?: string;
   commandGroups: Array<unknown>;
@@ -37,6 +48,112 @@ type PropsType = {
 type StateType = {
   expanded: boolean;
 };
+
+export class CommandMenu extends React.PureComponent<CommandMenuProps> {
+  _activeCommand?: UICommand = null;
+
+  declare props: CommandMenuProps;
+
+  render(): React.ReactElement {
+    const {commandGroups, editorState, title, theme} = this.props;
+    const children = [];
+    const jj = commandGroups.length - 1;
+    for (const [ii, group] of commandGroups.entries()) {
+      for (const label of Object.keys(group)) {
+        const command = group[label];
+        if (command instanceof UICommand) {
+          const {icon} = parseLabel(label, theme.toString());
+          children.push(
+            this._renderCustomMenuItem(label, command, editorState, icon, theme)
+          );
+        } else if (Array.isArray(command)) {
+          children.push(this._renderMenuButton(label, command, theme));
+        }
+      };
+      if (ii !== jj) {
+        children.push(<CustomMenuItem.Separator key={`${String(ii)}-hr`} />);
+      }
+    };
+    return (
+      <CustomMenu theme={theme} isHorizontal={isExpandButton(title)}>
+        {children}
+      </CustomMenu>
+    );
+  }
+
+  _renderCustomMenuItem = (
+    label: string,
+    command: UICommand,
+    editorState: EditorState,
+    icon: string | React.ReactElement,
+    theme: string
+  ): React.ReactElement<CustomMenuItem> => {
+    const {title} = parseLabel(label, theme);
+    return (
+      <CustomMenuItem
+        active={command.isActive(editorState)}
+        disabled={!command.isEnabled(editorState)}
+        icon={icon}
+        key={label}
+        label={
+          icon
+            ? null
+            : (command.renderLabel(editorState) as
+                | string
+                | React.ReactElement) || label
+        }
+        onClick={this._onUIEnter}
+        onMouseEnter={this._onUIEnter}
+        value={command}
+        theme={theme}
+        title={title}
+      />
+    );
+  };
+
+  _renderMenuButton = (
+    label: string,
+    commandGroups: Array<Arr>,
+    theme: string
+  ): React.ReactElement<CommandMenuButton> => {
+    const {editorState, editorView, dispatch} = this.props;
+    const {icon, title} = parseLabel(label, theme);
+    let isDropdown = false;
+    if (commandGroups && commandGroups.length > 0) {
+      isDropdown = commandGroups[0] instanceof UICommand;
+    }
+
+    return (
+      <CommandMenuButton
+        commandGroups={commandGroups}
+        disabled={false}
+        dispatch={dispatch}
+        editorState={editorState}
+        editorView={editorView}
+        icon={icon}
+        key={label}
+        label={icon ? null : title}
+        sub={!isDropdown}
+        title={title}
+      />
+    );
+  };
+
+  _onUIEnter = (command: UICommand, event: React.SyntheticEvent): void => {
+    if (command.shouldRespondToUIEvent(event)) {
+      this._activeCommand?.cancel();
+      this._activeCommand = command;
+      this._execute(command, event);
+    }
+  };
+
+  _execute = (command: UICommand, e: React.SyntheticEvent): void => {
+    const {dispatch, editorState, editorView, onCommand} = this.props;
+    if (command.execute(editorState, dispatch, editorView, e)) {
+      onCommand?.();
+    }
+  };
+}
 
 class CommandMenuButton extends React.PureComponent<PropsType, StateType> {
   declare props: PropsType;

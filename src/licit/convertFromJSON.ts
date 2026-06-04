@@ -13,6 +13,47 @@ export interface LicitPlugin extends Plugin {
   initButtonCommands: (theme: unknown) => UICommand;
 }
 
+function hasSchemaInitializer(plugin: Plugin): plugin is LicitPlugin {
+  return (
+    'getEffectiveSchema' in plugin &&
+    typeof (plugin as LicitPlugin).getEffectiveSchema === 'function'
+  );
+}
+
+function hasKeyCommandInitializer(plugin: Plugin): plugin is LicitPlugin {
+  return (
+    'initKeyCommands' in plugin &&
+    typeof (plugin as LicitPlugin).initKeyCommands === 'function'
+  );
+}
+
+function applySchemaExtension(schema: Schema, plugin: Plugin): Schema {
+  if (!hasSchemaInitializer(plugin)) {
+    return schema;
+  }
+
+  return plugin.getEffectiveSchema(schema);
+}
+
+function appendKeyCommandPlugins(
+  effectivePlugins: Array<Plugin>,
+  plugin: Plugin
+): void {
+  if (!hasKeyCommandInitializer(plugin)) {
+    return;
+  }
+
+  const keyCommandPlugins = plugin.initKeyCommands();
+  if (Array.isArray(keyCommandPlugins)) {
+    effectivePlugins.push(...keyCommandPlugins);
+    return;
+  }
+
+  if (keyCommandPlugins) {
+    effectivePlugins.push(keyCommandPlugins);
+  }
+}
+
 export function getEffectiveSchema(
   defaultSchema: Schema,
   defaultPlugins: Array<Plugin>,
@@ -24,24 +65,14 @@ export function getEffectiveSchema(
   const effectivePlugins = defaultPlugins;
 
   if (plugins) {
-    for (const p of plugins) {
-      if (!effectivePlugins.includes(p)) {
-        effectivePlugins.push(p);
-        if ('getEffectiveSchema' in p) {
-          editorSchema = (p as LicitPlugin).getEffectiveSchema(editorSchema);
-        }
-
-        if ('initKeyCommands' in p) {
-             if ((p as LicitPlugin).initKeyCommands) {
-          const keyCommandPlugins = (p as LicitPlugin).initKeyCommands();
-          if (Array.isArray(keyCommandPlugins)) {
-            effectivePlugins.push(...keyCommandPlugins);
-          } else if (keyCommandPlugins) {
-            effectivePlugins.push(keyCommandPlugins);
-          }
-        }
-        }
+    for (const plugin of plugins) {
+      if (effectivePlugins.includes(plugin)) {
+        continue;
       }
+
+      effectivePlugins.push(plugin);
+      editorSchema = applySchemaExtension(editorSchema, plugin);
+      appendKeyCommandPlugins(effectivePlugins, plugin);
     }
   }
 
