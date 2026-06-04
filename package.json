@@ -187,7 +187,7 @@
     "@types/prosemirror-state": "^1.2.8",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "esbuild": "^0.27.0",
     "eslint": "^9.39.1",
     "identity-obj-proxy": "^3.0.0",
