@@ -1456,7 +1456,7 @@ describe('PDFHandler additional coverage', () => {
 
     await handler.doIT();
 
-    const cssArg = (mockPolisher.convertViaSheet as jest.Mock).mock.calls[0][0] as string;
+    const cssArg = (mockPolisher.convertViaSheet).mock.calls[0][0] as string;
     expect(cssArg).toContain('My Document');
     expect(cssArg).toContain('October');
     expect(cssArg).toContain('CUI');
@@ -1471,7 +1471,7 @@ describe('PDFHandler additional coverage', () => {
 
     await handler.doIT();
 
-    const cssArg = (mockPolisher.convertViaSheet as jest.Mock).mock.calls[0][0] as string;
+    const cssArg = (mockPolisher.convertViaSheet).mock.calls[0][0] as string;
     expect(cssArg).toContain('CUI');
     expect(cssArg).not.toContain(', undefined');
   });
@@ -1483,7 +1483,7 @@ describe('PDFHandler additional coverage', () => {
 
     await handler.doIT();
 
-    const cssArg = (mockPolisher.convertViaSheet as jest.Mock).mock.calls[0][0] as string;
+    const cssArg = (mockPolisher.convertViaSheet).mock.calls[0][0] as string;
     expect(cssArg).toContain('OnlyTitle');
   });
 
@@ -1517,7 +1517,7 @@ describe('PDFHandler additional coverage', () => {
 
   test('doIT marks the inserted style element with data-licit-pdf-handler when polisher returns one', async () => {
     const fakeStyle = document.createElement('style');
-    (mockPolisher.insert as jest.Mock).mockReturnValueOnce(fakeStyle);
+    (mockPolisher.insert).mockReturnValueOnce(fakeStyle);
 
     await handler.doIT();
 
@@ -1525,7 +1525,7 @@ describe('PDFHandler additional coverage', () => {
   });
 
   test('doIT does not throw when polisher.insert returns a falsy value', async () => {
-    (mockPolisher.insert as jest.Mock).mockReturnValueOnce(null);
+    (mockPolisher.insert).mockReturnValueOnce(null);
     await expect(handler.doIT()).resolves.toBeUndefined();
   });
 

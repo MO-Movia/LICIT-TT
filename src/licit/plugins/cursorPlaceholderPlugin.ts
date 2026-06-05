@@ -54,7 +54,7 @@ class CursorPlaceholderPlugin extends Plugin {
 
   constructor() {
     super(SPEC);
-    CursorPlaceholderPlugin._instance = this as CursorPlaceholderPlugin;
+    CursorPlaceholderPlugin._instance = this;
   }
 
   static getInstance(): CursorPlaceholderPlugin {

@@ -3,6 +3,8 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+
 import * as React from 'react';
 import CommandMenuButton from './commandMenuButton';
 import { EditorState } from 'prosemirror-state';

@@ -3,10 +3,10 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {ImageInlineEditor, ImageInlineEditorValue} from './ImageInlineEditor';
+import {ImageInlineEditor, ImageInlineEditorValue as _ImageInlineEditorValue } from './ImageInlineEditor';
 import {EditorState} from 'prosemirror-state';
-import {schema} from 'prosemirror-test-builder';
-import {MultimediaPlugin} from '../index';
+import {schema} from 'prosemirror-schema-basic';
+import { MultimediaPlugin } from '../index';
 import {createEditor, doc, p} from 'jest-prosemirror';
 import {EditorView} from 'prosemirror-view';
 
@@ -20,7 +20,10 @@ describe('ImageInlineEditor', () => {
     selection: editor.selection,
     plugins: [new MultimediaPlugin()],
   });
-  const view1 = new EditorView(document.querySelector('#editor'), {
+  const editorRoot = document.createElement('div');
+  editorRoot.id = 'editor';
+  document.body.appendChild(editorRoot);
+  const view1 = new EditorView(editorRoot, {
     state,
   });
 

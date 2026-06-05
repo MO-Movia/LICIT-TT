@@ -60,7 +60,7 @@ class SelectionPlaceholderPlugin extends Plugin {
   constructor() {
     super(SPEC);
     if (!SelectionPlaceholderPlugin._instance) {
-      SelectionPlaceholderPlugin._instance = this as SelectionPlaceholderPlugin;
+      SelectionPlaceholderPlugin._instance = this;
       singletonInstance = SelectionPlaceholderPlugin._instance;
     }
   }

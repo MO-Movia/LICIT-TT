@@ -124,7 +124,7 @@ class TableGridSizeEditor extends React.PureComponent<
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-              this._onMouseDown(e as unknown as React.SyntheticEvent);
+              this._onMouseDown(e);
             }
           }}
         >

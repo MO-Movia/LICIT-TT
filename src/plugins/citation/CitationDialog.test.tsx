@@ -3,6 +3,8 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import { CitationDialog, CitationDialogProps } from './CitationDialog';
 import React from 'react';
 import { DOMOutputSpec, Mark, MarkSpec, Schema } from 'prosemirror-model';
@@ -552,7 +554,7 @@ describe('CitationDialog', () => {
         const updater = setStateSpy.mock.calls[0][0] as unknown as (
           prev: Record<string, unknown>
         ) => Record<string, unknown>;
-        const next = updater({ existing: 'prev' } as unknown as Record<string, unknown>);
+        const next = updater({ existing: 'prev' });
         expect(next).toMatchObject({
           existing: 'prev',
           documentTitle: selected.title,
@@ -689,7 +691,7 @@ describe('CitationDialog', () => {
         cit._popUp = {
           close: closeMock,
           update: jest.fn(),
-        } as unknown as commands.PopUpHandle;
+        };
         cit.componentWillUnmount();
         expect(closeMock).toHaveBeenCalledWith(null);
       });
@@ -971,7 +973,7 @@ describe('CitationDialog', () => {
       it('creates a popup and sets _popUp on click', () => {
         const fakePopUp = { close: jest.fn(), update: jest.fn() };
         createPopUpMock.mockReturnValue(
-          fakePopUp as unknown as commands.PopUpHandle
+          fakePopUp
         );
 
         const citationForm = document.getElementById('citationform')
@@ -1000,8 +1002,8 @@ describe('CitationDialog', () => {
           | ((val: { citationObject: Partial<Citation> } | undefined) => void)
           | undefined;
         createPopUpMock.mockImplementation((_comp, _props, opts) => {
-          capturedOnClose = opts?.onClose as unknown as typeof capturedOnClose;
-          return fakePopUp as unknown as commands.PopUpHandle;
+          capturedOnClose = opts?.onClose;
+          return fakePopUp;
         });
 
         const cit = new CitationDialog(citationMockProps);
@@ -1017,7 +1019,7 @@ describe('CitationDialog', () => {
         expect(capturedOnClose).toBeDefined();
 
         capturedOnClose?.({
-          citationObject: { author: 'From Search' } as Partial<Citation>,
+          citationObject: { author: 'From Search' },
         });
         expect(fakePopUp.close).toHaveBeenCalledWith(null);
         expect(cit._popUp).toBeUndefined();
@@ -1030,8 +1032,8 @@ describe('CitationDialog', () => {
           | ((val: undefined) => void)
           | undefined;
         createPopUpMock.mockImplementation((_comp, _props, opts) => {
-          capturedOnClose = opts?.onClose as unknown as typeof capturedOnClose;
-          return fakePopUp as unknown as commands.PopUpHandle;
+          capturedOnClose = opts?.onClose;
+          return fakePopUp;
         });
 
         const cit = new CitationDialog(citationMockProps);
@@ -1054,8 +1056,8 @@ describe('CitationDialog', () => {
           | ((val: undefined) => void)
           | undefined;
         createPopUpMock.mockImplementation((_comp, _props, opts) => {
-          capturedOnClose = opts?.onClose as unknown as typeof capturedOnClose;
-          return fakePopUp as unknown as commands.PopUpHandle;
+          capturedOnClose = opts?.onClose;
+          return fakePopUp;
         });
 
         const cit = new CitationDialog(citationMockProps);

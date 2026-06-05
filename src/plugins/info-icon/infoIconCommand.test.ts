@@ -240,7 +240,7 @@ describe('InfoIconCommand', () => {
       expect(createPopUp as jest.Mock).toHaveBeenCalled();
       expect(capturedOnClose).toBeDefined();
 
-      capturedOnClose!('userValue');
+      capturedOnClose('userValue');
       const result = await promise;
       expect(result).toBe('userValue');
     });
@@ -260,9 +260,9 @@ describe('InfoIconCommand', () => {
       );
 
       (infoCommand as unknown as {_popUp: unknown})._popUp = null;
-      capturedOnClose!('ignored');
+      capturedOnClose('ignored');
       (infoCommand as unknown as {_popUp: unknown})._popUp = {close: jest.fn()};
-      capturedOnClose!('resolved');
+      capturedOnClose('resolved');
 
       const result = await Promise.race([
         promise,
@@ -508,11 +508,21 @@ describe('InfoIconCommand', () => {
   describe('createInfoIconAttrs', () => {
     it('should build attrs with from, to, description and infoIcon', () => {
       const infoIcon = {attrs: {someAttr: 'a'}, infoIcon: 'myIcon'};
-      const result = infoCommand.createInfoIconAttrs(1, 5, 'desc', infoIcon);
-      expect(result['from']).toBe(1);
-      expect(result['to']).toBe(5);
-      expect(result['description']).toBe('desc');
-      expect(result['infoIcon']).toBe('myIcon');
+      const result = infoCommand.createInfoIconAttrs(
+        1,
+        5,
+        'desc',
+        infoIcon
+      ) as {
+        from: number;
+        to: number;
+        description: string;
+        infoIcon: string;
+      };
+      expect(result.from).toBe(1);
+      expect(result.to).toBe(5);
+      expect(result.description).toBe('desc');
+      expect(result.infoIcon).toBe('myIcon');
     });
   });
 

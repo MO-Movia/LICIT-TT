@@ -3,6 +3,8 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
+
 import React from 'react';
 import { EditorState } from 'prosemirror-state';
 import { builders } from 'prosemirror-test-builder';

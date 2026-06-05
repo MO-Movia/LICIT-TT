@@ -3,6 +3,8 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
+
 jest.mock('./Icon', () => ({
   __esModule: true,
   Icon: {
@@ -1329,7 +1331,7 @@ describe('Custom Menu UI', () => {
     jest
       .spyOn(customStyle, 'addStyleToList')
       .mockReturnValueOnce([
-        { styleName: 'Single', mode: 0 } as unknown as Style,
+        { styleName: 'Single', mode: 0 },
       ]);
     const objInput = { styleName: 'Single', mode: 0 } as unknown as Style;
     const result = custommenuui.normalizeSavedStyles(objInput);
@@ -1360,7 +1362,7 @@ describe('Custom Menu UI', () => {
       editorView: { focus: focusMock } as unknown as EditorView,
     };
     const instance = new CustomMenuUI(localProps);
-    instance._stylePopup = { close: closeMock } as unknown as null;
+    instance._stylePopup = { close: closeMock };
     instance.closeStylePopup();
     expect(closeMock).toHaveBeenCalled();
     expect(instance._stylePopup).toBeNull();
@@ -1394,7 +1396,7 @@ describe('Custom Menu UI', () => {
     instance.applySavedStyleResult(
       { styleName: 'A' },
       null,
-      getTransform as unknown as (obj: Style) => Transform | null
+      getTransform as unknown
     );
     expect(closeSpy).toHaveBeenCalled();
     expect(getTransform).not.toHaveBeenCalled();
@@ -1415,7 +1417,7 @@ describe('Custom Menu UI', () => {
     const trMock = { docChanged: true } as unknown as Transform;
     instance.applySavedStyleResult(
       { styleName: 'A' },
-      [{ styleName: 'A' }] as unknown as Style[],
+      [{ styleName: 'A' }] as unknown,
       () => trMock
     );
     expect(dispatchMock).toHaveBeenCalledWith(trMock);
@@ -1436,8 +1438,8 @@ describe('Custom Menu UI', () => {
     const getTransform = jest.fn();
     instance.applySavedStyleResult(
       { styleName: 'NonExistent' },
-      [{ styleName: 'A' }] as unknown as Style[],
-      getTransform as unknown as (obj: Style) => Transform | null
+      [{ styleName: 'A' }] as unknown,
+      getTransform as unknown
     );
     expect(dispatchMock).not.toHaveBeenCalled();
     expect(getTransform).not.toHaveBeenCalled();
@@ -1457,7 +1459,7 @@ describe('Custom Menu UI', () => {
     jest.spyOn(instance, 'closeStylePopup').mockImplementation(() => {});
     instance.applySavedStyleResult(
       { styleName: 'A' },
-      [{ styleName: 'A' }] as unknown as Style[],
+      [{ styleName: 'A' }] as unknown,
       () => null as unknown as Transform
     );
     expect(dispatchMock).not.toHaveBeenCalled();
@@ -1466,7 +1468,7 @@ describe('Custom Menu UI', () => {
   it('saveStyleAndApply should resolve and delete editorView from val', async () => {
     jest
       .spyOn(customStyle, 'saveStyle')
-      .mockReturnValueOnce(Promise.resolve([]) as unknown as Promise<Style[]>);
+      .mockReturnValueOnce(Promise.resolve([]));
     const applySpy = jest
       .spyOn(custommenuui, 'applySavedStyleResult')
       .mockImplementation(() => {});
@@ -1483,7 +1485,7 @@ describe('Custom Menu UI', () => {
     jest
       .spyOn(customStyle, 'saveStyle')
       .mockReturnValueOnce(
-        Promise.reject(new Error('boom')) as unknown as Promise<Style[]>
+        Promise.reject(new Error('boom'))
       );
     const val = { styleName: 'A', editorView: 'something' };
     custommenuui.saveStyleAndApply(val, () => null as unknown as Transform);
@@ -1510,7 +1512,7 @@ describe('Custom Menu UI', () => {
   it('handleRenameModeSave should early-return when renameStyle resolves null', async () => {
     jest
       .spyOn(customStyle, 'renameStyle')
-      .mockReturnValueOnce(Promise.resolve(null) as unknown as Promise<Style[]>);
+      .mockReturnValueOnce(Promise.resolve(null));
     const saveSpy = jest
       .spyOn(custommenuui, 'saveStyleAndApply')
       .mockImplementation(() => {});
@@ -1525,9 +1527,7 @@ describe('Custom Menu UI', () => {
     jest
       .spyOn(customStyle, 'renameStyle')
       .mockReturnValueOnce(
-        Promise.resolve([{ styleName: 'NewName' }]) as unknown as Promise<
-          Style[]
-        >
+        Promise.resolve([{ styleName: 'NewName' }])
       );
     const saveSpy = jest
       .spyOn(custommenuui, 'saveStyleAndApply')
@@ -1544,9 +1544,7 @@ describe('Custom Menu UI', () => {
     jest
       .spyOn(customStyle, 'renameStyle')
       .mockReturnValueOnce(
-        Promise.reject(new Error('rename failed')) as unknown as Promise<
-          Style[]
-        >
+        Promise.reject(new Error('rename failed'))
       );
     custommenuui._styleName = 'OldName';
     custommenuui.handleRenameModeSave({ styleName: 'NewName' });
@@ -1577,7 +1575,7 @@ describe('Custom Menu UI', () => {
     };
     const instance = new CustomMenuUI(localProps);
     const result = instance._execute(
-      undefined as unknown as UICommand,
+      undefined,
       new Event('click') as unknown as SyntheticEvent
     );
     expect(result).toBeUndefined();
@@ -1587,7 +1585,7 @@ describe('Custom Menu UI', () => {
   it('getCommandGroups should return default HEADING_COMMANDS when addStyleToList returns null', () => {
     jest
       .spyOn(customStyle, 'addStyleToList')
-      .mockReturnValueOnce(null as unknown as Style[]);
+      .mockReturnValueOnce(null);
     const localProps = { ...CustomMenuTestProps };
     const instance = new CustomMenuUI(localProps);
     const groups = instance.getCommandGroups();
@@ -1645,7 +1643,7 @@ describe('Custom Menu UI', () => {
 
     const removeStyleSpy = jest
       .spyOn(customStyle, 'removeStyle')
-      .mockReturnValueOnce(Promise.resolve([]) as unknown as Promise<Style[]>);
+      .mockReturnValueOnce(Promise.resolve([]));
 
     const localProps = {
       ...CustomMenuTestProps,
@@ -1671,7 +1669,7 @@ describe('Custom Menu UI', () => {
 
     expect(typeof capturedSubMenuOnClose).toBe('function');
     // Simulate the popup invoking onClose with the "remove" action
-    capturedSubMenuOnClose!({
+    capturedSubMenuOnClose({
       type: 'remove',
       command: {
         _customStyleName: 'ToRemove',
@@ -1696,9 +1694,7 @@ describe('Custom Menu UI', () => {
     jest
       .spyOn(customStyle, 'removeStyle')
       .mockReturnValueOnce(
-        Promise.reject(new Error('remove failed')) as unknown as Promise<
-          Style[]
-        >
+        Promise.reject(new Error('remove failed'))
       );
 
     const instance = new CustomMenuUI({ ...CustomMenuTestProps });
@@ -1708,7 +1704,7 @@ describe('Custom Menu UI', () => {
       currentTarget: document.createElement('div'),
     } as unknown as SyntheticEvent);
 
-    capturedSubMenuOnClose!({
+    capturedSubMenuOnClose({
       type: 'remove',
       command: {
         _customStyleName: 'Bad',
@@ -1743,7 +1739,7 @@ describe('Custom Menu UI', () => {
     const command = {} as unknown as UICommand;
     instance.showSubMenu(command, event);
 
-    capturedSubMenuOnClose!({
+    capturedSubMenuOnClose({
       type: 'rename',
       command: {
         _customStyleName: 'X',
@@ -1777,7 +1773,7 @@ describe('Custom Menu UI', () => {
     const command = {} as unknown as UICommand;
     instance.showSubMenu(command, event);
 
-    capturedSubMenuOnClose!({
+    capturedSubMenuOnClose({
       type: 'edit',
       command: {
         _customStyleName: 'X',
@@ -1809,7 +1805,7 @@ describe('Custom Menu UI', () => {
     } as unknown as SyntheticEvent);
 
     // Passing undefined should not invoke showStyleWindow
-    expect(() => capturedSubMenuOnClose!(undefined)).not.toThrow();
+    expect(() => capturedSubMenuOnClose(undefined)).not.toThrow();
     expect(showStyleSpy).not.toHaveBeenCalled();
   });
 
@@ -1843,7 +1839,7 @@ describe('Custom Menu UI', () => {
     );
 
     // After showStyleWindow, _stylePopup is now set. Simulate close with a value.
-    capturedWindowOnClose!({ styleName: 'X', runtime: 'should-be-deleted' });
+    capturedWindowOnClose({ styleName: 'X', runtime: 'should-be-deleted' });
     expect(editSpy).toHaveBeenCalled();
     expect(focusMock).toHaveBeenCalled();
   });
@@ -1877,7 +1873,7 @@ describe('Custom Menu UI', () => {
       2
     );
 
-    capturedWindowOnClose!({ styleName: 'Y', runtime: 'should-be-deleted' });
+    capturedWindowOnClose({ styleName: 'Y', runtime: 'should-be-deleted' });
     expect(renameSpy).toHaveBeenCalled();
   });
 
@@ -1913,7 +1909,7 @@ describe('Custom Menu UI', () => {
       1
     );
 
-    capturedWindowOnClose!(undefined);
+    capturedWindowOnClose(undefined);
     expect(editSpy).not.toHaveBeenCalled();
     expect(renameSpy).not.toHaveBeenCalled();
     expect(focusMock).toHaveBeenCalled();
@@ -1949,7 +1945,7 @@ describe('Custom Menu UI', () => {
     );
 
     instance._stylePopup = null;
-    capturedWindowOnClose!({ styleName: 'X' });
+    capturedWindowOnClose({ styleName: 'X' });
     expect(editSpy).not.toHaveBeenCalled();
     expect(focusMock).toHaveBeenCalled();
   });

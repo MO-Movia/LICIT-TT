@@ -342,7 +342,7 @@ describe('image resizebox control', () => {
       onResizeEnd: () => undefined,
       width: 10,
       fitToParent: false,
-    } as never;
+    };
     imageresizeboxcontrol._active = true;
     imageresizeboxcontrol._el = mockElement;
 

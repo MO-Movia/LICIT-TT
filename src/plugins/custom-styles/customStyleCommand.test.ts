@@ -3,6 +3,8 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
 jest.mock('./customStyle', () => ({
   getCustomStyleByName: jest.fn(),
   getCustomStyleByLevel: jest.fn(),
@@ -130,7 +132,7 @@ describe('CustomStyleCommand', () => {
       .mockReturnValue(TextSelection.atStart(state.doc) as any);
     jest
       .spyOn(csc, 'applyStyle')
-      .mockReturnValue(state.tr as any);
+      .mockReturnValue(state.tr);
 
     command.createNewStyle(style, state.tr, state, dispatch, state.doc);
 
@@ -163,7 +165,7 @@ describe('CustomStyleCommand', () => {
 
   it('retrieves custom styles and sets them', () => {
     mockedCustomstyles.getStylesAsync.mockResolvedValueOnce([
-      { styleName: 'TestStyle', styles: {} } as Style,
+      { styleName: 'TestStyle', styles: {} },
     ]);
     const state = makeState();
     const dispatch = jest.fn();
@@ -230,7 +232,7 @@ describe('CustomStyleCommand helpers', () => {
   it('compareMarkWithStyle returns the same transaction and does not modify when style matches', () => {
     const mark = { type: { name: 'em' }, attrs: { overridden: false } } as any;
     const tr = {} as Transform;
-    const result = csc.compareMarkWithStyle(mark, { em: true } as any, tr, 0, 0, {
+    const result = csc.compareMarkWithStyle(mark, { em: true }, tr, 0, 0, {
       modified: false,
     });
 
@@ -241,7 +243,7 @@ describe('CustomStyleCommand helpers', () => {
   it('compareMarkWithStyle returns unchanged transaction when style is null', () => {
     const mark = { type: { name: 'em' }, attrs: { overridden: false } } as any;
     const tr = {} as Transform;
-    const result = csc.compareMarkWithStyle(mark, null as any, tr, 0, 0, {
+    const result = csc.compareMarkWithStyle(mark, null, tr, 0, 0, {
       modified: false,
     });
 
@@ -252,7 +254,7 @@ describe('CustomStyleCommand helpers', () => {
     const mark = { type: { name: 'em' }, attrs: { overridden: false } } as any;
     const tr = {} as Transform;
     const retObj = { modified: false };
-    csc.compareMarkWithStyle(mark, { strong: true } as any, tr, 0, 0, retObj);
+    csc.compareMarkWithStyle(mark, { strong: true }, tr, 0, 0, retObj);
 
     expect(retObj.modified).toBe(true);
   });
@@ -276,7 +278,7 @@ describe('CustomStyleCommand helpers', () => {
   });
 
   it('getMarkByStyleName returns empty array when style is undefined', () => {
-    mockedCustomstyles.getCustomStyleByName.mockReturnValueOnce(undefined as any);
+    mockedCustomstyles.getCustomStyleByName.mockReturnValueOnce(undefined);
 
     const marks = csc.getMarkByStyleName('UndefinedStyle', schema);
     expect(marks.length).toBe(0);
@@ -292,7 +294,7 @@ describe('CustomStyleCommand - execute mode branches', () => {
 
     command.execute(state, jest.fn(), view);
 
-    expect(command['editWindow']).toHaveBeenCalled();
+    expect(command.editWindow).toHaveBeenCalled();
   });
 
   it('handles editall mode without ctrl key', () => {
@@ -304,7 +306,7 @@ describe('CustomStyleCommand - execute mode branches', () => {
 
     command.execute(state, jest.fn(), view, event);
 
-    expect(command['editWindow']).toHaveBeenCalled();
+    expect(command.editWindow).toHaveBeenCalled();
   });
 
   it('handles clearstyle mode', () => {
@@ -315,7 +317,7 @@ describe('CustomStyleCommand - execute mode branches', () => {
 
     command.execute(state, dispatch, undefined);
 
-    expect(command['executeClearStyle']).toHaveBeenCalled();
+    expect(command.executeClearStyle).toHaveBeenCalled();
   });
 
   it('handles reset mode', () => {
@@ -325,7 +327,7 @@ describe('CustomStyleCommand - execute mode branches', () => {
 
     command.execute(state, jest.fn(), undefined);
 
-    expect(command['resetNumber']).toHaveBeenCalled();
+    expect(command.resetNumber).toHaveBeenCalled();
   });
 
   it('isStyleEnabled returns true for non-clearstyle menus', () => {
@@ -521,7 +523,7 @@ describe('getCustomStyleCommands - switch case branches', () => {
   });
 
   it('ignores unknown style properties (default branch)', () => {
-    const result = csc.getCustomStyleCommands({ unknownProp: 'x' } as any);
+    const result = csc.getCustomStyleCommands({ unknownProp: 'x' });
     expect(result.length).toBe(0);
   });
 
@@ -557,7 +559,7 @@ describe('getStyleLevel branches', () => {
 
   it('returns 0 when custom style has no styleLevel and name is unknown', () => {
     mockedCustomstyles.getCustomStyleByName.mockReturnValueOnce(
-      undefined as any
+      undefined
     );
     expect(csc.getStyleLevel('Unknown')).toBe(0);
   });
@@ -583,7 +585,7 @@ describe('resetNodeAttrs', () => {
       paddingTop: 10,
     };
     const customStyle = { styleName: 'NewStyle' };
-    const result = csc.resetNodeAttrs(attrs as any, customStyle as any);
+    const result = csc.resetNodeAttrs(attrs, customStyle);
     expect(result.indent).toBeNull();
     expect(result.lineSpacing).toBeNull();
     expect(result.paddingBottom).toBeNull();
@@ -593,7 +595,7 @@ describe('resetNodeAttrs', () => {
 
   it('handles null customStyle gracefully', () => {
     const attrs = { indent: 5 };
-    const result = csc.resetNodeAttrs(attrs as any, null);
+    const result = csc.resetNodeAttrs(attrs, null);
     expect(result.styleName).toBe('');
     expect(result.indent).toBeNull();
   });
@@ -751,7 +753,7 @@ describe('jsonEditor and editWindow', () => {
 describe('getCustomStyles', () => {
   it('does not dispatch when no style name is provided', async () => {
     mockedCustomstyles.getStylesAsync.mockResolvedValueOnce([
-      { styleName: 'A', styles: {} } as Style,
+      { styleName: 'A', styles: {} },
     ]);
     const dispatch = jest.fn();
     const view = { state: makeState(), dispatch } as any;
@@ -763,7 +765,7 @@ describe('getCustomStyles', () => {
 
   it('does not dispatch when matching style is not in the result', async () => {
     mockedCustomstyles.getStylesAsync.mockResolvedValueOnce([
-      { styleName: 'Other', styles: {} } as Style,
+      { styleName: 'Other', styles: {} },
     ]);
     const dispatch = jest.fn();
     const view = { state: makeState(), dispatch } as any;
@@ -790,7 +792,7 @@ describe('createNewStyle - non-array result branch', () => {
 
     mockedCustomstyles.saveStyle.mockResolvedValueOnce({
       styleName: 'NewStyle',
-    } as any);
+    });
 
     command.createNewStyle(style, state.tr, state, dispatch, state.doc);
     await new Promise((r) => setTimeout(r, 0));
@@ -843,7 +845,7 @@ describe('removeAllMarksExceptLinkForTableColumnCell', () => {
     const tr = state.tr;
     const result = csc.removeAllMarksExceptLinkForTableColumnCell(
       0,
-      null as any,
+      null,
       tr
     );
     expect(result).toBe(tr);
@@ -863,11 +865,11 @@ describe('removeAllMarksExceptLinkForTableColumnCell', () => {
 
   it('returns the transform for a paragraph with no marked children', () => {
     const state = makeState();
-    const node = state.doc.firstChild!;
+    const node = state.doc.firstChild;
     const tr = state.tr;
     const result = csc.removeAllMarksExceptLinkForTableColumnCell(
       0,
-      node as any,
+      node,
       tr
     );
     expect(result).toBeDefined();
@@ -1011,7 +1013,7 @@ describe('applyLineStyle', () => {
       selection: Selection.atStart(editorDoc),
     });
     const tr = state.tr;
-    const node = state.doc.firstChild!;
+    const node = state.doc.firstChild;
     expect(csc.applyLineStyle(state, tr, node, 1)).toBeDefined();
   });
 
@@ -1026,14 +1028,14 @@ describe('applyLineStyle', () => {
 describe('insertParagraph', () => {
   it('returns the transform when state is not provided', () => {
     const tr = { dummy: true } as any;
-    const result = csc.insertParagraph({} as any, 0, tr, 1);
+    const result = csc.insertParagraph({}, 0, tr, 1);
     expect(result).toBe(tr);
   });
 
   it('inserts a paragraph when state has a schema', () => {
     mockedCustomstyles.getCustomStyleByLevel.mockReturnValueOnce({
       styleName: 'Lvl1',
-    } as any);
+    });
     const state = makeState();
     const nodeAttrs = {
       styleName: 'X',
@@ -1042,7 +1044,7 @@ describe('insertParagraph', () => {
       paddingBottom: null,
       paddingTop: null,
     };
-    const result = csc.insertParagraph(nodeAttrs as any, 0, state.tr, 1, state);
+    const result = csc.insertParagraph(nodeAttrs, 0, state.tr, 1, state);
     expect(result).toBeDefined();
   });
 });
@@ -1051,7 +1053,7 @@ describe('addElementEx / addElement', () => {
   it('addElementEx computes level from previousLevel when after is false', () => {
     const state = makeState();
     const result = csc.addElementEx(
-      { styleName: 'X' } as any,
+      { styleName: 'X' },
       state,
       state.tr,
       0,
@@ -1066,7 +1068,7 @@ describe('addElementEx / addElement', () => {
   it('addElementEx uses currentLevel as counter when after is false', () => {
     const state = makeState();
     const result = csc.addElementEx(
-      { styleName: 'X' } as any,
+      { styleName: 'X' },
       state,
       state.tr,
       0,
@@ -1081,7 +1083,7 @@ describe('addElementEx / addElement', () => {
   it('addElementEx defaults level to 0 when previousLevel is 0 and after is false', () => {
     const state = makeState();
     const result = csc.addElementEx(
-      { styleName: 'X' } as any,
+      { styleName: 'X' },
       state,
       state.tr,
       0,
@@ -1096,7 +1098,7 @@ describe('addElementEx / addElement', () => {
   it('addElementEx defaults currentLevel to 0 when undefined', () => {
     const state = makeState();
     const result = csc.addElementEx(
-      { styleName: 'X' } as any,
+      { styleName: 'X' },
       state,
       state.tr,
       0,
@@ -1212,9 +1214,9 @@ describe('removeMarks', () => {
     const command = new csc.CustomStyleCommand({ styleName: 'X' }, 'X');
     const removeMark = jest.fn().mockReturnThis();
     const tr = { removeMark } as any;
-    const node = makeState().doc.firstChild!;
+    const node = makeState().doc.firstChild;
     const mark = { type: { name: 'em' } } as any;
-    command.removeMarks(mark, tr, node as any, 0, 5);
+    command.removeMarks(mark, tr, node, 0, 5);
     expect(removeMark).toHaveBeenCalledWith(0, 5, mark.type);
   });
 });
@@ -1224,7 +1226,7 @@ describe('executeClearStyle - dispatch behaviour', () => {
     const command = new csc.CustomStyleCommand({ styleName: 'X' }, 'X');
     const state = makeState();
     const dispatch = jest.fn();
-    const node = state.doc.firstChild!;
+    const node = state.doc.firstChild;
 
     const result = command.executeClearStyle(
       state,
@@ -1241,7 +1243,7 @@ describe('executeClearStyle - dispatch behaviour', () => {
   it('handles missing dispatch gracefully', () => {
     const command = new csc.CustomStyleCommand({ styleName: 'X' }, 'X');
     const state = makeState();
-    const node = state.doc.firstChild!;
+    const node = state.doc.firstChild;
 
     expect(() =>
       command.executeClearStyle(
@@ -1279,13 +1281,13 @@ describe('applyStyleForTableColumnCell', () => {
   it('returns the transform when styleProp has no styles', () => {
     mockedCustomstyles.getCustomStyleByName.mockReturnValueOnce({} as any);
     const state = makeState();
-    const node = state.doc.firstChild!;
+    const node = state.doc.firstChild;
     const result = csc.applyStyleForTableColumnCell(
-      undefined as any,
+      undefined,
       'Missing',
       state,
       state.tr,
-      node as any,
+      node,
       0
     );
     expect(result).toBeDefined();
@@ -1297,13 +1299,13 @@ describe('applyStyleForTableColumnCell', () => {
       styles: { strong: true, indent: 0 },
     } as any;
     const state = makeState();
-    const node = state.doc.firstChild!;
+    const node = state.doc.firstChild;
     const result = csc.applyStyleForTableColumnCell(
       styleProp,
       'X',
       state,
       state.tr,
-      node as any,
+      node,
       0,
       1
     );
@@ -1317,7 +1319,7 @@ describe('applyLatestStyle', () => {
       styles: { strong: true },
     } as any);
     const state = makeState();
-    const node = state.doc.firstChild!;
+    const node = state.doc.firstChild;
     const context = {
       node,
       startPos: 1,
@@ -1336,7 +1338,7 @@ describe('applyLatestStyle', () => {
   it('uses supplied style object when opt is non-zero', () => {
     const style = { styles: { em: true } } as any;
     const state = makeState();
-    const node = state.doc.firstChild!;
+    const node = state.doc.firstChild;
     const context = {
       node,
       startPos: 1,
@@ -1414,16 +1416,16 @@ describe('addMarksToLine', () => {
   it('handles boldSentence true on plain text', () => {
     const state = makeState();
     const tr = state.tr;
-    const node = state.doc.firstChild!;
-    const result = csc.addMarksToLine(tr, state, node as any, 0, true);
+    const node = state.doc.firstChild;
+    const result = csc.addMarksToLine(tr, state, node, 0, true);
     expect(result).toBeDefined();
   });
 
   it('handles boldSentence false on plain text', () => {
     const state = makeState();
     const tr = state.tr;
-    const node = state.doc.firstChild!;
-    const result = csc.addMarksToLine(tr, state, node as any, 0, false);
+    const node = state.doc.firstChild;
+    const result = csc.addMarksToLine(tr, state, node, 0, false);
     expect(result).toBeDefined();
   });
 });

@@ -3,6 +3,8 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 jest.mock('./ui/Icon', () => ({
   __esModule: true,
   Icon: {

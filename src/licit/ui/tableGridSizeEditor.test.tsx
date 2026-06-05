@@ -168,7 +168,7 @@ it('should handle _onMouseMove and update grid size correctly', () => {
 
 it('should ignore mouse enter when currentTarget is not an HTMLElement', () => {
   const closeMock = jest.fn();
-  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const instance = new TableGridSizeEditor({ close: closeMock });
   const addSpy = jest.spyOn(document, 'addEventListener');
 
   instance._onMouseEnter({
@@ -182,7 +182,7 @@ it('should ignore mouse enter when currentTarget is not an HTMLElement', () => {
 
 it('should not request a frame when mouse position does not change', () => {
   const closeMock = jest.fn();
-  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const instance = new TableGridSizeEditor({ close: closeMock });
   const rafSpy = jest.spyOn(global, 'requestAnimationFrame');
 
   instance._bodyEl = null;
@@ -200,7 +200,7 @@ it('should not request a frame when mouse position does not change', () => {
 
 it('should not update state when the grid size does not change', () => {
   const closeMock = jest.fn();
-  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const instance = new TableGridSizeEditor({ close: closeMock });
   const setStateSpy = jest.spyOn(instance, 'setState');
 
   instance.state = { rows: 1, cols: 1 };
@@ -215,7 +215,7 @@ it('should not update state when the grid size does not change', () => {
 
 it('should cancel animation frame on unmount even when mouse never entered', () => {
   const closeMock = jest.fn();
-  const instance = new TableGridSizeEditor({ close: closeMock }) as unknown as TableGridSizeEditor;
+  const instance = new TableGridSizeEditor({ close: closeMock });
   const cancelSpy = jest.spyOn(global, 'cancelAnimationFrame');
 
   instance._entered = false;

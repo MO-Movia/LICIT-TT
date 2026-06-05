@@ -445,7 +445,7 @@ function optimizedPasteHandler(
   const parentNode = prevState.doc.resolve(demoPos).parent;
   const hasParentAttrs = !!parentNode.content?.content[0]?.attrs;
 
-  let currentPos = csview.state.selection.$from.before(
+  const currentPos = csview.state.selection.$from.before(
     csview.state.selection.$from.depth === 0
       ? 1
       : csview.state.selection.$from.depth

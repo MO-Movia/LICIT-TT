@@ -395,7 +395,7 @@ export class CustomStyleCommand extends UICommand {
   ): boolean | null {
     const node = getNode(state, startPos, endPos, state.tr);
     const newattrs = { ...(node ? node.attrs : {}) };
-    let isValidated = true;
+    const isValidated = true;
 
     if ('newstyle' === this._customStyle) {
       this.editWindow(state, view, 0);

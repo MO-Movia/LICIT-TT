@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { ImageInlineEditor, ImageInlineEditorValue } from './ImageInlineEditor';
+import { ImageInlineEditor, ImageInlineEditorValue as _ImageInlineEditorValue } from './ImageInlineEditor';
 import { EditorState } from 'prosemirror-state';
 import { schema } from 'prosemirror-test-builder';
 import { EnhancedTableFigure } from '../index';

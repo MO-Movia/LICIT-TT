@@ -38,7 +38,7 @@ export class GlossaryView implements NodeView {
       outerView.dom.ownerDocument,
       node.type.spec.toDOM(this.node)
     );
-    this.dom = spec.dom as HTMLElement;
+    this.dom = spec.dom;
     this.contentDOM = spec.contentDOM!;
     this.contentDOM.contentEditable = 'false';
     this.contentDOM.className = GLOSSARY;
