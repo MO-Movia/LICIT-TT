@@ -8,19 +8,12 @@ import * as EditorCommands from '../editorCommands';
 import FontSizeCommandMenuButton from './fontSizeCommandMenuButton';
 import FontTypeCommandMenuButton from './fontTypeCommandMenuButton';
 import ListTypeCommandButton from './listTypeCommandButton';
-import Icon from './icon';
 import { ComponentType } from 'react';
 import { UICommand } from '../../core';
 import { EditorView } from 'prosemirror-view';
 import { EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
-
-const ICON_LABEL_PATTERN = /^\[((?!\[)[^\s]{1,10000})(\] )(.*)/;
-
-type parseLabeltype = {
-  icon;
-  title;
-};
+export { isExpandButton, parseLabel } from './toolbarLabelUtils';
 
 interface CommandMenuButtonProps {
   dispatch?: (tr: Transform) => void;
@@ -36,25 +29,6 @@ export interface CommandGroup {
 }
 
 export const MORE = ' More';
-
-export function parseLabel(input: string, theme: string): parseLabeltype {
-  const matched = ICON_LABEL_PATTERN.exec(input);
-  if (matched) {
-    const [, icon, , label] = matched;
-    return {
-      icon: icon ? Icon.get(icon, null, theme) : null,
-      title: label || null,
-    };
-  }
-  return {
-    icon: null,
-    title: input || null,
-  };
-}
-
-export function isExpandButton(title: string): boolean {
-  return (title?.trim() == 'Expand');
-}
 const {
   CLEAR_FORMAT,
   EM,

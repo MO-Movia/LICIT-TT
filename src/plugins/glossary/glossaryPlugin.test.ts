@@ -74,7 +74,7 @@ describe('Glossary Helpers', () => {
 
     const ok = cmd.executeWithUserInput(
       view.state,
-      view.dispatch as unknown as (tr) => void,
+      view.dispatch,
       view,
       item
     );

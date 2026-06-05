@@ -5,8 +5,6 @@
 
 import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
-import {Editor} from '@tiptap/react';
 import TextAlignCommand from './textAlignCommand';
 
 // Mock Editor class
@@ -46,11 +44,11 @@ describe('TextAlignCommand', () => {
         setTextAlign: mockSetTextAlign,
         updateAttributes: mockUpdateAttributes,
       },
-    } as unknown as Editor);
+    });
 
     command.alignment = 'center';
 
-    command.execute({} as EditorState, jest.fn(), {} as EditorView);
+    command.execute({}, jest.fn(), {});
 
     expect(mockSetTextAlign).toHaveBeenCalledWith('center');
     expect(mockUpdateAttributes).toHaveBeenCalledWith('paragraph', {
@@ -66,12 +64,12 @@ describe('TextAlignCommand', () => {
         setTextAlign: () => true,
         updateAttributes: jest.fn(),
       },
-    } as unknown as Editor);
+    });
 
     const result = command.execute(
-      {} as EditorState,
+      {},
       jest.fn(),
-      {} as EditorView
+      {}
     );
     expect(result).toBe(true);
   });

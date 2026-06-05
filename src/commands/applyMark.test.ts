@@ -708,7 +708,7 @@ describe('updateMarksAttrs',()=>{
 
     // Create a document node from JSON
     const docNode = schema.nodeFromJSON(docJson);
-    const test1 = updateMarksAttrs({name:'mark-font-size',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,undefined as unknown as string | number);
+    const test1 = updateMarksAttrs({name:'mark-font-size',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,undefined);
     expect(test1).toBeUndefined();
   });
   it('should handle updateMarksAttrs (case 5)',()=>{
@@ -769,7 +769,7 @@ describe('updateMarksAttrs',()=>{
     const docNode = schema.nodeFromJSON(docJson);
     const test = updateMarksAttrs({name:'mark-font-type',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,'test');
     expect(test).toBeUndefined();
-    const test1 = updateMarksAttrs({name:'mark-font-type',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,undefined as unknown as string | number);
+    const test1 = updateMarksAttrs({name:'mark-font-type',create:()=>{}} as unknown as MarkType,{doc:docNode,addMark:()=>{}} as unknown as Transform,{selection:{from:0,to:1}} as unknown as EditorState,undefined);
     expect(test1).toBeUndefined();
   });
   it('should handle updateMarksAttrs (case 6)',()=>{
@@ -908,10 +908,10 @@ describe('updateMarksAttrs',()=>{
 describe('addMarksToNode',()=>{
   it('should handle addMarksToNode',()=>{
     const test = addMarksToNode({addMark:()=>{}} as unknown as Transform,0,1,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,{} as unknown as Node | null,true);
+      {},{} as unknown as Node | null,true);
       expect(test).toBeUndefined();
       const test1 = addMarksToNode({addMark:()=>{}} as unknown as Transform,0,1,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,{} as unknown as Node | null,undefined);
+      {},{} as unknown as Node | null,undefined);
       expect(test1).toBeUndefined();
   });
   it('should handle addMarksToNode (case 2)',()=>{
@@ -963,7 +963,7 @@ describe('addMarksToNode',()=>{
     // Create a document node from JSON
     const docNode = schema.nodeFromJSON(docJson);
     const test = addMarksToNode({addMark:()=>{return {addMark:()=>{return {addMark:()=>{}};}};}} as unknown as Transform,0,1,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,docNode,false);
+      {},docNode,false);
       expect(test).toBeUndefined();
   });
   it('should handle addMarksToNode (case 3)',()=>{
@@ -997,7 +997,7 @@ describe('addMarksToNode',()=>{
     // Create a document node from JSON
     const docNode = schema.nodeFromJSON(docJson);
     const test = addMarksToNode({addMark:()=>{return {addMark:()=>{return {addMark:()=>{}};}};}} as unknown as Transform,0,1,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,docNode,false);
+      {},docNode,false);
       expect(test).toBeDefined();
   });
   it('should handle handleTextColorMark',()=>{
@@ -1031,10 +1031,10 @@ describe('addMarksToNode',()=>{
     // Create a document node from JSON
     const docNode = schema.nodeFromJSON(docJson);
     const test = handleTextColorMark({addMark:()=>{}} as unknown as Transform,{pos:0} as unknown as ResolvedPos,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,docNode,{pos:1} as unknown as ResolvedPos);
+      {},docNode,{pos:1} as unknown as ResolvedPos);
       expect(test).toBeUndefined();
       const test1 = handleTextColorMark({addMark:()=>{}} as unknown as Transform,{pos:0} as unknown as ResolvedPos,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,docNode,{pos:1} as unknown as ResolvedPos);
+      {},docNode,{pos:1} as unknown as ResolvedPos);
       expect(test1).toBeUndefined();
   });
   it('should handle handleTextColorMark (case 2)',()=>{
@@ -1086,10 +1086,10 @@ describe('addMarksToNode',()=>{
     // Create a document node from JSON
     const docNode = schema.nodeFromJSON(docJson);
     const test = handleTextColorMark({addMark:()=>{}} as unknown as Transform,{pos:0} as unknown as ResolvedPos,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,docNode,{pos:1} as unknown as ResolvedPos);
+      {},docNode,{pos:1} as unknown as ResolvedPos);
       expect(test).toBeUndefined();
       const test1 = handleTextColorMark({addMark:()=>{}} as unknown as Transform,{pos:0} as unknown as ResolvedPos,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,docNode,{pos:1} as unknown as ResolvedPos);
+      {},docNode,{pos:1} as unknown as ResolvedPos);
       expect(test1).toBeUndefined();
   });
   it('should handle handleTextColorMark (case 3)',()=>{
@@ -1123,10 +1123,10 @@ describe('addMarksToNode',()=>{
     // Create a document node from JSON
     const docNode = schema.nodeFromJSON(docJson);
     const test = handleTextColorMark({addMark:()=>{}} as unknown as Transform,{pos:0} as unknown as ResolvedPos,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,docNode,{pos:1} as unknown as ResolvedPos);
+      {},docNode,{pos:1} as unknown as ResolvedPos);
       expect(test).toBeUndefined();
       const test1 = handleTextColorMark({addMark:()=>{}} as unknown as Transform,{pos:0} as unknown as ResolvedPos,{create:()=>{}} as unknown as MarkType,
-      {} as unknown as Record<string, unknown>,docNode,{pos:1} as unknown as ResolvedPos,true);
+      {},docNode,{pos:1} as unknown as ResolvedPos,true);
       expect(test1).toBeUndefined();
   });
 });

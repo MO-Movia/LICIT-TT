@@ -126,6 +126,6 @@ describe('removeTextAlignAndLineSpacing', () => {
 
   it('should handle clearCustomStyleAttribute (case 3)', () => {
     const myNode = {};
-    expect(clearCustomStyleAttribute(myNode as unknown as Node)).toBeUndefined();
+    expect(clearCustomStyleAttribute(myNode as Node)).toBeUndefined();
   });
 });

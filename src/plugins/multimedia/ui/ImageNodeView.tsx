@@ -378,7 +378,7 @@ export class ImageViewBody extends React.PureComponent<
 
   _renderInlineEditor(): void {
     const el = document.getElementById(this._id);
-    if (!el || el.getAttribute('data-active') !== 'true') {
+    if (!el || el.dataset.active !== 'true') {
       this._inlineEditor?.close?.(undefined);
       return;
     }
@@ -416,7 +416,7 @@ export class ImageViewBody extends React.PureComponent<
       return; // already resolved
     }
     const url = await resolveURL(
-      this.props.editorView.runtime as EditorRuntime,
+      this.props.editorView.runtime,
       src,
       this.props.dom
     );

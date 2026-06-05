@@ -72,7 +72,7 @@ describe('EMMarkSpec', () => {
     const mockMarkType = {} as MarkType;
     const mockMark: Mark = {
       type: mockMarkType,
-      attrs: {overridden: true} as Attrs,
+      attrs: {overridden: true},
       addToSet: (marks: readonly Mark[]) => [...marks],
       removeFromSet: () => [],
       isInSet: () => false,

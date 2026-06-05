@@ -69,7 +69,7 @@ describe('RichTextEditor (pure Jest tests)', () => {
 
  it('should dispatch transaction when _dispatchTransaction is called', () => {
     const instance = new RichTextEditor(mockProps, {});
-    const mockTransform = new Transform(null as Transform['doc']);
+    const mockTransform = new Transform(null);
     instance._dispatchTransaction(mockTransform);
     expect(mockProps.editor.view.dispatch).toHaveBeenCalled();
   });

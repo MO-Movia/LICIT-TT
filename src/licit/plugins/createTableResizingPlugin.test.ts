@@ -133,7 +133,7 @@ describe('calculateMaxClientX', () => {
       x: 100,
       y: 0,
       toJSON: () => {},
-    } as DOMRect);
+    });
 
     const mockEvent = { clientX: 200 } as MouseEvent;
     const result = calculateMaxClientX(mockEvent, targetTable);

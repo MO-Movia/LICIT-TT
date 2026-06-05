@@ -345,4 +345,120 @@ describe('TextAlignCommand', () => {
        'paragraph': schema.nodes.paragraph} } as unknown as Schema,'left');
     expect(test).toBeDefined();
   });
+  it('should return the same transform when selection or doc is missing', () => {
+    const tr = {} as Transform;
+    expect(setTextAlign(tr, schema1)).toBe(tr);
+  });
+  it('should skip missing cell nodes during cell selections', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'block+' },
+        text: {},
+        paragraph: {
+          content: 'text*',
+          group: 'block',
+          toDOM: () => ['p', 0],
+          parseDOM: [{ tag: 'p' }],
+        },
+        ...tableNodes({
+          tableGroup: 'block',
+          cellContent: 'paragraph',
+          cellAttributes: {}
+        }),
+      },
+    });
+
+    const doc = schema.node('doc', null, [
+      schema.node('table', null, [
+        schema.node('table_row', null, [
+          schema.node('table_cell', null, [
+            schema.node('paragraph', null, [schema.text('A')]),
+          ]),
+          schema.node('table_cell', null, [
+            schema.node('paragraph', null, [schema.text('B')]),
+          ]),
+        ]),
+      ]),
+    ]);
+    const selection = CellSelection.create(doc, 2, 2);
+    const tr = {
+      selection,
+      doc: {
+        nodeAt: () => null,
+      },
+    } as unknown as Transform;
+
+    expect(setTextAlign(
+      tr,
+      { nodes: { blockquote: null, heading: null, list_item: null, paragraph: schema.nodes.paragraph } } as unknown as Schema,
+      'left'
+    )).toBe(tr);
+  });
+  it('should clear align attrs based on overridden values when alignment is null', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          group: 'block',
+          attrs: {
+            align: { default: null },
+            overriddenAlign: { default: null },
+            overriddenAlignValue: { default: null },
+          },
+          toDOM: () => ['p', 0],
+          parseDOM: [{ tag: 'p' }],
+        },
+        text: {},
+      },
+    });
+
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', {
+        align: 'right',
+        overriddenAlign: true,
+        overriddenAlignValue: 'right',
+      }, [schema.text('A')]),
+      schema.node('paragraph', {
+        align: 'center',
+        overriddenAlign: false,
+        overriddenAlignValue: 'center',
+      }, [schema.text('B')]),
+    ]);
+
+    const calls: Array<{ pos: number; attrs: Record<string, unknown> }> = [];
+    const tr = {
+      selection: { from: 0, to: doc.content.size } as unknown as EditorState['selection'],
+      doc,
+      setNodeMarkup: (pos, _type, attrs) => {
+        calls.push({ pos, attrs });
+        return tr;
+      },
+    } as unknown as Transform;
+
+    setTextAlign(
+      tr,
+      { nodes: { blockquote: null, heading: null, list_item: null, paragraph: schema.nodes.paragraph } } as unknown as Schema,
+      null!
+    );
+
+    expect(calls[0]?.attrs).toMatchObject({
+      align: 'right',
+      overriddenAlign: true,
+      overriddenAlignValue: 'right',
+    });
+    expect(calls[1]?.attrs).toMatchObject({
+      align: null,
+      overriddenAlign: null,
+      overriddenAlignValue: null,
+    });
+  });
+  it('should return the same transform for executeCustomStyleForTable when selection is not a cell selection', () => {
+    const tr = {} as Transform;
+    const state = {
+      schema: schema1,
+      selection: { from: 0, to: 0 },
+    } as unknown as EditorState;
+    expect(command.executeCustomStyleForTable(state, tr, 0, 0)).toBe(tr);
+  });
 });

@@ -30,7 +30,6 @@ import {
   Node,
   ParseRule,
   Schema,
-  Slice,
 } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 import { Transform } from 'prosemirror-transform';
@@ -868,7 +867,7 @@ describe('Citation Plugin', () => {
   it('should create footnote', () => {
     const editor = createEditor(doc('<cursor>', p('Hello')));
     const tr = new AddCitationCommand().createFootNoteForCitation(
-      editor.view as unknown as EditorView,
+      editor.view,
       editor.state,
       editor.state.tr,
       citation
@@ -1186,15 +1185,15 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         clientX: 0,
         clientY: 1,
         preventDefault: () => {
           return null;
         },
-      } as unknown as ClipboardEvent,
-      {} as unknown as Slice
+      },
+      {}
     );
     expect(handlDropRet).toBeTruthy();
   });
@@ -1230,13 +1229,13 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: 'Enter',
         preventDefault: () => {
           return null;
         },
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeFalsy();
   });
@@ -1262,13 +1261,13 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: '.',
         preventDefault: () => {
           return null;
         },
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeFalsy();
   });
@@ -1294,13 +1293,13 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: 'a',
         preventDefault: () => {
           return null;
         },
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeTruthy();
   });
@@ -1326,14 +1325,14 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: 'a',
         preventDefault: () => {
           return null;
         },
         ctrlKey: true,
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeFalsy();
   });
@@ -1359,14 +1358,14 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: 'a',
         preventDefault: () => {
           return null;
         },
         ctrlKey: true,
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeFalsy();
   });

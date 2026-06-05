@@ -298,7 +298,7 @@ describe('TextColorCommand', () => {
     } as unknown as Event;
 
     const editorview = {} as unknown as EditorView;
-    plugin._popUp = {} as unknown as null;
+    plugin._popUp = {};
     const result = plugin.waitForUserInput(
       state,
       _dispatch,

@@ -187,7 +187,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
     // Mock domAtPos to simulate no DOM element found
     const mockDomAtPos: EditorView['domAtPos'] = () =>
-      null as unknown as {node: Node; offset: number};
+      null;
 
     // Mock view instance preserving EditorView prototype
     const mockView: EditorView = Object.assign(

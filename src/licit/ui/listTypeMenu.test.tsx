@@ -100,7 +100,7 @@ describe('ListTypeMenu', () => {
       editorState: mockEditorState,
       editorView: mockEditorView,
       onCommand: mockOnCommand,
-    } as unknown as ListTypeMenu);
+    });
 
     const event = {} as React.SyntheticEvent;
 
@@ -122,7 +122,7 @@ describe('ListTypeMenu', () => {
       editorState: mockEditorState,
       editorView: mockEditorView,
       onCommand: mockOnCommand,
-    } as unknown as UICommand);
+    });
 
     const event = {} as React.SyntheticEvent;
     instance._execute(command as unknown as UICommand, event);
@@ -146,7 +146,7 @@ describe('ListTypeMenu', () => {
       editorState: mockEditorState,
       editorView: mockEditorView,
       onCommand: mockOnCommand,
-    } as unknown as UICommand);
+    });
 
     const event = {} as React.SyntheticEvent;
     instance._execute(command as unknown as UICommand, event);

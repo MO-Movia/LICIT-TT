@@ -57,11 +57,11 @@ describe('UICommand', () => {
   });
 
   it('should by default be active', () => {
-    expect(uiCmd.isActive(null as unknown as EditorState)).toBeTruthy();
+    expect(uiCmd.isActive(null)).toBeTruthy();
   });
 
   it('should by default not render label', () => {
-    expect(uiCmd.renderLabel(null as unknown as EditorState)).toBeFalsy();
+    expect(uiCmd.renderLabel(null)).toBeFalsy();
   });
 
   describe('dryRunEditorStateProxyGetter', () => {

@@ -109,6 +109,37 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     this.getCustomStyles();
   }
 
+  toggleStyleState(style: string) {
+    const nextStyles = { ...this.state.styles };
+    nextStyles[style] =
+      nextStyles[style] === true ? undefined : !nextStyles[style];
+    return { styles: nextStyles };
+  }
+
+  renameStyleState(event) {
+    if (!event) {
+      return null;
+    }
+
+    const oldName = this.state.styleName;
+    const newName = event.target.value;
+    const styles = { ...this.state.styles };
+    if (styles.nextLineStyleName === oldName) {
+      styles.nextLineStyleName = newName;
+    }
+
+    return { styleName: newName, styles };
+  }
+
+  getStyleValueState(styleKey: string, value) {
+    return {
+      styles: {
+        ...this.state.styles,
+        [styleKey]: value,
+      },
+    };
+  }
+
   // To set the selected style values
   onStyleClick(style: string, event) {
     let state = null;
@@ -119,27 +150,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       case 'strike':
       case 'super':
       case 'underline':
-        // copy the current style values, and flip the matching value
-        state = { styles: { ...this.state.styles } };
-        if (state.styles[style] === true) {
-          state.styles[style] = undefined;
-        } else {
-          state.styles[style] = !state.styles[style];
-        }
-
+        state = this.toggleStyleState(style);
         break;
 
       case 'name':
-        if (event) {
-          const oldName = this.state.styleName;
-          const newName = event.target.value;
-          state = { styleName: newName, styles: null };
-          state.styles = { ...this.state.styles };
-          if (this.state.styles.nextLineStyleName === oldName) {
-            // Update next line style as well.
-            state.styles.nextLineStyleName = newName;
-          }
-        }
+        state = this.renameStyleState(event);
         break;
 
       case 'description':
@@ -152,22 +167,18 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       // Not able to set paragraph spacing before and after.
       case 'before':
         if (event) {
-          state = {
-            styles: {
-              ...this.state.styles,
-              paragraphSpacingBefore: event.target.value,
-            },
-          };
+          state = this.getStyleValueState(
+            'paragraphSpacingBefore',
+            event.target.value
+          );
         }
         break;
       case 'after':
         if (event) {
-          state = {
-            styles: {
-              ...this.state.styles,
-              paragraphSpacingAfter: event.target.value,
-            },
-          };
+          state = this.getStyleValueState(
+            'paragraphSpacingAfter',
+            event.target.value
+          );
         }
         break;
       default:
@@ -180,9 +191,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     }
   }
 
-  // Build styles to display the example piece
-  buildStyle() {
-    const style: React.CSSProperties = {};
+  applyBasePreviewStyle(style: React.CSSProperties) {
     if (this.state.styles.fontName) {
       style.fontFamily = this.state.styles.fontName;
     }
@@ -195,133 +204,179 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     if (this.state.styles.color) {
       style.color = this.state.styles.color;
     }
-    if (this.state.styles.underline) {
-      style.textDecoration =
-        undefined !== style.textDecoration
-          ? `${style.textDecoration}${' underline'}`
-          : 'underline';
-    }
-    if (this.state.styles.strike) {
-      style.textDecoration =
-        undefined !== style.textDecoration
-          ? `${style.textDecoration}${' line-through'}`
-          : 'line-through';
-    }
     if (this.state.styles.em) {
       style.fontStyle = 'italic';
     }
     if (this.state.styles.textHighlight) {
-      style.backgroundColor = this.state.styles.textHighlight;
+      style.backgroundColor =
+        this.state.styles.textHighlight;
     }
     if (this.state.styles.align) {
-      style.textAlign = this.state.styles.align;
+      style.textAlign = this.state.styles.align as React.CSSProperties['textAlign'];
     }
     if (this.state.styles.lineHeight) {
-      // [FS] IRAD-1104 2020-11-13
-      // Issue fix : Linespacing Double and Single not applied in the sample text paragraph
-      style.lineHeight = getLineSpacingValue(this.state.styles.lineHeight);
+      style.lineHeight = getLineSpacingValue(
+        this.state.styles.lineHeight as string
+      );
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Paragraph space before is not applied in the sample text.
     if (this.state.styles.paragraphSpacingBefore) {
       style.marginTop = `${this.state.styles.paragraphSpacingBefore}px`;
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Paragraph space after is not applied in the sample text.
     if (this.state.styles.paragraphSpacingAfter) {
       style.marginBottom = `${this.state.styles.paragraphSpacingAfter}px`;
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Indent is not applied in the sample text.
+  }
+
+  appendTextDecoration(
+    style: React.CSSProperties,
+    decoration: string
+  ) {
+    style.textDecoration =
+      undefined !== style.textDecoration
+        ? `${style.textDecoration} ${decoration}`
+        : decoration;
+  }
+
+  applyTextDecorationPreviewStyle(style: React.CSSProperties) {
+    if (this.state.styles.underline) {
+      this.appendTextDecoration(style, 'underline');
+    }
+    if (this.state.styles.strike) {
+      this.appendTextDecoration(style, 'line-through');
+    }
+  }
+
+  getPreviewIndent() {
     if (!this.state.styles.isLevelbased) {
-      if (this.state.styles.indent) {
-        style.marginLeft = `${parseInt(this.state.styles.indent) * 2}px`;
-      }
-    } else {
-      const levelValue = document?.getElementById('levelValue');
       if (
-        // this covers null & undefined
-        levelValue instanceof window.HTMLSelectElement &&
-        levelValue.value
+        typeof this.state.styles.indent === 'string' ||
+        typeof this.state.styles.indent === 'number'
       ) {
-        style.marginLeft = `${parseInt(levelValue.value) * 2}px`;
+        return `${parseInt(`${this.state.styles.indent}`, 10) * 2}px`;
       }
+      return null;
     }
 
+    const levelValue = document?.getElementById('levelValue');
+    if (
+      levelValue instanceof window.HTMLSelectElement &&
+      levelValue.value
+    ) {
+      return `${parseInt(levelValue.value) * 2}px`;
+    }
+
+    return null;
+  }
+
+  setPreviewIndent(style: React.CSSProperties) {
+    const marginLeft = this.getPreviewIndent();
+    if (marginLeft) {
+      style.marginLeft = marginLeft;
+    }
+  }
+
+  clearElementChildren(element: HTMLElement) {
+    while (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+  }
+
+  createBoldPartialFragment() {
+    const fragment = document.createDocumentFragment();
+    if (this.state.styles.boldSentence) {
+      const [firstSentence, ...rest] = SAMPLE_TEXT.split('.');
+      const boldElement = document.createElement('strong');
+      boldElement.innerText = `${firstSentence}.`;
+      fragment.appendChild(boldElement);
+      fragment.appendChild(document.createTextNode(rest.join('.')));
+      return fragment;
+    }
+
+    const [firstWord, ...rest] = SAMPLE_TEXT.split(' ');
+    const boldElement = document.createElement('strong');
+    boldElement.innerText = firstWord;
+    fragment.appendChild(boldElement);
+    fragment.appendChild(document.createTextNode(` ${rest.join(' ')}`));
+    return fragment;
+  }
+
+  renderBoldPartialPreview(
+    sampleDiv: HTMLElement,
+    style: React.CSSProperties
+  ): string {
+    const fragment = this.createBoldPartialFragment();
+    this.clearElementChildren(sampleDiv);
+    const newContentContainer = document.createElement('div');
+    fragment.childNodes.forEach((child) => {
+      newContentContainer.appendChild(child.cloneNode(true));
+    });
+    sampleDiv.appendChild(newContentContainer);
+    style.fontWeight = 'normal';
+    return sampleDiv.innerText;
+  }
+
+  applyNumberingPreview(sampleDiv: HTMLElement) {
+    const numberingLevel = this.getNumberingLevel(
+      typeof this.state.styles.styleLevel === 'boolean'
+        ? Number(this.state.styles.styleLevel)
+        : this.state.styles.styleLevel,
+      typeof this.state.styles.prefixValue === 'string' ||
+        typeof this.state.styles.prefixValue === 'number'
+        ? this.state.styles.prefixValue
+        : ''
+    );
+    const numberingNode = document.createTextNode(numberingLevel);
+    if (this.state.styles.boldNumbering) {
+      const boldElement = document.createElement('strong');
+      boldElement.appendChild(numberingNode);
+      sampleDiv.prepend(boldElement);
+      return;
+    }
+    sampleDiv.prepend(numberingNode);
+  }
+
+  applyBulletPreview(sampleDiv: HTMLElement, textSample: string) {
+    const bulletDetails = getDetailsBullet(this.state.styles.bulletLevel);
+    const bulletSymbol = document.createElement('strong');
+    bulletSymbol.style.color = bulletDetails.color;
+    bulletSymbol.innerText = bulletDetails.symbol;
+
+    sampleDiv.innerHTML = '';
+    sampleDiv.appendChild(bulletSymbol);
+    sampleDiv.appendChild(document.createTextNode(textSample));
+  }
+
+  syncPreviewSample(style: React.CSSProperties) {
     const sampleDiv = document.getElementById('sampletextdiv');
-    if (sampleDiv) {
-      // [FS] IRAD-1394 2021-06-02
-      // Issue: numbering sample not working when select Bold first sentence
-      let textSample = SAMPLE_TEXT;
-      if (this.state.styles.boldPartial) {
-        const fragment = document.createDocumentFragment();
-        if (this.state.styles.boldSentence) {
-          const [firstSentence, ...rest] = SAMPLE_TEXT.split('.');
-          const boldElement = document.createElement('strong');
-          boldElement.innerText = `${firstSentence}.`;
-          fragment.appendChild(boldElement);
-          fragment.appendChild(document.createTextNode(rest.join('.')));
-        } else {
-          const [firstWord, ...rest] = SAMPLE_TEXT.split(' ');
-          const boldElement = document.createElement('strong');
-          boldElement.innerText = firstWord;
-          fragment.appendChild(boldElement);
-          fragment.appendChild(document.createTextNode(` ${rest.join(' ')}`));
-        }
-        // Clear previous content using a loop
-        while (sampleDiv.firstChild) {
-          sampleDiv.removeChild(sampleDiv.firstChild);
-        }
-        const newContentContainer = document.createElement('div');
-
-        // Populate the fragment dynamically
-        fragment.childNodes.forEach((child) => {
-          newContentContainer.appendChild(child.cloneNode(true));
-        });
-
-        // Append the fragment or new content to the sampleDiv
-        sampleDiv.appendChild(newContentContainer);
-        textSample = sampleDiv.innerText;
-
-        // [FS] IRAD-1473 2021-06-30
-        // Style Example not showing properly when select Bold and Bold First Sentence
-        style.fontWeight = 'normal';
-      } else {
-        sampleDiv.innerText = SAMPLE_TEXT;
-      }
-
-      if (
-        this.state.styles.styleLevel &&
-        (this.state.styles.hasNumbering || this.state.styles.isList)
-      ) {
-        const numberingLevel = this.getNumberingLevel(
-          this.state.styles.styleLevel,
-          this.state.styles.prefixValue
-        );
-        const numberingNode = document.createTextNode(numberingLevel);
-        if (this.state.styles.boldNumbering) {
-          const boldElement = document.createElement('strong');
-          boldElement.appendChild(numberingNode);
-          // [FS] IRAD-1252 2024-11-19
-          // Bold the first sentence/word not working when apply numbering
-          sampleDiv.prepend(boldElement);
-        } else {
-          // [FS] IRAD-1252 2024-11-19
-          // Bold the first sentence/word not working when apply numbering
-          sampleDiv.prepend(numberingNode);
-        }
-      }
-      if (this.state.styles.styleLevel && this.state.styles.hasBullet) {
-        const bulletDetails = getDetailsBullet(this.state.styles.bulletLevel);
-        const bulletSymbol = document.createElement('strong');
-        bulletSymbol.style.color = bulletDetails.color;
-        bulletSymbol.innerText = bulletDetails.symbol;
-
-        sampleDiv.innerHTML = ''; // Clear previous content
-        sampleDiv.appendChild(bulletSymbol);
-        sampleDiv.appendChild(document.createTextNode(textSample));
-      }
+    if (!sampleDiv) {
+      return;
     }
+
+    let textSample = SAMPLE_TEXT;
+    if (this.state.styles.boldPartial) {
+      textSample = this.renderBoldPartialPreview(sampleDiv, style);
+    } else {
+      sampleDiv.innerText = SAMPLE_TEXT;
+    }
+
+    if (
+      this.state.styles.styleLevel &&
+      (this.state.styles.hasNumbering || this.state.styles.isList)
+    ) {
+      this.applyNumberingPreview(sampleDiv);
+    }
+    if (this.state.styles.styleLevel && this.state.styles.hasBullet) {
+      this.applyBulletPreview(sampleDiv, textSample);
+    }
+  }
+
+  // Build styles to display the example piece
+  buildStyle() {
+    const style: React.CSSProperties = {};
+    this.applyBasePreviewStyle(style);
+    this.applyTextDecorationPreviewStyle(style);
+    this.setPreviewIndent(style);
+    this.syncPreviewSample(style);
 
     return style;
   }
@@ -554,7 +609,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
           ).style.maxHeight = '100%';
 
           // Ensure the next line style is set
-          this.setNextLineStyle(this.state.styles.nextLineStyleName);
+          this.setNextLineStyle(
+            typeof this.state.styles.nextLineStyleName === 'string'
+              ? this.state.styles.nextLineStyleName
+              : ''
+          );
         }
       );
     }
@@ -734,8 +793,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
 
   isCustomStyleAlreadyApplied() {
     let found = false;
-    const { doc } = this.state.editorView.state;
-    doc.nodesBetween(0, doc.nodeSize - 2, (node) => {
+    const doc = this.state.editorView?.state?.doc;
+    if (!doc?.nodesBetween) {
+      return found;
+    }
+    doc.nodesBetween(0, (doc.nodeSize ?? 2) - 2, (node) => {
       if (node.content?.content?.length) {
         if (!found && node.attrs.styleName === this.state.styleName) {
           found = true;
@@ -827,7 +889,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     )[0] as HTMLElement;
     mp3.style.maxHeight = mp3.scrollHeight + 'px';
 
-    this.setNextLineStyle(this.state.styles.nextLineStyleName);
+    this.setNextLineStyle(
+      typeof this.state.styles.nextLineStyleName === 'string'
+        ? this.state.styles.nextLineStyleName
+        : ''
+    );
     // [FS] IRAD-1153 2021-02-25
     // Numbering level not showing in Preview text when modify style
     if (
@@ -863,7 +929,10 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                   {' '}
                   -- select a style --{' '}
                 </option>
-                {this.state.customStyles.map((style) => (
+                {(Array.isArray(this.state.customStyles)
+                  ? this.state.customStyles
+                  : []
+                ).map((style) => (
                   <option key={style.styleName} value={style.styleName}>
                     {style.styleName}
                   </option>
@@ -1098,6 +1167,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                         className="molsp-iconspan czi-icon format_color_text editor-markbuttons"
                         style={{
                           color:
+                            typeof this.state.styles.color === 'string' &&
                             this.state.styles.color !== 'rgba(0,0,0,0)'
                               ? this.state.styles.color
                               : '#666',
@@ -1125,6 +1195,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                         className="molsp-iconspan czi-icon border_color editor-markbuttons"
                         style={{
                           color:
+                            typeof this.state.styles.textHighlight === 'string' &&
                             this.state.styles.textHighlight !== 'rgba(0,0,0,0)'
                               ? this.state.styles.textHighlight
                               : '#666',
@@ -1376,7 +1447,12 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                 <select
                   className="molsp-linespacing molsp-fontstyle"
                   onChange={this.onLineSpaceChange.bind(this)}
-                  value={this.state.styles.lineHeight || ''}
+                  value={
+                    typeof this.state.styles.lineHeight === 'string' ||
+                    typeof this.state.styles.lineHeight === 'number'
+                      ? this.state.styles.lineHeight
+                      : ''
+                  }
                 >
                   {LINE_SPACE.map((value) => (
                     <option key={value} value={value}>
@@ -1589,7 +1665,12 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                     }
                     id="levelValue"
                     onChange={this.onLevelChange.bind(this)}
-                    value={this.state.styles.styleLevel || ''}
+                    value={
+                      typeof this.state.styles.styleLevel === 'number' ||
+                      typeof this.state.styles.styleLevel === 'string'
+                        ? this.state.styles.styleLevel
+                        : ''
+                    }
                   >
                     {LEVEL_VALUES.map((value) => (
                       <option key={value} value={value}>
@@ -1677,7 +1758,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                           }}
                         >
                           <input
-                            checked={this.state.styles.hideNumbering}
+                            checked={!!this.state.styles.hideNumbering}
                             className="molsp-chkboldnumbering"
                             disabled={
                               this.checkCondition(
@@ -1775,7 +1856,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                             id="bulletValue"
                             onChange={this.onBulletLevelChange.bind(this)}
                             style={{ textAlign: 'center' }}
-                            value={this.state.styles.bulletLevel || ''}
+                            value={
+                              typeof this.state.styles.bulletLevel === 'string'
+                                ? this.state.styles.bulletLevel
+                                : ''
+                            }
                           >
                             {BULLET_POINTS.map((value) => (
                               <option key={value.key} value={value.key}>
@@ -1843,7 +1928,12 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                         }
                         onChange={this.onIndentChange.bind(this)}
                         style={{ width: '99px !important' }}
-                        value={this.state.styles.indent || ''}
+                        value={
+                          typeof this.state.styles.indent === 'string' ||
+                          typeof this.state.styles.indent === 'number'
+                            ? this.state.styles.indent
+                            : ''
+                        }
                       >
                         {LEVEL_VALUES.map((value) => (
                           <option key={value} value={value}>
@@ -1855,7 +1945,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     <input
-                      checked={this.state.styles.isHangingIndent}
+                      checked={!!this.state.styles.isHangingIndent}
                       id='hanging-indent-checkbox'
                       onChange={this.onHangingIndentChange.bind(this)}
                       type="checkbox"
@@ -1873,7 +1963,12 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                       onChange={this.onIndentPositionChange.bind(this)}
                       style={{ width: '34px', marginRight: '6px' }}
                       type="text"
-                      value={this.state.styles.indentPosition ?? ''}
+                      value={
+                        typeof this.state.styles.indentPosition === 'string' ||
+                        typeof this.state.styles.indentPosition === 'number'
+                          ? this.state.styles.indentPosition
+                          : ''
+                      }
                     />
                     <span>inches</span>
                   </div>
@@ -1953,7 +2048,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                   </div>
                   <div className="molsp-indentdiv">
                     <input
-                      checked={this.state.otherStyleSelected}
+                      checked={!!this.state.otherStyleSelected}
                       disabled={this.state.styles.tot || this.state.styles.tof}
                       name="nextlinestyle"
                       onChange={this.onNextLineStyleSelected.bind(this, 2)}
@@ -1980,7 +2075,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
                           marginLeft: '7px',
                           width: '97px',
                         }}
-                        value={this.state.styles.nextLineStyleName}
+                        value={
+                          typeof this.state.styles.nextLineStyleName === 'string'
+                            ? this.state.styles.nextLineStyleName
+                            : ''
+                        }
                       >
                         {customStyles.map((style) => (
                           <option key={style.styleName}>

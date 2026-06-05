@@ -31,13 +31,10 @@ export function showModalMask(IsChildDialog?: boolean): void {
     // To handle child dialog window
     if (IsChildDialog) {
       element.className = 'czi-pop-up-modal-mask child-modal';
-      element.setAttribute(
-        'data-mask-type',
-        'czi-pop-up-modal-mask child-modal'
-      );
+      element.dataset.maskType = 'czi-pop-up-modal-mask child-modal';
     } else {
       element.className = 'czi-pop-up-modal-mask';
-      element.setAttribute('data-mask-type', 'czi-pop-up-modal-mask');
+      element.dataset.maskType = 'czi-pop-up-modal-mask';
     }
 
     element.setAttribute('role', 'dialog');
@@ -86,7 +83,7 @@ function getRootElement(
   }
 
   if (popUpParams?.modal) {
-    element.setAttribute('data-pop-up-modal', 'y');
+    element.dataset.popUpModal = 'y';
   }
   // [FS] IRAD-1048 2020-10-07
   // To handle child dialog window
