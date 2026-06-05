@@ -3,13 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-jest.mock('./Icon', () => ({
-  __esModule: true,
-  Icon: {
-    get: jest.fn(() => null),
-  },
-}));
-
 import { ImageInlineEditor, ImageInlineEditorValue } from './ImageInlineEditor';
 import { EditorState } from 'prosemirror-state';
 import { schema } from 'prosemirror-test-builder';
@@ -75,7 +68,7 @@ describe('ImageInlineEditor', () => {
     const imageinlineeditor = new ImageInlineEditor(() => undefined);
     imageinlineeditor.props = {
       onSelect: (val) => val.align,
-      value: null as unknown as ImageInlineEditorValue,
+      value: null,
       editorView: view1,
     };
 

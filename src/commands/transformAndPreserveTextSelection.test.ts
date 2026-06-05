@@ -765,7 +765,7 @@ describe('transformAndPreserveTextSelection', () => {
     } as unknown as Transform;
     jest
       .spyOn(tr1.doc, 'nodeAt')
-      .mockReturnValue(null as unknown as Node);
+      .mockReturnValue(null);
 
     const mySchema = new Schema({
       nodes: {

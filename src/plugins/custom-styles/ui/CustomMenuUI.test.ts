@@ -652,7 +652,7 @@ describe('Custom Menu UI', () => {
     expect(
       custommenuui.showSubMenu(
         ui as unknown as UICommand,
-        null as unknown as SyntheticEvent
+        null
       )
     ).toBeUndefined();
   });
@@ -684,7 +684,7 @@ describe('Custom Menu UI', () => {
     ).toBeUndefined();
   });
   it('should handle showsubmenu when popup not null (case 2)', () => {
-    custommenuui._stylePopup = { close: () => {} } as unknown as null;
+    custommenuui._stylePopup = { close: () => {} };
     const ui = {
       _customStyleName: 'Normal',
       _customStyle: {
@@ -1211,7 +1211,7 @@ describe('Custom Menu UI', () => {
       _customStyleName: 'test',
       _customStyle: { description: 'description', styles: {} },
     };
-    custommenuui._stylePopup = { close: () => {} } as unknown as null;
+    custommenuui._stylePopup = { close: () => {} };
     expect(
       custommenuui.showStyleWindow(
         uicommands,
@@ -1297,7 +1297,7 @@ describe('Custom Menu UI', () => {
     };
 
     const result = custommenuui.getTheSelectedCustomStyle(
-      testState as unknown as EditorState
+      testState
     );
 
     expect(result).toBe('Normal');

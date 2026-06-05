@@ -53,7 +53,7 @@ describe('createCommand', () => {
 
     it('execute should return false if no transaction change', () => {
         mockExecute.mockImplementation((_state, dispatchFn) => {
-            dispatchFn(state.tr as unknown as Transform); // same transaction, no change
+            dispatchFn(state.tr); // same transaction, no change
         });
 
         const cmd = createCommand(mockExecute);

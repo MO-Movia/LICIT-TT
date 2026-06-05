@@ -18,7 +18,6 @@ import {
   Plugin,
   PluginKey,
 } from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
 import {MultimediaPlugin, bindImageView, bindVideoView} from './index';
 import {VideoEditorState} from './ui/VideoEditor';
 import {VideoSourceCommand, insertIFrame} from './VideoSourceCommand';
@@ -88,7 +87,7 @@ describe('MultimediaPlugin', () => {
   isOffline();
   new VideoSourceCommand().executeWithUserInput(
     state,
-    view.dispatch as (tr: Transform) => void,
+    view.dispatch,
     view,
     veState
   );

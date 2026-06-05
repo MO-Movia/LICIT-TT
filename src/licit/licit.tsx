@@ -485,7 +485,7 @@ const LicitComponent = (
   const isSchemaInitializedRef = useRef(false);
   const collabConfigRef = useRef({
     collaboration: false,
-    currentUser: null as Record<string, unknown> | null,
+    currentUser: null,
   });
 
   // [FS] IRAD-981 2020-06-10
@@ -748,13 +748,13 @@ const LicitComponent = (
   // Set runtime on editor view when available
   useEffect(() => {
     if (editor?.view) {
-      const eView: EditorViewEx = editor.view as EditorViewEx;
+      const eView: EditorViewEx = editor.view;
       eView.runtime = finalRuntime;
     }
   }, [editor, finalRuntime]);
 
   if (editor) {
-    const eView: EditorViewEx = editor.view as EditorViewEx;
+    const eView: EditorViewEx = editor.view;
     const wrapperClass = 'prosemirror-editor-wrapper' + ' ' + finalTheme;
     const mainClassName = cx(wrapperClass, {
       embedded: finalEmbedded,

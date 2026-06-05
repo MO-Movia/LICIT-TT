@@ -36,7 +36,7 @@ describe('CursorPlaceholderPlugin', () => {
       },
     } as unknown as EditorState;
 
-    mockTr = mockEditorState.tr as unknown as Transaction;
+    mockTr = mockEditorState.tr;
 
     // Mock Decoration
     jest.spyOn(Decoration, 'widget').mockImplementation(() => ({} as unknown as Decoration));

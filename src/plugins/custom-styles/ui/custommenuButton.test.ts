@@ -102,7 +102,7 @@ describe('CustomMenuButton', () => {
   });
   it('should handle _onClick when this.state.expanded = true', () => {
     custommenubutton.state = { expanded: true };
-    custommenubutton._menu = { close: () => undefined } as unknown as null;
+    custommenubutton._menu = { close: () => undefined };
     const spy = jest.spyOn(custommenubutton, '_hideMenu');
     custommenubutton._onClick();
     expect(spy).toBeDefined();

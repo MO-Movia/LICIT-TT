@@ -799,7 +799,7 @@ export function applyStyleForNextParagraph(
   }
 
   const { $from } = nextState.selection;
-  if (!view || !isNewParagraph(prevState as EditorState, nextState as EditorState, view)) {
+  if (!view || !isNewParagraph(prevState, nextState, view)) {
     return null;
   }
 

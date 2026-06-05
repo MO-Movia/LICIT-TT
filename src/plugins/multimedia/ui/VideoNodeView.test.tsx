@@ -102,7 +102,7 @@ describe('video node view', () => {
 
 describe('Video view body', () => {
   const videoviewbody = new VideoViewBody(
-    dummyNodeWithImage as unknown as Node
+    dummyNodeWithImage
   );
   videoviewbody.props = {
     decorations: [],
@@ -256,7 +256,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
     videoviewbody.props = {
       decorations: [],
@@ -315,7 +315,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
 
     videoviewbody.state = {
@@ -393,7 +393,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
 
     videoviewbody.state = {
@@ -461,7 +461,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
 
     videoviewbody.state = {
@@ -535,7 +535,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
 
     videoviewbody.state = {
@@ -873,7 +873,7 @@ describe('Video view body', () => {
         align: 'left',
         fitToParent: 'fit',
       },
-    }) as unknown as Node;
+    });
     const videoviewbody = new VideoViewBody(mockImageNode);
     videoviewbody.props = {
       decorations: [],
@@ -950,7 +950,7 @@ describe('Video view body', () => {
         align: 'left',
         fitToParent: 'fit',
       },
-    }) as unknown as Node;
+    });
     const videoviewbody = new VideoViewBody(mockImageNode);
     videoviewbody.props = {
       decorations: [],

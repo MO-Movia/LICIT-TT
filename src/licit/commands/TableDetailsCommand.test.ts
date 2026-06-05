@@ -44,7 +44,7 @@ describe('TableDetailsCommand', () => {
 
   describe('execute', () => {
     it('should return false when view is not provided', () => {
-      const result = command.execute(mockState, mockDispatch, undefined as unknown as EditorView);
+      const result = command.execute(mockState, mockDispatch, undefined);
       expect(result).toBe(false);
     });
 

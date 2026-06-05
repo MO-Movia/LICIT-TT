@@ -591,7 +591,7 @@ describe('customstyledropdowncommand', () => {
               tag: 'p',
               getAttrs(dom) {
                 const style =
-                  (dom as unknown as HTMLElement).getAttribute('style') || '';
+                  (dom).getAttribute('style') || '';
                 const attrs: { align?: string; color?: string } = {};
                 if (style.includes('text-align: left')) attrs.align = 'left';
                 if (style.includes('text-align: center'))
@@ -626,7 +626,7 @@ describe('customstyledropdowncommand', () => {
               tag: 'h1', // Adjust the heading tag based on the desired level
               getAttrs(dom) {
                 const style =
-                  (dom as unknown as HTMLElement).getAttribute('style') || '';
+                  (dom).getAttribute('style') || '';
                 const attrs: { align?: string; color?: string } = {};
                 if (style.includes('text-align: left')) attrs.align = 'left';
                 if (style.includes('text-align: center'))
@@ -954,7 +954,7 @@ describe('customstyledropdowncommand 1', () => {
               tag: 'p',
               getAttrs(dom) {
                 const style =
-                  (dom as unknown as HTMLElement).getAttribute('style') || '';
+                  (dom).getAttribute('style') || '';
                 const attrs: { align?: string; color?: string } = {};
                 if (style.includes('text-align: left')) attrs.align = 'left';
                 if (style.includes('text-align: center'))
@@ -989,7 +989,7 @@ describe('customstyledropdowncommand 1', () => {
               tag: 'h1', // Adjust the heading tag based on the desired level
               getAttrs(dom) {
                 const style =
-                  (dom as unknown as HTMLElement).getAttribute('style') || '';
+                  (dom).getAttribute('style') || '';
                 const attrs: { align?: string; color?: string } = {};
                 if (style.includes('text-align: left')) attrs.align = 'left';
                 if (style.includes('text-align: center'))

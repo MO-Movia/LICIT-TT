@@ -4,7 +4,6 @@
  */
 
 import {CitationRuntime} from './CitationRuntime';
-import {Citation} from './Types';
 import * as http from './http';
 
 describe('CitationRuntime', () => {
@@ -53,7 +52,7 @@ describe('CitationRuntime', () => {
   });
 
   it('saveCitation calls POST with the correct URL and citation', async () => {
-    const mockPOST = jest.spyOn(http, 'POST').mockResolvedValueOnce(undefined as unknown as string);
+    const mockPOST = jest.spyOn(http, 'POST').mockResolvedValueOnce(undefined);
     const mockFetchCitations = jest
       .spyOn(citationRuntime, 'fetchCitations')
       .mockResolvedValueOnce([]);
@@ -119,7 +118,7 @@ describe('CitationRuntime', () => {
     const referenceId = 'refId';
     const mockDELETE = jest
       .spyOn(http, 'DELETE')
-      .mockResolvedValueOnce(undefined as unknown as string);
+      .mockResolvedValueOnce(undefined);
     const mockFetchCitations = jest
       .spyOn(citationRuntime, 'fetchCitations')
       .mockResolvedValueOnce([]);
@@ -134,7 +133,7 @@ describe('CitationRuntime', () => {
   });
 
   it('should handle isArrEmpty', () => {
-    citationRuntime.citations = null as unknown as Citation[];
+    citationRuntime.citations = null;
     expect(citationRuntime.isArrEmpty()).toBeTruthy();
   });
 

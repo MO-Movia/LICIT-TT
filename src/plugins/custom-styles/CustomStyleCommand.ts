@@ -292,16 +292,16 @@ export class CustomStyleCommand extends UICommand {
 
   // [FS] IRAD-1053 2020-10-22
   // returns the applied style of a paragraph
-  isCustomStyleApplied(editorState: EditorState) {
+  isCustomStyleApplied(editorState: EditorState): string {
     const { selection, doc } = editorState;
     const { from, to } = selection;
     let customStyleName = RESERVED_STYLE_NONE;
     doc.nodesBetween(from, to, (node) => {
-      if (node.attrs.styleName) {
+      if (typeof node.attrs.styleName === 'string') {
         customStyleName = node.attrs.styleName;
       }
     });
-    return customStyleName;
+    return String(customStyleName);
   }
 
   executeClearStyle(
@@ -395,11 +395,12 @@ export class CustomStyleCommand extends UICommand {
   ): boolean | null {
     const node = getNode(state, startPos, endPos, state.tr);
     const newattrs = { ...(node ? node.attrs : {}) };
+    let isValidated = true;
+
     if ('newstyle' === this._customStyle) {
       this.editWindow(state, view, 0);
       return false;
-    }
-    if ('editall' === this._customStyle) {
+    } else if ('editall' === this._customStyle) {
       if (event?.ctrlKey) {
         this.jsonEditor(view);
       } else {
@@ -407,7 +408,9 @@ export class CustomStyleCommand extends UICommand {
       }
       return false;
     }
-    if (
+    // [FS] IRAD-1053 2020-10-08
+    // to remove the custom styles applied in the selected paragraph
+    else if (
       'clearstyle' === this._customStyle ||
       RESERVED_STYLE_NONE === this._customStyle
     ) {
@@ -420,8 +423,7 @@ export class CustomStyleCommand extends UICommand {
         newattrs,
         selection
       );
-    }
-    if ('reset' === this._customStyle) {
+    } else if ('reset' === this._customStyle) {
       this.resetNumber(state, dispatch, startPos, newattrs);
       return false;
     }
@@ -507,6 +509,7 @@ export class CustomStyleCommand extends UICommand {
     const to = selection.$to?.end();
     const range = { from, to };
     doc.nodesBetween(from, to, (node) => {
+
       if (this.hasCustomStyle(node)) {
         tr = this.removeNodeStyleMarks(node, tr, range);
       }

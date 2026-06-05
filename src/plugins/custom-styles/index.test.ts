@@ -48,7 +48,7 @@ import {
   getHidenumberingFlag,
   setHidenumberingFlag,
 } from './customStyle';
-import { Schema, Mark, Node, Slice, ResolvedPos, Fragment } from 'prosemirror-model';
+import { Schema, Mark, Node, ResolvedPos, Fragment } from 'prosemirror-model';
 import { isTransparent, toCSSColor } from './toCSSColor';
 import { EditorView } from 'prosemirror-view';
 import * as DOMfunc from './CustomStyleNodeSpec';
@@ -63,11 +63,8 @@ type ApplyNextTr = ApplyNextArgs[2];
 type ApplyNextView = ApplyNextArgs[3];
 type InitArgs = Parameters<typeof onInitAppendTransaction>;
 type InitTr = InitArgs[1];
-type InitState = InitArgs[2];
 type UpdateArgs = Parameters<typeof onUpdateAppendTransaction>;
 type UpdateTr = UpdateArgs[1];
-type UpdateState = UpdateArgs[2];
-type UpdatePrevState = UpdateArgs[3];
 type NodeAssignArg = Parameters<typeof nodeAssignment>[0];
 
 const asTr = (value: unknown) => value as Transaction;
@@ -511,7 +508,7 @@ describe('onUpdateAppendTransaction', () => {
   beforeEach(() => {
     jest
       .spyOn(ccommand, 'applyLatestStyle')
-      .mockImplementation((_styleName, _nextState, tr) => tr as never);
+      .mockImplementation((_styleName, _nextState, tr) => tr);
   });
 
   afterEach(() => {
@@ -613,8 +610,8 @@ describe('Style Plugin', () => {
     expect(
       boundHandlePaste(
         view,
-        {} as unknown as Event,
-        { content: { content: [{ attrs: true }] } } as unknown as Slice
+        {},
+        { content: { content: [{ attrs: true }] } }
       )
     ).toBeFalsy();
   });
@@ -1143,7 +1140,7 @@ describe('Custom Style Plugin pass', () => {
         ...(originalModule.default as Record<string, unknown>),
         isDocChanged: jest.fn(() => true),
       },
-    } as Record<string, unknown>;
+    };
   });
   const plugin = new CustomstylePlugin(TestCustomStyleRuntime);
   const editor = createEditor(doc(p('<cursor>')), {
@@ -2425,7 +2422,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate as unknown as ApplyNextState,
         nextstate as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -2531,7 +2528,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -2548,7 +2545,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeNull();
@@ -2556,7 +2553,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        null as unknown as ApplyNextTr,
+        null,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -2564,16 +2561,16 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        null as unknown as ApplyNextTr,
-        null as unknown as ApplyNextView
+        null,
+        null
       )
     ).toBeDefined();
     expect(
       applyStyleForNextParagraph(
-        {} as unknown as ApplyNextState,
-        {} as unknown as ApplyNextState,
+        {},
+        {},
         {} as unknown as ApplyNextTr,
-        { input: { lastKeyCode: 10 } } as unknown as ApplyNextView
+        { input: { lastKeyCode: 10 } }
       )
     ).toBeDefined();
     expect(nodeAssignment(prevstate as unknown as NodeAssignArg)).toBeDefined();
@@ -3079,7 +3076,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate as unknown as ApplyNextState,
         nextstate as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -3185,7 +3182,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -3202,7 +3199,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeNull();
@@ -3210,7 +3207,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        null as unknown as ApplyNextTr,
+        null,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -3218,16 +3215,16 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        null as unknown as ApplyNextTr,
-        null as unknown as ApplyNextView
+        null,
+        null
       )
     ).toBeDefined();
     expect(
       applyStyleForNextParagraph(
-        {} as unknown as ApplyNextState,
-        {} as unknown as ApplyNextState,
+        {},
+        {},
         {} as unknown as ApplyNextTr,
-        { input: { lastKeyCode: 10 } } as unknown as ApplyNextView
+        { input: { lastKeyCode: 10 } }
       )
     ).toBeDefined();
     expect(nodeAssignment(prevstate as unknown as NodeAssignArg)).toBeDefined();
@@ -3747,7 +3744,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate as unknown as ApplyNextState,
         nextstate as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -3853,7 +3850,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -3870,7 +3867,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        transaction1 as unknown as ApplyNextTr,
+        transaction1,
         mockview as unknown as ApplyNextView
       )
     ).toBeNull();
@@ -3878,7 +3875,7 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        null as unknown as ApplyNextTr,
+        null,
         mockview as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -3886,16 +3883,16 @@ describe('Cus Style Plugin-Pass', () => {
       applyStyleForNextParagraph(
         prevstate1 as unknown as ApplyNextState,
         nextstate1 as unknown as ApplyNextState,
-        null as unknown as ApplyNextTr,
-        null as unknown as ApplyNextView
+        null,
+        null
       )
     ).toBeDefined();
     expect(
       applyStyleForNextParagraph(
-        {} as unknown as ApplyNextState,
-        {} as unknown as ApplyNextState,
+        {},
+        {},
         {} as unknown as ApplyNextTr,
-        { input: { lastKeyCode: 10 } } as unknown as ApplyNextView
+        { input: { lastKeyCode: 10 } }
       )
     ).toBeDefined();
     expect(nodeAssignment(prevstate as unknown as NodeAssignArg)).toBeDefined();
@@ -3920,7 +3917,7 @@ describe('onInitAppendTransaction', () => {
       onInitAppendTransaction(
         { loaded: false },
         {} as unknown as InitTr,
-        {} as unknown as InitState
+        {}
       )
     ).toStrictEqual({});
   });
@@ -4043,7 +4040,7 @@ describe('onInitAppendTransaction', () => {
             },
           },
           schema: mockSchema,
-        } as unknown as InitState
+        } as unknown
       )
     ).toBeDefined();
   });
@@ -4136,7 +4133,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown as UpdateState,
+        } as unknown,
         {
           selection: {
             $from: {
@@ -4161,7 +4158,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown as UpdatePrevState,
+        } as unknown,
         null,
         [] as Transaction[],
         null
@@ -4291,7 +4288,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown as UpdateState,
+        } as unknown,
         {
           selection: {
             $from: {
@@ -4317,7 +4314,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown as UpdatePrevState,
+        } as unknown,
         { input: { lastKeyCode: 13 } },
         [] as Transaction[],
         null
@@ -4453,7 +4450,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown as UpdateState,
+        } as unknown,
         {
           selection: {
             $from: {
@@ -4479,7 +4476,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown as UpdatePrevState,
+        } as unknown,
         { input: { lastKeyCode: 13 } },
         [] as Transaction[],
         null
@@ -4608,7 +4605,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown as UpdateState,
+        } as unknown,
         {
           selection: {
             $from: {
@@ -4635,7 +4632,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown as UpdatePrevState,
+        } as unknown,
         { input: { lastKeyCode: 8 } },
         [] as Transaction[],
         null
@@ -4740,7 +4737,7 @@ describe('applyStyleForPreviousEmptyParagraph', () => {
               } as unknown as ResolvedPos;
             },
           } as unknown as Node,
-        } as unknown as EditorState,
+        },
         tr
       )
     ).toBeDefined();
@@ -4755,7 +4752,7 @@ describe('applyStyleForEmptyParagraph', () => {
   it('should handle applyStyleForEmptyParagraph', () => {
     expect(
       applyStyleForEmptyParagraph(
-        { tr: {} as unknown as Transaction } as unknown as EditorState,
+        { tr: {} as unknown as Transaction },
         null
       )
     ).toStrictEqual({});
@@ -4859,7 +4856,7 @@ describe('applyStyleForNextParagraph', () => {
       applyStyleForNextParagraph(
         prevstate as unknown as ApplyNextState,
         nextstate as unknown as ApplyNextState,
-        tr as unknown as ApplyNextTr,
+        tr as ApplyNextTr,
         view as unknown as ApplyNextView
       )
     ).toBeDefined();
@@ -4973,7 +4970,7 @@ describe('applyStyleForNextParagraph', () => {
       applyStyleForNextParagraph(
         prevstate as unknown as ApplyNextState,
         nextstate as unknown as ApplyNextState,
-        tr as unknown as ApplyNextTr,
+        tr as ApplyNextTr,
         view as unknown as ApplyNextView
       )
     ).toBeDefined();

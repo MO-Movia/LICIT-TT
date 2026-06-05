@@ -165,12 +165,6 @@ class EditorToolbar extends React.PureComponent {
             menuCommand: (matchingPlugin as LicitPlugin).initButtonCommands(
               theme
             ),
-          } as {
-            menuCommand: UICommand;
-            menuPosition: number;
-            key: string;
-            isPlugin?: boolean;
-            group: string;
           };
         }
 

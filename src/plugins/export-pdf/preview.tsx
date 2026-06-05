@@ -1299,7 +1299,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
 
     const extracted: ChildNode[] = [];
     for (let i = 0; i < anchorIndex; i++) {
-      const n = proseChildren[i] as unknown as ChildNode;
+      const n = proseChildren[i];
       n.remove();
       extracted.push(n);
     }

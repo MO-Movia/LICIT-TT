@@ -12,7 +12,6 @@ jest.mock('./ui/Icon', () => ({
 
 import {createEditor, doc, p} from 'jest-prosemirror';
 import {EditorState, Transaction} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
 import {MultimediaPlugin} from './index';
 import {
   VideoEditor,
@@ -138,7 +137,7 @@ describe('Video Plugin - Test', () => {
   it('should Init VideoSourceCommand', () => {
     const cmd = new VideoSourceCommand().executeWithUserInput(
       state,
-      view.dispatch as (tr: Transform) => void,
+      view.dispatch,
       view,
       veState
     );

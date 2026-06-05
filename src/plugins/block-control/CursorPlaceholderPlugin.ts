@@ -9,13 +9,14 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 
 
 const PLACE_HOLDER_ID = { name: 'CursorPlaceholderPlugin' };
+const CURSOR_PLACEHOLDER_PLUGIN_KEY = new PluginKey('CursorPlaceholderPlugin');
 
 let singletonInstance: CursorPlaceholderPlugin | null = null;
 
 // https://prosemirror.net/examples/upload/
 const SPEC = {
   // Upgrade outdated packages.
-  key: new PluginKey('CursorPlaceholderPlugin'),
+  key: CURSOR_PLACEHOLDER_PLUGIN_KEY,
   state: {
     init() {
       return DecorationSet.empty;
@@ -54,7 +55,8 @@ export class CursorPlaceholderPlugin extends Plugin {
   constructor() {
     super(SPEC);
     if (!singletonInstance) {
-      singletonInstance = this as CursorPlaceholderPlugin;
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      singletonInstance = this;
     }
   }
 }
@@ -116,7 +118,6 @@ export function hideCursorPlaceholder(state: EditorState): Transform {
   if (!plugin) {
     return tr;
   }
-
   const pos = findCursorPlaceholderPos(state);
   if (pos !== null) {
     tr = tr.setMeta(plugin, {
@@ -129,4 +130,3 @@ export function hideCursorPlaceholder(state: EditorState): Transform {
 export function getSingletonInstance(): CursorPlaceholderPlugin | null {
   return singletonInstance;
 }
-

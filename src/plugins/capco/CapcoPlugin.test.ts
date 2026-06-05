@@ -199,7 +199,7 @@ describe('Capco Plugin', () => {
     const result = plugin.spec.props.handlePaste.bind(plugin)(
       view,
       mockEvent,
-      {} as unknown as Slice
+      {}
     );
     expect(result).toBeFalsy();
   });
@@ -229,7 +229,7 @@ describe('Capco Plugin', () => {
       ],
     });
     const plugin = new CapcoPlugin(undefined);
-    plugin.mode = undefined as unknown as CAPCOMODE;
+    plugin.mode = undefined;
     expect(plugin.spec.appendTransaction).toBeTruthy();
     if (!plugin.spec.appendTransaction) {
       return;
@@ -260,7 +260,7 @@ describe('Capco Plugin', () => {
             },
           },
           doc: docWithNodes,
-        } as unknown as Transaction,
+        },
       ],
       state,
       {
@@ -271,7 +271,7 @@ describe('Capco Plugin', () => {
             return {};
           },
         },
-      } as unknown as EditorState
+      }
     );
     expect(result).toBeDefined();
   });
@@ -816,14 +816,9 @@ describe('capco plugin', () => {
     jest.spyOn(capcoplugin, 'isSupportedNode').mockReturnValue(true);
     jest.spyOn(capcoplugin, 'getStartPos').mockReturnValue({
       start: 1,
-      startCoords: null as unknown as {
-        left: number;
-        right: number;
-        top: number;
-        bottom: number;
-      },
+      startCoords: null,
       found: true,
-      resolvedPos: null as unknown as ResolvedPos,
+      resolvedPos: null,
     });
     expect(
       capcoplugin.containsStart(event, view, {
@@ -839,14 +834,9 @@ describe('capco plugin', () => {
     jest.spyOn(capcoplugin, 'isSupportedNode').mockReturnValue(true);
     jest.spyOn(capcoplugin, 'getStartPos').mockReturnValue({
       start: 1,
-      startCoords: null as unknown as {
-        left: number;
-        right: number;
-        top: number;
-        bottom: number;
-      },
+      startCoords: null,
       found: false,
-      resolvedPos: undefined as unknown as ResolvedPos,
+      resolvedPos: undefined,
     });
     expect(
       capcoplugin.containsStart(event, view, {
