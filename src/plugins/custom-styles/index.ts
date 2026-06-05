@@ -280,87 +280,30 @@ export function onUpdateAppendTransaction(
         tr as Transform
       ) as Transaction;
     }
-  }
 
-  const paraPositionDiff = prevState.selection.from - nextState.selection.from;
-  if (paraPositionDiff !== 2 && paraPositionDiff !== 0) {
-    return null;
-  }
-
-  // OPTIMIZED: Only process paste if content is small enough
-  if (isPaste) {
-    // Defer styling for large pastes
-    if (slice1 && slice1.content.childCount > 20) {
-      // Apply minimal styling or defer to next tick
-      tr = applyMinimalPasteStyling(slice1, prevState, nextState, csview, tr);
-    } else if (slice1) {
-      tr = optimizedPasteHandler(slice1, prevState, nextState, csview, tr);
+    const paraPositionDiff =
+      prevState.selection.from - nextState.selection.from;
+    if (paraPositionDiff !== 2 && paraPositionDiff !== 0) {
+      return null;
     }
-    tr = tr?.scrollIntoView();
-  }
 
-  tr = applyLatestStyle(
-    styleName,
-    nextState as EditorState,
-    tr,
-    para.node,
-    para.pos,
-    para.pos + para.node.nodeSize - 1
-  ) as Transaction;
+    const isPaste = transactions.length && transactions[0].getMeta('paste');
+    tr = applyLineStyleForBoldPartial(nextState, tr, isPaste);
 
-  return tr.setSelection(
-    TextSelection.create(tr.doc, nextState.selection.from)
-  );
-}
+    // OPTIMIZED: Only process paste if content is small enough
+    if (isPaste) {
+      // Defer styling for large pastes
+      if (slice1 && slice1.content.childCount > 20) {
+        // Apply minimal styling or defer to next tick
+        tr = applyMinimalPasteStyling(slice1, prevState, nextState, csview, tr);
+      } else if (slice1) {
+        tr = optimizedPasteHandler(slice1, prevState, nextState, csview, tr);
+      }
+      tr = tr?.scrollIntoView();
+    }
 
-function handlePreviousEmptyParagraphStyle(
-  prevState: LooseState,
-  nextState: LooseState,
-  tr: LooseTr
-): LooseTr {
-  tr = applyStyleForPreviousEmptyParagraph(nextState, tr);
-  const cursourPosition = getSelectionCursor(prevState.selection)?.pos;
-  if (
-    cursourPosition !== undefined &&
-    cursourPosition >= 0 &&
-    cursourPosition <= prevState.doc.content.size
-  ) {
-    tr = tr.setSelection(TextSelection.create(tr.doc, cursourPosition));
-  }
-  return tr;
-}
-
-function handlePasteUpdateStyling(
-  isPaste,
-  slice1: SliceLike,
-  prevState: LooseState,
-  nextState: LooseState,
-  csview: CustomStyleView | LooseView | null,
-  tr: LooseTr
-): LooseTr {
-  if (!isPaste) {
     return tr;
   }
-
-  if (slice1 && slice1.content.childCount > 20) {
-    tr = applyMinimalPasteStyling(
-      slice1,
-      prevState,
-      nextState,
-      csview,
-      tr
-    );
-  } else if (slice1) {
-    tr = optimizedPasteHandler(
-      slice1,
-      prevState,
-      nextState,
-      csview,
-      tr
-    );
-  }
-
-  return tr?.scrollIntoView();
 }
 
 // NEW: Minimal styling for large pastes
@@ -615,6 +558,7 @@ export function applyStoredMarksAfterHardBreak(
   });
   return tr;
 }
+
 export function remapCounterFlags(tr: LooseTr): void {
   // Depending on the window variables,
   // set counters for numbering.
@@ -758,13 +702,13 @@ export function applyStyleForNextParagraph(
   tr: LooseTr,
   view: CustomStyleView | LooseView | null
 ): LooseTr {
+  let modified = false;
   if (!tr) {
     tr = nextState.tr;
   }
   if (!nextState?.selection) {
     return tr;
   }
-
   const { $from } = nextState.selection;
   if (
     view &&
@@ -785,98 +729,56 @@ export function applyStyleForNextParagraph(
         nextNodePos >= prevState.selection.from &&
         nextNodePos <= nextState.selection.from;
 
-  const prevParagraph = findPreviousParagraph($from);
-  if (!requiredAddAttr(prevParagraph)) {
-    return null;
-  }
+      if (nextNode && IsActiveNode && nextNode.type.name === 'paragraph') {
+        const posList = prevState.selection.from - 1;
+        const Listnode = prevState.doc.nodeAt(posList);
+        const style = getCustomStyleByName(prevParagraph.attrs.styleName);
+        if (style?.styles?.nextLineStyleName) {
+          // [FS] IRAD-1217 2021-02-24
+          // Select style for next line not working continuously for more that 2 paragraphs
+          if ($from.node(-1).type.name !== 'list_item') {
+            newattrs = setNodeAttrs(
+              resetTheDefaultStyleNameToNone(style.styles.nextLineStyleName),
+              newattrs
+            );
+          }
+          if (style.styles.isList === true) {
+            if (Listnode.isText === false) {
+              newattrs.indent = Listnode.attrs.indent;
+            } else {
+              const ListnodeAlt = prevState.doc.nodeAt(
+                posList - Listnode.nodeSize
+              );
+              newattrs.indent = ListnodeAlt.attrs.indent;
+            }
+          }
+          tr = tr.setNodeMarkup(nextNodePos, undefined, newattrs);
+          let styleName = style.styleName;
+          if ($from.node(-1).type.name !== 'list_item') {
+            styleName = style.styles?.nextLineStyleName ?? RESERVED_STYLE_NONE;
+          }
 
-  const nextNodePos = nextState.selection.from - 1;
-  const nextNode = nextState.doc.nodeAt(nextNodePos);
-  if (!isActiveParagraphTarget(prevState, nextState, nextNode, nextNodePos)) {
-    return null;
-  }
-
-  const style = getCustomStyleByName(prevParagraph.attrs.styleName);
-  if (!style?.styles?.nextLineStyleName) {
-    return null;
-  }
-
-  const listNode = prevState.doc.nodeAt(prevState.selection.from - 1);
-  let newattrs = getNextParagraphAttrs(prevParagraph);
-  const isListItemParent = $from.node(-1).type.name === 'list_item';
-  if (!isListItemParent) {
-    newattrs = setNodeAttrs(
-      resetTheDefaultStyleNameToNone(style.styles.nextLineStyleName),
-      newattrs
-    );
-  }
-  if (style.styles.isList === true) {
-    newattrs.indent = getListIndent(prevState, listNode);
-  }
-
-  tr = tr.setNodeMarkup(nextNodePos, undefined, newattrs);
-  const styleName = isListItemParent
-    ? style.styleName
-    : style.styles?.nextLineStyleName ?? RESERVED_STYLE_NONE;
-  return addStoredMarksForNextParagraph(tr, nextNode, styleName, nextState.schema);
-}
-
-function isActiveParagraphTarget(
-  prevState: LooseState,
-  nextState: LooseState,
-  nextNode: Node | null,
-  nextNodePos: number
-): boolean {
-  return Boolean(
-    nextNode &&
-    nextNodePos > prevState.selection.from &&
-    nextNodePos < nextState.selection.from &&
-    nextNode.type.name === 'paragraph'
-  );
-}
-
-function getNextParagraphAttrs(prevParagraph: Node): Record<string, unknown> {
-  return {
-    styleName: prevParagraph.attrs.styleName,
-    indent: prevParagraph.attrs.indent,
-    align: prevParagraph.attrs.align,
-  };
-}
-
-function getListIndent(prevState: LooseState, listNode: Node | null): unknown {
-  if (!listNode) {
-    return null;
-  }
-  if (listNode.isText === false) {
-    return listNode.attrs.indent;
-  }
-
-  const listNodeAlt = prevState.doc.nodeAt(
-    prevState.selection.from - 1 - listNode.nodeSize
-  );
-  return listNodeAlt?.attrs?.indent;
-}
-
-function addStoredMarksForNextParagraph(
-  tr: LooseTr,
-  nextNode: Node,
-  styleName: string,
-  schema
-): LooseTr {
-  const marks = getMarkByStyleName(styleName, schema);
-  nextNode.descendants((child) => {
-    if (child.type.name === 'text') {
-      marks.forEach((mark) => {
-        tr = tr.addStoredMark(mark);
-      });
+          // get the nextLine Style from the current style object.
+          const marks = getMarkByStyleName(styleName, nextState.schema);
+          nextNode.descendants((child) => {
+            if (child.type.name === 'text') {
+              marks.forEach((mark) => {
+                tr = tr.addStoredMark(mark);
+              });
+            }
+          });
+          if (nextNode.content.size === 0) {
+            marks.forEach((mark) => {
+              tr = tr.addStoredMark(mark);
+            });
+          }
+          modified = true;
+        }
+      }
     }
-  });
-  if (nextNode.content.size === 0) {
-    marks.forEach((mark) => {
-      tr = tr.addStoredMark(mark);
-    });
   }
-  return tr;
+
+  return modified ? tr : null;
 }
 
 function findPreviousParagraph(
