@@ -3,6 +3,8 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-floating-promises */
+
 import {Schema, Slice} from 'prosemirror-model';
 import {DecorationSet, EditorView} from 'prosemirror-view';
 
@@ -238,7 +240,7 @@ describe('FloatingMenuPlugin helpers', () => {
       props: {existing: true},
       update: jest.fn(),
     };
-    plugin._popUpHandle = handle as never;
+    plugin._popUpHandle = handle;
     plugin._urlConfig = {
       instanceUrl: 'https://instance/',
       referenceUrl: 'https://ref/',
@@ -833,7 +835,7 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('handles missing plugins and rejected slice actions gracefully', async () => {
-    jest.spyOn(CMPluginKey, 'get').mockReturnValue(null as never);
+    jest.spyOn(CMPluginKey, 'get').mockReturnValue(null);
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const view = createMockView();
 
@@ -921,7 +923,7 @@ describe('FloatingMenuPlugin helpers', () => {
         doc,
       } as never,
       pluginState,
-      null as never,
+      null,
       {doc} as never
     );
     expect(unchanged.decorations).toBeDefined();
@@ -933,7 +935,7 @@ describe('FloatingMenuPlugin helpers', () => {
         doc,
       } as never,
       {decorations: undefined},
-      null as never,
+      null,
       {doc} as never
     );
     expect(unchangedWithoutDecos.decorations).toBeUndefined();
@@ -947,7 +949,7 @@ describe('FloatingMenuPlugin helpers', () => {
         steps: [],
       } as never,
       pluginState,
-      null as never,
+      null,
       {doc} as never
     );
     expect(rescanned.decorations).toBeDefined();
@@ -961,7 +963,7 @@ describe('FloatingMenuPlugin helpers', () => {
         steps: [{toJSON: () => ({stepType: 'replace'})}],
       } as never,
       pluginState,
-      null as never,
+      null,
       {doc} as never
     );
     expect(rescannedByStep.decorations).toBeDefined();
