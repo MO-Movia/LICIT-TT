@@ -45,7 +45,6 @@
 .czi-custom-button.dark.disabled:hover {
   background: transparent;
   cursor: unset;
-  pointer-events: none;
   -webkit-text-stroke-width: 0;
   opacity: 0.3;
 }
@@ -53,7 +52,6 @@
 .czi-custom-button.light.disabled,
 .czi-custom-button.light.disabled:hover {
   cursor: unset;
-  pointer-events: none;
   -webkit-text-stroke-width: 0;
   opacity: 0.3;
 }
@@ -92,7 +90,6 @@
 .czi-custom-button.disabled:hover {
   color: #b0b0b0;
   cursor: unset;
-  pointer-events: none;
   -webkit-text-stroke-width: 0;
 }
 
