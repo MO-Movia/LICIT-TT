@@ -4,7 +4,7 @@
  */
 
 import StrikeMarkSpec from './strikeMarkSpec';
-import {Attrs, Mark, MarkType} from 'prosemirror-model';
+import {Mark, MarkType} from 'prosemirror-model';
 
 describe('StrikeMarkSpec', () => {
   describe('parseDOM', () => {
@@ -55,7 +55,7 @@ describe('StrikeMarkSpec', () => {
       const mockMarkType = {} as MarkType;
       return {
         type: mockMarkType,
-        attrs: {overridden: true} as Attrs,
+        attrs: {overridden: true},
         addToSet: (marks: readonly Mark[]) => [...marks],
         removeFromSet: () => [],
         isInSet: () => false,

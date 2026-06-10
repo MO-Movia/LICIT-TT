@@ -76,8 +76,8 @@ export const Indent = Extension.create<IndentOptions, never>({
             },
 
             parseHTML: (element) => {
-              const attr = element.getAttribute('data-indent');
-              if (attr !== null) {
+              const attr = element.dataset.indent;
+              if (attr != null) {
                 const val = Number.parseInt(attr, 10);
                 return Number.isNaN(val)
                   ? this.options.defaultIndentLevel

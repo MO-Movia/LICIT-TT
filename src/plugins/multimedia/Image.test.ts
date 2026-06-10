@@ -11,7 +11,6 @@ import {
   PluginKey,
   Transaction,
 } from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
 import {MultimediaPlugin} from './index';
 import {resolveImage} from './ui/resolveImage';
 import * as resolveImageMod from './ui/resolveImage';
@@ -88,7 +87,7 @@ describe('MultimediaPlugin', () => {
 
     ImgSrcCmd.executeWithUserInput(
       state,
-      view.dispatch as (tr: Transform) => void,
+      view.dispatch,
       view,
       ImageArgs
     );

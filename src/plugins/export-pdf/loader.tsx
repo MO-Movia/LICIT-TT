@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { PDFHandler } from './handlers';
+import { pdfPreviewProgress } from './pdfPreviewProgress';
 
 export class Loader extends React.PureComponent {
   private interval: ReturnType<typeof setInterval>;
@@ -14,7 +14,7 @@ export class Loader extends React.PureComponent {
     // trigger update of static values
     this.interval = setInterval(() => {
 
-      if (PDFHandler.state.isOnLoad) {
+      if (pdfPreviewProgress.isOnLoad) {
         this.passCounter++;
       }
       this.setState({ time: Date.now() });
@@ -28,12 +28,12 @@ export class Loader extends React.PureComponent {
   }
 
   render(): React.ReactElement {
-    const passNum = PDFHandler.state.isOnLoad ? 1 : 2;
+    const passNum = pdfPreviewProgress.isOnLoad ? 1 : 2;
     const totalPasses = 2;
 
-    const counter = PDFHandler.state.isOnLoad
+    const counter = pdfPreviewProgress.isOnLoad
       ? this.passCounter
-      : PDFHandler.state.currentPage ?? 0;
+      : pdfPreviewProgress.currentPage ?? 0;
 
     return (
       <div className="epdf-loader-fullscreen">

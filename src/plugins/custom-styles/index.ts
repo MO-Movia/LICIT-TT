@@ -214,90 +214,170 @@ export function onUpdateAppendTransaction(
   tr = applyStyleForEmptyParagraph(nextState, tr);
   ref.firstTime = false;
 
-  // custom style for next line
-  if (csview) {
-    if (BACKSPACEKEYCODE === csview.input.lastKeyCode) {
-      const paraPositionDiff =
-        prevState.selection.from - nextState.selection.from;
-      if (paraPositionDiff === 2 || paraPositionDiff === 0) {
-        const selectionHead = tr.selection?.$head;
-        if (!selectionHead) {
-          return tr;
-        }
-        const { schema } = nextState;
-        const para = findParentNodeClosestToPos(selectionHead, (node: Node) => {
-          return node.type === schema.nodes.paragraph;
-        });
-        if (para) {
-          let styleName = para.node.attrs.styleName;
-          if (RESERVED_STYLE_NONE === styleName || undefined === styleName) {
-            const newattrs = { ...para.node.attrs };
-            newattrs.styleName = RESERVED_STYLE_NONE;
-            tr = tr.setNodeMarkup(para.pos, undefined, newattrs);
-            styleName = RESERVED_STYLE_NONE;
-          }
-          tr = applyLatestStyle(
-            styleName,
-            nextState,
-            tr,
-            para.node,
-            para.pos,
-            para.pos + para.node.nodeSize - 1
-          ) as Transaction;
-          tr = tr.setSelection(
-            TextSelection.create(tr.doc, nextState.selection.from)
-          );
-        }
-      }
-    }
-    if (
-      ENTERKEYCODE === csview.input.lastKeyCode &&
-      tr.selection.$from.start() === tr.selection.$from.end()
-    ) {
-      tr = applyStyleForNextParagraph(prevState, nextState, tr, csview);
-    } else if (
-      ENTERKEYCODE === csview.input.lastKeyCode &&
-      getSelectionCursor(tr.selection)?.pos === tr.selection.$from.start() &&
-      tr.selection.empty &&
-      tr.selection.$from.node().content.size === 0
-    ) {
-      tr = applyStyleForPreviousEmptyParagraph(nextState, tr);
-      const cursorPosition = getSelectionCursor(prevState.selection)?.pos;
-      if (
-        cursorPosition !== undefined &&
-        cursorPosition >= 0 &&
-        cursorPosition <= prevState.doc.content.size
-      ) {
-        tr = tr.setSelection(TextSelection.create(tr.doc, cursorPosition));
-      }
-    } else if (
-      // ? ADD THIS BLOCK RIGHT HERE ? after the two existing else-if blocks
-      ENTERKEYCODE === csview.input.lastKeyCode &&
-      prevState.selection.from === nextState.selection.from - 1
-    ) {
-      tr = applyStoredMarksAfterHardBreak(
-        nextState,
-        tr as Transform
-      ) as Transaction;
-    }
-  }
+  tr = handleUpdateKeyStyling(
+    prevState,
+    nextState,
+    tr,
+    csview
+  );
 
   const isPaste = transactions.length && transactions[0].getMeta('paste');
   tr = applyLineStyleForBoldPartial(nextState, tr, isPaste);
+  tr = handlePasteUpdateStyling(
+    isPaste,
+    slice1,
+    prevState,
+    nextState,
+    csview,
+    tr
+  );
 
-  // OPTIMIZED: Only process paste if content is small enough
-  if (isPaste) {
-    // Defer styling for large pastes
-    if (slice1 && slice1.content.childCount > 20) {
-      // Apply minimal styling or defer to next tick
-      tr = applyMinimalPasteStyling(slice1, prevState, nextState, csview, tr);
-    } else if (slice1) {
-      tr = optimizedPasteHandler(slice1, prevState, nextState, csview, tr);
+  return tr;
+}
+
+function handleUpdateKeyStyling(
+  prevState: LooseState,
+  nextState: LooseState,
+  tr: LooseTr,
+  csview: CustomStyleView | LooseView | null
+): LooseTr {
+  if (!csview) {
+    return tr;
+  }
+
+  if (BACKSPACEKEYCODE === csview.input.lastKeyCode) {
+    const updatedTr = handleBackspaceStyleUpdate(prevState, nextState, tr);
+    if (updatedTr) {
+      return updatedTr;
     }
-    tr = tr?.scrollIntoView();
+  }
+
+  if (ENTERKEYCODE !== csview.input.lastKeyCode) {
+    return tr;
+  }
+
+  if (tr.selection.$from.start() === tr.selection.$from.end()) {
+    return applyStyleForNextParagraph(prevState, nextState, tr, csview);
+  }
+  if (getSelectionCursor(tr.selection)?.pos === tr.selection.$from.start()) {
+    return handlePreviousEmptyParagraphStyle(prevState, nextState, tr);
   }
 
   return tr;
+}
+
+function handleBackspaceStyleUpdate(
+  prevState: LooseState,
+  nextState: LooseState,
+  tr: LooseTr
+): LooseTr | null {
+  const selection = nextState.selection;
+  const $from = selection?.$from;
+  if (selection?.empty && $from?.parentOffset === 0 && $from.depth > 0) {
+    const cut = $from.before();
+    if (canJoin(nextState.doc, cut)) {
+      return tr.join(cut).scrollIntoView();
+    }
+  }
+
+  const paraPositionDiff = prevState.selection.from - nextState.selection.from;
+  if (paraPositionDiff !== 2 && paraPositionDiff !== 0) {
+    return null;
+  }
+
+  const selectionHead = tr.selection?.$head;
+  if (!selectionHead) {
+    return tr;
+  }
+
+  const para = findCurrentParagraph(selectionHead, nextState.schema);
+  if (!para) {
+    return tr;
+  }
+
+  return reapplyParagraphStyle(nextState, tr, para);
+}
+
+function findCurrentParagraph(selectionHead, schema) {
+  return findParentNodeClosestToPos(selectionHead, (node: Node) => {
+    return node.type === schema.nodes.paragraph;
+  });
+}
+
+function reapplyParagraphStyle(
+  nextState: LooseState,
+  tr: LooseTr,
+  para
+): LooseTr {
+  let styleName = para.node.attrs.styleName;
+  if (RESERVED_STYLE_NONE === styleName || undefined === styleName) {
+    const newattrs = { ...para.node.attrs, styleName: RESERVED_STYLE_NONE };
+    tr = tr.setNodeMarkup(para.pos, undefined, newattrs);
+    styleName = RESERVED_STYLE_NONE;
+  }
+
+  tr = applyLatestStyle(
+    styleName,
+    nextState as EditorState,
+    tr,
+    para.node,
+    para.pos,
+    para.pos + para.node.nodeSize - 1
+  ) as Transaction;
+
+  return tr.setSelection(
+    TextSelection.create(tr.doc, nextState.selection.from)
+  );
+}
+
+function handlePreviousEmptyParagraphStyle(
+  prevState: LooseState,
+  nextState: LooseState,
+  tr: LooseTr
+): LooseTr {
+  tr = applyStyleForPreviousEmptyParagraph(nextState, tr);
+  const cursourPosition = getSelectionCursor(prevState.selection)?.pos;
+  if (
+    cursourPosition !== undefined &&
+    cursourPosition >= 0 &&
+    cursourPosition <= prevState.doc.content.size
+  ) {
+    tr = tr.setSelection(TextSelection.create(tr.doc, cursourPosition));
+  }
+  return tr;
+}
+
+function handlePasteUpdateStyling(
+  isPaste,
+  slice1: SliceLike,
+  prevState: LooseState,
+  nextState: LooseState,
+  csview: CustomStyleView | LooseView | null,
+  tr: LooseTr
+): LooseTr {
+  if (!isPaste) {
+    return tr;
+  }
+
+  if (slice1 && slice1.content.childCount > 20) {
+    tr = applyMinimalPasteStyling(
+      slice1,
+      prevState,
+      nextState,
+      csview,
+      tr
+    );
+  } else if (slice1) {
+    tr = optimizedPasteHandler(
+      slice1,
+      prevState,
+      nextState,
+      csview,
+      tr
+    );
+  }
+
+  return tr?.scrollIntoView();
 }
 
 // NEW: Minimal styling for large pastes
@@ -695,83 +775,110 @@ export function applyStyleForNextParagraph(
   tr: LooseTr,
   view: CustomStyleView | LooseView | null
 ): LooseTr {
-  let modified = false;
   if (!tr) {
     tr = nextState.tr;
   }
   if (!nextState?.selection) {
     return tr;
   }
+
   const { $from } = nextState.selection;
-  if (
-    view &&
-    isNewParagraph(prevState as EditorState, nextState as EditorState, view)
-  ) {
-    const prevParagraph = findPreviousParagraph($from);
-    const required = requiredAddAttr(prevParagraph);
-    if (required) {
-      let newattrs: Record<string, unknown> = {
-        styleName: prevParagraph.attrs.styleName,
-        indent: prevParagraph.attrs.indent,
-        align: prevParagraph.attrs.align,
-      };
-
-      const nextNodePos = $from.start();
-      const nextNode = nextState.doc.nodeAt(nextNodePos);
-      const IsActiveNode =
-        nextNodePos >= prevState.selection.from &&
-        nextNodePos <= nextState.selection.from;
-
-      if (nextNode && IsActiveNode && nextNode.type.name === 'paragraph') {
-        const posList = prevState.selection.from - 1;
-        const Listnode = prevState.doc.nodeAt(posList);
-        const style = getCustomStyleByName(prevParagraph.attrs.styleName);
-        if (style?.styles?.nextLineStyleName) {
-          // [FS] IRAD-1217 2021-02-24
-          // Select style for next line not working continuously for more that 2 paragraphs
-          if ($from.node(-1).type.name !== 'list_item') {
-            newattrs = setNodeAttrs(
-              resetTheDefaultStyleNameToNone(style.styles.nextLineStyleName),
-              newattrs
-            );
-          }
-          if (style.styles.isList === true) {
-            if (Listnode.isText === false) {
-              newattrs.indent = Listnode.attrs.indent;
-            } else {
-              const ListnodeAlt = prevState.doc.nodeAt(
-                posList - Listnode.nodeSize
-              );
-              newattrs.indent = ListnodeAlt.attrs.indent;
-            }
-          }
-          tr = tr.setNodeMarkup(nextNodePos, undefined, newattrs);
-          let styleName = style.styleName;
-          if ($from.node(-1).type.name !== 'list_item') {
-            styleName = style.styles?.nextLineStyleName ?? RESERVED_STYLE_NONE;
-          }
-
-          // get the nextLine Style from the current style object.
-          const marks = getMarkByStyleName(styleName, nextState.schema);
-          nextNode.descendants((child) => {
-            if (child.type.name === 'text') {
-              marks.forEach((mark) => {
-                tr = tr.addStoredMark(mark);
-              });
-            }
-          });
-          if (nextNode.content.size === 0) {
-            marks.forEach((mark) => {
-              tr = tr.addStoredMark(mark);
-            });
-          }
-          modified = true;
-        }
-      }
-    }
+  if (!view || !isNewParagraph(prevState, nextState, view)) {
+    return null;
   }
 
-  return modified ? tr : null;
+  const prevParagraph = findPreviousParagraph($from);
+  if (!requiredAddAttr(prevParagraph)) {
+    return null;
+  }
+
+  const nextNodePos = nextState.selection.from - 1;
+  const nextNode = nextState.doc.nodeAt(nextNodePos);
+  if (!isActiveParagraphTarget(prevState, nextState, nextNode, nextNodePos)) {
+    return null;
+  }
+
+  const style = getCustomStyleByName(prevParagraph.attrs.styleName);
+  if (!style?.styles?.nextLineStyleName) {
+    return null;
+  }
+
+  const listNode = prevState.doc.nodeAt(prevState.selection.from - 1);
+  let newattrs = getNextParagraphAttrs(prevParagraph);
+  const isListItemParent = $from.node(-1).type.name === 'list_item';
+  if (!isListItemParent) {
+    newattrs = setNodeAttrs(
+      resetTheDefaultStyleNameToNone(style.styles.nextLineStyleName),
+      newattrs
+    );
+  }
+  if (style.styles.isList === true) {
+    newattrs.indent = getListIndent(prevState, listNode);
+  }
+
+  tr = tr.setNodeMarkup(nextNodePos, undefined, newattrs);
+  const styleName = isListItemParent
+    ? style.styleName
+    : style.styles?.nextLineStyleName ?? RESERVED_STYLE_NONE;
+  return addStoredMarksForNextParagraph(tr, nextNode, styleName, nextState.schema);
+}
+
+function isActiveParagraphTarget(
+  prevState: LooseState,
+  nextState: LooseState,
+  nextNode: Node | null,
+  nextNodePos: number
+): boolean {
+  return Boolean(
+    nextNode &&
+    nextNodePos > prevState.selection.from &&
+    nextNodePos < nextState.selection.from &&
+    nextNode.type.name === 'paragraph'
+  );
+}
+
+function getNextParagraphAttrs(prevParagraph: Node): Record<string, unknown> {
+  return {
+    styleName: prevParagraph.attrs.styleName,
+    indent: prevParagraph.attrs.indent,
+    align: prevParagraph.attrs.align,
+  };
+}
+
+function getListIndent(prevState: LooseState, listNode: Node | null): unknown {
+  if (!listNode) {
+    return null;
+  }
+  if (listNode.isText === false) {
+    return listNode.attrs.indent;
+  }
+
+  const listNodeAlt = prevState.doc.nodeAt(
+    prevState.selection.from - 1 - listNode.nodeSize
+  );
+  return listNodeAlt?.attrs?.indent;
+}
+
+function addStoredMarksForNextParagraph(
+  tr: LooseTr,
+  nextNode: Node,
+  styleName: string,
+  schema
+): LooseTr {
+  const marks = getMarkByStyleName(styleName, schema);
+  nextNode.descendants((child) => {
+    if (child.type.name === 'text') {
+      marks.forEach((mark) => {
+        tr = tr.addStoredMark(mark);
+      });
+    }
+  });
+  if (nextNode.content.size === 0) {
+    marks.forEach((mark) => {
+      tr = tr.addStoredMark(mark);
+    });
+  }
+  return tr;
 }
 
 function findPreviousParagraph(

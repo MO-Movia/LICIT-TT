@@ -4,7 +4,7 @@
  */
 
 import { UICommand } from '../core';
-import { Transaction, EditorState } from 'prosemirror-state';
+import { Transaction, EditorState, Selection } from 'prosemirror-state';
 import { BLOCKQUOTE, HEADING, LIST_ITEM, PARAGRAPH } from './NodeNames';
 import { EditorView } from 'prosemirror-view';
 import { Node, NodeType, Schema } from 'prosemirror-model';
@@ -18,6 +18,112 @@ import {
 import { getSelectionRange, isColumnCellSelected, getSelectedCellPositions } from './isNodeSelectionForNodeType';
 import * as React from 'react';
 
+type TextLineSpacingTask = {
+  node: Node;
+  pos: number;
+  nodeType: NodeType;
+};
+
+function isNodeType(nodeType: NodeType | null | undefined): nodeType is NodeType {
+  return Boolean(nodeType);
+}
+
+function getAllowedTextLineSpacingNodeTypes(schema: Schema): Set<NodeType> {
+  const paragraph = schema.nodes[PARAGRAPH];
+  const heading = schema.nodes[HEADING];
+  const listItem = schema.nodes[LIST_ITEM];
+  const blockquote = schema.nodes[BLOCKQUOTE];
+
+  return new Set(
+    [blockquote, heading, listItem, paragraph].filter(isNodeType)
+  );
+}
+
+function addTextLineSpacingTask(
+  tasks: TextLineSpacingTask[],
+  allowedNodeTypes: Set<NodeType>,
+  node: Node,
+  pos: number,
+  lineSpacingValue: string
+): void {
+  if (!allowedNodeTypes.has(node.type)) {
+    return;
+  }
+
+  const lineSpacing = node.attrs.lineSpacing ?? null;
+  if (lineSpacing === lineSpacingValue) {
+    return;
+  }
+
+  tasks.push({
+    node,
+    pos,
+    nodeType: node.type,
+  });
+}
+
+function collectColumnCellTextLineSpacingTasks(
+  tr: Transform,
+  selection: Selection,
+  allowedNodeTypes: Set<NodeType>,
+  lineSpacingValue: string
+): TextLineSpacingTask[] {
+  const tasks: TextLineSpacingTask[] = [];
+  const positions = getSelectedCellPositions(selection);
+
+  for (const originalPos of positions) {
+    const pos = originalPos + 1;
+    const node = tr.doc.nodeAt(pos);
+    if (!node) {
+      continue;
+    }
+
+    addTextLineSpacingTask(tasks, allowedNodeTypes, node, pos, lineSpacingValue);
+  }
+
+  return tasks;
+}
+
+function collectSelectionTextLineSpacingTasks(
+  doc: Transaction['doc'],
+  selection: Selection,
+  allowedNodeTypes: Set<NodeType>,
+  lineSpacingValue: string,
+  listItem: NodeType | null | undefined
+): TextLineSpacingTask[] {
+  const tasks: TextLineSpacingTask[] = [];
+  const { from, to } = getSelectionRange(selection);
+
+  doc.nodesBetween(from, to, (node, pos) => {
+    addTextLineSpacingTask(tasks, allowedNodeTypes, node, pos, lineSpacingValue);
+    return node.type === listItem;
+  });
+
+  return tasks;
+}
+
+function getTextLineSpacingAttrs(node: Node, lineSpacing?: string) {
+  const lineSpacingValue = lineSpacing || null;
+  const { attrs } = node;
+
+  if (lineSpacingValue) {
+    return {
+      ...attrs,
+      lineSpacing: lineSpacingValue,
+      overriddenLineSpacing: true,
+      overriddenLineSpacingValue: lineSpacing
+    };
+  }
+
+  const isOverriddenLineSpacing = attrs.overriddenLineSpacing ?? null;
+  return {
+    ...attrs,
+    lineSpacing: isOverriddenLineSpacing ? attrs.lineSpacing : SINGLE_LINE_SPACING,
+    overriddenLineSpacing: isOverriddenLineSpacing ? attrs.overriddenLineSpacing : null,
+    overriddenLineSpacingValue: isOverriddenLineSpacing ? attrs.overriddenLineSpacingValue : null
+  };
+}
+
 export function setTextLineSpacing(
   tr: Transform,
   schema: Schema,
@@ -28,61 +134,27 @@ export function setTextLineSpacing(
     return tr;
   }
 
-  const paragraph = schema.nodes[PARAGRAPH];
-  const heading = schema.nodes[HEADING];
   const listItem = schema.nodes[LIST_ITEM];
-  const blockquote = schema.nodes[BLOCKQUOTE];
-  if (!paragraph && !heading && !listItem && !blockquote) {
+  const allowedNodeTypes = getAllowedTextLineSpacingNodeTypes(schema);
+  if (!allowedNodeTypes.size) {
     return tr;
   }
 
-  const tasks: {
-    node: Node;
-    pos: number;
-    nodeType: NodeType;
-  }[] = [];
   const lineSpacingValue = lineSpacing || null;
-  const allowedNodeTypes = new Set([blockquote, heading, listItem, paragraph]);
-
-  if (isColumnCellSelected(selection)) {
-    const positions = getSelectedCellPositions(selection);
-    if (positions.length > 0) {
-      for (const originalPos of positions) {
-        const pos = originalPos + 1;
-        const node = tr.doc.nodeAt(pos);
-        if (!node) return;
-        const nodeType = node.type;
-        if (allowedNodeTypes.has(nodeType)) {
-          const lineSpacing = node.attrs.lineSpacing ?? null;
-          if (lineSpacing !== lineSpacingValue) {
-            tasks.push({
-              node,
-              pos,
-              nodeType,
-            });
-          }
-        }
-      };
-    }
-  }
-  else {
-    const { from, to } = getSelectionRange(selection);
-    doc.nodesBetween(from, to, (node, pos, _parentNode) => {
-      const nodeType = node.type;
-      if (allowedNodeTypes.has(nodeType)) {
-        const lineSpacing = node.attrs.lineSpacing || null;
-        if (lineSpacing !== lineSpacingValue) {
-          tasks.push({
-            node,
-            pos,
-            nodeType,
-          });
-        }
-        return nodeType === listItem;
-      }
-      return true;
-    });
-  }
+  const tasks = isColumnCellSelected(selection)
+    ? collectColumnCellTextLineSpacingTasks(
+      tr,
+      selection,
+      allowedNodeTypes,
+      lineSpacingValue
+    )
+    : collectSelectionTextLineSpacingTasks(
+      doc,
+      selection,
+      allowedNodeTypes,
+      lineSpacingValue,
+      listItem
+    );
 
   if (!tasks.length) {
     return tr;
@@ -90,27 +162,9 @@ export function setTextLineSpacing(
 
   for (const job of tasks) {
     const { node, pos, nodeType } = job;
-    let { attrs } = node;
-    if (lineSpacingValue) {
-      attrs = {
-        ...attrs,
-        lineSpacing: lineSpacingValue,
-        overriddenLineSpacing: true,
-        overriddenLineSpacingValue: lineSpacing
-      };
-    } else {
-      const isOverriddenLineSpacing = attrs.overriddenLineSpacing ?? null;
-
-      attrs = {
-        ...attrs,
-        lineSpacing: isOverriddenLineSpacing ? attrs.lineSpacing : SINGLE_LINE_SPACING,
-        overriddenLineSpacing: isOverriddenLineSpacing ? attrs.overriddenLineSpacing : null,
-        overriddenLineSpacingValue: isOverriddenLineSpacing ? attrs.overriddenLineSpacingValue : null
-
-      };
-    }
+    const attrs = getTextLineSpacingAttrs(node, lineSpacing);
     tr = tr.setNodeMarkup(pos, nodeType, attrs, node.marks);
-  };
+  }
 
   return tr;
 }
@@ -209,7 +263,7 @@ export class TextLineSpacingCommand extends UICommand {
           };
           tr = tr.setNodeMarkup(nodePos, null, newAttrs);
         }
-        dispatch?.(tr as Transaction);
+        dispatch?.(tr);
       }
       return true;
     } else {

@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { Mark, MarkType, Node, Schema } from 'prosemirror-model';
+import { Mark, Node, Schema } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
 import { HEADING, PARAGRAPH } from './NodeNames';
 import * as MarkNames from './MarkNames';
@@ -188,70 +188,98 @@ export function extractParagraphs(node: Node, normalParagraphs: Node[], otherPar
     }
   }
 }
+
+function shouldClearBooleanMark(
+  style: Style,
+  styleKey: string,
+  mark: Mark
+): boolean {
+  return !style?.styles[styleKey] && Boolean(mark.attrs.overridden);
+}
+
+function addReplacementMark(
+  schema: Schema,
+  marksToAdd,
+  node: Node,
+  pos: number,
+  markName: string,
+  attrs: Record<string, unknown>
+): boolean {
+  const markType = schema.marks[markName];
+  marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
+  return true;
+}
+
+function restoreStyledMark(
+  style: Style,
+  mark: Mark,
+  marksToAdd,
+  pos: number,
+  node: Node,
+  schema: Schema,
+  config: {
+    attrKey: string;
+    defaultValue: string | undefined;
+    markName: string;
+    styleKey: string;
+  }
+): boolean {
+  const styleValue = style?.styles[config.styleKey];
+  if ((styleValue && mark.attrs[config.attrKey] === styleValue) || !mark.attrs.overridden) {
+    return false;
+  }
+
+  return addReplacementMark(
+    schema,
+    marksToAdd,
+    node,
+    pos,
+    config.markName,
+    { [config.attrKey]: styleValue ?? config.defaultValue }
+  );
+}
+
 export function comapreMarks(style: Style, mark: Mark, marksToAdd, pos: number, node: Node, schema: Schema): boolean {
-
-  let markType: MarkType = null;
-  let attrs = {};
-
   switch (mark.type.name) {
     case MarkNames.MARK_STRONG:
-      if (style?.styles[STRONG] || !mark.attrs.overridden) {
-        return false;
-      }
-      return true;
+      return shouldClearBooleanMark(style, STRONG, mark);
     case MarkNames.MARK_EM:
-      if (style?.styles[EM] || !mark.attrs.overridden) {
-        return false;
-      }
-      return true;
+      return shouldClearBooleanMark(style, EM, mark);
     case MarkNames.MARK_TEXT_COLOR:
-      if ((style?.styles[COLOR] && mark.attrs[COLOR] === style?.styles[COLOR]) || !mark.attrs.overridden) {
-        return false;
-      }
-      markType = schema.marks[MarkNames.MARK_TEXT_COLOR];
-      attrs = { color: style?.styles[COLOR] ?? '#000000' };
-      marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
-      return true;
+      return restoreStyledMark(style, mark, marksToAdd, pos, node, schema, {
+        attrKey: COLOR,
+        defaultValue: '#000000',
+        markName: MarkNames.MARK_TEXT_COLOR,
+        styleKey: COLOR,
+      });
     case MarkNames.MARK_FONT_SIZE:
-      if ((style?.styles[FONTSIZE] && mark.attrs['pt'] === style?.styles[FONTSIZE]) || !mark.attrs.overridden) {
-        return false;
-      }
-      markType = schema.marks[MarkNames.MARK_FONT_SIZE];
-      attrs = { pt: style?.styles[FONTSIZE] };
-      marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
-      return true;
+      return restoreStyledMark(style, mark, marksToAdd, pos, node, schema, {
+        attrKey: 'pt',
+        defaultValue: undefined,
+        markName: MarkNames.MARK_FONT_SIZE,
+        styleKey: FONTSIZE,
+      });
     case MarkNames.MARK_FONT_TYPE:
-      if ((style?.styles[FONTNAME] && mark.attrs['name'] === style?.styles[FONTNAME]) || !mark.attrs.overridden) {
-        return false;
-      }
-      markType = schema.marks[MarkNames.MARK_FONT_TYPE];
-      attrs = { name: style?.styles[FONTNAME] };
-      marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
-      return true;
+      return restoreStyledMark(style, mark, marksToAdd, pos, node, schema, {
+        attrKey: 'name',
+        defaultValue: undefined,
+        markName: MarkNames.MARK_FONT_TYPE,
+        styleKey: FONTNAME,
+      });
     case MarkNames.MARK_STRIKE:
-      if (style?.styles[STRIKE] || !mark.attrs.overridden) {
-        return false;
-      }
-      return true;
+      return shouldClearBooleanMark(style, STRIKE, mark);
     case MarkNames.MARK_SUPER:
     case MarkNames.MARK_SUB:
-      if (!mark.attrs.overridden) {
-        return false;
-      }
-      return true;
+      return Boolean(mark.attrs.overridden);
     case MarkNames.MARK_TEXT_HIGHLIGHT:
-      if ((style?.styles['textHighlight'] && mark.attrs['highlightColor'] === style?.styles['textHighlight']) || !mark.attrs.overridden) {
-        return false;
-      }
-      markType = schema.marks[MarkNames.MARK_TEXT_HIGHLIGHT];
-      attrs = { highlightColor: style?.styles['textHighlight'] ?? '#ffffff' };
-      marksToAdd.push({ node, from: pos, to: pos + node.nodeSize, markType, attrs });
-      return true;
+      return restoreStyledMark(style, mark, marksToAdd, pos, node, schema, {
+        attrKey: 'highlightColor',
+        defaultValue: '#ffffff',
+        markName: MarkNames.MARK_TEXT_HIGHLIGHT,
+        styleKey: 'textHighlight',
+      });
     case MarkNames.MARK_UNDERLINE:
-      if (style?.styles[UNDERLINE] || !mark.attrs.overridden) {
-        return false;
-      }
-      return true;
+      return shouldClearBooleanMark(style, UNDERLINE, mark);
     default:
       return false;
   }

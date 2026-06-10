@@ -389,8 +389,8 @@ export class ImageViewBody extends React.PureComponent<
 
   _renderInlineEditor(): void {
     const el = document.getElementById(this._id);
-    if (!el || el.getAttribute('data-active') !== 'true') {
-      this._closeMenu();
+    if (!el || el.dataset.active !== 'true') {
+      this._inlineEditor?.close?.(undefined);
       return;
     }
 

@@ -30,7 +30,7 @@ export const enhancedTableFigureNotesNodeSpec: NodeSpec = {
   },
   parseDOM: [{ tag: "div[data-type='enhanced-table-figure-notes']",
       getAttrs: (dom: HTMLElement) => ({
-        styleName: dom.getAttribute('data-styleName') || 'Normal',
+        styleName: dom.dataset['stylename'] || 'Normal',
       }),
    }],
   toDOM(node) {
@@ -59,7 +59,10 @@ export const enhancedTableFigureCapcoNodeSpec: NodeSpec = {
     {
       tag: "div[data-type='enhanced-table-figure-capco']",
       getAttrs(dom) {
-        return { form: dom.getAttribute('data-form') || 'long', capco: dom.getAttribute('data-capco') || null };
+        return {
+          form: dom.dataset.form || 'long',
+          capco: dom.dataset.capco || null,
+        };
       },
     },
   ],
@@ -99,10 +102,10 @@ export const enhancedTableFigureNodeSpec: NodeSpec = {
       tag: "div[data-type='enhanced-table-figure']",
       getAttrs(dom) {
         return {
-          id: dom.getAttribute('data-id') || '',
-          figureType: dom.getAttribute('data-figure-type') || 'table',
-          orientation: dom.getAttribute('data-orientation') || 'portrait',
-          maximized: dom.getAttribute('data-maximized') === 'true',
+          id: dom.dataset.id || '',
+          figureType: dom.dataset.figureType || 'table',
+          orientation: dom.dataset.orientation || 'portrait',
+          maximized: dom.dataset.maximized === 'true',
         };
       },
     },

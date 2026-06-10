@@ -6,7 +6,6 @@
 import { EditorState } from 'prosemirror-state';
 import DocLayoutCommand from './docLayoutCommand';
 import { EditorView } from 'prosemirror-view';
-import type { DocLayoutEditorValue } from '../ui/docLayoutEditor';
 import { Editor } from '@tiptap/react';
 import { Schema } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
@@ -83,7 +82,7 @@ describe('DocLayoutCommand', () => {
       tr: {
         setSelection: jest.fn().mockReturnThis(),
       },
-    } as unknown as EditorState;
+    };
 
     UICommand.prototype.editor = {
       view: { focus: () => {}, dispatch: () => {} },
@@ -130,7 +129,7 @@ describe('DocLayoutCommand', () => {
       } as unknown as EditorState,
       () => {},
       { focus: () => {} } as unknown as EditorView,
-      { width: 1, layouts: 2 } as unknown as DocLayoutEditorValue
+      { width: 1, layouts: 2 } as unknown
     );
     expect(test).toBeDefined();
   });
@@ -151,7 +150,7 @@ describe('DocLayoutCommand', () => {
       } as unknown as EditorState,
       () => {},
       { focus: () => {} } as unknown as EditorView,
-      { width: 1, layouts: 2 } as unknown as DocLayoutEditorValue
+      { width: 1, layouts: 2 } as unknown
     );
     expect(test).toBeDefined();
   });

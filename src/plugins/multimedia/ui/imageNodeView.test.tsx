@@ -741,8 +741,8 @@ describe('Image view body', () => {
   it('should handle calcWidthAndHeight', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
-        0,
-        0,
+        null,
+        null,
         1,
         {width: 1, height: 1, src: ''}
       )
@@ -751,12 +751,12 @@ describe('Image view body', () => {
   it('should handle calcWidthAndHeight (case 2)', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
-        0,
-        0,
+        null,
+        null,
         1,
         {
-          width: 0,
-          height: 0,
+          width: null,
+          height: null,
           src: '',
         }
       )

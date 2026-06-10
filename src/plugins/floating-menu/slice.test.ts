@@ -24,7 +24,7 @@ describe('createSliceManager', () => {
         description: 'A mock slice for testing',
         referenceType: 'mock',
         ids: ['mock-id'],
-      } as SliceModel),
+      }),
 
       retrieveSlices: jest.fn().mockResolvedValue([
         {
@@ -36,7 +36,7 @@ describe('createSliceManager', () => {
           description: 'Mock slice for testing',
           referenceType: 'mock',
           ids: ['node-1'],
-        } as SliceModel,
+        },
       ]),
 
       insertInfoIconFloat: jest.fn(),

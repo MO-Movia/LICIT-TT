@@ -72,7 +72,7 @@ export default function splitListItem(
   }
 
   const { $from, $to, node } = selection as NodeSelection;
-  if ((node && node.isBlock) || $from.depth < 2 || !$from.sameParent($to)) {
+  if (node?.isBlock || $from.depth < 2 || !$from.sameParent($to)) {
     return tr;
   }
 

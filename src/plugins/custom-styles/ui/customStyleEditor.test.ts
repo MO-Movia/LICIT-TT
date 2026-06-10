@@ -6,7 +6,6 @@
 import { CustomStyleEditor } from './CustomStyleEditor';
 import * as customstyle from '../customStyle';
 import { SyntheticEvent } from 'react';
-import { Style } from '../../../commands';
 
 describe('CustomStyleEditor', () => {
   jest.spyOn(customstyle, 'getStylesAsync').mockResolvedValue([]);
@@ -821,7 +820,7 @@ describe('CustomStyleEditor', () => {
   it('should handle showColorDialog when event is null', () => {
     customstyleeditor._popUp = null;
     expect(
-      customstyleeditor.showColorDialog(true, null as unknown as SyntheticEvent)
+      customstyleeditor.showColorDialog(true, null)
     ).toBeUndefined();
   });
   it('should handle onAlignButtonClick', () => {
@@ -1304,7 +1303,7 @@ describe('CustomStyleEditor', () => {
   it('should handle modifyCustomStyle when saveStyle does not return array', () => {
     jest
       .spyOn(customstyle, 'saveStyle')
-      .mockResolvedValue(null as unknown as Style[] | Promise<Style[]>);
+      .mockResolvedValue(null);
     expect(
       customstyleeditor.modifyCustomStyle({
         editorView: {},

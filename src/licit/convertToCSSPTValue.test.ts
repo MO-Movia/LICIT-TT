@@ -63,7 +63,7 @@ describe('convertToCSSPTValue', () => {
   });
 
   it('should return 0 for non-string inputs', () => {
-    const result = convertToCSSPTValue(undefined as unknown as string);
+    const result = convertToCSSPTValue(undefined);
     expect(result).toBe(0);
   });
 });

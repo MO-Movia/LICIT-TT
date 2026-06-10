@@ -11,7 +11,7 @@ import sanitizeURL from '../sanitizeURL';
 import { CustomButton } from '../../commands';
 
 function isBookMarkHref(href: string): boolean {
-  return !!href && href.indexOf('#') === 0 && href.length >= 2;
+  return !!href && href.startsWith('#') && href.length >= 2;
 }
 
 class LinkTooltip extends React.PureComponent {

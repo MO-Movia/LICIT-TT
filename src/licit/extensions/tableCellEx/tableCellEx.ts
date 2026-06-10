@@ -179,7 +179,7 @@ export const TableCellEx = TableCell.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.backgroundColor.replace(/['"]{1,10000}/g, '');
+          return element.style.backgroundColor.replaceAll('"', '').replaceAll("'", '');
         },
       },
       borderLeft: {
@@ -230,7 +230,7 @@ export const TableCellEx = TableCell.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.borderColor.replace(/['"]{1,10000}/g, '');
+          return element.style.borderColor.replaceAll(/['"]/g, '');
         },
       },
     };

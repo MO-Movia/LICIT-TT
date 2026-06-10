@@ -13,7 +13,7 @@ describe('canUseCSSFont', () => {
         ready: Promise.resolve(null!),
         status: 'loaded',
         values: () => [{}],
-      } as unknown as FontFaceSet,
+      },
     });
     const font = 'mock';
     const check = canUseCSSFont(font);

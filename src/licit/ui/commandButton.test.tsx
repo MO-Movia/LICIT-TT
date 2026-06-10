@@ -138,7 +138,7 @@ describe('CommandButton', () => {
       dispatch: mockDispatch,
       editorState: mockEditorState,
       editorView: mockEditorView,
-    } as CommandButton['props']);
+    });
 
     const mockEvent = { preventDefault: jest.fn() } as unknown as React.SyntheticEvent<HTMLButtonElement, Event>;
 
@@ -161,7 +161,7 @@ describe('CommandButton', () => {
       dispatch: mockDispatch,
       editorState: mockEditorState,
       editorView: mockEditorView,
-    } as CommandButton['props']);
+    });
 
     const mockEvent = { preventDefault: jest.fn() } as unknown as React.SyntheticEvent<HTMLButtonElement, Event>;
 
