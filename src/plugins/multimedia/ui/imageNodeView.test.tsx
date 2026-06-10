@@ -73,7 +73,7 @@ describe('ImageNodeView', () => {
       align: 'left',
       fitToParent: 'fit',
     },
-  }) as unknown as Node;
+  });
   const imagenodeview = new ImageNodeView(
     mockImageNode,
     editorfocused,
@@ -156,7 +156,7 @@ describe('Image view body', () => {
       align: 'left',
       fitToParent: 'fit',
     },
-  }) as unknown as Node;
+  });
 
   const mockPopupHandle = {
     close: () => undefined,
@@ -176,7 +176,7 @@ describe('Image view body', () => {
     selected: true,
     focused: true,
   };
-  imageviewbody._inlineEditor = {
+  imageviewbody._menu = {
     close: () => undefined,
   } as unknown as PopUpHandle;
   it('should be defined (case 2)', () => {
@@ -184,9 +184,9 @@ describe('Image view body', () => {
   });
 
   it('should handle componentWillUnmount', () => {
-    imageviewbody._inlineEditor =
-      imageviewbody._inlineEditor ?? ({} as unknown as PopUpHandle);
-    const spy = jest.spyOn(imageviewbody._inlineEditor, 'close');
+    imageviewbody._menu =
+      imageviewbody._menu ?? ({close: () => undefined} as unknown as PopUpHandle);
+    const spy = jest.spyOn(imageviewbody._menu, 'close');
     imageviewbody.componentWillUnmount();
     expect(spy).toHaveBeenCalled();
   });
@@ -203,6 +203,41 @@ describe('Image view body', () => {
     });
     expect(spy).toHaveBeenCalled();
   });
+
+  it('should update image attrs when getPos returns 0', () => {
+    const docWithImage = mockSchema.node('doc', null, [
+      mockSchema.node('image', {align: 'left', fitToParent: 'fit'}),
+    ]);
+    const stateWithImage = EditorState.create({
+      doc: docWithImage,
+      schema: mockSchema,
+    });
+    const dispatch = jest.fn();
+    const imageViewBody = new ImageViewBody(
+      mockImageNode as unknown as NodeViewProps,
+      editorfocused
+    );
+    imageViewBody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        state: stateWithImage,
+        dispatch,
+      } as unknown as EditorFocused,
+      getPos: () => 0,
+      node: {
+        attrs: {align: 'left', fitToParent: 'fit'},
+      } as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+      focused: true,
+    };
+
+    imageViewBody._updateImageAttrs({src: 'data:image/png;base64,test'});
+
+    expect(dispatch).toHaveBeenCalled();
+  });
+
   it('should handle render', () => {
     imageviewbody.state = {
       maxSize: {
@@ -297,32 +332,93 @@ describe('Image view body', () => {
     ).toStrictEqual({width: 50, height: 10});
   });
 
-  it('should handle _renderInlineEditor', () => {
-    const elem = document.createElement('div');
-    const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
+  it('should prepare image menu items', () => {
+    const items = imageviewbody._getMenuItems();
 
-    expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    spy.mockRestore();
+    expect(items.map((item) => item.id)).toContain('choose-file');
+    expect(items.map((item) => item.id)).toContain('paste-clipboard');
   });
-  it('should handle _renderInlineEditor (case 2)', () => {
-    const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
-    const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
-    expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toBeCalled();
-  });
-  it('should handle _renderInlineEditor else statement', () => {
-    imageviewbody._inlineEditor = {
-      update: () => undefined,
-    } as unknown as PopUpHandle;
-    const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
-    const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
+  it('should dispatch image alignment menu actions', () => {
+    const mockSchema = new Schema({
+      nodes: {
+        doc: {content: 'block+'},
+        paragraph: {content: 'inline*', group: 'block'},
+        text: {group: 'inline'},
+        image: {
+          inline: true,
+          attrs: {align: {default: null}, fitToParent: {default: null}},
+          group: 'inline',
+        },
+      },
+      marks: {},
+    });
+    const stateWithImage = EditorState.create({
+      doc: mockSchema.nodeFromJSON({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'image',
+                attrs: {
+                  align: 'left',
+                  fitToParent: null,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+      schema: mockSchema,
+    });
+    const dispatch = jest.fn();
+    const imageViewBody = new ImageViewBody(
+      mockImageNode as unknown as NodeViewProps,
+      editorfocused
+    );
+    imageViewBody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        state: stateWithImage,
+        dispatch,
+      } as unknown as EditorFocused,
+      getPos: () => 1,
+      node: {
+        attrs: {align: 'left', fitToParent: null},
+      } as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+      focused: true,
+    };
 
-    expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toBeCalled();
+    const alignments = [
+      ['align-center', 'center'],
+      ['align-right', 'right'],
+      ['float-left', 'float-left'],
+      ['float-right', 'float-right'],
+    ];
+
+    for (const [itemId, align] of alignments) {
+      dispatch.mockClear();
+      imageViewBody._getMenuItems().find((item) => item.id === itemId)?.action();
+
+      expect(dispatch).toHaveBeenCalled();
+      const transaction = dispatch.mock.calls[0][0];
+      expect(transaction.doc.nodeAt(1)?.attrs.align).toBe(align);
+    }
   });
+
+  it('should store menu button ref', () => {
+    const button = document.createElement('button');
+
+    imageviewbody._onMenuButtonRef(button);
+
+    expect(imageviewbody._menuButton).toBe(button);
+  });
+
   it('should handle _onResizeEnd', () => {
     const mockSchema = new Schema({
       nodes: {
@@ -394,7 +490,7 @@ describe('Image view body', () => {
       selected: true,
       focused: true,
     };
-    imageviewbody._inlineEditor = mockPopupHandle;
+    imageviewbody._menu = mockPopupHandle;
     expect(imageviewbody._onResizeEnd(10, 20)).toBeUndefined();
   });
 
@@ -469,7 +565,7 @@ describe('Image view body', () => {
       selected: true,
       focused: true,
     };
-    imageviewbody._inlineEditor = mockPopupHandle;
+    imageviewbody._menu = mockPopupHandle;
     expect(imageviewbody._onChange({align: 'left'})).toBeUndefined();
     imageviewbody._mounted = true;
     expect(imageviewbody._onChange({align: 'left'})).toBeUndefined();
@@ -642,8 +738,8 @@ describe('Image view body', () => {
   it('should handle calcWidthAndHeight', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
-        null as unknown as number,
-        null as unknown as number,
+        0,
+        0,
         1,
         {width: 1, height: 1, src: ''}
       )
@@ -652,12 +748,12 @@ describe('Image view body', () => {
   it('should handle calcWidthAndHeight (case 2)', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
-        null as unknown as number,
-        null as unknown as number,
+        0,
+        0,
         1,
         {
-          width: null as unknown as number,
-          height: null as unknown as number,
+          width: 0,
+          height: 0,
           src: '',
         }
       )

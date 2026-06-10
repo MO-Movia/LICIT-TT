@@ -7,16 +7,12 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import TableCellMenu from './tableCellMenu';
 import CommandMenuButton from './commandMenuButton';
-import Icon from './icon';
 import { TABLE_COMMANDS_GROUP } from './editorToolbarConfig';
 import { EditorState, PluginView } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 // Mock dependencies
 jest.mock('./commandMenuButton', () => jest.fn(() => React.createElement('button')));
-jest.mock('./icon', () => ({
-  get: jest.fn(() => 'mock-icon'),
-}));
 
 describe('TableCellMenu', () => {
   let container: HTMLDivElement;
@@ -35,16 +31,10 @@ describe('TableCellMenu', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
 
-    mockEditorState = { doc: {} } as EditorState;
+    mockEditorState = { doc: {} } as unknown as EditorState;
     mockEditorView = { dispatch: jest.fn() } as unknown as EditorView;
     mockActionNode = document.createElement('div');
-    mockPluginView = {} as PluginView & {
-      _menu?: (
-        editorState: EditorState,
-        actionNode: Node,
-        defaultCommands: unknown
-      ) => unknown;
-    };
+    mockPluginView = {};
 
     jest.clearAllMocks();
   });
@@ -66,18 +56,15 @@ describe('TableCellMenu', () => {
 
     expect(CommandMenuButton).toHaveBeenCalledWith(
       expect.objectContaining({
-        className: 'czi-table-cell-menu',
+        className: 'czi-table-cell-menu licit-block-control-trigger',
         commandGroups: TABLE_COMMANDS_GROUP,
         dispatch: mockEditorView.dispatch,
         editorState: mockEditorState,
         editorView: mockEditorView,
-        icon: 'mock-icon',
-        title: 'Edit',
+        title: 'Table options',
       }),
       {}
     );
-
-    expect(Icon.get).toHaveBeenCalledWith('icon_edit');
   });
 
   test('uses pluginView._menu return value if defined', () => {

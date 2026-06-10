@@ -104,6 +104,14 @@ describe('TableEx Extension', () => {
     expect(hasTableExtension).toBe(true);
   });
 
+  test('should configure Licit table node view', () => {
+    const extension = editor.extensionManager.extensions.find(
+      (ext) => ext.name === 'table'
+    );
+
+    expect(extension?.options.View?.name).toBe('LicitTableNodeView');
+  });
+
   test('should support table cell commands', () => {
     editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
 

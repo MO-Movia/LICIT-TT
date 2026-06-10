@@ -8,6 +8,8 @@ import {DOMOutputSpec, Node as ProseMirrorNode} from 'prosemirror-model';
 import {Table,createColGroup, createTable} from '@tiptap/extension-table';
 import {TextSelection} from 'prosemirror-state';
 
+import {LicitTableNodeView} from '../../ui/tableNodeView';
+
 const DEFAULT_TABLE_COLUMNS = 3;
 const DEFAULT_TABLE_HEIGHT = 'auto';
 
@@ -81,6 +83,13 @@ const getColumnsFromNode = (node: ProseMirrorNode): number => {
 };
 
 export const TableEx = Table.extend({
+  addOptions() {
+    return {
+      ...this.parent?.(),
+      View: LicitTableNodeView,
+    };
+  },
+
   addAttributes() {
     return {
       ...this.parent?.(),
