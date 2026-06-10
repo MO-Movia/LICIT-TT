@@ -956,3 +956,712 @@ test('handleAfttpFooter executes processTocAndFooter when non-AFTTP', () => {
 
 
 });
+
+describe('PDFHandler additional coverage', () => {
+  let handler: PDFHandler;
+
+  beforeEach(() => {
+    handler = new PDFHandler(mockChunker, mockPolisher, mockCaller);
+    jest.clearAllMocks();
+    PDFHandler.state.currentPage = 0;
+    PDFHandler.state.isOnLoad = false;
+    previewState.pageBanner = null;
+    previewState.documentTitle = '';
+    previewState.formattedDate = '2025-10-13';
+    previewState.isToc = false;
+    previewState.isTof = false;
+    previewState.isTot = false;
+    previewState.tocHeader = [];
+    previewState.tofHeader = [];
+    previewState.totHeader = [];
+
+    // Reset the static mode tracker so doIT mode-switch tests are deterministic
+    (PDFHandler as unknown as { lastMode: 'afttp' | 'non-afttp' | null }).lastMode = null;
+
+    // Strip any residual marker styles left by earlier doIT tests
+    document.querySelectorAll('style[data-licit-pdf-handler]').forEach(s => s.remove());
+  });
+
+  test('beforeParsed does NOT call createTable when isToc, isTof and isTot are all false', () => {
+    previewState.isToc = false;
+    previewState.isTof = false;
+    previewState.isTot = false;
+
+    handler.beforeParsed('content');
+
+    expect(createTable).not.toHaveBeenCalled();
+  });
+
+  test('beforeParsed calls createTable when only isTof is true', () => {
+    previewState.isToc = false;
+    previewState.isTof = true;
+    previewState.isTot = false;
+    previewState.tofHeader = ['fig'];
+
+    handler.beforeParsed('content');
+
+    expect(createTable).toHaveBeenCalled();
+  });
+
+  test('beforeParsed calls createTable when only isTot is true', () => {
+    previewState.isToc = false;
+    previewState.isTof = false;
+    previewState.isTot = true;
+    previewState.totHeader = ['tbl'];
+
+    handler.beforeParsed('content');
+
+    expect(createTable).toHaveBeenCalled();
+  });
+
+  test('afterPageLayout mutates breakToken when chapter is not first element and chapterSource exists', () => {
+    // Build a source DOM that chunker.source.querySelector can match against
+    const sourceChapter = document.createElement('p');
+    sourceChapter.dataset.ref = 'chap-abc';
+    const sourceDOM = document.createElement('div');
+    sourceDOM.appendChild(sourceChapter);
+
+    const customHandler = new PDFHandler({ source: sourceDOM }, mockPolisher, mockCaller);
+
+    // Build page.area in which the chapter is NOT firstElementChild.children[0].children[0]
+    const firstEl = document.createElement('p');
+    firstEl.textContent = 'first (not chapter)';
+
+    const chapterEl = document.createElement('p');
+    chapterEl.setAttribute('stylename', 'chapterTitle');
+    chapterEl.dataset.ref = 'chap-abc';
+
+    const trailing = document.createElement('p');
+    trailing.textContent = 'trailing content';
+
+    const inner = document.createElement('div');
+    inner.appendChild(firstEl);
+    inner.appendChild(chapterEl);
+    inner.appendChild(trailing);
+
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(inner);
+
+    const areaRoot = document.createElement('div');
+    areaRoot.appendChild(wrapper);
+
+    const pageFragment = document.createElement('div');
+    const page = { element: document.createElement('div'), area: areaRoot };
+    const breakToken: { node: unknown; offset: number } = { node: 'original', offset: 5 };
+
+    customHandler.afterPageLayout(pageFragment, page, breakToken);
+
+    // breakToken redirected to chapter node in the source DOM
+    expect(breakToken.node).toBe(sourceChapter);
+    expect(breakToken.offset).toBe(0);
+
+    // chapter + trailing siblings should be removed from the page area
+    expect(inner.contains(chapterEl)).toBe(false);
+    expect(inner.contains(trailing)).toBe(false);
+    // first element remains
+    expect(inner.contains(firstEl)).toBe(true);
+  });
+
+  test('afterPageLayout does NOT mutate breakToken when chapterSource is missing in chunker', () => {
+    const sourceDOM = document.createElement('div'); // no matching ref inside
+    const customHandler = new PDFHandler({ source: sourceDOM }, mockPolisher, mockCaller);
+
+    const firstEl = document.createElement('p');
+    const chapterEl = document.createElement('p');
+    chapterEl.setAttribute('stylename', 'chapterTitle');
+    chapterEl.dataset.ref = 'missing-ref';
+
+    const inner = document.createElement('div');
+    inner.appendChild(firstEl);
+    inner.appendChild(chapterEl);
+
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(inner);
+
+    const areaRoot = document.createElement('div');
+    areaRoot.appendChild(wrapper);
+
+    const pageFragment = document.createElement('div');
+    const page = { element: document.createElement('div'), area: areaRoot };
+    const breakToken = { node: 'original', offset: 5 };
+
+    customHandler.afterPageLayout(pageFragment, page, breakToken);
+
+    expect(breakToken.node).toBe('original');
+    expect(breakToken.offset).toBe(5);
+  });
+
+  test('afterPageLayout skips chapter-break logic for already-processed chapter refs', () => {
+    const sourceChapter = document.createElement('p');
+    sourceChapter.dataset.ref = 'chap-dupe';
+    const sourceDOM = document.createElement('div');
+    sourceDOM.appendChild(sourceChapter);
+
+    const customHandler = new PDFHandler({ source: sourceDOM }, mockPolisher, mockCaller);
+    // Mark the ref as already processed so find() returns undefined
+    (customHandler as unknown as { processedChapterRefs: Set<string> })
+      .processedChapterRefs.add('chap-dupe');
+
+    const firstEl = document.createElement('p');
+    const chapterEl = document.createElement('p');
+    chapterEl.setAttribute('stylename', 'chapterTitle');
+    chapterEl.dataset.ref = 'chap-dupe';
+
+    const inner = document.createElement('div');
+    inner.appendChild(firstEl);
+    inner.appendChild(chapterEl);
+
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(inner);
+
+    const areaRoot = document.createElement('div');
+    areaRoot.appendChild(wrapper);
+
+    const pageFragment = document.createElement('div');
+    const page = { element: document.createElement('div'), area: areaRoot };
+    const breakToken = { node: 'orig', offset: 2 };
+
+    customHandler.afterPageLayout(pageFragment, page, breakToken);
+
+    expect(breakToken.node).toBe('orig');
+    expect(breakToken.offset).toBe(2);
+    // chapter is NOT removed since the break handler skipped it
+    expect(inner.contains(chapterEl)).toBe(true);
+  });
+
+  test('afterPageLayout treats --reset-flag CSS property as a reset trigger', () => {
+    const pageFragment = document.createElement('div');
+
+    const el = document.createElement('p');
+    el.dataset.styleLevel = '2';
+    el.style.setProperty('--reset-flag', '1');
+
+    pageFragment.appendChild(el);
+
+    const page = { element: document.createElement('div') };
+    handler.afterPageLayout(pageFragment, page, null);
+
+    expect(el.getAttribute('customcounter')).toBeDefined();
+  });
+
+  test('afterPageLayout applies prefix from data-prefix to customcounter', () => {
+    const pageFragment = document.createElement('div');
+
+    const el = document.createElement('p');
+    el.dataset.styleLevel = '1';
+    el.dataset.prefix = 'Section ';
+
+    pageFragment.appendChild(el);
+
+    const page = { element: document.createElement('div') };
+    handler.afterPageLayout(pageFragment, page, null);
+
+    expect(el.getAttribute('customcounter')).toContain('Section ');
+  });
+
+  test('afterPageLayout uses TOT counter when tot attribute is present', () => {
+    const pageFragment = document.createElement('div');
+
+    const el = document.createElement('p');
+    el.dataset.styleLevel = '1';
+    el.dataset.tot = 'true';
+
+    pageFragment.appendChild(el);
+
+    const page = { element: document.createElement('div') };
+    handler.afterPageLayout(pageFragment, page, null);
+
+    expect(el.getAttribute('customcounter')).toContain('.');
+  });
+
+  /* ---------- toRoman ---------- */
+  test('toRoman returns String(num) for values greater than 3999', () => {
+    const toRoman = (handler as unknown as { toRoman(n: number): string }).toRoman.bind(handler);
+    expect(toRoman(4000)).toBe('4000');
+    expect(toRoman(5123)).toBe('5123');
+  });
+
+  test('toRoman converts standard values within range', () => {
+    const toRoman = (handler as unknown as { toRoman(n: number): string }).toRoman.bind(handler);
+    expect(toRoman(1)).toBe('i');
+    expect(toRoman(4)).toBe('iv');
+    expect(toRoman(9)).toBe('ix');
+    expect(toRoman(40)).toBe('xl');
+    expect(toRoman(90)).toBe('xc');
+    expect(toRoman(400)).toBe('cd');
+    expect(toRoman(900)).toBe('cm');
+    expect(toRoman(1987)).toBe('mcmlxxxvii');
+    expect(toRoman(3999)).toBe('mmmcmxcix');
+  });
+
+  test('resolveFirstChapterPageIndex assigns index of first chapter when not yet resolved', () => {
+    const pages = [
+      createPage('<div></div>'),
+      createPage('<p stylename="chapterTitle"></p>'),
+      createPage('<div></div>'),
+    ];
+
+    handler['resolveFirstChapterPageIndex'](pages);
+
+    expect(handler['firstChapterPageIndex']).toBe(1);
+  });
+
+  test('resolveFirstChapterPageIndex stays null when no chapter exists anywhere', () => {
+    const pages = [createPage('<div></div>'), createPage('<div></div>')];
+    handler['resolveFirstChapterPageIndex'](pages);
+    expect(handler['firstChapterPageIndex']).toBeNull();
+  });
+
+  test('resolveAfttpPageNumber returns onAttachmentStart value when page has attachmentTitle', () => {
+    const pageEl = document.createElement('div');
+    const att = document.createElement('p');
+    att.setAttribute('stylename', 'attachmentTitle');
+    pageEl.appendChild(att);
+
+    const result = handler['resolveAfttpPageNumber'](
+      pageEl,
+      0,
+      [],
+      () => 'A1-1',
+      () => ''
+    );
+
+    expect(result).toBe('A1-1');
+  });
+
+  test('resolveAfttpPageNumber returns onAttachmentContinue when continuation is truthy', () => {
+    const pageEl = document.createElement('div');
+
+    const result = handler['resolveAfttpPageNumber'](
+      pageEl,
+      1,
+      [],
+      () => 'A1-1',
+      () => 'A1-2'
+    );
+
+    expect(result).toBe('A1-2');
+  });
+
+  test('resolveAfttpPageNumber returns chapter-formatted page number when page falls within a chapter range', () => {
+    const pageEl = document.createElement('div');
+
+    const result = handler['resolveAfttpPageNumber'](
+      pageEl,
+      2,
+      [{ start: 1, end: 5, chapterIndex: 3 }],
+      () => '',
+      () => ''
+    );
+
+    expect(result).toBe('3-2');
+  });
+
+  test('computeTotalMainPages returns early when firstChapterPageIndex is null', () => {
+    handler['firstChapterPageIndex'] = null;
+    handler['totalMainPages'] = 99;
+
+    const pages = [createPage('<div></div>')];
+    handler['computeTotalMainPages'](pages);
+
+    expect(handler['totalMainPages']).toBe(99);
+  });
+
+  test('computeTotalMainPages counts to last page when no attachments exist', () => {
+    const pages = [
+      createPage('<p stylename="chapterTitle"></p>'),
+      createPage('<div></div>'),
+      createPage('<div></div>'),
+    ];
+
+    handler['resolveFirstChapterPageIndex'](pages);
+    handler['computeTotalMainPages'](pages);
+
+    expect(handler['totalMainPages']).toBe(3);
+  });
+
+  test('computeTotalMainPages returns 0 when endIndex precedes firstChapterPageIndex', () => {
+    const pages = [
+      createPage('<p stylename="attachmentTitle"></p>'),
+      createPage('<p stylename="chapterTitle"></p>'),
+    ];
+
+    handler['resolveFirstChapterPageIndex'](pages);
+    handler['computeTotalMainPages'](pages);
+
+    expect(handler['totalMainPages']).toBe(0);
+  });
+
+  test('detectAttachments counts pages correctly across multiple attachments', () => {
+    const pages = [
+      createPage('<p stylename="attachmentTitle"></p>'),
+      createPage('<div></div>'),
+      createPage('<p stylename="attachmentTitle"></p>'),
+      createPage('<div></div>'),
+      createPage('<div></div>'),
+    ];
+
+    handler['detectAttachments'](pages);
+
+    expect(handler['attachmentPageCounters'].get(1)).toBe(2);
+    expect(handler['attachmentPageCounters'].get(2)).toBe(3);
+    expect(handler['currentAttachmentIndex']).toBe(2);
+  });
+
+  test('detectAttachments leaves counters empty when there are no attachments', () => {
+    const pages = [createPage('<div></div>'), createPage('<div></div>')];
+    handler['detectAttachments'](pages);
+    expect(handler['attachmentPageCounters'].size).toBe(0);
+    expect(handler['currentAttachmentIndex']).toBe(0);
+  });
+
+  test('getNonAfttpPageNumber returns pageIndex + 1 when lastPrePageIndex is null', () => {
+    handler['lastPrePageIndex'] = null;
+    expect(handler['getNonAfttpPageNumber'](4)).toBe('5');
+  });
+
+  test('getNonAfttpPageNumber returns offset from lastPrePageIndex when past the pre-pages', () => {
+    handler['lastPrePageIndex'] = 2;
+    expect(handler['getNonAfttpPageNumber'](5)).toBe('3');
+  });
+
+  test('getNonAfttpPageNumber returns roman numeral when pageIndex falls within pre-pages', () => {
+    handler['lastPrePageIndex'] = 3;
+    expect(handler['getNonAfttpPageNumber'](2)).toBe('iii');
+  });
+
+  test('getAfttpPageNumber returns chapter format when only chapters match', () => {
+    const result = handler['getAfttpPageNumber'](
+      4,
+      [],
+      [{ start: 3, end: 6, chapterIndex: 2 }]
+    );
+    expect(result).toBe('2-2');
+  });
+
+  test('getAfttpPageNumber falls back to roman when neither chapter nor attachment matches', () => {
+    expect(handler['getAfttpPageNumber'](2, [], [])).toBe('iii');
+  });
+
+  test('formatLongDate returns empty string for invalid date input', () => {
+    expect(handler['formatLongDate']('not-a-real-date')).toBe('');
+  });
+
+  test('formatLongDate returns a formatted en-GB date string for valid input', () => {
+    const result = handler['formatLongDate']('2025-10-13');
+    expect(result).toContain('October');
+    expect(result).toContain('2025');
+    expect(result).toContain('13');
+  });
+
+  test('applySingleTocLink returns early when link is not an HTMLElement', () => {
+    const textNode = document.createTextNode('not html') as unknown as Element;
+    expect(() =>
+      handler['applySingleTocLink'](textNode, new Map(), false, [], [])
+    ).not.toThrow();
+  });
+
+  test('applySingleTocLink returns early when href is missing entirely', () => {
+    const page = createPage('<div class="toc-element"><a></a></div>');
+    const link = page.element.querySelector('a') as HTMLElement;
+
+    handler['applySingleTocLink'](link, new Map([['x', 1]]), false, [], []);
+
+    expect(link.dataset.page).toBeUndefined();
+  });
+
+  test('applySingleTocLink returns early when id is not in refToPage', () => {
+    const page = createPage('<div class="toc-element"><a href="#unknown"></a></div>');
+    const link = page.element.querySelector('a') as HTMLElement;
+
+    handler['applySingleTocLink'](link, new Map(), false, [], []);
+
+    expect(link.dataset.page).toBeUndefined();
+  });
+
+  test('applySingleTocLink sets chapter page number in AFTTP mode', () => {
+    const page = createPage('<div class="toc-element"><a href="#ch1"></a></div>');
+    const link = page.element.querySelector('a') as HTMLElement;
+
+    handler['applySingleTocLink'](
+      link,
+      new Map([['ch1', 5]]),
+      true,
+      [],
+      [{ start: 4, end: 10, chapterIndex: 2 }]
+    );
+
+    expect(link.dataset.page).toBe('2-2');
+  });
+
+  test('applyPageNumbers (non-AFTTP) outputs roman for pre-pages and arabic afterwards', () => {
+    const pages = [
+      createPage('<div class="totHead"></div>'), 
+      createPage('<div></div>'),                
+      createPage('<div></div>'),              
+    ];
+
+    pages.forEach(p => {
+      const margin = document.createElement('div');
+      margin.className = 'pagedjs_margin-top-right';
+      const content = document.createElement('div');
+      content.className = 'pagedjs_margin-content';
+      margin.appendChild(content);
+      p.element.appendChild(margin);
+    });
+
+    handler['resetLastPrePageIndex'](pages);
+    handler['applyPageNumbers'](pages);
+
+    const nums = pages.map(
+      p => p.element.querySelector('.pagedjs_margin-content')?.textContent
+    );
+
+    expect(nums[0]).toBe('i');
+    expect(nums[1]).toBe('1');
+    expect(nums[2]).toBe('2');
+  });
+
+  test('applyPageNumbers (AFTTP) skips pages without margin content but still numbers others', () => {
+    previewState.pageBanner = { text: 'CUI', color: 'red' };
+
+    const pages = [
+      createPage('<p stylename="chapterTitle"></p>'),
+      createPage('<div></div>'), 
+      createPage('<div></div>'),
+    ];
+
+    [0, 2].forEach(i => {
+      const margin = document.createElement('div');
+      margin.className = 'pagedjs_margin-top-right';
+      const content = document.createElement('div');
+      content.className = 'pagedjs_margin-content';
+      margin.appendChild(content);
+      pages[i].element.appendChild(margin);
+    });
+
+    expect(() => handler['applyPageNumbers'](pages)).not.toThrow();
+
+    const num0 = pages[0].element.querySelector('.pagedjs_margin-content')?.textContent;
+    const num2 = pages[2].element.querySelector('.pagedjs_margin-content')?.textContent;
+
+    expect(num0).toBe('1-1');
+    expect(num2).toBe('1-3');
+  });
+
+  test('doIT (AFTTP) injects headerTitleContent with banner text and formatted title/date', async () => {
+    previewState.pageBanner = { text: 'CUI', color: 'red' };
+    previewState.documentTitle = 'My Document';
+    previewState.formattedDate = '2025-10-13';
+
+    await handler.doIT();
+
+    const cssArg = (mockPolisher.convertViaSheet).mock.calls[0][0] as string;
+    expect(cssArg).toContain('My Document');
+    expect(cssArg).toContain('October');
+    expect(cssArg).toContain('CUI');
+    // Mode tracker should reflect afttp now
+    expect((PDFHandler as unknown as { lastMode: string | null }).lastMode).toBe('afttp');
+  });
+
+  test('doIT (AFTTP) omits headerTitleContent when title and date are both empty', async () => {
+    previewState.pageBanner = { text: 'CUI', color: 'red' };
+    previewState.documentTitle = '';
+    previewState.formattedDate = '';
+
+    await handler.doIT();
+
+    const cssArg = (mockPolisher.convertViaSheet).mock.calls[0][0] as string;
+    expect(cssArg).toContain('CUI');
+    expect(cssArg).not.toContain(', undefined');
+  });
+
+  test('doIT (AFTTP) with title but no date emits title alone in headerTitleContent', async () => {
+    previewState.pageBanner = { text: 'CUI', color: 'red' };
+    previewState.documentTitle = 'OnlyTitle';
+    previewState.formattedDate = '';
+
+    await handler.doIT();
+
+    const cssArg = (mockPolisher.convertViaSheet).mock.calls[0][0] as string;
+    expect(cssArg).toContain('OnlyTitle');
+  });
+
+  test('doIT removes previously injected handler styles when switching modes', async () => {
+
+    (PDFHandler as unknown as { lastMode: string | null }).lastMode = 'non-afttp';
+
+    const stale = document.createElement('style');
+    stale.dataset.licitPdfHandler = 'true';
+    document.head.appendChild(stale);
+
+    previewState.pageBanner = { text: 'CUI', color: 'red' };
+    await handler.doIT();
+
+    expect(document.querySelector('style[data-licit-pdf-handler]')).toBeNull();
+    expect((PDFHandler as unknown as { lastMode: string | null }).lastMode).toBe('afttp');
+  });
+
+  test('doIT keeps existing handler-marker styles when mode is unchanged', async () => {
+    (PDFHandler as unknown as { lastMode: string | null }).lastMode = 'non-afttp';
+
+    const keeper = document.createElement('style');
+    keeper.dataset.licitPdfHandler = 'true';
+    document.head.appendChild(keeper);
+    previewState.pageBanner = null;
+    await handler.doIT();
+
+    expect(document.head.contains(keeper)).toBe(true);
+    keeper.remove();
+  });
+
+  test('doIT marks the inserted style element with data-licit-pdf-handler when polisher returns one', async () => {
+    const fakeStyle = document.createElement('style');
+    (mockPolisher.insert).mockReturnValueOnce(fakeStyle);
+
+    await handler.doIT();
+
+    expect(fakeStyle.dataset.licitPdfHandler).toBe('true');
+  });
+
+  test('doIT does not throw when polisher.insert returns a falsy value', async () => {
+    (mockPolisher.insert).mockReturnValueOnce(null);
+    await expect(handler.doIT()).resolves.toBeUndefined();
+  });
+
+  test('buildLabel at higher level does NOT reset TOF/TOT counters', () => {
+    handler['counters'][1] = 1;
+    handler['counters'][2] = 0;
+    handler['counters'][11] = 4;
+    handler['counters'][12] = 7;
+
+    const label: number[] = [];
+    handler['buildLabel'](2, label);
+
+    expect(handler['counters'][11]).toBe(4);
+    expect(handler['counters'][12]).toBe(7);
+    expect(label).toEqual([1, 1]);
+  });
+
+  test('stripHTML returns empty string for empty input', () => {
+    expect(handler.stripHTML('')).toBe('');
+  });
+
+  test('stripHTML returns empty string for tags-only input with no text content', () => {
+    expect(handler.stripHTML('<div></div>')).toBe('');
+    expect(handler.stripHTML('<p><br/></p>')).toBe('');
+  });
+
+  test('stripHTML preserves nested text from multiple tags', () => {
+    expect(handler.stripHTML('<div>A <span>B</span> C</div>')).toBe('A B C');
+  });
+
+  test('afterRendered exercises resolveFirstChapterPageIndex + computeTotalMainPages with chapter & attachment', () => {
+    const pages = [
+      createPage('<p stylename="chapterTitle"></p>'),
+      createPage('<div></div>'),
+      createPage('<p stylename="attachmentTitle"></p>'),
+    ];
+
+    Object.defineProperty(window, 'getComputedStyle', {
+      value: jest.fn().mockReturnValue({ marginLeft: '0pt' }),
+      writable: true,
+    });
+
+    expect(() => handler.afterRendered(pages)).not.toThrow();
+    expect(handler['firstChapterPageIndex']).toBe(0);
+    expect(handler['totalMainPages']).toBe(2);
+  });
+
+  test('buildAttachmentRanges sets end to pages.length for a single trailing attachment', () => {
+    const pages = [
+      createPage('<div></div>'),
+      createPage('<p stylename="attachmentTitle"></p>'),
+      createPage('<div></div>'),
+    ];
+
+    const ranges = handler['buildAttachmentRanges'](pages);
+
+    expect(ranges).toEqual([{ start: 1, end: 3, index: 1 }]);
+  });
+
+  test('buildChapterRanges sets end to pages.length for a single chapter', () => {
+    const pages = [
+      createPage('<p stylename="chapterTitle"></p>'),
+      createPage('<div></div>'),
+    ];
+
+    expect(handler['buildChapterRanges'](pages)).toEqual([
+      { start: 0, end: 2, chapterIndex: 1 },
+    ]);
+  });
+
+  test('buildChapterRanges returns empty list when no chapter pages exist', () => {
+    const pages = [createPage('<div></div>'), createPage('<div></div>')];
+    expect(handler['buildChapterRanges'](pages)).toEqual([]);
+  });
+
+  test('buildAttachmentRanges returns empty list when no attachment pages exist', () => {
+    const pages = [createPage('<div></div>'), createPage('<div></div>')];
+    expect(handler['buildAttachmentRanges'](pages)).toEqual([]);
+  });
+
+  test('resetLastPrePageIndex picks the last page containing a totHead', () => {
+    const pages = [
+      createPage('<div class="totHead"></div>'),
+      createPage('<div></div>'),
+      createPage('<div class="totHead"></div>'),
+      createPage('<div></div>'),
+    ];
+
+    handler['resetLastPrePageIndex'](pages);
+
+    expect(handler['lastPrePageIndex']).toBe(2);
+  });
+
+  test('fixSplitTo applies margin-top and padding-left when split-to paragraph exists', () => {
+    const page = document.createElement('div');
+    const p = document.createElement('p');
+    p.dataset.splitTo = 'true';
+    page.appendChild(p);
+
+    handler['fixSplitTo'](page, () => '7pt');
+
+    expect(p.style.marginTop).toBe('1pt');
+    expect(p.style.marginLeft).toBe('0pt');
+    expect(p.style.paddingLeft).toBe('7pt');
+  });
+
+  test('fixSplitFrom safely returns when no split-from element is present', () => {
+    const page = document.createElement('div');
+    expect(() => handler['fixSplitFrom'](page, () => '7pt')).not.toThrow();
+  });
+
+  test('fixSplitFrom applies margin and padding when split-from paragraph exists', () => {
+    const page = document.createElement('div');
+    const p = document.createElement('p');
+    p.dataset.splitFrom = 'true';
+    page.appendChild(p);
+
+    handler['fixSplitFrom'](page, () => '9pt');
+
+    expect(p.style.marginLeft).toBe('0pt');
+    expect(p.style.paddingLeft).toBe('9pt');
+  });
+
+  test('fixIndent applies styling for each indent paragraph', () => {
+    const page = document.createElement('div');
+    const p1 = document.createElement('p');
+    p1.dataset.indent = 'true';
+    const p2 = document.createElement('p');
+    p2.dataset.indent = 'true';
+    page.appendChild(p1);
+    page.appendChild(p2);
+
+    handler['fixIndent'](page, () => '11pt');
+
+    expect(p1.style.marginLeft).toBe('0pt');
+    expect(p1.style.paddingLeft).toBe('11pt');
+    expect(p2.style.paddingLeft).toBe('11pt');
+  });
+});

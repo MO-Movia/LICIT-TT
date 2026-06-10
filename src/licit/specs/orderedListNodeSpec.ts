@@ -116,15 +116,15 @@ const OrderedListNodeSpec: NodeSpec = {
 
     const cssCounterName = `czi-counter-${indent}`;
     if ('x.x.x' === type) {
-      if (RESERVED_STYLE_NONE !== node.attrs.styleName) {
-        attrs['style'] = buildStyleClass(indent, node.attrs.start);
-      } else {
+      if (RESERVED_STYLE_NONE === node.attrs.styleName) {
         attrs['style'] = buildStyleClassEx(
           cssCounterName,
           following,
           htmlListStyleType,
           start
         );
+      } else {
+        attrs['style'] = buildStyleClass(indent, node.attrs.start);
       }
     } else {
       attrs['style'] = buildStyleClassEx(

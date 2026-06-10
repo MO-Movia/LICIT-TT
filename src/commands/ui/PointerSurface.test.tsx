@@ -25,12 +25,12 @@ describe('PointerSurface', () => {
     expect(isValidElement(render())).toBe(true);
   });
 
-  it('renders a <span> with role="button"', () => {
+  it('renders a <button> with role="button"', () => {
     expect(render().type).toBe('span');
     expect(spanProps().role).toBe('button');
   });
 
-  it('forwards id, style, title, children to <span>', () => {
+  it('forwards id, style, title, children to <button>', () => {
     const style = { color: 'red' };
     const child = createElement('span', { key: 'c' }, 'hi');
     expect(spanProps({ id: 'x' }).id).toBe('x');

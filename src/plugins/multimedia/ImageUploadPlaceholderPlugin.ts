@@ -150,7 +150,8 @@ export class ImageUploadPlaceholderPlugin extends Plugin {
         },
         apply(tr, set: DecorationSet): DecorationSet {
           // Adjust decoration positions to changes made by the transaction
-          set = set.map(tr.mapping, tr.doc);
+          // ProseMirror DecorationSet.map(mapping, doc) — not Array.map
+          set = set.map(tr.mapping, tr.doc);   // NOSONAR
           // See if the transaction adds or removes any placeholders
           const action = tr.getMeta(this);
           if (action?.add) {

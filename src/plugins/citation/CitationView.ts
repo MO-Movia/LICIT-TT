@@ -163,7 +163,7 @@ export class CitationView {
       });
       if (citationNode.length > 0) {
         const MARK_TEXT_HIGHLIGHT_COLOR = hasCitation ? '' : '#aed0e6';
-        citationNode.forEach((cit) => {
+        for (const cit of citationNode) {
           // to check the mouse is over correct citation if a paragraph have multiple citation
           // Copy and paste CITATION applied paragraph, CITATION highlight not showing
           if (selectedMarkPos === Number(cit.attrs.from)) {
@@ -175,7 +175,7 @@ export class CitationView {
               })
             );
           }
-        });
+        };
         this.scrollAction(tr);
       }
     }

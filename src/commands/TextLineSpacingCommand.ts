@@ -24,10 +24,6 @@ type TextLineSpacingTask = {
   nodeType: NodeType;
 };
 
-function isNodeType(nodeType: NodeType | null | undefined): nodeType is NodeType {
-  return Boolean(nodeType);
-}
-
 function getAllowedTextLineSpacingNodeTypes(schema: Schema): Set<NodeType> {
   const paragraph = schema.nodes[PARAGRAPH];
   const heading = schema.nodes[HEADING];
@@ -35,7 +31,9 @@ function getAllowedTextLineSpacingNodeTypes(schema: Schema): Set<NodeType> {
   const blockquote = schema.nodes[BLOCKQUOTE];
 
   return new Set(
-    [blockquote, heading, listItem, paragraph].filter(isNodeType)
+    [blockquote, heading, listItem, paragraph].filter(
+      (n): n is NodeType => n !== null && n !== undefined
+    )
   );
 }
 

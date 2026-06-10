@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import { CustomStyleItem } from './CustomStyleItem';
 import * as cusstyle from '../customStyle';
 import { EditorState } from 'prosemirror-state';

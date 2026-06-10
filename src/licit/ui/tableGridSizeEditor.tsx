@@ -5,16 +5,14 @@
 
 import cx from 'classnames';
 import * as React from 'react';
-import ReactDOM from 'react-dom';
-
 import htmlElementToRect from '../htmlElementToRect';
 import { fromHTMlElement, fromXY, isIntersected, clamp } from '../../commands';
 
 type TableGridSizeEditorProps = {
-  close?: (val: TableGridSizeEditorState) => void;
-  x?;
-  y?;
-  selected?;
+  close?: (val: TableGridSizeEditorState) => void; //NOSONAR
+  x?; //NOSONAR
+  y?; //NOSONAR
+  selected?; //NOSONAR
 };
 export type TableGridSizeEditorState = {
   cols: number;
@@ -54,7 +52,6 @@ class TableGridSizeEditor extends React.PureComponent<
   _mx = 0;
   _my = 0;
   _rafID = 0;
-  _ref = null;
   _entered = false;
 
   declare props: {
@@ -123,6 +120,13 @@ class TableGridSizeEditor extends React.PureComponent<
           onMouseDown={this._onMouseDown}
           onMouseEnter={this._onMouseEnter}
           style={bodyStyle}
+          role="grid"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              this._onMouseDown(e);
+            }
+          }}
         >
           {cells}
         </div>
@@ -133,8 +137,8 @@ class TableGridSizeEditor extends React.PureComponent<
     );
   }
 
-  _onRef = (ref: React.ReactInstance): void => {
-    this._ref = ref;
+  _onRef = (ref: HTMLElement): void => {
+    this._bodyEl = ref;
   };
 
   _onMouseEnter = (e: React.MouseEvent): void => {
@@ -154,9 +158,9 @@ class TableGridSizeEditor extends React.PureComponent<
     }
   };
 
+  _bodyEl: HTMLElement | null = null;
   _onMouseMove = (e: MouseEvent): void => {
-    const el: Element | Text = this._ref && ReactDOM.findDOMNode(this._ref);
-    const elRect = el ? htmlElementToRect(el as HTMLElement) : null;
+    const elRect = this._bodyEl ? htmlElementToRect(this._bodyEl) : null;
     const mouseRect = fromXY(e.screenX, e.screenY, 10);
 
     if (elRect && mouseRect && isIntersected(elRect, mouseRect, 50)) {

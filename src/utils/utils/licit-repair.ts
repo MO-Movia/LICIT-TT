@@ -42,7 +42,9 @@ function processNodeContent(this: void, node: LicitNode): void {
       node.type = 'horizontalRule'; // czi to tiptap type
       break;
   }
-  node.content?.forEach(processNodeContent);
+  for (const child of node.content ?? []) {
+    processNodeContent(child);
+  }
 }
 function repairTextNode(content: LicitNode): void {
   content.text ??= ' ';

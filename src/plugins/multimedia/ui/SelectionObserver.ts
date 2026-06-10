@@ -67,11 +67,11 @@ export class SelectionObserver {
   }
 
   disconnect(): void {
-    this._observables.forEach((obj) => {
+    for (const obj of this._observables) {
       const el = obj.target;
       el.removeEventListener('click', this._check, false);
       el.removeEventListener('selectionchange', this._check, false);
-    });
+    };
     this._observables = [];
   }
 

@@ -5,8 +5,8 @@
 
 import React from 'react';
 
-import canUseCSSFont from '../canUseCSSFont';
 import { ThemeContext } from '../../commands';
+import canUseCSSFont from '../../utils/utils/canUseCSSFont';
 
 const cached = {};
 

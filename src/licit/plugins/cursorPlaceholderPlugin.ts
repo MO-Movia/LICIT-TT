@@ -9,8 +9,6 @@ import {Decoration, DecorationSet} from 'prosemirror-view';
 
 const PLACE_HOLDER_ID = {name: 'CursorPlaceholderPlugin'};
 
-let singletonInstance = null;
-
 // https://prosemirror.net/examples/upload/
 export const SPEC = {
   // [FS] IRAD-1005 2020-07-07
@@ -20,11 +18,11 @@ export const SPEC = {
     init() {
       return DecorationSet.empty;
     },
-    apply(tr, set) {
-      set = set.map(tr.mapping, tr.doc);
-      const action = tr.getMeta(this);
+    apply(tr, decorationSet) {
+      decorationSet = decorationSet.map(tr.mapping, tr.doc); //NOSONAR
+      const action = tr.getMeta(CursorPlaceholderPlugin.instance);
       if (!action) {
-        return set as DecorationSet;
+        return decorationSet as DecorationSet;
       }
       if (action.add) {
         const widget = document.createElement('czi-cursor-placeholder');
@@ -32,30 +30,38 @@ export const SPEC = {
         const deco = Decoration.widget(action.add.pos, widget, {
           id: PLACE_HOLDER_ID,
         });
-        set = set.add(tr.doc, [deco]);
+        decorationSet = decorationSet.add(tr.doc, [deco]);
       } else if (action.remove) {
-        const found = set.find(null, null, specFinder);
-        set = set.remove(found);
+        const found = decorationSet.find(null, null, specFinder);
+        decorationSet = decorationSet.remove(found);
       }
-
-      return set as DecorationSet;
+      return decorationSet as DecorationSet;
     },
   },
   props: {
     decorations: (state) => {
-      const plugin = singletonInstance;
-      return plugin ? (plugin.getState(state) as DecorationSet) : null;
+      return CursorPlaceholderPlugin.instance ? (CursorPlaceholderPlugin.instance.getState(state) as DecorationSet) : null;
     },
   },
 };
 
 class CursorPlaceholderPlugin extends Plugin {
+  private static _instance: CursorPlaceholderPlugin = null;
+
+  static get instance(): CursorPlaceholderPlugin {
+    return CursorPlaceholderPlugin._instance;
+  }
+
   constructor() {
     super(SPEC);
-    if (singletonInstance) {
-      return singletonInstance as CursorPlaceholderPlugin;
+    CursorPlaceholderPlugin._instance = this;
+  }
+
+  static getInstance(): CursorPlaceholderPlugin {
+    if (!CursorPlaceholderPlugin._instance) {
+      CursorPlaceholderPlugin._instance = new CursorPlaceholderPlugin();
     }
-    singletonInstance = this as CursorPlaceholderPlugin;
+    return CursorPlaceholderPlugin._instance;
   }
 }
 
@@ -64,17 +70,17 @@ function specFinder(spec: Record<string, unknown>): boolean {
 }
 
 export function findCursorPlaceholderPos(state: EditorState): number {
-  if (!singletonInstance) {
+  if (!CursorPlaceholderPlugin.instance) {
     return null;
   }
-  const decos = singletonInstance.getState(state);
+  const decos = CursorPlaceholderPlugin.instance.getState(state);
   const found = decos.find(null, null, specFinder);
   const pos = found.length ? found[0].from : null;
   return (pos as number) || null;
 }
 
 export function showCursorPlaceholder(state: EditorState): Transform {
-  const plugin = singletonInstance;
+  const plugin = CursorPlaceholderPlugin.instance;
   let {tr} = state;
   if (!plugin || !tr.selection) {
     return tr;
@@ -97,7 +103,7 @@ export function showCursorPlaceholder(state: EditorState): Transform {
 }
 
 export function hideCursorPlaceholder(state: EditorState): Transform {
-  const plugin = singletonInstance;
+  const plugin = CursorPlaceholderPlugin.instance;
   let {tr} = state;
   if (!plugin) {
     return tr;

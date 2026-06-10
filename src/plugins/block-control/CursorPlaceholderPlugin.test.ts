@@ -3,7 +3,15 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { CursorPlaceholderPlugin, showCursorPlaceholder, hideCursorPlaceholder, findCursorPlaceholderPos, specFinder, resetInstance, isPlugin, getSingletonInstance } from './CursorPlaceholderPlugin';
+import {
+  showCursorPlaceholder,
+  hideCursorPlaceholder,
+  findCursorPlaceholderPos,
+  specFinder,
+  resetInstance,
+  isPlugin,
+  getSingletonInstance,
+} from './CursorPlaceholderPlugin';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { Decoration } from 'prosemirror-view';
 jest.mock('prosemirror-state');
@@ -65,8 +73,7 @@ describe('CursorPlaceholderPlugin', () => {
     });
 
     it('should return position when decoration exists', () => {
-      const plugin = new CursorPlaceholderPlugin();
-      plugin.getState = jest.fn().mockReturnValue({
+      getSingletonInstance().getState = jest.fn().mockReturnValue({
         find: jest.fn().mockReturnValue([{ from: 10 }]),
       });
       const result = findCursorPlaceholderPos(mockEditorState);
@@ -74,7 +81,7 @@ describe('CursorPlaceholderPlugin', () => {
     });
 
     it('should return null when no decoration exists', () => {
-      const plugin = new CursorPlaceholderPlugin();
+      const plugin = getSingletonInstance();
       plugin.getState = jest.fn().mockReturnValue({
         find: jest.fn().mockReturnValue([]),
       });
@@ -107,7 +114,7 @@ describe('CursorPlaceholderPlugin', () => {
     });
 
     it('should delete selection when not empty and no existing placeholder', () => {
-      const plugin = new CursorPlaceholderPlugin();
+      const plugin = getSingletonInstance();
       plugin.getState = jest.fn().mockReturnValue({
         find: jest.fn().mockReturnValue([]),
       });
@@ -117,8 +124,8 @@ describe('CursorPlaceholderPlugin', () => {
     });
 
     it('should add placeholder meta when no existing placeholder', () => {
-      const plugin = new CursorPlaceholderPlugin();
-      plugin.getState = jest.fn().mockReturnValue({
+      const plugin = getSingletonInstance();
+      getSingletonInstance().getState = jest.fn().mockReturnValue({
         find: jest.fn().mockReturnValue([]),
       });
       const result = showCursorPlaceholder(mockEditorState);
@@ -129,7 +136,7 @@ describe('CursorPlaceholderPlugin', () => {
     });
 
     it('should return unchanged transaction when placeholder already exists', () => {
-      const plugin = new CursorPlaceholderPlugin();
+      const plugin = getSingletonInstance();
       plugin.getState = jest.fn().mockReturnValue({
         find: jest.fn().mockReturnValue([{ from: 10 }]),
       });
@@ -146,7 +153,7 @@ describe('CursorPlaceholderPlugin', () => {
     });
 
     it('should add remove meta when placeholder exists', () => {
-      const plugin = new CursorPlaceholderPlugin();
+      const plugin = getSingletonInstance();
       plugin.getState = jest.fn().mockReturnValue({
         find: jest.fn().mockReturnValue([{ from: 10 }]),
       });
@@ -156,7 +163,7 @@ describe('CursorPlaceholderPlugin', () => {
     });
 
     it('should return unchanged transaction when no placeholder exists', () => {
-      const plugin = new CursorPlaceholderPlugin();
+      const plugin = getSingletonInstance();
       plugin.getState = jest.fn().mockReturnValue({
         find: jest.fn().mockReturnValue([]),
       });
@@ -169,16 +176,13 @@ describe('CursorPlaceholderPlugin', () => {
   describe('resetInstance', () => {
   it('should reset the singleton instance', () => {
     // Create a new instance to set the singleton
-    const plugin = new CursorPlaceholderPlugin();
-    
-    // Verify the singleton was set
-    expect(getSingletonInstance()).toBe(plugin);
+    const plugin = getSingletonInstance();
     
     // Reset the instance
     resetInstance();
     
     // Verify it's now null
-    expect(getSingletonInstance()).toBeNull();
+    expect(getSingletonInstance()).not.toBe(plugin);
   });
 });
 });

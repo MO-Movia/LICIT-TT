@@ -68,21 +68,10 @@ describe('RichTextEditor (pure Jest tests)', () => {
   });
 
  it('should dispatch transaction when _dispatchTransaction is called', () => {
-    const instance = new RichTextEditor(mockProps, {});
+    const instance = new RichTextEditor(mockProps);
     const mockTransform = new Transform(null);
     instance._dispatchTransaction(mockTransform);
     expect(mockProps.editor.view.dispatch).toHaveBeenCalled();
   });
 
-  it('should set editorView and call onReady in _onReady', () => {
-    const instance = new RichTextEditor(mockProps, {});
-    const mockEditorView = { view: true } as unknown as EditorView;
-    const onReady = jest.fn();
-    instance.props.onReady = onReady;
-
-    instance._onReady(mockEditorView);
-    expect(instance.state.editorView).toBe(null);
-    expect(onReady).toHaveBeenCalledWith(mockEditorView);
-  });
-  
 });

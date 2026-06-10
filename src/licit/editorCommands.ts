@@ -51,8 +51,8 @@ import { LandscapeCommand } from './commands/LandscapeCommand';
 // editable tables, even though those don't work in ProseMirror. The only way
 // to turn these off is globally, which you might want to do with the
 // following code:
-document.execCommand?.('enableObjectResizing', false, 'false');
-document.execCommand?.('enableInlineTableEditing', false, 'false');
+document.execCommand?.('enableObjectResizing', false, 'false'); //NOSONAR no alternative
+document.execCommand?.('enableInlineTableEditing', false, 'false'); //NOSONAR no alternative
 export const CLEAR_FORMAT = new MarksClearCommand();
 export const DOC_LAYOUT = new DocLayoutCommand();
 export const EM = new MarkToggleCommandEx(MARK_EM);

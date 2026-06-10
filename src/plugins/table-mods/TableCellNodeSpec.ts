@@ -17,7 +17,7 @@ export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
         let fullSize = 0;
         let vAlign = 'top';
         if (attrFS) {
-          fullSize = parseInt(attrFS);
+          fullSize = Number.parseInt(attrFS, 10);
         }
         if (attrsVAlign) {
           vAlign = attrsVAlign;

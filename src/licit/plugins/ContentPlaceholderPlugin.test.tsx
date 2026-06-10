@@ -7,14 +7,19 @@ import { EditorView } from 'prosemirror-view';
 import { PluginKey } from 'prosemirror-state';
 import ContentPlaceholderPlugin from './contentPlaceholderPlugin';
 import isEditorStateEmpty from '../isEditorStateEmpty';
-import ReactDOM from 'react-dom';
 import * as React from 'react';
+import {createRoot} from 'react-dom/client';
 
 jest.mock('../isEditorStateEmpty');
-jest.mock('react-dom', (): typeof import('react-dom') => ({
-  ...jest.requireActual('react-dom'),
-  render: jest.fn(),
-  unmountComponentAtNode: jest.fn(),
+
+const mockRender = jest.fn();
+const mockUnmount = jest.fn();
+
+jest.mock('react-dom/client', () => ({
+  createRoot: jest.fn(() => ({
+    render: mockRender,
+    unmount: mockUnmount,
+  })),
 }));
 
 interface EditorViewWithPlaceholder extends EditorView {
@@ -45,8 +50,9 @@ describe('ContentPlaceholderPlugin', () => {
     } as unknown as EditorViewWithPlaceholder;
 
     (isEditorStateEmpty as jest.Mock).mockClear();
-    (ReactDOM.render as jest.Mock).mockClear();
-    (ReactDOM.unmountComponentAtNode as jest.Mock).mockClear();
+    mockRender.mockClear();
+    mockUnmount.mockClear();
+    (createRoot as jest.Mock).mockClear();
   });
 
   afterEach(() => {
@@ -92,11 +98,9 @@ describe('ContentPlaceholderPlugin', () => {
   // Trigger `update()`
   viewInstance.update(editorViewMock);
 
-  // Ensure `ReactDOM.render` was called
-  expect(ReactDOM.render).toHaveBeenCalledTimes(1);
-  expect(ReactDOM.render).toHaveBeenCalledWith(
+  expect(mockRender).toHaveBeenCalledTimes(1);
+  expect(mockRender).toHaveBeenCalledWith(
     React.createElement('div', null, 'Type something...'),
-    mockEl
   );
   expect(mockEl.style.display).toBe('block');
 });
@@ -121,8 +125,7 @@ describe('ContentPlaceholderPlugin', () => {
   // Call update safely
   viewInstance.update(editorViewMock);
 
-  // Ensure ReactDOM.render was NOT called
-  expect(ReactDOM.render).not.toHaveBeenCalled();
+  expect(mockRender).not.toHaveBeenCalled();
 });
 
 
@@ -141,7 +144,7 @@ describe('ContentPlaceholderPlugin', () => {
   viewInstance._el = mockEl;
   viewInstance.update(editorViewMock);
 
-  expect(ReactDOM.render).not.toHaveBeenCalled();
+  expect(mockRender).not.toHaveBeenCalled();
 });
 
 
@@ -159,7 +162,7 @@ describe('ContentPlaceholderPlugin', () => {
   const viewInstance = plugin.spec.view(editorViewMock) as unknown as PlaceholderView;
   viewInstance._el = mockEl;
   viewInstance.update(editorViewMock);
-  expect(ReactDOM.render).not.toHaveBeenCalled();
+  expect(mockRender).not.toHaveBeenCalled();
 });
 
 
@@ -184,13 +187,20 @@ it('should hide the placeholder when the editor is focused', () => {
   const plugin = new ContentPlaceholderPlugin();
   interface PlaceholderView {
     _el: HTMLElement;
+    _focused?: boolean;
+    _getBodyElement?: () => HTMLElement | null;
+    update: (view: EditorView) => void;
     destroy: () => void;  }
 
   const viewInstance = plugin.spec.view(editorViewMock) as unknown as PlaceholderView;
   viewInstance._el = mockEl;
+  viewInstance._focused = false;
+  viewInstance._getBodyElement = jest.fn(() => document.createElement('div'));
+  editorViewMock.dom.appendChild(mockEl);
+  viewInstance.update(editorViewMock);
   viewInstance.destroy();
 
-  expect(ReactDOM.unmountComponentAtNode).toHaveBeenCalledWith(mockEl);
+  expect(mockUnmount).toHaveBeenCalledTimes(1);
   expect(document.body.contains(mockEl)).toBe(false);
 });
 
@@ -207,7 +217,7 @@ it('should hide the placeholder when the editor is focused', () => {
   viewInstance._el = document.createElement('div');
   viewInstance.update(editorViewMock);
 
-  expect(ReactDOM.render).not.toHaveBeenCalled();
+  expect(mockRender).not.toHaveBeenCalled();
 });
 
 
@@ -223,7 +233,7 @@ it('should hide the placeholder when the editor is focused', () => {
   viewInstance._el = undefined;
   viewInstance.update(editorViewMock);
 
-  expect(ReactDOM.render).not.toHaveBeenCalled();
+  expect(mockRender).not.toHaveBeenCalled();
 });
 
 
@@ -239,7 +249,7 @@ it('should hide the placeholder when the editor is focused', () => {
   viewInstance._el = document.createElement('div');
   viewInstance.update(editorViewMock);
 
-  expect(ReactDOM.render).not.toHaveBeenCalled();
+  expect(mockRender).not.toHaveBeenCalled();
 });
 
 
@@ -256,7 +266,7 @@ it('should hide the placeholder when the editor is focused', () => {
   viewInstance._el = null;
   viewInstance.update(editorViewMock);
 
-  expect(ReactDOM.render).not.toHaveBeenCalled();
+  expect(mockRender).not.toHaveBeenCalled();
 });
 
 
@@ -274,7 +284,7 @@ it('should not render placeholder if _getBodyElement() returns null', () => {
   viewInstance._getBodyElement = jest.fn(() => null);
   viewInstance.update(editorViewMock);
 
-  expect(ReactDOM.render).not.toHaveBeenCalled();
+  expect(mockRender).not.toHaveBeenCalled();
 });
 
 
@@ -282,15 +292,22 @@ it('should unmount component when _el is removed from the DOM', () => {
   const plugin = new ContentPlaceholderPlugin();
   interface PlaceholderView {
     _el: HTMLElement;
+    _focused?: boolean;
+    _getBodyElement?: () => HTMLElement | null;
+    update: (view: EditorView) => void;
     destroy: () => void;
   }
   const viewInstance = plugin.spec.view(editorViewMock) as unknown as PlaceholderView;
   viewInstance._el = mockEl;
+  viewInstance._focused = false;
+  viewInstance._getBodyElement = jest.fn(() => document.createElement('div'));
   document.body.appendChild(mockEl);
-  document.body.removeChild(mockEl);
+  editorViewMock.dom.appendChild(mockEl);
+  viewInstance.update(editorViewMock);
+  mockEl.parentNode?.removeChild(mockEl);
   viewInstance.destroy();
 
-  expect(ReactDOM.unmountComponentAtNode).toHaveBeenCalledWith(mockEl);
+  expect(mockUnmount).toHaveBeenCalledTimes(1);
 });
 
 

@@ -3,9 +3,8 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import url from 'url';
-
-import {isOffline} from './isOffline';
+import url from 'node:url';
+import { isOffline } from './isOffline';
 
 export type ImageResult = {
   complete: boolean;
@@ -16,14 +15,14 @@ export type ImageResult = {
   width: number;
 };
 
-const cache: {[src: string]: ImageResult} = {};
+const cache: { [src: string]: ImageResult } = {};
 // Track in-flight requests to deduplicate concurrent calls for the same src
 const inFlight: Record<string, Promise<ImageResult>> = {};
 export function resolveImage(src: string): Promise<ImageResult> {
   const srcStr = src || '';
   // return from cache immediately (no img element, no download)
   if (cache[srcStr]) {
-    return Promise.resolve({...cache[srcStr]});
+    return Promise.resolve({ ...cache[srcStr] });
   }
   //  Deduplicate concurrent requests for the same src
   if (inFlight[srcStr]?.then) {
@@ -58,7 +57,7 @@ function processPromise(src: string): Promise<ImageResult> {
     }
     const parsedURL = url.parse(srcStr);
     // Removed the port validation from here
-    const {protocol} = parsedURL;
+    const { protocol } = parsedURL;
     if (
       !/(http:|https:|data:|blob:)/.test(
         protocol || globalThis.location.protocol
@@ -86,7 +85,7 @@ function processPromise(src: string): Promise<ImageResult> {
         result.naturalWidth = img.naturalWidth || img.width;
         result.naturalHeight = img.naturalHeight || img.height;
         result.complete = true;
-        cache[srcStr] = {...result};
+        cache[srcStr] = { ...result };
       }
       resolve(result);
       dispose();

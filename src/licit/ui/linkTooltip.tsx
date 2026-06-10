@@ -23,8 +23,6 @@ class LinkTooltip extends React.PureComponent {
     onRemove: (view: EditorView) => void;
   };
 
-  _unmounted = false;
-
   state = {
     hidden: false,
   };
@@ -59,7 +57,7 @@ class LinkTooltip extends React.PureComponent {
 
   _openLink = (href: string): void => {
     if (isBookMarkHref(href)) {
-      const id = href.substr(1);
+      const id = href.slice(1);
       const el = document.getElementById(id);
       if (el) {
         const { onCancel, editorView } = this.props;

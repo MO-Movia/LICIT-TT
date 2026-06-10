@@ -14,7 +14,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Extension, Editor } from '@tiptap/core';
 import { EditorEvents, getSchema, JSONContent, useEditor } from '@tiptap/react';
 import {StarterKit} from '@tiptap/starter-kit';
@@ -71,9 +71,11 @@ import DocLayoutCommand from './commands/docLayoutCommand';
  *  theme {string} [light] light/dark theme support for toolbar.
  */
 
-export interface ChangeCB {
-  (data: JSONContent, isEmpty: boolean, view: EditorView): void;
-}
+export type ChangeCB = (
+  data: JSONContent,
+  isEmpty: boolean,
+  view: EditorView
+) => void;
 
 export type ReadyCB = (ref: LicitHandle) => void;
 export interface LicitProps {
@@ -292,7 +294,7 @@ const updateSpec = (
 
   // update current array with the latest info
   for (let i = 0; i < collection.length; i += 2) {
-    if (keysUpdate.some((element) => element === collection[i])) {
+    if (keysUpdate.includes(collection[i] as string)) {
       existingSchema.spec[attrName] = (
         existingSchema.spec[attrName] as OrderedMap<unknown>
       ).update(collection[i] as string, collection[i + 1]);
@@ -363,7 +365,7 @@ const initDevTool = (debug: boolean, editorView: EditorView): void => {
               '.'.concat('__prosemirror-dev-tools__')
             );
             if (place) {
-              ReactDOM.unmountComponentAtNode(place);
+              createRoot(place).unmount();
               place.innerHTML = '';
             }
           });
@@ -674,7 +676,7 @@ const LicitComponent = (
       isNodeHasAttribute,
     ]
   );
-  const [, setEditorState] = useState(editor?.state);
+  const [, setEditorState] = useState(editor?.state); //NOSONAR
   // Register event handlers only once when editor is available
   useEffect(() => {
     if (!editor) return;

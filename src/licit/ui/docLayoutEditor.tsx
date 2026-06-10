@@ -32,7 +32,6 @@ type DocLayoutEditorState = {
 class DocLayoutEditor extends React.PureComponent<DocLayoutEditorProps> {
 
   public static readonly contextType = ThemeContext;
-  _unmounted = false;
   // [FS] IRAD-1005 2020-07-07
   // Upgrade outdated packages.
   // To take care of the property type declaration.

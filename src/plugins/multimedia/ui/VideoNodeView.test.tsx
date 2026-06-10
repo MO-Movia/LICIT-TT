@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {VideoNodeView, VideoViewBody} from './VideoNodeView';
 import {EditorState} from 'prosemirror-state';
 import {schema} from 'prosemirror-schema-basic';
@@ -688,10 +695,10 @@ describe('Video view body', () => {
         left: 9,
       },
     };
-    videoviewbody._body = document.createElement('div');
+    videoviewbody._bodyEl = document.createElement('div');
     expect(videoviewbody._onBodyResize(resizeobserverentry)).toBeUndefined();
   });
-  it('should handle _onBodyResize with this._body undefined', () => {
+  it('should handle _onBodyResize with this._bodyEl undefined', () => {
     const mockReactInstance = document.createElement('div');
     const resizeobserverentry = {
       target: mockReactInstance,
@@ -706,7 +713,7 @@ describe('Video view body', () => {
         left: 9,
       },
     };
-    videoviewbody._body = undefined;
+    videoviewbody._bodyEl = undefined;
     expect(videoviewbody._onBodyResize(resizeobserverentry)).toBeUndefined();
   });
 

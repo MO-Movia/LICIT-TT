@@ -60,9 +60,4 @@ describe('VideoEditor', () => {
     videoeditor._insert();
     expect(spy).toHaveBeenCalled();
   });
-
-  it('should handle _getYouTubeId', () => {
-    const videoeditor = new VideoEditor(props);
-    expect(videoeditor._getYouTubeId('')).toBeDefined();
-  });
 });
