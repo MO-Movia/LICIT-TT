@@ -192,15 +192,18 @@ describe('Image view body', () => {
   });
   it('should handle componentDidUpdate', () => {
     const spy = jest.spyOn(imageviewbody, '_resolveOriginalSize');
-    imageviewbody.componentDidUpdate({
-      decorations: [],
-      editorView: editorfocused,
-      getPos: () => 1,
-      node: {attrs: {src: 'test'}} as unknown as Node,
-      dom: document.createElement('img'),
-      selected: true,
-      focused: true,
-    });
+    imageviewbody.componentDidUpdate(
+      {
+        decorations: [],
+        editorView: editorfocused,
+        getPos: () => 1,
+        node: {attrs: {src: 'test'}} as unknown as Node,
+        dom: document.createElement('img'),
+        selected: true,
+        focused: true,
+      },
+      editorState
+    );
     expect(spy).toHaveBeenCalled();
   });
 

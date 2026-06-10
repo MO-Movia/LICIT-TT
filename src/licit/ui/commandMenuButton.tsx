@@ -95,7 +95,7 @@ class CommandMenuButton extends React.PureComponent<PropsType, StateType> {
         hasChild={hasChild && !isMaximizeButton}
         icon={icon}
         id={this._id}
-        label={label}
+        label={label || (hasChild && !isMaximizeButton ? '?' : null)}
         onClick={this._onClick}
         theme={theme_1.toString()}
         title={title}

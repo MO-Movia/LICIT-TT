@@ -1,5 +1,5 @@
 /* <CustomButton /> */
-@import url("./czi-vars.css");
+@import url('./czi-vars.css');
 
 .czi-custom-buttons {
   margin: 0 8px;
@@ -116,8 +116,8 @@
 }
 
 .czi-menu-drop-icon {
-  font-family: "Material Icons", sans-serif !important;
-  content: "\e5cc";
+  font-family: 'Material Icons', sans-serif !important;
+  content: '\e5cc';
   display: block;
   height: 8px;
   position: absolute;
@@ -130,10 +130,19 @@
 
 .czi-custom-button.is-active.dark {
   background-color: rgb(0 0 0 / 50%);
-    border: 1px gray solid;
+  border: 1px gray solid;
 }
 
 .czi-custom-button.is-active.light {
   background-color: rgb(125 125 125 / 50%);
-    border: 1px gray solid;
+  border: 1px gray solid;
+}
+
+.custom-button-dropdown-caret {
+  font-size: 5px;
+  color: currentcolor;
+  margin-left: 21px;
+  position: fixed;
+  display: block;
+  top: 33px;
 }

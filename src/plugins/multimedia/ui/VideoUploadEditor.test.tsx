@@ -6,9 +6,9 @@
 import {VideoUploadEditor} from './VideoUploadEditor';
 
 const VideoUploadEditorProps = {
-  runtime: {
-    // Video Proxy
+  runtime: { // Video Proxy
     canProxyVideoSrc: (_src: string) => true,
+    getProxyVideoSrc: (_src: string) => 'http://video.mp4',
     getVideoSrc: jest.fn().mockReturnValue(Promise.resolve('http://video.mp4')),
 
     // Video Upload
@@ -20,19 +20,21 @@ const VideoUploadEditorProps = {
       width: 150,
     }),
   },
-  close: () => undefined,
+  close: () => undefined
 };
 const VideoUploadEdrProps = {
-  runtime: {
-    // Video Proxy
+  runtime: { // Video Proxy
     canProxyVideoSrc: (_src: string) => false,
+    getProxyVideoSrc: (_src: string) => 'http://video.mp4',
     getVideoSrc: jest.fn().mockReturnValue(Promise.resolve('http://video.mp4')),
 
     // Video Upload
     canUploadVideo: () => false,
-    uploadVideo: jest.fn().mockResolvedValue({}),
+    uploadVideo: jest.fn().mockResolvedValue({
+
+    }),
   },
-  close: () => undefined,
+  close: () => undefined
 };
 const testCases=[VideoUploadEditorProps,VideoUploadEdrProps];
 describe('Video Upload Editor', () => {
@@ -50,12 +52,10 @@ describe('Video Upload Editor', () => {
 });
 describe('Video Upload Editor (group 2)', () => {
   const VideoUploadEditorProps = {
-    runtime: {
-      // Video Proxy
+    runtime: { // Video Proxy
       canProxyVideoSrc: (_src: string) => true,
-      getVideoSrc: jest
-        .fn()
-        .mockReturnValue(Promise.resolve('http://video.mp4')),
+      getProxyVideoSrc: (_src: string) => 'http://video.mp4',
+      getVideoSrc: jest.fn().mockReturnValue(Promise.resolve('http://video.mp4')),
 
       // Video Upload
       canUploadVideo: () => true,
@@ -66,7 +66,7 @@ describe('Video Upload Editor (group 2)', () => {
         width: 150,
       }),
     },
-    close: () => undefined,
+    close: () => undefined
   };
 
  const videouploadeditor = new VideoUploadEditor(VideoUploadEditorProps);
@@ -115,25 +115,21 @@ describe('Video Upload Editor (group 2)', () => {
 
      });
      it('should handle _upload (case 2)', async() => {
-      videouploadeditor.props = {
-        runtime: {
-          // Video Proxy
-          canProxyVideoSrc: (_src: string) => true,
-          getVideoSrc: jest
-            .fn()
-            .mockReturnValue(Promise.resolve('http://video.mp4')),
+      videouploadeditor.props = {  runtime: { // Video Proxy
+        canProxyVideoSrc: (_src: string) => true,
+        getProxyVideoSrc: (_src: string) => 'http://video.mp4',
+        getVideoSrc: jest.fn().mockReturnValue(Promise.resolve('http://video.mp4')),
 
-          // Video Upload
-          canUploadVideo: () => true,
-          uploadVideo: jest.fn().mockResolvedValue({
-            height: 0,
-            id: 'Test-1',
-            src: '',
-            width: 0,
-          }),
-        },
-        close: () => undefined,
-      };
+        // Video Upload
+        canUploadVideo: () => true,
+        uploadVideo: jest.fn().mockResolvedValue({
+          height: 0,
+          id: 'Test-1',
+          src: '',
+          width: 0,
+        }),
+      },
+      close: () => undefined};
 
       const file = new File([], 'test.mp4');
       const instance = await videouploadeditor._upload(file);
