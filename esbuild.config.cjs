@@ -70,7 +70,7 @@ async function build() {
       outdir: 'dist',
       bundle: true,
       sourcemap: 'linked',
-      platform: 'node',
+      platform: 'neutral',
       target: 'es2022',
       format: 'esm',
       jsx: 'automatic',

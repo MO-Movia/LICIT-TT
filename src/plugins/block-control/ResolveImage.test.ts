@@ -6,7 +6,7 @@
 import { resolveImage, isImgInstance } from './ResolveImage';
 
 
-jest.mock('node:url', () => {
+jest.mock('url', () => {
   const parse = (src: string) => {
     if (!src) return { protocol: null };
     try {
