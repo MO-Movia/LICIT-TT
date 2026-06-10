@@ -73,7 +73,7 @@ describe('ImageInlineEditor', () => {
     imageinlineeditor._onClick('align_test');
     imageinlineeditor._onRemove(view1);
     imageinlineeditor._onCrop(view1);
-    expect(spy).lastReturnedWith('align_test');
+    expect(spy).toHaveLastReturnedWith('align_test');
   });
   it('should handle prepButtons', () => {
     const imageinlineeditor = new ImageInlineEditor(() => undefined);

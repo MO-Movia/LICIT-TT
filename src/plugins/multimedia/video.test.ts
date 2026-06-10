@@ -179,9 +179,9 @@ describe('Video Plugin - Test', () => {
   });
 
   it('should change on src Change Event - resolved', () => {
-    mockedAxios.get.mockResolvedValue(resp);
+    const spy = jest.spyOn(VideoeditorIns, 'getsrc');
     VideoeditorIns._onSrcChange(srcevent);
-    expect(mockedAxios.get).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
   });
 
   it('should change on src Change Event - rejected', () => {
@@ -196,7 +196,7 @@ describe('Video Plugin - Test', () => {
     } as React.ChangeEvent<HTMLInputElement>;
     const spy = jest.spyOn(VideoeditorIns, 'setState');
     VideoeditorIns._onWidthChange(event);
-    expect(spy).toBeCalledWith({width, validValue: true});
+    expect(spy).toHaveBeenCalledWith({width, validValue: true});
   });
 
   it('should change on Height Change Event', () => {
@@ -206,7 +206,7 @@ describe('Video Plugin - Test', () => {
     } as React.ChangeEvent<HTMLInputElement>;
     const spy = jest.spyOn(VideoeditorIns, 'setState');
     VideoeditorIns._onHeightChange(event);
-    expect(spy).toBeCalledWith({height, validValue: true});
+    expect(spy).toHaveBeenCalledWith({height, validValue: true});
   });
 
   it('should showCursorPlaceholder', () => {

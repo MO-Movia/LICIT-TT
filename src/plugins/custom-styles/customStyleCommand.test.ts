@@ -1734,7 +1734,7 @@ describe('getMarkByStyleName', () => {
             },
           ],
           toDOM() {
-            return "{ highlightColor: {default: '',},}";
+            return ['span', { highlightColor: '' }, 0];
           },
         },
         'mark-font-size': {
@@ -1931,7 +1931,7 @@ describe('getMarkByStyleName', () => {
             },
           ],
           toDOM() {
-            return "{ highlightColor: {default: '',},}";
+            return ['span', { highlightColor: '' }, 0];
           },
         },
         'mark-font-size': {

@@ -18,7 +18,7 @@ export type ImageResult = {
 
 const cache: {[src: string]: ImageResult} = {};
 // Track in-flight requests to deduplicate concurrent calls for the same src
-const inFlight = {};
+const inFlight: Record<string, Promise<ImageResult>> = {};
 export function resolveImage(src: string): Promise<ImageResult> {
   const srcStr = src || '';
   // return from cache immediately (no img element, no download)
@@ -26,16 +26,15 @@ export function resolveImage(src: string): Promise<ImageResult> {
     return Promise.resolve({...cache[srcStr]});
   }
   //  Deduplicate concurrent requests for the same src
-  if (inFlight[srcStr]) {
+  if (inFlight[srcStr]?.then) {
     return inFlight[srcStr];
   }
   // Start resolution in parallel (no blocking queue)
   const promise = processPromise(src);
   inFlight[srcStr] = promise;
-  promise.finally(() => {
+  return promise.finally(() => {
     delete inFlight[srcStr];
   });
-  return promise;
 }
 
 export function isImgInstance(img: unknown): boolean {
@@ -110,7 +109,7 @@ function processPromise(src: string): Promise<ImageResult> {
         else onError();
       };
 
-      // Use img.decode() when available — it decodes the image off the main
+      // Use img.decode() when available ï¿½ it decodes the image off the main
       // thread, preventing UI hangs for large images. Falls back to load/error
       // events for environments that don't support decode().
       if (typeof img.decode === 'function') {

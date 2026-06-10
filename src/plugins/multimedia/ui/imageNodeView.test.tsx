@@ -309,22 +309,22 @@ describe('Image view body', () => {
   });
   it('should handle _renderInlineEditor (case 2)', () => {
     const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
+    elem.dataset.active = 'true';
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
     expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toBeCalled();
+    expect(spy).toHaveBeenCalled();
   });
   it('should handle _renderInlineEditor else statement', () => {
     imageviewbody._inlineEditor = {
       update: () => undefined,
     } as unknown as PopUpHandle;
     const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
+    elem.dataset.active = 'true';
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
     expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toBeCalled();
+    expect(spy).toHaveBeenCalled();
   });
   it('should handle _onResizeEnd', () => {
     const mockSchema = new Schema({

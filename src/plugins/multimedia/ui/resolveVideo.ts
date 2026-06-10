@@ -5,7 +5,7 @@
 
 import {isOffline} from './isOffline';
 import url from 'url';
-import {VideoEditorState} from './VideoEditor';
+import type {VideoEditorState} from './VideoEditor';
 
 export type VideoResult = {
   complete: boolean;

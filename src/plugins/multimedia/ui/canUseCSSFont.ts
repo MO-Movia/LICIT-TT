@@ -3,13 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-const cached: {[fonst: string]: boolean} = {};
+const cached: {[fonst: string]: Promise<boolean>} = {};
 
 export function canUseCSSFont(fontName: string): Promise<boolean> {
   const doc = document;
 
-  if (cached[fontName]) {
-    return Promise.resolve(cached[fontName]);
+  if (cached[fontName]?.then) {
+    return cached[fontName];
   }
 
   if (
@@ -21,10 +21,12 @@ export function canUseCSSFont(fontName: string): Promise<boolean> {
     // Feature is not supported, install the CSS anyway
     // https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/check#Browser_compatibility
     console.warn('FontFaceSet is not supported');
-    return Promise.resolve(false);
+    const promise = Promise.resolve(false);
+    cached[fontName] = promise;
+    return promise;
   }
 
-  return new Promise((resolve) => {
+  const promise = new Promise<boolean>((resolve) => {
     // https://stackoverflow.com/questions/5680013/how-to-be-notified-once-a-web-font-has-loaded
     // All fonts in use by visible text have loaded.
     const check = () => {
@@ -36,11 +38,12 @@ export function canUseCSSFont(fontName: string): Promise<boolean> {
       const fontFaces = Array.from(doc.fonts.values());
       const matched = fontFaces.find((ff) => ff['family'] === fontName);
       const result = !!matched;
-      cached[fontName] = result;
       resolve(result);
     };
     doc.fonts.ready
       .then(check)
       .catch(() => resolve(false));
   });
+  cached[fontName] = promise;
+  return promise;
 }

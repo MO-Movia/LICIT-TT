@@ -62,7 +62,7 @@ describe('ImageInlineEditor', () => {
     };
     const spy = jest.spyOn(imageinlineeditor.props, 'onSelect');
     imageinlineeditor._onClick('align_test');
-    expect(spy).lastReturnedWith('align_test');
+    expect(spy).toHaveLastReturnedWith('align_test');
   });
   it('should handle prepButtons', () => {
     const imageinlineeditor = new ImageInlineEditor(() => undefined);

@@ -19,13 +19,14 @@ import {
   atAnchorBottomCenter,
   PopUpHandle,
 } from '../../../commands';
-import ResizeObserver from './ResizeObserver';
 import {resolveImage} from './resolveImage';
 import {uuid} from './uuid';
 
 import type {EditorRuntime} from '../Types';
 import type {NodeViewProps} from './CustomNodeView';
+
 import type {ResizeObserverEntry} from './ResizeObserver';
+import {observe, unobserve} from './ResizeObserver';
 import {ImageInlineEditor} from './ImageInlineEditor';
 import {FP_WIDTH} from '../Constants';
 
@@ -181,7 +182,7 @@ export class ImageViewBody extends React.PureComponent<
     // Also re-render the inline editor when the image finishes loading
     // (originalSize.complete flips to true) while the node is already selected.
     // Without this, clicking a large image while it's still resolving would
-    // never show the menu — _renderInlineEditor was only triggered by prop
+    // never show the menu ï¿½ _renderInlineEditor was only triggered by prop
     // changes, not by the setState that follows _resolveOriginalSize().
     const prevComplete = prevState?.originalSize?.complete;
     const currentComplete = this.state.originalSize?.complete;
@@ -490,13 +491,13 @@ export class ImageViewBody extends React.PureComponent<
       // Mounting
       const el = ReactDOM.findDOMNode(ref);
       if (el instanceof HTMLElement) {
-        ResizeObserver.observe(el, this._onBodyResize);
+        observe(el, this._onBodyResize);
       }
     } else {
       // Unmounting.
       const el = this._body && ReactDOM.findDOMNode(this._body);
       if (el instanceof HTMLElement) {
-        ResizeObserver.unobserve(el);
+        unobserve(el);
       }
       this._body = null;
     }

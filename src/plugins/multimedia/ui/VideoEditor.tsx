@@ -116,7 +116,7 @@ export class VideoEditor extends React.PureComponent<
       if (this.state.src === result.src) {
         this._setStateValues(result.src, result.width, result.height, true);
       }
-    });
+    }).catch(console.error);
   };
 
   _setStateValues = (

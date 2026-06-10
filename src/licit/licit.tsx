@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import React, {
@@ -347,7 +347,9 @@ const initDevTool = (debug: boolean, editorView: EditorView): void => {
         try {
           // Method is exported as both the default and named, Using named
           // for clarity and future proofing.
-          const applyPMDevTools = await import('prosemirror-dev-tools');
+          const applyPMDevTools = await import('prosemirror-dev-tools').catch(
+            () => undefined
+          );
           // got the pm dev tools instance.
           applyDevTools = applyPMDevTools.default;
           // Attach debug tools to current editor instance.

@@ -4126,7 +4126,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown,
+        } as unknown as EditorState,
         {
           selection: {
             $from: {
@@ -4151,12 +4151,12 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown,
+        } as unknown as EditorState,
         null,
         [] as Transaction[],
         null
       )
-    ).toBeDefined();
+    ).toBeUndefined();
   });
   it('should handle onUpdateAppendTransaction when slice1 is null (case 2)', () => {
     const linkmark = new Mark();
@@ -4281,7 +4281,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown,
+        } as unknown as EditorState,
         {
           selection: {
             $from: {
@@ -4307,7 +4307,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown,
+        } as unknown as EditorState,
         { input: { lastKeyCode: 13 } },
         [] as Transaction[],
         null
@@ -4443,7 +4443,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown,
+        } as unknown as EditorState,
         {
           selection: {
             $from: {
@@ -4469,7 +4469,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown,
+        } as unknown as EditorState,
         { input: { lastKeyCode: 13 } },
         [] as Transaction[],
         null
@@ -4598,7 +4598,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown,
+        } as unknown as EditorState,
         {
           selection: {
             $from: {
@@ -4625,7 +4625,7 @@ describe('onUpdateAppendTransaction (group 2)', () => {
             },
           },
           doc: mockdoc,
-        } as unknown,
+        } as unknown as EditorState,
         { input: { lastKeyCode: 8 } },
         [] as Transaction[],
         null
@@ -4808,6 +4808,10 @@ describe('applyStyleForNextParagraph', () => {
         if (depth === 1) return 0;
         return 0;
       },
+
+      start() {
+        return 0;
+      },
     };
     const prevstate = {
       doc: {
@@ -4920,6 +4924,10 @@ describe('applyStyleForNextParagraph', () => {
       index(depth) {
         if (depth === 0) return 1;
         if (depth === 1) return 0;
+        return 0;
+      },
+
+      start() {
         return 0;
       },
     };

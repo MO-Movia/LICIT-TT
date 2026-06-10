@@ -221,7 +221,7 @@ describe('resolveImage (img instance)', () => {
 
     const isImgInsMock = jest.spyOn(resolveImageMod, 'isImgInstance');
     isImgInsMock.mockReturnValue(true);
-    global.document.createElement = (function (create) {
+    globalThis.document.createElement = (function (create) {
       return function (...args) {
         const element = create.apply(this, args);
 
@@ -362,7 +362,6 @@ describe('resolveImage', () => {
 
 describe('resolveImage (group 2)', () => {
   it('should resolve Image - onLoad offline', async () => {
-    const spy = jest.spyOn(Object, 'hasOwn').mockReturnValue(true);
     const res = {
       complete: true,
       height: 400,
@@ -372,8 +371,8 @@ describe('resolveImage (group 2)', () => {
       width: 200,
     };
 
-    await resolveImage(res.src);
-    expect(spy).toBeCalled();
+    const resolved = await resolveImage(res.src);
+    expect(resolved.src).toBe(res.src);
   });
 });
 

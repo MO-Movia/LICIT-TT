@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import DocLayoutCommand from './commands/docLayoutCommand';
@@ -21,7 +21,7 @@ import HistoryRedoCommand from './commands/historyRedoCommand';
 import HistoryUndoCommand from './commands/historyUndoCommand';
 import HorizontalRuleCommand from './commands/horizontalRuleCommand';
 import LinkSetURLCommand from './commands/linkSetURLCommand';
-import {ListToggleCommand} from './commands/listToggleCommand';
+import { ListToggleCommand } from './commands/listToggleCommand';
 import MarksClearCommand from './commands/marksClearCommand';
 import TableBackgroundColorCommand from './commands/tableBackgroundColorCommand';
 import TableBorderColorCommand from './commands/tableBorderColorCommand';
@@ -45,14 +45,14 @@ import TableToggleHeaderRowCommand from './commands/tableToggleHeaderRowCommand'
 import TableToggleHeaderColumnCommand from './commands/tableToggleHeaderColumnCommand';
 import MarkToggleCommandEx from './commands/markToggleCommandEx';
 import ListSplitCommand from './commands/listSplitCommand';
-import {LandscapeCommand} from './commands/LandscapeCommand'; 
+import { LandscapeCommand } from './commands/LandscapeCommand';
 
 // Note that Firefox will, by default, add various kinds of controls to
 // editable tables, even though those don't work in ProseMirror. The only way
 // to turn these off is globally, which you might want to do with the
 // following code:
-document.execCommand('enableObjectResizing', false, 'false');
-document.execCommand('enableInlineTableEditing', false, 'false');
+document.execCommand?.('enableObjectResizing', false, 'false');
+document.execCommand?.('enableInlineTableEditing', false, 'false');
 export const CLEAR_FORMAT = new MarksClearCommand();
 export const DOC_LAYOUT = new DocLayoutCommand();
 export const EM = new MarkToggleCommandEx(MARK_EM);

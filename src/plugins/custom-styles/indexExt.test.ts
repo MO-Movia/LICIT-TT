@@ -155,9 +155,13 @@ describe('index branch coverage', () => {
             childCount: 1,
           };
         }
+        if (depth === -1) {
+          return { type: { name: 'paragraph' } };
+        }
         return { type: { name: 'doc' } };
       },
       index: () => 1,
+      start: () => 2,
     };
 
     const prevState = {

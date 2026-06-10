@@ -10,10 +10,10 @@ import { CustomButton, preventEventDefault } from '../../../commands';
 import {LoadingIndicator} from './LoadingIndicator';
 import {uuid} from './uuid';
 
-import type {EditorRuntime, ImageLike} from '../Types';
+import type {EditorRuntime} from '../Types';
 type ImageUploadProps = {
   runtime: EditorRuntime;
-  close: (val?: ImageLike) => void;
+  close: (val?: { src: string }) => void;
 };
 export class ImageUploadEditor extends React.PureComponent {
   _unmounted = false;
@@ -31,8 +31,8 @@ export class ImageUploadEditor extends React.PureComponent {
   }
 
   render(): React.ReactElement {
-    const {id, error, pending} = this.state;
-    const className = cx('molm-czi-image-upload-editor', {pending, error});
+    const { id, error, pending } = this.state;
+    const className = cx('molm-czi-image-upload-editor', { pending, error });
     let label: string | React.ReactElement = 'Choose an image file...';
 
     if (pending) {
@@ -74,7 +74,7 @@ export class ImageUploadEditor extends React.PureComponent {
     }
   };
 
-  _onSuccess = (image: ImageLike): void => {
+  _onSuccess = (image: { src: string }): void => {
     if (this._unmounted) {
       return;
     }
@@ -95,11 +95,11 @@ export class ImageUploadEditor extends React.PureComponent {
   _upload = async (file: File): Promise<void> => {
     try {
       const runtime = this.props.runtime || {};
-      const {canUploadImage, uploadImage} = runtime;
+      const { canUploadImage, uploadImage } = runtime;
       if (!canUploadImage || !uploadImage || !canUploadImage()) {
         throw new Error('feature is not available');
       }
-      this.setState({pending: true, error: null});
+      this.setState({ pending: true, error: null });
       const image = await uploadImage(file);
       this._onSuccess(image);
     } catch (ex) {

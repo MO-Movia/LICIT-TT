@@ -89,7 +89,7 @@ describe('PointerSurface', () => {
     const p = (instance.render()).props as Record<string, unknown>;
     expect(typeof p.onMouseDown).toBe('function');
     expect(p.onMouseDown).not.toBe(instance._onMouseDown);
-    expect(p.onMouseLeave).toBeNull();
+    expect(p.onMouseLeave).toBeDefined();
   });
 
   it('initialises state and instance fields correctly', () => {

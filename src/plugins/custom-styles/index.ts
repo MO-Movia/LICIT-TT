@@ -277,7 +277,7 @@ export function onUpdateAppendTransaction(
     ) {
       tr = applyStoredMarksAfterHardBreak(
         nextState,
-        tr as Transform
+        tr
       ) as Transaction;
     }
 
@@ -712,7 +712,7 @@ export function applyStyleForNextParagraph(
   const { $from } = nextState.selection;
   if (
     view &&
-    isNewParagraph(prevState as EditorState, nextState as EditorState, view)
+    isNewParagraph(prevState, nextState, view)
   ) {
     const prevParagraph = findPreviousParagraph($from);
     const required = requiredAddAttr(prevParagraph);
