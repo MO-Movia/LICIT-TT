@@ -20,9 +20,7 @@ import {
   atAnchorTopCenter,
   PopUpHandle,
 } from '../../../commands';
-import { observe, unobserve } from './ResizeObserver';
 import { resolveImage } from './resolveImage';
-import { uuid } from './uuid';
 import ResizeObserver from './ResizeObserver';
 import {uuid} from './uuid';
 
@@ -387,6 +385,19 @@ export class ImageViewBody extends React.PureComponent<
       height = originalSize.height || IMAGE_PLACEHOLDER_SIZE;
     }
     return { width, height };
+  }
+
+  _renderInlineEditor(): void {
+    const el = document.getElementById(this._id);
+    if (!el || el.getAttribute('data-active') !== 'true') {
+      this._closeMenu();
+      return;
+    }
+
+    this._menu?.update({
+      close: this._closeMenu,
+      items: this._getMenuItems(),
+    });
   }
 
   _resolveOriginalSize = async (): Promise<void> => {
