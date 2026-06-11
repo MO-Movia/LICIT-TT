@@ -38,4 +38,33 @@ describe('Resize observer', () => {
       unobserve(element, (_ResizeObserverEntry) => undefined)
     ).toBeUndefined();
   });
+  it('should handle unobserve when callbacks length > 0', () => {
+    const element = document.createElement('div');
+    const callback1 = jest.fn();
+    const callback2 = jest.fn();
+    observe(element, callback1);
+    observe(element, callback2);
+    expect(unobserve(element, callback1)).toBeUndefined();
+  });
+  it('should handle unobserve when callbacks length becomes 0', () => {
+    const element = document.createElement('div');
+    const callback = jest.fn();
+    observe(element, callback);
+    expect(unobserve(element, callback)).toBeUndefined();
+  });
+  it('should handle unobserve when nodesObserving size becomes 0', () => {
+    const element = document.createElement('div');
+    const callback = jest.fn();
+    observe(element, callback);
+    expect(unobserve(element, callback)).toBeUndefined();
+  });
+  it('should handle observe with multiple callbacks on same element', () => {
+    const element = document.createElement('div');
+    const callback1 = jest.fn();
+    const callback2 = jest.fn();
+    observe(element, callback1);
+    observe(element, callback2);
+    expect(unobserve(element, callback1)).toBeUndefined();
+    expect(unobserve(element, callback2)).toBeUndefined();
+  });
 });
