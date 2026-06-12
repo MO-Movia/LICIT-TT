@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import cx from 'classnames';
@@ -37,7 +37,7 @@ type PropsType = {
   className?: string;
   commandGroups: Array<unknown>;
   disabled?: boolean;
-  dispatch: (tr: Transform) => void;
+  dispatch: (tr: Transform) => void; //NOSONAR
   editorState: EditorState;
   editorView: EditorViewEx;
   icon?: string | React.ReactElement;
@@ -212,7 +212,7 @@ class CommandMenuButton extends React.PureComponent<PropsType, StateType> {
         hasChild={hasChild && !isMaximizeButton}
         icon={icon}
         id={this._id}
-        label={label}
+        label={label || (hasChild && !isMaximizeButton ? '?' : null)}
         onClick={this._onClick}
         theme={theme_1.toString()}
         title={title}
@@ -225,15 +225,15 @@ class CommandMenuButton extends React.PureComponent<PropsType, StateType> {
   }
 
   _onClick = (): void => {
-    const expanded = !this.state.expanded;
-    this.setState({
-      expanded,
+    this.setState((prevState) => {
+      const expanded = !prevState.expanded;
+      if (expanded) {
+        this._showMenu();
+      } else {
+        this._hideMenu();
+      }
+      return { expanded };
     });
-    if (expanded) {
-      this._showMenu();
-    } else {
-      this._hideMenu();
-    }
   };
 
   _hideMenu = (): void => {

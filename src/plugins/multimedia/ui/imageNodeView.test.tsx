@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {ImageNodeView, ImageViewBody} from './ImageNodeView';
 import {Schema, Node} from 'prosemirror-model';
 import {EditorState} from 'prosemirror-state';
@@ -192,15 +199,18 @@ describe('Image view body', () => {
   });
   it('should handle componentDidUpdate', () => {
     const spy = jest.spyOn(imageviewbody, '_resolveOriginalSize');
-    imageviewbody.componentDidUpdate({
-      decorations: [],
-      editorView: editorfocused,
-      getPos: () => 1,
-      node: {attrs: {src: 'test'}} as unknown as Node,
-      dom: document.createElement('img'),
-      selected: true,
-      focused: true,
-    });
+    imageviewbody.componentDidUpdate(
+      {
+        decorations: [],
+        editorView: editorfocused,
+        getPos: () => 1,
+        node: {attrs: {src: 'test'}} as unknown as Node,
+        dom: document.createElement('img'),
+        selected: true,
+        focused: true,
+      },
+      editorState
+    );
     expect(spy).toHaveBeenCalled();
   });
   it('should handle render', () => {
@@ -306,22 +316,22 @@ describe('Image view body', () => {
   });
   it('should handle _renderInlineEditor (case 2)', () => {
     const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
+    elem.dataset.active = 'true';
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
     expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toBeCalled();
+    expect(spy).toHaveBeenCalled();
   });
   it('should handle _renderInlineEditor else statement', () => {
     imageviewbody._inlineEditor = {
       update: () => undefined,
     } as unknown as PopUpHandle;
     const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
+    elem.dataset.active = 'true';
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
     expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toBeCalled();
+    expect(spy).toHaveBeenCalled();
   });
   it('should handle _onResizeEnd', () => {
     const mockSchema = new Schema({
@@ -478,9 +488,11 @@ describe('Image view body', () => {
 
   it('should handle _onBodyRef', () => {
     imageviewbody._body = document.createElement('div');
+    imageviewbody._bodyEl = imageviewbody._body as HTMLElement;
     const spy = jest.spyOn(ResizeObserver, 'unobserve');
     imageviewbody._onBodyRef();
     expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it('should handle _onBodyResize', () => {
@@ -539,9 +551,7 @@ describe('Image view body', () => {
   });
   it('should handle _onBodyRef (case 2)', () => {
     const mockElement = document.createElement('div');
-    expect(
-      imageviewbody._onBodyRef(mockElement as unknown as React.ReactInstance)
-    ).toBeUndefined();
+    expect(imageviewbody._onBodyRef(mockElement)).toBeUndefined();
   });
   it('should handle _resolveOriginalSize', () => {
     imageviewbody._mounted = true;

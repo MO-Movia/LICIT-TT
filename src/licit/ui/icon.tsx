@@ -1,12 +1,12 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import React from 'react';
 
-import canUseCSSFont from '../canUseCSSFont';
 import { ThemeContext } from '../../commands';
+import canUseCSSFont from '../../utils/utils/canUseCSSFont';
 
 const cached = {};
 

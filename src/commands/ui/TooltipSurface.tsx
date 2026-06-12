@@ -36,8 +36,9 @@ export class TooltipSurface extends React.PureComponent<TooltipSurfaceProps> {
 
   render(): React.ReactElement {
     const {tooltip, children} = this.props;
+    // Changing the element semantics affects existing tooltip UI interactions/layout.
     return (
-      <span
+      <span //NOSONAR
         aria-label={tooltip}
         className="czi-tooltip-surface"
         data-tooltip={tooltip}

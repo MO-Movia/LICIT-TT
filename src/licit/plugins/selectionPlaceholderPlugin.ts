@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
@@ -21,32 +21,25 @@ const SPEC = {
       return DecorationSet.empty;
     },
 
-    apply(tr, set) {
-      set = set.map(tr.mapping, tr.doc);
-      const action = tr.getMeta(this);
-
+    apply(tr, decorationSet) {
+      decorationSet = decorationSet.map(tr.mapping, tr.doc); //NOSONAR
+      const action = tr.getMeta(singletonInstance);
       if (!action) {
-        return set as DecorationSet;
+        return decorationSet as DecorationSet;
       }
-
       if (action.add) {
         const deco = Decoration.inline(
           action.add.from,
           action.add.to,
-          {
-            class: 'czi-selection-placeholder',
-          },
-          {
-            id: PLACE_HOLDER_ID,
-          }
+          { class: 'czi-selection-placeholder' },
+          { id: PLACE_HOLDER_ID }
         );
-        set = set.add(tr.doc, [deco]);
+        decorationSet = decorationSet.add(tr.doc, [deco]);
       } else if (action.remove) {
-        const found = set.find(null, null, specFinder);
-        set = set.remove(found);
+        const found = decorationSet.find(null, null, specFinder);
+        decorationSet = decorationSet.remove(found);
       }
-
-      return set as DecorationSet;
+      return decorationSet as DecorationSet;
     },
   },
   props: {
@@ -58,12 +51,18 @@ const SPEC = {
 };
 
 class SelectionPlaceholderPlugin extends Plugin {
+  private static _instance: SelectionPlaceholderPlugin = null;
+
+  static get instance(): SelectionPlaceholderPlugin {
+    return SelectionPlaceholderPlugin._instance;
+  }
+
   constructor() {
     super(SPEC);
-    if (singletonInstance) {
-      return singletonInstance as SelectionPlaceholderPlugin;
+    if (!SelectionPlaceholderPlugin._instance) {
+      SelectionPlaceholderPlugin._instance = this;
+      singletonInstance = SelectionPlaceholderPlugin._instance;
     }
-    singletonInstance = this as SelectionPlaceholderPlugin;
   }
 }
 

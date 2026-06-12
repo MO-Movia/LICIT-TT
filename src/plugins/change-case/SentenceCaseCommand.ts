@@ -180,16 +180,18 @@ export class SentanceCaseCommand extends UICommand {
   }
 
   endsWithSentenceWrapper(delimiterSeparatedChars: string[]): boolean {
-    const charectersToInclude = [">", "}", ")", "]", '"'];
+    const charactersToInclude = new Set([">", "}", ")", "]", '"']);
 
     for (const chunk of delimiterSeparatedChars) {
       let isParagraphStart = true;
+
       for (const char of chunk) {
-        if (!charectersToInclude.includes(char)) {
+        if (!charactersToInclude.has(char)) {
           isParagraphStart = false;
           break;
         }
       }
+
       if (isParagraphStart) {
         return true;
       }

@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import * as React from 'react';
@@ -32,7 +32,6 @@ type DocLayoutEditorState = {
 class DocLayoutEditor extends React.PureComponent<DocLayoutEditorProps> {
 
   public static readonly contextType = ThemeContext;
-  _unmounted = false;
   // [FS] IRAD-1005 2020-07-07
   // Upgrade outdated packages.
   // To take care of the property type declaration.

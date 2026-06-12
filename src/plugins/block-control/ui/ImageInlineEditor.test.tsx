@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { ImageInlineEditor } from './ImageInlineEditor';
+import { ImageInlineEditor, ImageInlineEditorValue as _ImageInlineEditorValue } from './ImageInlineEditor';
 import { EditorState } from 'prosemirror-state';
 import { schema } from 'prosemirror-test-builder';
 import { EnhancedTableFigure } from '../index';
@@ -62,7 +62,7 @@ describe('ImageInlineEditor', () => {
     };
     const spy = jest.spyOn(imageinlineeditor.props, 'onSelect');
     imageinlineeditor._onClick('align_test');
-    expect(spy).lastReturnedWith('align_test');
+    expect(spy).toHaveLastReturnedWith('align_test');
   });
   it('should handle prepButtons', () => {
     const imageinlineeditor = new ImageInlineEditor(() => undefined);

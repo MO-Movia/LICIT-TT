@@ -33,7 +33,7 @@ export class CustomMenuButton extends React.PureComponent<
   state = {
     expanded: false,
   };
-  static contextType = ThemeContext;
+  static readonly contextType = ThemeContext;
   _menu  = null;
   _id = uuid();
 

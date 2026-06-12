@@ -66,7 +66,8 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
           if (!tr.docChanged || !state.liveUpdates) {
             return {
               ...state,
-              decorations: state.decorations.map(tr.mapping, tr.doc),
+              // ProseMirror DecorationSet.map(mapping, doc) — not Array.map
+              decorations: state.decorations.map(tr.mapping, tr.doc),   // NOSONAR
             };
           }
 
@@ -83,7 +84,8 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
 
           return {
             ...state,
-            decorations: state.decorations.map(tr.mapping, tr.doc),
+            // ProseMirror DecorationSet.map(mapping, doc) — not Array.map
+            decorations: state.decorations.map(tr.mapping, tr.doc),  // NOSONAR
           };
         },
       },
@@ -98,9 +100,9 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
   static getChangedRanges(tr: Transaction) {
     const ranges: { from: number; to: number }[] = [];
 
-    tr.steps?.forEach((_step, i) => {
+    for (const [i] of (tr.steps ?? []).entries()) {
       const map = tr.mapping.maps[i];
-      map.forEach((_oldStart, _oldEnd, newStart, newEnd) => {
+      map.forEach((_oldStart, _oldEnd, newStart, newEnd) => { //NOSONAR
         let from = newStart;
         let to = newEnd;
 
@@ -118,11 +120,11 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
           to: Math.min(tr.doc.content.size, to),
         });
       });
-    });
+    };
 
     return ranges.reduce(
       (merged, current) => {
-        const prev = merged[merged.length - 1];
+        const prev = merged.at(-1);
         if (prev && current.from <= prev.to) {
           prev.to = Math.max(prev.to, current.to);
         } else {
@@ -139,7 +141,7 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
     matchWholeWordsOnly: boolean,
     caseSensitive = false
   ): RegExp {
-    const escapedTerm = searchTerm.replace(/[-/\\^$*+?.()|[\]{}]/g, String.raw`\$&`);
+    const escapedTerm = searchTerm.replaceAll(/[-/\\^$*+?.()|[\]{}]/g, String.raw`\$&`);
     const flags = caseSensitive ? 'g' : 'gi';
 
     if (matchWholeWordsOnly) {
@@ -228,7 +230,7 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
       (part) => part.parentType !== 'listItem' && part.parentType !== 'li'
     );
 
-    nonListItems.forEach((part) => {
+    for (const part of nonListItems) {
       this.processTextMatches(part.text, regex, part.pos, {
         range,
         selectedParaPositions,
@@ -236,14 +238,14 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
         highlightDocProperties,
         decorations,
       });
-    });
+    };
 
     const listItemsByParent = new Map<
       string,
       { text: string; parts: typeof textParts }
     >();
 
-    listItems.forEach((part) => {
+    for (const part of listItems) {
       const parentKey = `${part.parentType}-${part.pos}`;
       if (!listItemsByParent.has(parentKey)) {
         listItemsByParent.set(parentKey, { text: '', parts: [] });
@@ -251,11 +253,11 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
       const item = listItemsByParent.get(parentKey);
       item.text += part.text;
       item.parts.push(part);
-    });
+    };
 
-    listItemsByParent.forEach((item) => {
+    for (const item of listItemsByParent.values()) {
       if (regex.test(item.text)) {
-        item.parts.forEach((part) => {
+        for (const part of item.parts) {
           this.processTextMatches(part.text, regex, part.pos, {
             range,
             selectedParaPositions,
@@ -263,9 +265,9 @@ export class LicitHighlightTextPlugin extends Plugin<PluginState> {
             highlightDocProperties,
             decorations,
           });
-        });
+        };
       }
-    });
+    };
 
     return decorations;
   }

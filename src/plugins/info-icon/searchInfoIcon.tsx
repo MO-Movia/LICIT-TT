@@ -66,7 +66,7 @@ export class SearchInfoIcon extends React.PureComponent<SearchInfoProps, SearchI
   _save = (): void => {
     const cache = this.getCacheIcons();
 
-    if (cache.filter(c => c.name === this.state.selectedIcon.name).length > 0) {
+    if (cache.some(c => c.name === this.state.selectedIcon.name)) {
       this.showAlert();
     } else {
       if (cache.length >= 10) {

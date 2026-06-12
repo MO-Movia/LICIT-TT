@@ -24,27 +24,3 @@
   padding: 0 !important;
   padding-top: 9px !important;
 }
-
-/*
-.czi-custom-more {
-  padding-top: 20px;
-  padding-bottom: 10px;
-  padding-left: 0;
-  padding-right: 0;
-  pointer-events: auto;
-}
-
-.czi-custom-submenu-button.czi-custom-button {
-  border: none;
-  border-radius: 0;
-  display: block;
-  margin: 0;
-  padding-bottom: 8px;
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 8px;
-}
-
-.czi-custom-submenu-button.czi-custom-button:hover {
-  background-color: var(--czi-button-hover-background-color);
-} */

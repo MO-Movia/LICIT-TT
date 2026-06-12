@@ -10,8 +10,6 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 const PLACE_HOLDER_ID = { name: 'CursorPlaceholderPlugin' };
 const CURSOR_PLACEHOLDER_PLUGIN_KEY = new PluginKey('CursorPlaceholderPlugin');
 
-let singletonInstance: CursorPlaceholderPlugin | null = null;
-
 // https://prosemirror.net/examples/upload/
 const SPEC = {
   // Upgrade outdated packages.
@@ -21,7 +19,8 @@ const SPEC = {
       return DecorationSet.empty;
     },
     apply(tr, set: DecorationSet): DecorationSet {
-      set = set.map(tr.mapping, tr.doc);
+      // ProseMirror DecorationSet.map(mapping, doc) � not Array.map
+      set = set.map(tr.mapping, tr.doc);    // NOSONAR
       const action = tr.getMeta(this);
       if (!action) {
         return set;
@@ -52,10 +51,6 @@ const SPEC = {
 export class CursorPlaceholderPlugin extends Plugin {
   constructor() {
     super(SPEC);
-    if (!singletonInstance) {
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      singletonInstance = this;
-    }
   }
 }
 
@@ -64,15 +59,15 @@ export function specFinder(spec: Record<string, unknown>): boolean {
 }
 
 export function resetInstance(): void {
-  singletonInstance = null;
+  singletonInstance = new CursorPlaceholderPlugin();
 }
 function findCursorPlaceholderPos(state: EditorState): number | null {
   if (!singletonInstance) {
     return null;
   }
   const decos = singletonInstance.getState(state) as DecorationSet;
-  const found = decos.find(null, null, specFinder);
-  const pos = found.length ? found[0].from : null;
+  const found = decos?.find(null, null, specFinder);
+  const pos = found?.length ? found[0].from : null;
   return pos || null;
 }
 
@@ -125,3 +120,5 @@ export function hideCursorPlaceholder(state: EditorState): Transform {
 
   return tr;
 }
+
+let singletonInstance: CursorPlaceholderPlugin = new CursorPlaceholderPlugin();

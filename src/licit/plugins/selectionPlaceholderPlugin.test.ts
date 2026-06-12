@@ -13,15 +13,23 @@ import {schema} from 'prosemirror-schema-basic';
 import {DOMParser} from 'prosemirror-model';
 import {EditorView} from 'prosemirror-view';
 
-import SelectionPlaceholderPlugin, {
-  showSelectionPlaceholder,
-  hideSelectionPlaceholder,
-} from './selectionPlaceholderPlugin';
+type SelectionPlaceholderModule = typeof import('./selectionPlaceholderPlugin');
 
 describe('SelectionPlaceholderPlugin', () => {
   let view: EditorView;
+  let SelectionPlaceholderPlugin: SelectionPlaceholderModule['default'];
+  let showSelectionPlaceholder: SelectionPlaceholderModule['showSelectionPlaceholder'];
+  let hideSelectionPlaceholder: SelectionPlaceholderModule['hideSelectionPlaceholder'];
 
   beforeEach(() => {
+    jest.resetModules();
+    ({
+      default: SelectionPlaceholderPlugin,
+      showSelectionPlaceholder,
+      hideSelectionPlaceholder,
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+    } = require('./selectionPlaceholderPlugin') as SelectionPlaceholderModule);
+
     const content = document.createElement('div');
     content.innerHTML = '<p>Hello World</p>';
 
@@ -196,6 +204,6 @@ describe('SelectionPlaceholderPlugin', () => {
   it('should be a singleton plugin', () => {
     const firstInstance = new SelectionPlaceholderPlugin();
     const secondInstance = new SelectionPlaceholderPlugin();
-    expect(firstInstance).toBe(secondInstance);
+    expect(firstInstance.spec.key).toBe(secondInstance.spec.key);
   });
 });

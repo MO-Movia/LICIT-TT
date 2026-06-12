@@ -26,7 +26,7 @@ export class ImageURLEditor extends React.PureComponent<
   _unmounted = false;
 
   state = {
-    ...(this.props.initialValue || {}),
+    ...this.props.initialValue,
     validValue: null,
   };
 

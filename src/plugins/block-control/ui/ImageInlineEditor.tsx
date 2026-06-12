@@ -134,7 +134,7 @@ export class ImageInlineEditor extends React.PureComponent {
   }
 
   parseLabel(input: string, value?): parseLabeltype {
-    const matched = RegExp(ICON_LABEL_PATTERN).exec(input);
+    const matched = new RegExp(ICON_LABEL_PATTERN).exec(input);
     if (matched) {
       const icon = matched[1];
       const label = matched[2];

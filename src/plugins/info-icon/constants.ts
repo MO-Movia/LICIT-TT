@@ -20,9 +20,7 @@ export function getNode(
   let selectedNode: Node | null = null;
   tr.doc.nodesBetween(from, to, (node, _startPos) => {
     if (node.type.name === 'paragraph') {
-      if (null == selectedNode) {
-        selectedNode = node;
-      }
+      selectedNode ??= node;
     }
   });
   return selectedNode;

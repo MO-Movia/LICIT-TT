@@ -17,4 +17,16 @@ describe('VideoFromURLCommand', () => {
     const command = new VideoFromURLCommand();
     expect(command.executeCustomStyleForTable(null!, tr)).toBe(tr);
   });
+  it('should return true for isActive', () => {
+    const command = new VideoFromURLCommand();
+    expect(command.isActive()).toBe(true);
+  });
+  it('should return null for renderLabel', () => {
+    const command = new VideoFromURLCommand();
+    expect(command.renderLabel()).toBeNull();
+  });
+  it('should return VideoEditor for getEditor', () => {
+    const command = new VideoFromURLCommand();
+    expect(command.getEditor()).toBeDefined();
+  });
 });

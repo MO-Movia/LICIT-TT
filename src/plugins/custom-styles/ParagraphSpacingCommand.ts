@@ -69,7 +69,7 @@ export function setParagraphSpacing(
     return tr;
   }
 
-  tasks.forEach((job) => {
+  for (const job of tasks) {
     const { node, pos, nodeType } = job;
     let { attrs } = node;
     if (isAfter) {
@@ -84,7 +84,7 @@ export function setParagraphSpacing(
       };
     }
     tr = tr.setNodeMarkup(pos, nodeType, attrs, node.marks);
-  });
+  };
 
   return tr;
 }

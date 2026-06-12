@@ -9,6 +9,8 @@ import { Transform } from 'prosemirror-transform';
 import {
   AddCitationCommand,
   ShowTexteHighLightMark,
+  addTexthighlightMark,
+  removeTexthighlightMark,
 } from './AddCitationCommand';
 import { PopUpHandle } from '../../commands';
 import { Node, ResolvedPos, Schema } from 'prosemirror-model';
@@ -541,5 +543,71 @@ describe('AddCitationCommand', () => {
         state: { selection: { empty: false } },
       } as unknown as EditorView)
     ).toBeDefined();
+  });
+  describe('exported functions', () => {
+    it('should handle addTexthighlightMark', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(addTexthighlightMark(mockTr, mockState, 0, 10)).toBeDefined();
+    });
+    it('should handle removeTexthighlightMark', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              type: 'mark',
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        removeMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(removeTexthighlightMark(mockTr, mockState, 0, 10)).toBeDefined();
+    });
+    it('should handle ShowTexteHighLightMark with hasCitation true', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(ShowTexteHighLightMark(mockTr, mockState, 0, true, '#ff0000', 10)).toBeDefined();
+    });
+    it('should handle ShowTexteHighLightMark with hasCitation false', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(ShowTexteHighLightMark(mockTr, mockState, 0, false, '#ff0000', 10)).toBeDefined();
+    });
   });
 });

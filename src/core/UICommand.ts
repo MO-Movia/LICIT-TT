@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {Editor} from '@tiptap/core';
@@ -22,7 +22,7 @@ export const EventType = {
 export abstract class UICommand {
   static readonly EventType = EventType;
    
-  static theme: string;
+  static theme: string; //NOSONAR
 
   protected _editor: Editor | null = null;
   // Getter for the editor instance

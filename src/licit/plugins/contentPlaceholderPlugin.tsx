@@ -1,12 +1,13 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import * as React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
 import { EditorViewEx } from '../constants';
 
 import isEditorStateEmpty from '../isEditorStateEmpty';
@@ -18,6 +19,7 @@ class ContentPlaceholderView {
   _focused = null;
   _view = null;
   _visible = null;
+  _root: Root | null = null; 
 
   constructor(editorView: EditorView) {
     const el = document.createElement('div');
@@ -62,7 +64,7 @@ class ContentPlaceholderView {
 
     const parentElRect = parentEl.getBoundingClientRect();
     const bodyRect = bodyEl.getBoundingClientRect();
-    const bodyStyle = window.getComputedStyle(bodyEl);
+    const bodyStyle = globalThis.getComputedStyle(bodyEl);
 
     const left = bodyRect.left - parentElRect.left;
     const top = bodyRect.top - parentElRect.top;
@@ -73,7 +75,8 @@ class ContentPlaceholderView {
     el.style.display = 'block';
     el.style.width = bodyEl.offsetWidth + 'px';
 
-    ReactDOM.render(<div>{placeholder}</div>, el);
+    this._root ??= createRoot(el);
+    this._root.render(<div>{placeholder}</div>);
   }
 
   destroy() {
@@ -82,7 +85,8 @@ class ContentPlaceholderView {
     const el = this._el;
     if (el) {
       el.remove();
-      ReactDOM.unmountComponentAtNode(el);
+      this._root?.unmount();
+      this._root = null;
     }
     document.removeEventListener('focusin', this._checkFocus, true);
     document.removeEventListener('focusout', this._checkFocus, false);

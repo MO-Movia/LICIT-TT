@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {EditorState, PluginView} from 'prosemirror-state';
@@ -19,7 +19,6 @@ type TableCellMenuProps = {
 };
 
 class TableCellMenu extends React.PureComponent<TableCellMenuProps> {
-  _menu = null;
 
   declare props: TableCellMenuProps;
 
