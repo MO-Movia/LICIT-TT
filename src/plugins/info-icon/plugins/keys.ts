@@ -8,7 +8,7 @@ import {undo, redo} from 'prosemirror-history';
 import {keymap} from 'prosemirror-keymap';
 import {MarkSpec, MarkType} from 'prosemirror-model';
 
-export default () =>
+const keymapPlugin = () =>
   keymap({
     ...baseKeymap,
     'Mod-z': undo,
@@ -16,7 +16,8 @@ export default () =>
     'Mod-b': toggleMark(marks.strong as unknown as MarkType),
     'Mod-i': toggleMark(marks.em as unknown as MarkType),
   });
-
+  
+export default keymapPlugin;
 export type Marks = 'em' | 'strong';
 
 export const marks: {em: MarkSpec; strong: MarkSpec } = {

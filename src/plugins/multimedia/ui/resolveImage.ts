@@ -4,8 +4,7 @@
  */
 
 import url from 'url';
-
-import {isOffline} from './isOffline';
+import { isOffline } from './isOffline';
 
 export type ImageResult = {
   complete: boolean;
@@ -16,26 +15,25 @@ export type ImageResult = {
   width: number;
 };
 
-const cache: {[src: string]: ImageResult} = {};
+const cache: { [src: string]: ImageResult } = {};
 // Track in-flight requests to deduplicate concurrent calls for the same src
-const inFlight = {};
+const inFlight: Record<string, Promise<ImageResult>> = {};
 export function resolveImage(src: string): Promise<ImageResult> {
   const srcStr = src || '';
   // return from cache immediately (no img element, no download)
   if (cache[srcStr]) {
-    return Promise.resolve({...cache[srcStr]});
+    return Promise.resolve({ ...cache[srcStr] });
   }
   //  Deduplicate concurrent requests for the same src
-  if (inFlight[srcStr]) {
+  if (inFlight[srcStr]?.then) {
     return inFlight[srcStr];
   }
   // Start resolution in parallel (no blocking queue)
   const promise = processPromise(src);
   inFlight[srcStr] = promise;
-  promise.finally(() => {
+  return promise.finally(() => {
     delete inFlight[srcStr];
   });
-  return promise;
 }
 
 export function isImgInstance(img: unknown): boolean {
@@ -59,7 +57,7 @@ function processPromise(src: string): Promise<ImageResult> {
     }
     const parsedURL = url.parse(srcStr);
     // Removed the port validation from here
-    const {protocol} = parsedURL;
+    const { protocol } = parsedURL;
     if (
       !/(http:|https:|data:|blob:)/.test(
         protocol || globalThis.location.protocol
@@ -87,7 +85,7 @@ function processPromise(src: string): Promise<ImageResult> {
         result.naturalWidth = img.naturalWidth || img.width;
         result.naturalHeight = img.naturalHeight || img.height;
         result.complete = true;
-        cache[srcStr] = {...result};
+        cache[srcStr] = { ...result };
       }
       resolve(result);
       dispose();
@@ -110,7 +108,7 @@ function processPromise(src: string): Promise<ImageResult> {
         else onError();
       };
 
-      // Use img.decode() when available — it decodes the image off the main
+      // Use img.decode() when available ï¿½ it decodes the image off the main
       // thread, preventing UI hangs for large images. Falls back to load/error
       // events for environments that don't support decode().
       if (typeof img.decode === 'function') {

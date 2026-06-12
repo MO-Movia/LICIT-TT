@@ -146,8 +146,8 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
     this.theme =  this.props.theme;
     const selectedName = this.getTheSelectedCustomStyle(this.props.editorState);
     const commandGroups_nw = this.getCommandGroups();
-    commandGroups_nw.forEach((group) => {
-      Object.keys(group).forEach((label) => {
+    for (const group of commandGroups_nw) {
+      for (const label of Object.keys(group)) {
         const command = group[label];
         counter++;
         if (label === selectedName && '' === selecteClassName) {
@@ -173,10 +173,10 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
             value={command}
           ></CustomStyleItem>
         );
-      });
-    });
-    staticCommand.forEach((group) => {
-      Object.keys(group).forEach((label) => {
+      };
+    };
+    for (const group of staticCommand) {
+      for (const label of Object.keys(group)) {
         const command = group[label];
         children1.push(
           <CustomStyleItem
@@ -195,8 +195,8 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
             value={command}
           ></CustomStyleItem>
         );
-      });
-    });
+      };
+    };
     const className = 'molsp-dropbtn ' + theme;
     return (
       <div>
@@ -325,16 +325,16 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
     });
 
     if (!tasks.length) {
-      textAlignNode.forEach((eachnode) => {
+      for (const eachnode of textAlignNode) {
         const { node, pos } = eachnode;
         const newattrs = { ...node.attrs, styleName: customStyleName };
         tr = tr?.setNodeMarkup(pos, undefined, newattrs);
-      });
+      };
       // to remove both text align format and line spacing
       tr = this.removeTextAlignAndLineSpacing(tr, editorState.schema);
     }
 
-    tasks.forEach((job) => {
+    for (const job of tasks) {
       const { node, mark, pos } = job;
       tr = tr.removeMark(pos, pos + node.nodeSize, mark.type);
       // reset the custom style name to NONE after remove the styles
@@ -346,13 +346,15 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
         newNode?.attrs?.styleName,
         editorState,
         tr,
-        newNode,
-        pos,
-        pos + node.nodeSize - 1,
-        null,
-        1
+        {
+          node: newNode,
+          startPos: pos,
+          endPos: pos + node.nodeSize - 1,
+          opt: 1,
+        },
+        null
       );
-    });
+    };
 
     // to remove both text align format and line spacing
     tr = this.removeTextAlignAndLineSpacing(tr, editorState.schema);
@@ -484,13 +486,13 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
           );
         }
 
-        HEADING_NAMES.forEach((obj) => {
+        for (const obj of HEADING_NAMES) {
           if (RESERVED_STYLE_NONE != obj.styleName)
             HEADING_COMMANDS[obj.styleName] = new CustomStyleCommand(
               obj,
               obj.styleName
             );
-        });
+        };
       }
       return [HEADING_COMMANDS];
     }

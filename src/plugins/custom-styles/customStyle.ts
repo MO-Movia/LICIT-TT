@@ -47,10 +47,10 @@ export function addStyleToList(style: Style): Style[] {
     const index = customStyles.findIndex(
       (item) => item?.styleName === style?.styleName
     );
-    if (index !== -1) {
-      customStyles[index] = style;
-    } else {
+    if (index === -1) {
       customStyles.push(style);
+    } else {
+      customStyles[index] = style;
     }
   }
   return customStyles;

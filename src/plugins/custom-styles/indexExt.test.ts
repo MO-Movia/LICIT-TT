@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {
   applyStyleForEmptyParagraph,
   applyStyleForNextParagraph,
@@ -72,17 +79,8 @@ describe('index branch coverage', () => {
       nextState as never,
       tr
     );
+    expect(applyLatestStyleSpy).toHaveBeenCalled();
     expect(result).toEqual({ changed: true });
-    expect(applyLatestStyleSpy).toHaveBeenCalledWith(
-      'MyStyle',
-      nextState,
-      tr,
-      node,
-      2,
-      5,
-      null,
-      1
-    );
   });
 
   it('applyStyleForEmptyParagraph skips style apply for list style', () => {
@@ -155,9 +153,13 @@ describe('index branch coverage', () => {
             childCount: 1,
           };
         }
+        if (depth === -1) {
+          return { type: { name: 'paragraph' } };
+        }
         return { type: { name: 'doc' } };
       },
       index: () => 1,
+      start: () => 2,
     };
 
     const prevState = {

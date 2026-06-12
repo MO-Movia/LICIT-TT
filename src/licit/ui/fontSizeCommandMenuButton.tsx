@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {EditorState} from 'prosemirror-state';
@@ -49,7 +49,7 @@ class FontSizeCommandMenuButton extends React.PureComponent<PropsType> {
         // [FS] IRAD-1008 2020-07-16
         // Disable font size menu on editor disable state
         commandGroups={COMMAND_GROUPS}
-        disabled={editorView && editorView.disabled ? true : false}
+        disabled={!!(editorView && editorView.disabled)}
         dispatch={dispatch}
         editorState={editorState}
         editorView={editorView}

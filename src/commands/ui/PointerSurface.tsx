@@ -11,7 +11,7 @@ import { EditorView } from 'prosemirror-view';
 import { UICommand } from '../../core';
 
 export type PointerSurfaceProps = {
-  active?: boolean;
+  active?: boolean; //NOSONAR
   children?;
   className?: string;
   disabled?: boolean;
@@ -22,7 +22,7 @@ export type PointerSurfaceProps = {
   title?: string;
   // value?: any;
   value?: string | number | Record<string, unknown> | EditorView | UICommand;
-  hasChild?: boolean;
+  hasChild?: boolean; //NOSONAR
 };
 
 export class PointerSurface extends React.PureComponent {
@@ -44,7 +44,8 @@ export class PointerSurface extends React.PureComponent {
     });
 
     return (
-      <span
+      // Custom button implementation intentionally uses span; native button changes existing UI behavior.
+      <span  //NOSONAR
         aria-disabled={disabled}
         aria-pressed={pressed}
         className={buttonClassName}

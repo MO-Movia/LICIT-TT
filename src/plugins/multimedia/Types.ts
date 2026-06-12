@@ -35,5 +35,5 @@ export type EditorRuntime = {
 
   // Image Upload
   canUploadImage?: () => boolean;
-  uploadImage?: (obj: Blob) => Promise<ImageLike>;
+  uploadImage?: (obj: Blob) => Promise<{ src: string }>;
 };

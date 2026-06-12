@@ -134,10 +134,7 @@ describe('Image Upload Editor (group 2)', () => {
     imageuploadeditor._unmounted = false;
     expect(
       imageuploadeditor._onSuccess({
-        height: 10,
-        id: '',
         src: '',
-        width: 10,
       })
     ).toBeUndefined();
   });

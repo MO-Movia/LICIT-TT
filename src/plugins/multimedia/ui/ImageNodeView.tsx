@@ -8,24 +8,22 @@ import {Node} from 'prosemirror-model';
 import {Decoration} from 'prosemirror-view';
 import {NodeSelection} from 'prosemirror-state';
 import React from 'react';
-import ReactDOM from 'react-dom';
-
 import {CustomNodeView} from './CustomNodeView';
 import {Icon} from './Icon';
 import {ImageResizeBox, MIN_SIZE} from './ImageResizeBox';
-
 import {
   createPopUp,
   atAnchorBottomCenter,
   PopUpHandle,
 } from '../../../commands';
-import ResizeObserver from './ResizeObserver';
 import {resolveImage} from './resolveImage';
 import {uuid} from './uuid';
 
 import type {EditorRuntime} from '../Types';
 import type {NodeViewProps} from './CustomNodeView';
+
 import type {ResizeObserverEntry} from './ResizeObserver';
+import {observe, unobserve} from './ResizeObserver';
 import {ImageInlineEditor} from './ImageInlineEditor';
 import {FP_WIDTH} from '../Constants';
 
@@ -181,7 +179,7 @@ export class ImageViewBody extends React.PureComponent<
     // Also re-render the inline editor when the image finishes loading
     // (originalSize.complete flips to true) while the node is already selected.
     // Without this, clicking a large image while it's still resolving would
-    // never show the menu — _renderInlineEditor was only triggered by prop
+    // never show the menu ï¿½ _renderInlineEditor was only triggered by prop
     // changes, not by the setState that follows _resolveOriginalSize().
     const prevComplete = prevState?.originalSize?.complete;
     const currentComplete = this.state.originalSize?.complete;
@@ -477,21 +475,18 @@ export class ImageViewBody extends React.PureComponent<
     editorView.dispatch(tr);
   };
 
-  _onBodyRef = (ref?: React.ReactInstance): void => {
+  _bodyEl: HTMLElement | null = null;
+  _onBodyRef = (ref?: HTMLElement): void => {
     if (ref) {
       this._body = ref;
-      // Mounting
-      const el = ReactDOM.findDOMNode(ref);
-      if (el instanceof HTMLElement) {
-        ResizeObserver.observe(el, this._onBodyResize);
-      }
+      this._bodyEl = ref;
+      observe(ref, this._onBodyResize);
     } else {
-      // Unmounting.
-      const el = this._body && ReactDOM.findDOMNode(this._body);
-      if (el instanceof HTMLElement) {
-        ResizeObserver.unobserve(el);
+      if (this._bodyEl) {
+        unobserve(this._bodyEl);
       }
       this._body = null;
+      this._bodyEl = null;
     }
   };
 
@@ -517,8 +512,8 @@ export class ImageViewBody extends React.PureComponent<
     if (_info.contentRect) {
       mActualWidth = _info.contentRect.width;
     }
-    const width = this._body
-      ? getMaxResizeWidth(ReactDOM.findDOMNode(this._body))
+    const width = this._bodyEl
+      ? getMaxResizeWidth(this._bodyEl)
       : MAX_SIZE;
 
     const oldWidth = this.state.maxSize.width;

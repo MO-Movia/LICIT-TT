@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Node, DOMOutputSpec } from 'prosemirror-model';
@@ -116,15 +116,15 @@ const OrderedListNodeSpec: NodeSpec = {
 
     const cssCounterName = `czi-counter-${indent}`;
     if ('x.x.x' === type) {
-      if (RESERVED_STYLE_NONE !== node.attrs.styleName) {
-        attrs['style'] = buildStyleClass(indent, node.attrs.start);
-      } else {
+      if (RESERVED_STYLE_NONE === node.attrs.styleName) {
         attrs['style'] = buildStyleClassEx(
           cssCounterName,
           following,
           htmlListStyleType,
           start
         );
+      } else {
+        attrs['style'] = buildStyleClass(indent, node.attrs.start);
       }
     } else {
       attrs['style'] = buildStyleClassEx(

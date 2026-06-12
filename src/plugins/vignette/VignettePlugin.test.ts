@@ -20,7 +20,7 @@ import { Node, NodeSpec, Fragment } from 'prosemirror-model';
 import { VignetteMenuPlugin } from './VignetteMenuPlugin';
 import { deleteTable } from 'prosemirror-tables';
 import { EditorView } from 'prosemirror-view';
-import { LightThemeIcon } from './images';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 
 describe('VignettePlugin', () => {
   const editor = createEditor(doc(p('<cursor>')), {
@@ -69,6 +69,62 @@ describe('VignettePlugin', () => {
 
     expect(Object.keys(commands)).toEqual([`[${LightThemeIcon}] Add Vignette`]);
   });
+
+  it('should use the dark theme icon when dark theme is selected', () => {
+    const commands = new VignettePlugin().initButtonCommands('dark');
+
+    expect(Object.keys(commands)).toEqual([`[${DarkThemeIcon}] Add Vignette`]);
+    expect(Object.values(commands)[0]).toBeInstanceOf(VignetteCommand);
+  });
+
+  it('should fall back to the dark theme icon for any non-light theme value', () => {
+    const commandsEmpty = new VignettePlugin().initButtonCommands('');
+    const commandsOther = new VignettePlugin().initButtonCommands('high-contrast');
+
+    expect(Object.keys(commandsEmpty)).toEqual([`[${DarkThemeIcon}] Add Vignette`]);
+    expect(Object.keys(commandsOther)).toEqual([`[${DarkThemeIcon}] Add Vignette`]);
+  });
+
+  it('should map the produced key to a VignetteCommand instance for light theme too', () => {
+    const commands = new VignettePlugin().initButtonCommands('light');
+    expect(Object.values(commands)[0]).toBeInstanceOf(VignetteCommand);
+  });
+
+  it("invokes the plugin's state.init callback when wired into an EditorState", () => {
+    const plugin = new VignettePlugin();
+
+    const newState = EditorState.create({
+      schema,
+      plugins: [plugin],
+    });
+
+    expect(newState).toBeDefined();
+    expect(plugin.getState(newState)).toBeUndefined();
+  });
+
+  it("invokes the plugin's state.apply callback when a transaction is applied", () => {
+    const plugin = new VignettePlugin();
+    const initialState = EditorState.create({
+      schema,
+      plugins: [plugin],
+    });
+
+    const nextState = initialState.apply(initialState.tr);
+
+    expect(nextState).toBeDefined();
+    expect(plugin.getState(nextState)).toBeUndefined();
+  });
+
+  it('registers a stable PluginKey so the plugin is locatable on a state', () => {
+    const plugin = new VignettePlugin();
+    const newState = EditorState.create({
+      schema,
+      plugins: [plugin],
+    });
+
+    expect(newState.plugins).toContain(plugin);
+  });
+
 
   it('should handle createCommand', () => {
     createEditor(doc(table(tr(td(p('content'))))), {});

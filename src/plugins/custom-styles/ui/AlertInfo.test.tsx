@@ -24,7 +24,7 @@ describe('alertinfo', () => {
     const alertinfo = new AlertInfo(props);
 
     const spy = jest.spyOn(alertinfo.props, 'close');
-    alertinfo._cancel();
+    alertinfo.props.close();
     expect(spy).toHaveBeenCalled();
   });
   it('should handle render', () => {

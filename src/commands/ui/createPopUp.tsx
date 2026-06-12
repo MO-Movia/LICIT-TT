@@ -7,7 +7,7 @@ import type {PopUpParams, ViewProps} from './PopUp';
 
 import {PopUp} from './PopUp';
 import * as React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import {uuid} from './uuid';
 
 export type PopUpHandle = {
@@ -20,6 +20,7 @@ let popUpsCount = 0;
 
 const Z_INDEX_BASE = 9999;
 const MODAL_MASK_ID = 'pop-up-modal-mask-' + uuid();
+const rootInstances = new Map<string, ReturnType<typeof createRoot>>(); 
 
 export function showModalMask(IsChildDialog?: boolean): void {
   const root = document.body || document.documentElement;
@@ -60,7 +61,7 @@ export function showModalMask(IsChildDialog?: boolean): void {
 export function hideModalMask(): void {
   const element = document.getElementById(MODAL_MASK_ID);
   if (element?.parentElement) {
-    element.parentElement.removeChild(element);
+    element.remove();
   }
 }
 
@@ -117,7 +118,7 @@ function renderPopUp(
   viewProps: ViewProps,
   popUpParams: PopUpParams
 ): void {
-  const rootNode = getRootElement(rootId, true, popUpParams);
+    const rootNode = getRootElement(rootId, true, popUpParams);
   if (rootNode) {
     const component = (
       <PopUp
@@ -127,7 +128,12 @@ function renderPopUp(
         viewProps={viewProps}
       />
     );
-    ReactDOM.render(component, rootNode);
+       let root = rootInstances.get(rootId);
+    if (!root) {
+      root = createRoot(rootNode);
+      rootInstances.set(rootId, root);
+    }
+    root.render(component);
   }
 
   if (modalsCount > 0) {
@@ -140,8 +146,12 @@ function renderPopUp(
 export function unrenderPopUp(rootId: string): void {
   const rootNode = getRootElement(rootId, false);
   if (rootNode) {
-    ReactDOM.unmountComponentAtNode(rootNode);
-    rootNode.parentElement?.removeChild(rootNode);
+    const root = rootInstances.get(rootId);
+    if (root) {
+      root.unmount();
+      rootInstances.delete(rootId);
+    }
+    rootNode.remove();
   }
 
   if (modalsCount === 0) {

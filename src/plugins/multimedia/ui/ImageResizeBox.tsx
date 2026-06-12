@@ -56,7 +56,7 @@ const ResizeDirection = {
 };
 type ImageResizwBoxProps = {
   boxID: string;
-  config;
+  config; //NOSONAR
   direction: string;
   height: number;
   onResizeEnd: (w: number, height: number) => void;
@@ -83,14 +83,25 @@ export class ImageResizeBoxControl extends React.PureComponent {
   }
 
   render(): React.ReactElement {
-    const {direction} = this.props;
+    const { direction } = this.props;
 
     const className = cx({
       'molm-czi-image-resize-box-control': true,
       [direction]: true,
     });
 
-    return <span className={className} onMouseDown={this._onMouseDown} />;
+    return (
+      <button
+        className={className}
+        onMouseDown={this._onMouseDown}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            this._onMouseDown(e as unknown as React.MouseEvent);
+          }
+        }}
+      />
+    );
   }
 
   _syncSize = (): void => {

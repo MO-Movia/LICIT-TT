@@ -9,10 +9,10 @@ import React from 'react';
 import { CustomButton, preventEventDefault, uuid } from '../../../commands';
 import { LoadingIndicator } from './LoadingIndicator';
 
-import type { EditorRuntime, ImageLike } from '../Types';
+import type { EditorRuntime } from '../Types';
 export type ImageUploadProps = {
   runtime: EditorRuntime;
-  close: (val?: ImageLike) => void;
+  close: (val?: { src: string }) => void;
 };
 export class ImageUploadEditor extends React.PureComponent {
   _unmounted = false;
@@ -73,7 +73,7 @@ export class ImageUploadEditor extends React.PureComponent {
     }
   };
 
-  _onSuccess = (image: ImageLike): void => {
+  _onSuccess = (image: { src: string }): void => {
     if (this._unmounted) {
       return;
     }

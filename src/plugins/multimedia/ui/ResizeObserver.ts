@@ -40,7 +40,9 @@ let instance: ResizeObserver | null = null;
 const nodesObserving: Map<Element, Array<ResizeCallback>> = new Map();
 
 function onResizeObserve(entries: Entries): void {
-  entries.forEach(handleResizeObserverEntry);
+  for (const entry of entries) {
+    handleResizeObserverEntry(entry);
+  }
 }
 
 function handleResizeObserverEntry(entry: ResizeObserverEntry): void {
@@ -49,7 +51,9 @@ function handleResizeObserverEntry(entry: ResizeObserverEntry): void {
   const executeCallback = (cb: ResizeCallback): void => {
     cb(entry);
   };
-  callbacks?.forEach(executeCallback);
+  for (const callback of callbacks ?? []) {
+    executeCallback(callback);
+  }
 }
 
 export function observe(
