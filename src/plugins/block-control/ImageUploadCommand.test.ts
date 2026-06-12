@@ -61,6 +61,8 @@ describe('ImageSourceCommand', () => {
             alt: {default: ''},
             simpleImg: {default: 'false'},
             cropData: {default: null},
+            width: {default: null},
+            height: {default: null},
           },
           group: 'block',
           draggable: true,
@@ -329,6 +331,44 @@ describe('ImageSourceCommand', () => {
       command.executeWithUserInput(state, mockDispatch, null, inputs);
 
       expect(mockView.focus).not.toHaveBeenCalled();
+    });
+
+    it('should insert synchronously when upload metadata is missing', () => {
+      const inputs: ImageProps = {
+        src: 'https://example.com/image.jpg',
+        id: 'img-5',
+      };
+
+      const result = command.executeWithUserInput(
+        state,
+        mockDispatch,
+        mockView,
+        inputs
+      );
+
+      expect(result).toBe(false);
+      expect(mockDispatch).toHaveBeenCalledTimes(1);
+      expect(mockView.focus).toHaveBeenCalled();
+    });
+
+    it('should insert dimensions provided by the upload editor', () => {
+      const inputs: ImageProps = {
+        src: 'https://example.com/image.jpg',
+        id: 'img-6',
+        height: 240,
+        width: 320,
+      };
+
+      command.executeWithUserInput(state, mockDispatch, mockView, inputs);
+      let imageNode;
+      mockDispatch.mock.calls[0][0].doc.descendants((node) => {
+        if (node.type.name === 'image') {
+          imageNode = node;
+        }
+      });
+
+      expect(imageNode.attrs.width).toBe(320);
+      expect(imageNode.attrs.height).toBe(240);
     });
   });
 

@@ -11,7 +11,7 @@ import {
   TextSelection,
   Transaction,
 } from 'prosemirror-state';
-import { Transform } from 'prosemirror-transform';
+import { canJoin, Transform } from 'prosemirror-transform';
 import {
   applyLatestStyle,
   getMarkByStyleName,

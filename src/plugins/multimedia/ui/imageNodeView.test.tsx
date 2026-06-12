@@ -342,6 +342,98 @@ describe('Image view body', () => {
     expect(items.map((item) => item.id)).toContain('paste-clipboard');
   });
 
+  it('should not render image hamburger inside enhanced table figure', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: {content: 'enhanced_table_figure'},
+        text: {group: 'inline'},
+        paragraph: {content: 'inline*', group: 'block'},
+        image: {
+          inline: true,
+          attrs: {
+            align: {default: null},
+            crop: {default: null},
+            cropData: {default: null},
+            fitToParent: {default: null},
+            height: {default: null},
+            rotate: {default: null},
+            src: {default: null},
+            width: {default: null},
+          },
+          group: 'inline',
+        },
+        enhanced_table_figure: {
+          content: 'enhanced_table_figure_body',
+          group: 'block',
+        },
+        enhanced_table_figure_body: {
+          content: 'paragraph',
+          group: 'block',
+        },
+      },
+    });
+    const doc = schema.nodeFromJSON({
+      type: 'doc',
+      content: [
+        {
+          type: 'enhanced_table_figure',
+          content: [
+            {
+              type: 'enhanced_table_figure_body',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [
+                    {
+                      type: 'image',
+                      attrs: {src: '/path/to/image.jpg'},
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const state = EditorState.create({doc, schema});
+    const imageViewBody = new ImageViewBody(
+      mockImageNode as unknown as NodeViewProps
+    );
+    imageViewBody.state = {
+      maxSize: {
+        width: 10000,
+        height: 10000,
+        complete: true,
+      },
+      originalSize: {
+        src: '/path/to/image.jpg',
+        complete: true,
+        height: 100,
+        width: 100,
+      },
+    };
+    imageViewBody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        readOnly: false,
+        state,
+      } as unknown as EditorFocused,
+      getPos: () => 3,
+      node: schema.nodes.image.create({src: '/path/to/image.jpg'}),
+      dom: document.createElement('span'),
+      selected: true,
+      focused: true,
+    };
+
+    const rendered = imageViewBody.render();
+
+    expect(imageViewBody.isInsideEnhancedTableFigureBody()).toBe(true);
+    expect(rendered.props.className).not.toContain('has-hover-handle');
+    expect(hasImageOptionsButton(rendered)).toBe(false);
+  });
+
   it('should dispatch image alignment menu actions', () => {
     const mockSchema = new Schema({
       nodes: {
@@ -763,3 +855,22 @@ describe('Image view body', () => {
     ).toBeDefined();
   });
 });
+
+function hasImageOptionsButton(node): boolean {
+  if (!node || typeof node !== 'object') {
+    return false;
+  }
+
+  if (node.props?.label === 'Image options') {
+    return true;
+  }
+
+  const children = node.props?.children;
+  if (!children) {
+    return false;
+  }
+
+  return []
+    .concat(children)
+    .some((child) => hasImageOptionsButton(child));
+}

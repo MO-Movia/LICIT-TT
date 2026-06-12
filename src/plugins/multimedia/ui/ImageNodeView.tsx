@@ -46,6 +46,8 @@ const IMAGE_MARGIN = 2;
 
 const MAX_SIZE = 100000;
 const IMAGE_PLACEHOLDER_SIZE = 24;
+const ENHANCED_TABLE_FIGURE = 'enhanced_table_figure';
+const ENHANCED_TABLE_FIGURE_BODY = 'enhanced_table_figure_body';
 
 const DEFAULT_ORIGINAL_SIZE = {
   src: '',
@@ -146,6 +148,7 @@ export class ImageViewBody extends React.PureComponent<
   _body?: HTMLElement | React.ReactInstance;
   _id = uuid();
   _cropEditor?: PopUpHandle;
+  _inlineEditor?: PopUpHandle;
   _menu?: PopUpHandle;
   _menuButton?: HTMLButtonElement;
   _mounted = false;
@@ -206,6 +209,8 @@ export class ImageViewBody extends React.PureComponent<
     const { originalSize, maxSize } = this.state;
     const { editorView, node, selected, focused } = this.props;
     const { readOnly } = editorView;
+    const shouldShowMenuButton =
+      !readOnly && !this.isInsideEnhancedTableFigureBody();
     const { attrs } = node;
     const { align, crop, rotate } = attrs;
 
@@ -238,7 +243,7 @@ export class ImageViewBody extends React.PureComponent<
       active,
       error,
       focused,
-      'has-hover-handle': !readOnly,
+      'has-hover-handle': shouldShowMenuButton,
       loading,
       selected,
     });
@@ -344,7 +349,7 @@ export class ImageViewBody extends React.PureComponent<
             {errorView}
           </span>
         </span>
-        {!readOnly ? (
+        {shouldShowMenuButton ? (
           <BlockControlHandleButton
             label="Image options"
             onClick={this._onMenuClick}
@@ -353,6 +358,35 @@ export class ImageViewBody extends React.PureComponent<
         ) : null}
         {resizeBox}
       </span>
+    );
+  }
+
+  isInsideEnhancedTableFigureBody(): boolean {
+    const {dom, editorView, getPos} = this.props;
+
+    try {
+      const pos = getPos?.();
+      if (Number.isFinite(pos)) {
+        const resolvedPos = editorView.state.doc.resolve(pos);
+        for (let depth = resolvedPos.depth; depth >= 0; depth--) {
+          const nodeName = resolvedPos.node(depth).type.name;
+          if (
+            nodeName === ENHANCED_TABLE_FIGURE ||
+            nodeName === ENHANCED_TABLE_FIGURE_BODY
+          ) {
+            return true;
+          }
+        }
+      }
+    } catch {
+      // Fall through to the DOM check below.
+    }
+
+    return (
+      dom instanceof Element &&
+      !!dom.closest(
+        "[data-type='enhanced-table-figure'], [data-type='enhanced-table-figure-body'], .enhanced-table-figure, .enhanced-table-figure-body"
+      )
     );
   }
 

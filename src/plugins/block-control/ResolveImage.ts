@@ -3,8 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import url from 'node:url';
-
 export type ImageResult = {
   complete: boolean;
   height: number;
@@ -75,10 +73,7 @@ function processPromise(
 
   resolveRes(srcStr, result, resolve);
 
-  const parsedURL = url.parse(srcStr);
-  // Removed the port validation from here
-  const { protocol } = parsedURL;
-  if (!/(http:|https:|data:)/.test(protocol || window.location.protocol)) {
+  if (!isSupportedImageSrc(srcStr)) {
     resolve(result);
     return;
   }
@@ -130,4 +125,13 @@ function isOffline(): boolean {
     return !window.navigator.onLine;
   }
   return false;
+}
+
+function isSupportedImageSrc(src: string): boolean {
+  try {
+    const protocol = new URL(src, window.location.href).protocol;
+    return /^(http:|https:|data:|blob:)$/.test(protocol);
+  } catch {
+    return false;
+  }
 }

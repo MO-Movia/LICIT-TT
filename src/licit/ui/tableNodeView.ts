@@ -17,12 +17,15 @@ import {
 } from './blockControls';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
+const ENHANCED_TABLE_FIGURE = 'enhanced_table_figure';
+const ENHANCED_TABLE_FIGURE_BODY = 'enhanced_table_figure_body';
 
 export class LicitTableNodeView extends TableView {
   private readonly _view: EditorView;
   private readonly _menuButton: HTMLElement;
   private _menu?: PopUpHandle;
   private _tablePos: number | null = null;
+  private _node: ProseMirrorNode;
 
   constructor(
     node: ProseMirrorNode,
@@ -31,12 +34,22 @@ export class LicitTableNodeView extends TableView {
   ) {
     super(node, defaultCellMinWidth);
     this._view = view;
+    this._node = node;
     this._wrapTableView();
     this._menuButton = createBlockControlHandle({
       label: 'Table options',
       onClick: this._onMenuClick,
     });
-    this.dom.appendChild(this._menuButton);
+    this._syncMenuButtonVisibility();
+  }
+
+  update(node: ProseMirrorNode): boolean {
+    const updated = super.update(node);
+    if (updated) {
+      this._node = node;
+      this._syncMenuButtonVisibility();
+    }
+    return updated;
   }
 
   ignoreMutation(record: MutationRecord): boolean {
@@ -68,6 +81,69 @@ export class LicitTableNodeView extends TableView {
     this.dom = tableControl;
   }
 
+  private _syncMenuButtonVisibility(): void {
+    const shouldShowMenuButton = !this._isInsideEnhancedTableFigure();
+    this.dom.classList.toggle('has-hover-handle', shouldShowMenuButton);
+
+    if (shouldShowMenuButton) {
+      if (!this._menuButton.parentElement) {
+        this.dom.appendChild(this._menuButton);
+      }
+      return;
+    }
+
+    this._closeMenu();
+    this._menuButton.remove();
+  }
+
+  private _isInsideEnhancedTableFigure(): boolean {
+    const pos = this._getCurrentTablePos();
+
+    try {
+      if (pos !== null) {
+        const resolvedPos = this._view.state.doc.resolve(pos);
+        for (let depth = resolvedPos.depth; depth >= 0; depth--) {
+          const nodeName = resolvedPos.node(depth).type.name;
+          if (
+            nodeName === ENHANCED_TABLE_FIGURE ||
+            nodeName === ENHANCED_TABLE_FIGURE_BODY
+          ) {
+            return true;
+          }
+        }
+      }
+    } catch {
+      // Fall through to the DOM check below.
+    }
+
+    return (
+      !!this.dom.closest(
+        "[data-type='enhanced-table-figure'], [data-type='enhanced-table-figure-body'], .enhanced-table-figure, .enhanced-table-figure-body"
+      )
+    );
+  }
+
+  private _getCurrentTablePos(): number | null {
+    let foundPos: number | null = null;
+    this._view.state.doc.descendants((node, pos) => {
+      if (node === this._node) {
+        foundPos = pos;
+        return false;
+      }
+      return true;
+    });
+
+    if (foundPos !== null) {
+      return foundPos;
+    }
+
+    try {
+      return this._view.posAtDOM(this.table, 0) - 1;
+    } catch {
+      return null;
+    }
+  }
+
   private _onMenuClick = (event: Event): void => {
     event.preventDefault();
     event.stopPropagation();
@@ -77,7 +153,11 @@ export class LicitTableNodeView extends TableView {
       return;
     }
 
-    this._tablePos = this._view.posAtDOM(this.table, 0) - 1;
+    this._tablePos = this._getCurrentTablePos();
+    if (this._tablePos === null || this._isInsideEnhancedTableFigure()) {
+      this._closeMenu();
+      return;
+    }
     this._menu = createPopUp(
       BlockControlMenu,
       {

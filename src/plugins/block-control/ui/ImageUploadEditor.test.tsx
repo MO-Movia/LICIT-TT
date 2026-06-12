@@ -247,6 +247,50 @@ describe('ImageUploadEditor', () => {
     expect(instance._onSuccess).toHaveBeenCalledWith(image);
   });
 
+  it('_upload adds local file dimensions when upload result has none', async () => {
+    const OriginalFileReader = global.FileReader;
+    const OriginalImage = global.Image;
+    class MockFileReader {
+      error = null;
+      onerror: (() => void) | null = null;
+      onload: (() => void) | null = null;
+      result = 'data:image/png;base64,test';
+
+      readAsDataURL(): void {
+        this.onload?.();
+      }
+    }
+    class MockImage {
+      naturalHeight = 240;
+      naturalWidth = 320;
+      onerror: (() => void) | null = null;
+      onload: (() => void) | null = null;
+      src = '';
+
+      constructor() {
+        setTimeout(() => this.onload?.(), 0);
+      }
+    }
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
+    global.Image = MockImage as unknown as typeof Image;
+
+    const image = { src: 'img.png', id: 'img-1' };
+    const uploadImage = jest.fn().mockResolvedValue(image);
+    const runtime = { canUploadImage: () => true, uploadImage };
+    const instance = makeInstance({ runtime });
+    instance._onSuccess = jest.fn();
+
+    await instance._upload(new File([''], 'test.png'));
+
+    expect(instance._onSuccess).toHaveBeenCalledWith({
+      ...image,
+      height: 240,
+      width: 320,
+    });
+    global.FileReader = OriginalFileReader;
+    global.Image = OriginalImage;
+  });
+
   it('_upload calls _onError when uploadImage rejects', async () => {
     const err = new Error('network error');
     const runtime = {

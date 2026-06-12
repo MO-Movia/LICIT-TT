@@ -80,6 +80,13 @@ export function insertEnhancedImageFigure(
   return tr;
 }
 
+function hasImageDimensions(
+  width?: number,
+  height?: number
+): width is number {
+  return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
+}
+
 
 export class ImageSourceCommand extends UICommand {
   _popUp?: PopUpHandle;
@@ -133,7 +140,14 @@ export class ImageSourceCommand extends UICommand {
       tr = tr.setSelection(selection);
       if (inputs) {
         const { src, width, height } = inputs;
-        tr = insertEnhancedImageFigure(tr, schema, src, '', width, height);
+        tr = insertEnhancedImageFigure(
+          tr,
+          schema,
+          src,
+          '',
+          hasImageDimensions(width, height) ? width : undefined,
+          hasImageDimensions(width, height) ? height : undefined
+        );
       }
       dispatch(tr);
       view?.focus();
