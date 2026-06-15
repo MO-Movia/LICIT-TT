@@ -6,7 +6,7 @@
 import React from 'react';
 import { preventEventDefault, CustomButton } from '../../../commands';
 
-import axios from 'axios';
+import { resolveVideo } from './resolveVideo';
 
 export type VideoEditorProps = {
   initialValue;
@@ -25,13 +25,13 @@ export class VideoEditor extends React.PureComponent<
   VideoEditorState
 > {
   state: VideoEditorState = {
-    ...(this.props.initialValue || {}),
+    ...this.props.initialValue,
     validValue: null,
     src: 'https://www.youtube.com/embed/',
   };
 
   render(): React.ReactNode {
-    const {src, width, height} = this.state;
+    const { src, width, height } = this.state;
 
     return (
       <div className="molm-czi-image-url-editor">
@@ -103,22 +103,22 @@ export class VideoEditor extends React.PureComponent<
 
   _onSrcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const src = this.getsrc(e);
-    const yId = this._getYouTubeId(src);
-    const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${yId}&format=json`;
-    let width = 300;
-    let height = 200;
-    const setValues = this._setStateValues;
-
-    axios
-      .get(url)
-      .then((response) => {
-        height = response.data.height;
-        width = response.data.width;
-        setValues(src, width, height, true);
+    this.setState(
+      {
+        src,
+        validValue: null,
+      },
+      this._didSrcChange
+    );
+  };
+  _didSrcChange = () => {
+    resolveVideo(this.state)
+      .then((result) => {
+        if (this.state.src === result.src) {
+          this._setStateValues(result.src, result.width, result.height, true);
+        }
       })
-      .catch((_rejected) => {
-        setValues(src, width, height, true);
-      });
+      .catch(console.error);
   };
 
   _setStateValues = (
@@ -127,12 +127,7 @@ export class VideoEditor extends React.PureComponent<
     height: number,
     validValue: boolean
   ) => {
-    (this as VideoEditor).setState({src, width, height, validValue});
-  };
-
-  _getYouTubeId = (url: string) => {
-    const arr = url.split(/(vi\/|v%3D|v=|\/v\/|youtu\.be\/|\/embed\/)/);
-    return undefined !== arr[2] ? arr[2].split(/[^\w-]/i)[0] : arr[0];
+    (this as VideoEditor).setState({ src, width, height, validValue });
   };
 
   _onWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {

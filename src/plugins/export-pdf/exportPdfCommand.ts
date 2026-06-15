@@ -9,10 +9,9 @@ import {EditorView} from 'prosemirror-view';
 import { UICommand } from '../../core';
 import {ExportPDF} from './exportPdf';
 import React from 'react';
+import { closePreviewForm, openPreviewForm } from './previewSession';
 
 export class ExportPDFCommand extends UICommand {
-  private static isPreviewFormOpen = false;
-
   public exportPdf: ExportPDF;
 
   constructor() {
@@ -52,10 +51,9 @@ export class ExportPDFCommand extends UICommand {
     view: EditorView,
     _doc: unknown
   ): boolean => {
-    if (ExportPDFCommand.isPreviewFormOpen) {
+    if (!openPreviewForm()) {
       return false;
     }
-    ExportPDFCommand.isPreviewFormOpen = true;
     return this.exportPdf.exportPdf(view, _doc);
   };
 
@@ -79,6 +77,6 @@ export class ExportPDFCommand extends UICommand {
   }
 
   public static closePreviewForm(): void {
-    ExportPDFCommand.isPreviewFormOpen = false;
+    closePreviewForm();
   }
 }

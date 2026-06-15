@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 // This implements the interface of `EditorRuntime`.
@@ -60,7 +60,7 @@ export class CitationRuntime {
         this.citations = citations;
         return citations;
       },
-      (_err) => {
+      (_error_) => {
         return null;
       }
     );
@@ -81,7 +81,7 @@ export class CitationRuntime {
         this.citationByRefId = citation;
         return citation;
       },
-      (_err) => {
+      (_error_) => {
         return null;
       }
     );

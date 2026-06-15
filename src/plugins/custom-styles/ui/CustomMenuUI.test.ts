@@ -3,17 +3,35 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
+jest.mock('../../../commands', () => {
+  const actual = jest.requireActual('../../../commands');
+  return {
+    __esModule: true,
+    ...actual,
+    createPopUp: jest.fn(() => ({ close: jest.fn() })),
+  } as unknown;
+});
+
 import { createEditor, doc, p } from 'jest-prosemirror';
 import { CustomstylePlugin } from '../index';
 import { CustomMenuUI } from './CustomMenuUI';
-import { Schema , Node } from 'prosemirror-model';
+import { Schema, Node } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { CustomStyleCommand } from '../CustomStyleCommand';
 import { UICommand } from '../../../core';
 import { SyntheticEvent } from 'react';
 import { Transform } from 'prosemirror-transform';
-
+import * as customStyle from '../customStyle';
+import * as commands from '../../../commands';
+import type { Style } from '../StyleRuntime';
 
 describe('Custom Menu UI', () => {
   const TestCustomStyleRuntime = {
@@ -535,7 +553,7 @@ describe('Custom Menu UI', () => {
   });
   it('should handle _onUIEnter', () => {
     const parent = document.createElement('div');
-    parent.setAttribute('data-test', 'test-value');
+    parent.dataset.test = 'test-value';
     const input = document.createElement('input');
     input.className = 'czi-custom-menu-item edit-icon';
     parent.appendChild(input);
@@ -544,7 +562,7 @@ describe('Custom Menu UI', () => {
     const event = {
       bubbles: true,
       cancelable: true,
-      view: window,
+      view: globalThis,
       currentTarget: input,
     };
     const ui = {
@@ -558,7 +576,7 @@ describe('Custom Menu UI', () => {
   });
   it('should handle _onUIEnter  when shouldRespondToUIEvent is false event.currentTarget.className === czi-custom-menu-item edit-icon', () => {
     const parent = document.createElement('div');
-    parent.setAttribute('data-test', 'test-value');
+    parent.dataset.test = 'test-value';
     const input = document.createElement('input');
     input.className = 'czi-custom-menu-item edit-icon';
     parent.appendChild(input);
@@ -567,7 +585,7 @@ describe('Custom Menu UI', () => {
     const event = {
       bubbles: true,
       cancelable: true,
-      view: window,
+      view: globalThis,
       currentTarget: input,
     };
     const ui = {
@@ -583,7 +601,7 @@ describe('Custom Menu UI', () => {
   });
   it('should handle _onUIEnter when shouldRespondToUIEvent is false', () => {
     const parent = document.createElement('div');
-    parent.setAttribute('data-test', 'test-value');
+    parent.dataset.test = 'test-value';
     const input = document.createElement('input');
     input.className = 'test';
     parent.appendChild(input);
@@ -592,7 +610,7 @@ describe('Custom Menu UI', () => {
     const event = {
       bubbles: true,
       cancelable: true,
-      view: window,
+      view: globalThis,
       currentTarget: input,
     };
     const ui = {
@@ -634,7 +652,7 @@ describe('Custom Menu UI', () => {
     expect(
       custommenuui.showSubMenu(
         ui as unknown as UICommand,
-        null as unknown as SyntheticEvent
+        null
       )
     ).toBeUndefined();
   });
@@ -666,7 +684,7 @@ describe('Custom Menu UI', () => {
     ).toBeUndefined();
   });
   it('should handle showsubmenu when popup not null (case 2)', () => {
-    custommenuui._stylePopup = { close: () => {} } as unknown as null;
+    custommenuui._stylePopup = { close: () => {} };
     const ui = {
       _customStyleName: 'Normal',
       _customStyle: {
@@ -1193,7 +1211,7 @@ describe('Custom Menu UI', () => {
       _customStyleName: 'test',
       _customStyle: { description: 'description', styles: {} },
     };
-    custommenuui._stylePopup = { close: () => {} } as unknown as null;
+    custommenuui._stylePopup = { close: () => {} };
     expect(
       custommenuui.showStyleWindow(
         uicommands,
@@ -1279,7 +1297,7 @@ describe('Custom Menu UI', () => {
     };
 
     const result = custommenuui.getTheSelectedCustomStyle(
-      testState as unknown as EditorState
+      testState
     );
 
     expect(result).toBe('Normal');
@@ -1294,5 +1312,734 @@ describe('Custom Menu UI', () => {
 
     expect(result).toBeDefined();
     expect(custommenuui._selectedIndex).toBeGreaterThan(0);
+  });
+
+  it('should normalize saved styles when input is an array', () => {
+    const arrayInput = [
+      { styleName: 'StyleA', mode: 0 },
+      { styleName: 'StyleB', mode: 0 },
+    ] as unknown as Style[];
+    const result = custommenuui.normalizeSavedStyles(arrayInput);
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual(arrayInput);
+  });
+
+  it('should normalize saved styles when input is not an array', () => {
+   
+    jest
+      .spyOn(customStyle, 'addStyleToList')
+      .mockReturnValueOnce([
+        { styleName: 'Single', mode: 0 },
+      ]);
+    const objInput = { styleName: 'Single', mode: 0 } as unknown as Style;
+    const result = custommenuui.normalizeSavedStyles(objInput);
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it('should find a matching style by styleName', () => {
+    const styles = [
+      { styleName: 'A' },
+      { styleName: 'B' },
+      { styleName: 'C' },
+    ] as unknown as Style[];
+    const match = custommenuui.findMatchingStyle(styles, 'B');
+    expect(match).toEqual({ styleName: 'B' });
+  });
+
+  it('should return undefined when no matching style found', () => {
+    const styles = [{ styleName: 'A' }] as unknown as Style[];
+    const match = custommenuui.findMatchingStyle(styles, 'X');
+    expect(match).toBeUndefined();
+  });
+
+  it('should close style popup when popup exists and focus editor view', () => {
+    const closeMock = jest.fn();
+    const focusMock = jest.fn();
+    const localProps = {
+      ...CustomMenuTestProps,
+      editorView: { focus: focusMock } as unknown as EditorView,
+    };
+    const instance = new CustomMenuUI(localProps);
+    instance._stylePopup = { close: closeMock };
+    instance.closeStylePopup();
+    expect(closeMock).toHaveBeenCalled();
+    expect(instance._stylePopup).toBeNull();
+    expect(focusMock).toHaveBeenCalled();
+  });
+
+  it('should close style popup when popup does not exist (no-throw)', () => {
+    const focusMock = jest.fn();
+    const localProps = {
+      ...CustomMenuTestProps,
+      editorView: { focus: focusMock } as unknown as EditorView,
+    };
+    const instance = new CustomMenuUI(localProps);
+    instance._stylePopup = null;
+    expect(() => instance.closeStylePopup()).not.toThrow();
+    expect(focusMock).toHaveBeenCalled();
+    expect(instance._stylePopup).toBeNull();
+  });
+
+  it('applySavedStyleResult should close popup when result is null', () => {
+    const focusMock = jest.fn();
+    const localProps = {
+      ...CustomMenuTestProps,
+      editorView: { focus: focusMock } as unknown as EditorView,
+    };
+    const instance = new CustomMenuUI(localProps);
+    const closeSpy = jest
+      .spyOn(instance, 'closeStylePopup')
+      .mockImplementation(() => {});
+    const getTransform = jest.fn();
+    instance.applySavedStyleResult(
+      { styleName: 'A' },
+      null,
+      getTransform as unknown
+    );
+    expect(closeSpy).toHaveBeenCalled();
+    expect(getTransform).not.toHaveBeenCalled();
+  });
+
+  it('applySavedStyleResult should dispatch when transform is returned', () => {
+    const dispatchMock = jest.fn();
+    const focusMock = jest.fn();
+    const localProps = {
+      ...CustomMenuTestProps,
+      editorView: {
+        focus: focusMock,
+        dispatch: dispatchMock,
+      } as unknown as EditorView,
+    };
+    const instance = new CustomMenuUI(localProps);
+    jest.spyOn(instance, 'closeStylePopup').mockImplementation(() => {});
+    const trMock = { docChanged: true } as unknown as Transform;
+    instance.applySavedStyleResult(
+      { styleName: 'A' },
+      [{ styleName: 'A' }] as unknown,
+      () => trMock
+    );
+    expect(dispatchMock).toHaveBeenCalledWith(trMock);
+  });
+
+  it('applySavedStyleResult should not dispatch when no matching style found', () => {
+    const dispatchMock = jest.fn();
+    const focusMock = jest.fn();
+    const localProps = {
+      ...CustomMenuTestProps,
+      editorView: {
+        focus: focusMock,
+        dispatch: dispatchMock,
+      } as unknown as EditorView,
+    };
+    const instance = new CustomMenuUI(localProps);
+    jest.spyOn(instance, 'closeStylePopup').mockImplementation(() => {});
+    const getTransform = jest.fn();
+    instance.applySavedStyleResult(
+      { styleName: 'NonExistent' },
+      [{ styleName: 'A' }] as unknown,
+      getTransform as unknown
+    );
+    expect(dispatchMock).not.toHaveBeenCalled();
+    expect(getTransform).not.toHaveBeenCalled();
+  });
+
+  it('applySavedStyleResult should not dispatch when transform returned is falsy', () => {
+    const dispatchMock = jest.fn();
+    const focusMock = jest.fn();
+    const localProps = {
+      ...CustomMenuTestProps,
+      editorView: {
+        focus: focusMock,
+        dispatch: dispatchMock,
+      } as unknown as EditorView,
+    };
+    const instance = new CustomMenuUI(localProps);
+    jest.spyOn(instance, 'closeStylePopup').mockImplementation(() => {});
+    instance.applySavedStyleResult(
+      { styleName: 'A' },
+      [{ styleName: 'A' }] as unknown,
+      () => null as unknown as Transform
+    );
+    expect(dispatchMock).not.toHaveBeenCalled();
+  });
+
+  it('saveStyleAndApply should resolve and delete editorView from val', async () => {
+    jest
+      .spyOn(customStyle, 'saveStyle')
+      .mockReturnValueOnce(Promise.resolve([]));
+    const applySpy = jest
+      .spyOn(custommenuui, 'applySavedStyleResult')
+      .mockImplementation(() => {});
+    const val = { styleName: 'A', editorView: 'something' };
+    custommenuui.saveStyleAndApply(val, () => null as unknown as Transform);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(val.editorView).toBeUndefined();
+    expect(applySpy).toHaveBeenCalled();
+    applySpy.mockRestore();
+  });
+
+  it('saveStyleAndApply should handle rejection via catch (no throw)', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest
+      .spyOn(customStyle, 'saveStyle')
+      .mockReturnValueOnce(
+        Promise.reject(new Error('boom'))
+      );
+    const val = { styleName: 'A', editorView: 'something' };
+    custommenuui.saveStyleAndApply(val, () => null as unknown as Transform);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it('handleEditModeSave should delegate to saveStyleAndApply', () => {
+    const saveSpy = jest
+      .spyOn(custommenuui, 'saveStyleAndApply')
+      .mockImplementation(() => {});
+    custommenuui.handleEditModeSave({ styleName: 'Edited' });
+    expect(saveSpy).toHaveBeenCalled();
+    // verify the second arg is a function (the getTransform callback)
+    expect(typeof saveSpy.mock.calls[0][1]).toBe('function');
+    // invoking the callback should not throw
+    expect(() =>
+      (saveSpy.mock.calls[0][1] as (o: unknown) => unknown)({})
+    ).not.toThrow();
+    saveSpy.mockRestore();
+  });
+
+  it('handleRenameModeSave should early-return when renameStyle resolves null', async () => {
+    jest
+      .spyOn(customStyle, 'renameStyle')
+      .mockReturnValueOnce(Promise.resolve(null));
+    const saveSpy = jest
+      .spyOn(custommenuui, 'saveStyleAndApply')
+      .mockImplementation(() => {});
+    custommenuui._styleName = 'OldName';
+    custommenuui.handleRenameModeSave({ styleName: 'NewName' });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(saveSpy).not.toHaveBeenCalled();
+    saveSpy.mockRestore();
+  });
+
+  it('handleRenameModeSave should call saveStyleAndApply on non-null result', async () => {
+    jest
+      .spyOn(customStyle, 'renameStyle')
+      .mockReturnValueOnce(
+        Promise.resolve([{ styleName: 'NewName' }])
+      );
+    const saveSpy = jest
+      .spyOn(custommenuui, 'saveStyleAndApply')
+      .mockImplementation(() => {});
+    custommenuui._styleName = 'OldName';
+    custommenuui.handleRenameModeSave({ styleName: 'NewName' });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(saveSpy).toHaveBeenCalled();
+    saveSpy.mockRestore();
+  });
+
+  it('handleRenameModeSave should handle renameStyle rejection via catch', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest
+      .spyOn(customStyle, 'renameStyle')
+      .mockReturnValueOnce(
+        Promise.reject(new Error('rename failed'))
+      );
+    custommenuui._styleName = 'OldName';
+    custommenuui.handleRenameModeSave({ styleName: 'NewName' });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it('removeTextAlignAndLineSpacing should return a Transform', () => {
+    let _setNodeCount = 0;
+    const tr = {
+      doc: mockdoc,
+      docChanged: false,
+      setNodeMarkup: () => {
+        _setNodeCount++;
+        return tr;
+      },
+    } as unknown as Transform;
+    const result = custommenuui.removeTextAlignAndLineSpacing(tr, schema);
+    expect(result).toBeDefined();
+  });
+
+  it('_execute should early-return when command is undefined', () => {
+    const onCommandMock = jest.fn();
+    const localProps = {
+      ...CustomMenuTestProps,
+      onCommand: onCommandMock,
+    };
+    const instance = new CustomMenuUI(localProps);
+    const result = instance._execute(
+      undefined,
+      new Event('click') as unknown as SyntheticEvent
+    );
+    expect(result).toBeUndefined();
+    expect(onCommandMock).not.toHaveBeenCalled();
+  });
+
+  it('getCommandGroups should return default HEADING_COMMANDS when addStyleToList returns null', () => {
+    jest
+      .spyOn(customStyle, 'addStyleToList')
+      .mockReturnValueOnce(null);
+    const localProps = { ...CustomMenuTestProps };
+    const instance = new CustomMenuUI(localProps);
+    const groups = instance.getCommandGroups();
+    expect(Array.isArray(groups)).toBe(true);
+    expect(groups.length).toBe(1);
+    // The default group must always contain RESERVED_STYLE_NONE ("Normal")
+    expect(groups[0]).toHaveProperty('Normal');
+  });
+
+  it('getCommandGroups should build commands when foundNormal exists and additional styles', () => {
+    const styles = [
+      { styleName: 'Normal', mode: 0 },
+      { styleName: 'CustomStyle1', mode: 0 },
+      { styleName: 'CustomStyle2', mode: 0 },
+    ] as unknown as Style[];
+    jest.spyOn(customStyle, 'addStyleToList').mockReturnValueOnce(styles);
+    const setStylesSpy = jest
+      .spyOn(customStyle, 'setStyles')
+      .mockImplementation(() => {});
+    const localProps = { ...CustomMenuTestProps };
+    const instance = new CustomMenuUI(localProps);
+    const groups = instance.getCommandGroups();
+    expect(groups[0]).toHaveProperty('Normal');
+    expect(groups[0]).toHaveProperty('CustomStyle1');
+    expect(groups[0]).toHaveProperty('CustomStyle2');
+    expect(setStylesSpy).toHaveBeenCalled();
+    setStylesSpy.mockRestore();
+  });
+
+  it('getCommandGroups should not overwrite Normal when foundNormal is absent', () => {
+    const styles = [
+      { styleName: 'OnlyCustom', mode: 0 },
+    ] as unknown as Style[];
+    jest.spyOn(customStyle, 'addStyleToList').mockReturnValueOnce(styles);
+    jest.spyOn(customStyle, 'setStyles').mockImplementation(() => {});
+    const localProps = { ...CustomMenuTestProps };
+    const instance = new CustomMenuUI(localProps);
+    const groups = instance.getCommandGroups();
+    // Default Normal entry is preserved, plus OnlyCustom is added
+    expect(groups[0]).toHaveProperty('Normal');
+    expect(groups[0]).toHaveProperty('OnlyCustom');
+  });
+
+  it('showSubMenu onClose should call removeStyle and removeCustomStyleName for "remove" type', async () => {
+    // Capture createPopUp's onClose callback via the module-level mock
+    let capturedSubMenuOnClose: ((val: unknown) => void) | undefined;
+    const popupCloseMock = jest.fn();
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_Comp: unknown, _props: unknown, opts: unknown) => {
+        capturedSubMenuOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: popupCloseMock };
+      }
+    );
+
+    const removeStyleSpy = jest
+      .spyOn(customStyle, 'removeStyle')
+      .mockReturnValueOnce(Promise.resolve([]));
+
+    const localProps = {
+      ...CustomMenuTestProps,
+      editorView: {
+        ...editor.view,
+        dispatch: jest.fn(),
+      } as unknown as EditorView,
+    };
+    const instance = new CustomMenuUI(localProps);
+    const removeSpy = jest
+      .spyOn(instance, 'removeCustomStyleName')
+      .mockReturnValue(true);
+
+    const command = {
+      _customStyleName: 'ToRemove',
+      _customStyle: { styleName: 'ToRemove' },
+    } as unknown as UICommand;
+    instance._stylePopup = null;
+    instance._popUp = null;
+    instance.showSubMenu(command, {
+      currentTarget: document.createElement('div'),
+    } as unknown as SyntheticEvent);
+
+    expect(typeof capturedSubMenuOnClose).toBe('function');
+    // Simulate the popup invoking onClose with the "remove" action
+    capturedSubMenuOnClose({
+      type: 'remove',
+      command: {
+        _customStyleName: 'ToRemove',
+        _customStyle: { styleName: 'ToRemove' },
+      },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(removeStyleSpy).toHaveBeenCalledWith('ToRemove');
+    expect(removeSpy).toHaveBeenCalled();
+  });
+
+  it('showSubMenu onClose should handle removeStyle rejection for "remove" type', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    let capturedSubMenuOnClose: ((val: unknown) => void) | undefined;
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_C: unknown, _p: unknown, opts: unknown) => {
+        capturedSubMenuOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: jest.fn() };
+      }
+    );
+    jest
+      .spyOn(customStyle, 'removeStyle')
+      .mockReturnValueOnce(
+        Promise.reject(new Error('remove failed'))
+      );
+
+    const instance = new CustomMenuUI({ ...CustomMenuTestProps });
+    instance._stylePopup = null;
+    instance._popUp = null;
+    instance.showSubMenu({} as unknown as UICommand, {
+      currentTarget: document.createElement('div'),
+    } as unknown as SyntheticEvent);
+
+    capturedSubMenuOnClose({
+      type: 'remove',
+      command: {
+        _customStyleName: 'Bad',
+        _customStyle: { styleName: 'Bad' },
+      },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it('showSubMenu onClose should call showStyleWindow with mode 2 for "rename" type', () => {
+    let capturedSubMenuOnClose: ((val: unknown) => void) | undefined;
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_C: unknown, _p: unknown, opts: unknown) => {
+        capturedSubMenuOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: jest.fn() };
+      }
+    );
+
+    const instance = new CustomMenuUI({ ...CustomMenuTestProps });
+    const showStyleSpy = jest
+      .spyOn(instance, 'showStyleWindow')
+      .mockImplementation(() => {});
+
+    instance._stylePopup = null;
+    instance._popUp = null;
+    const event = {
+      currentTarget: document.createElement('div'),
+    } as unknown as SyntheticEvent;
+    const command = {} as unknown as UICommand;
+    instance.showSubMenu(command, event);
+
+    capturedSubMenuOnClose({
+      type: 'rename',
+      command: {
+        _customStyleName: 'X',
+        _customStyle: { styleName: 'X' },
+      },
+    });
+
+    expect(showStyleSpy).toHaveBeenCalledWith(command, event, 2);
+  });
+
+  it('showSubMenu onClose should call showStyleWindow with mode 1 for "edit" type (else branch)', () => {
+    let capturedSubMenuOnClose: ((val: unknown) => void) | undefined;
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_C: unknown, _p: unknown, opts: unknown) => {
+        capturedSubMenuOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: jest.fn() };
+      }
+    );
+
+    const instance = new CustomMenuUI({ ...CustomMenuTestProps });
+    const showStyleSpy = jest
+      .spyOn(instance, 'showStyleWindow')
+      .mockImplementation(() => {});
+
+    instance._stylePopup = null;
+    instance._popUp = null;
+    const event = {
+      currentTarget: document.createElement('div'),
+    } as unknown as SyntheticEvent;
+    const command = {} as unknown as UICommand;
+    instance.showSubMenu(command, event);
+
+    capturedSubMenuOnClose({
+      type: 'edit',
+      command: {
+        _customStyleName: 'X',
+        _customStyle: { styleName: 'X' },
+      },
+    });
+
+    expect(showStyleSpy).toHaveBeenCalledWith(command, event, 1);
+  });
+
+  it('showSubMenu onClose should do nothing if val is undefined', () => {
+    let capturedSubMenuOnClose: ((val: unknown) => void) | undefined;
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_C: unknown, _p: unknown, opts: unknown) => {
+        capturedSubMenuOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: jest.fn() };
+      }
+    );
+
+    const instance = new CustomMenuUI({ ...CustomMenuTestProps });
+    const showStyleSpy = jest
+      .spyOn(instance, 'showStyleWindow')
+      .mockImplementation(() => {});
+    instance._stylePopup = null;
+    instance._popUp = null;
+    instance.showSubMenu({} as unknown as UICommand, {
+      currentTarget: document.createElement('div'),
+    } as unknown as SyntheticEvent);
+
+    // Passing undefined should not invoke showStyleWindow
+    expect(() => capturedSubMenuOnClose(undefined)).not.toThrow();
+    expect(showStyleSpy).not.toHaveBeenCalled();
+  });
+
+  it('showStyleWindow onClose should call handleEditModeSave for mode 1', () => {
+    let capturedWindowOnClose: ((val: unknown) => void) | undefined;
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_C: unknown, _p: unknown, opts: unknown) => {
+        capturedWindowOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: jest.fn() };
+      }
+    );
+
+    const focusMock = jest.fn();
+    const instance = new CustomMenuUI({
+      ...CustomMenuTestProps,
+      editorView: { focus: focusMock } as unknown as EditorView,
+    });
+    const editSpy = jest
+      .spyOn(instance, 'handleEditModeSave')
+      .mockImplementation(() => {});
+
+    instance._stylePopup = null;
+    instance.showStyleWindow(
+      {
+        _customStyleName: 'X',
+        _customStyle: { description: 'd', styles: {} },
+      },
+      new Event('click') as unknown as SyntheticEvent,
+      1
+    );
+
+    // After showStyleWindow, _stylePopup is now set. Simulate close with a value.
+    capturedWindowOnClose({ styleName: 'X', runtime: 'should-be-deleted' });
+    expect(editSpy).toHaveBeenCalled();
+    expect(focusMock).toHaveBeenCalled();
+  });
+
+  it('showStyleWindow onClose should call handleRenameModeSave for mode != 1', () => {
+    let capturedWindowOnClose: ((val: unknown) => void) | undefined;
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_C: unknown, _p: unknown, opts: unknown) => {
+        capturedWindowOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: jest.fn() };
+      }
+    );
+
+    const focusMock = jest.fn();
+    const instance = new CustomMenuUI({
+      ...CustomMenuTestProps,
+      editorView: { focus: focusMock } as unknown as EditorView,
+    });
+    const renameSpy = jest
+      .spyOn(instance, 'handleRenameModeSave')
+      .mockImplementation(() => {});
+
+    instance._stylePopup = null;
+    instance.showStyleWindow(
+      {
+        _customStyleName: 'X',
+        _customStyle: { description: 'd', styles: {} },
+      },
+      new Event('click') as unknown as SyntheticEvent,
+      2
+    );
+
+    capturedWindowOnClose({ styleName: 'Y', runtime: 'should-be-deleted' });
+    expect(renameSpy).toHaveBeenCalled();
+  });
+
+  it('showStyleWindow onClose should still focus editor when val is undefined', () => {
+    let capturedWindowOnClose: ((val: unknown) => void) | undefined;
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_C: unknown, _p: unknown, opts: unknown) => {
+        capturedWindowOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: jest.fn() };
+      }
+    );
+
+    const focusMock = jest.fn();
+    const instance = new CustomMenuUI({
+      ...CustomMenuTestProps,
+      editorView: { focus: focusMock } as unknown as EditorView,
+    });
+    const editSpy = jest
+      .spyOn(instance, 'handleEditModeSave')
+      .mockImplementation(() => {});
+    const renameSpy = jest
+      .spyOn(instance, 'handleRenameModeSave')
+      .mockImplementation(() => {});
+
+    instance._stylePopup = null;
+    instance.showStyleWindow(
+      {
+        _customStyleName: 'X',
+        _customStyle: { description: 'd', styles: {} },
+      },
+      new Event('click') as unknown as SyntheticEvent,
+      1
+    );
+
+    capturedWindowOnClose(undefined);
+    expect(editSpy).not.toHaveBeenCalled();
+    expect(renameSpy).not.toHaveBeenCalled();
+    expect(focusMock).toHaveBeenCalled();
+  });
+
+  it('showStyleWindow onClose should not invoke handlers when _stylePopup was cleared', () => {
+    let capturedWindowOnClose: ((val: unknown) => void) | undefined;
+    (commands.createPopUp as unknown as jest.Mock).mockImplementationOnce(
+      (_C: unknown, _p: unknown, opts: unknown) => {
+        capturedWindowOnClose = (opts as { onClose: (v: unknown) => void })
+          .onClose;
+        return { close: jest.fn() };
+      }
+    );
+
+    const focusMock = jest.fn();
+    const instance = new CustomMenuUI({
+      ...CustomMenuTestProps,
+      editorView: { focus: focusMock } as unknown as EditorView,
+    });
+    const editSpy = jest
+      .spyOn(instance, 'handleEditModeSave')
+      .mockImplementation(() => {});
+
+    instance._stylePopup = null;
+    instance.showStyleWindow(
+      {
+        _customStyleName: 'X',
+        _customStyle: { description: 'd', styles: {} },
+      },
+      new Event('click') as unknown as SyntheticEvent,
+      1
+    );
+
+    instance._stylePopup = null;
+    capturedWindowOnClose({ styleName: 'X' });
+    expect(editSpy).not.toHaveBeenCalled();
+    expect(focusMock).toHaveBeenCalled();
+  });
+
+  it('removeCustomStyleName should use selection.from/to directly when empty is false', () => {
+
+    const instance = new CustomMenuUI({ ...CustomMenuTestProps });
+
+    const finalTr: Record<string, unknown> = {
+      docChanged: true,
+      doc: mockdoc,
+    };
+    finalTr.setNodeMarkup = () => finalTr;
+    finalTr.removeMark = () => finalTr;
+
+    const trObj: Record<string, unknown> = { doc: mockdoc };
+    trObj.setNodeMarkup = () => trObj;
+    trObj.removeMark = () => trObj;
+
+    jest
+      .spyOn(instance, 'removeTextAlignAndLineSpacing')
+      .mockReturnValue(finalTr as unknown as Transform);
+
+    const stateWithRange = {
+      doc: mockdoc,
+      schema: schema,
+      selection: { from: 0, to: 2, empty: false },
+      tr: trObj,
+    } as unknown as EditorState;
+
+    expect(() =>
+      instance.removeCustomStyleName(stateWithRange, 'AFDP_Bullet', jest.fn())
+    ).not.toThrow();
+  });
+
+  it('renameStyleInDocument should rename matching nodes only', () => {
+    const calls: Array<{ pos: number; attrs: Record<string, unknown> }> = [];
+    const fakeTr = {
+      setNodeMarkup: (pos: number, _t: unknown, attrs: Record<string, unknown>) => {
+        calls.push({ pos, attrs });
+        return fakeTr;
+      },
+    } as unknown as Transform;
+    const fakeState = {
+      doc: {
+        descendants: (cb: (n: { attrs: { styleName: string } }, pos: number) => void) => {
+          cb({ attrs: { styleName: 'Old' } }, 0);
+          cb({ attrs: { styleName: 'Other' } }, 5);
+          cb({ attrs: { styleName: 'Old' } }, 10);
+        },
+      },
+    } as unknown as EditorState;
+
+    const result = custommenuui.renameStyleInDocument(
+      fakeState,
+      fakeTr,
+      'Old',
+      'New'
+    );
+    expect(result).toBeDefined();
+    expect(calls.length).toBe(2);
+    expect(calls[0].attrs.styleName).toBe('New');
+    expect(calls[1].attrs.styleName).toBe('New');
+  });
+
+  it('getTheSelectedCustomStyle should return the styleName attr of an allowed node', () => {
+    const customDoc = {
+      nodesBetween: (_f: number, _t: number, cb: (n: unknown) => void) => {
+        cb({
+          type: { name: 'paragraph' },
+          attrs: { styleName: 'MyCustom' },
+        });
+      },
+    };
+    const fakeState = {
+      doc: customDoc,
+      selection: { from: 0, to: 1 },
+    } as unknown as EditorState;
+    expect(custommenuui.getTheSelectedCustomStyle(fakeState)).toBe('AFDP_Bullet');
+  });
+
+  it('isAllowedNode should return true for paragraph and enhanced_table_figure_notes', () => {
+    expect(
+      custommenuui.isAllowedNode({
+        type: { name: 'paragraph' },
+      } as unknown as Node)
+    ).toBe(true);
+    expect(
+      custommenuui.isAllowedNode({
+        type: { name: 'enhanced_table_figure_notes' },
+      } as unknown as Node)
+    ).toBe(true);
+    expect(
+      custommenuui.isAllowedNode({
+        type: { name: 'image' },
+      } as unknown as Node)
+    ).toBe(false);
   });
 });

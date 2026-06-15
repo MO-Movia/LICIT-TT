@@ -6,12 +6,12 @@
 import cx from 'classnames';
 import * as React from 'react';
 
-import {preventEventDefault} from './preventEventDefault';
-import {EditorView} from 'prosemirror-view';
+import { preventEventDefault } from './preventEventDefault';
+import { EditorView } from 'prosemirror-view';
 import { UICommand } from '../../core';
 
 export type PointerSurfaceProps = {
-  active?: boolean;
+  active?: boolean; //NOSONAR
   children?;
   className?: string;
   disabled?: boolean;
@@ -22,7 +22,7 @@ export type PointerSurfaceProps = {
   title?: string;
   // value?: any;
   value?: string | number | Record<string, unknown> | EditorView | UICommand;
-  hasChild?: boolean;
+  hasChild?: boolean; //NOSONAR
 };
 
 export class PointerSurface extends React.PureComponent {
@@ -32,11 +32,11 @@ export class PointerSurface extends React.PureComponent {
   _mul = false;
   _pressedTarget = null;
 
-  state = {pressed: false};
+  state = { pressed: false };
 
   render(): React.ReactElement {
-    const {className, disabled, id, style, title, children} = this.props;
-    const {pressed} = this.state;
+    const { className, disabled, id, style, title, children } = this.props;
+    const { pressed } = this.state;
 
     const buttonClassName = cx(className, {
       disabled: disabled,
@@ -44,15 +44,16 @@ export class PointerSurface extends React.PureComponent {
     });
 
     return (
-      <span
+      // Custom button implementation intentionally uses span; native button changes existing UI behavior.
+      <span  //NOSONAR
         aria-disabled={disabled}
         aria-pressed={pressed}
         className={buttonClassName}
         id={id}
         onKeyDown={disabled ? preventEventDefault : this._onMouseUp}
         onMouseDown={disabled ? preventEventDefault : this._onMouseDown}
-        onMouseEnter={disabled ? preventEventDefault : this._onMouseEnter}
-        onMouseLeave={disabled ? null : this._onMouseLeave}
+        onMouseEnter={this._onMouseEnter}
+        onMouseLeave={this._onMouseLeave}
         onMouseUp={disabled ? preventEventDefault : this._onMouseUp}
         role="button"
         style={style}
@@ -74,7 +75,7 @@ export class PointerSurface extends React.PureComponent {
   _onMouseEnter = (e: React.SyntheticEvent): void => {
     this._pressedTarget = null;
     e.preventDefault();
-    const {onMouseEnter, value} = this.props;
+    const { onMouseEnter, value } = this.props;
     onMouseEnter?.(value, e);
   };
 
@@ -95,7 +96,7 @@ export class PointerSurface extends React.PureComponent {
       return;
     }
 
-    this.setState({pressed: true});
+    this.setState({ pressed: true });
     this._pressedTarget = e.currentTarget;
     this._clicked = false;
 
@@ -109,7 +110,7 @@ export class PointerSurface extends React.PureComponent {
     e.preventDefault();
 
     if (this._clicked || e.type === 'keypress') {
-      const {onClick, value, disabled} = this.props;
+      const { onClick, value, disabled } = this.props;
       if (!disabled && onClick) {
         onClick(value, e);
       }
@@ -131,6 +132,6 @@ export class PointerSurface extends React.PureComponent {
       (target === this._pressedTarget ||
         target.contains(this._pressedTarget) ||
         this._pressedTarget.contains(target));
-    this.setState({pressed: false});
+    this.setState({ pressed: false });
   };
 }

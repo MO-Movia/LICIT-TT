@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {findParentNodeClosestToPos, mergeAttributes} from '@tiptap/core';
@@ -55,13 +55,13 @@ const getColumnsFromDOM = (element: HTMLElement): number => {
   }
 
   let colCount = 0;
-  Array.from(firstRow.children).forEach((cell) => {
+  for (const cell of Array.from(firstRow.children)) {
     const colspan = normalizePositiveInteger(
       (cell as HTMLElement).getAttribute('colspan'),
       1
     );
     colCount += colspan;
-  });
+  };
 
   return colCount > 0 ? colCount : DEFAULT_TABLE_COLUMNS;
 };

@@ -8,7 +8,6 @@ import {Node} from 'prosemirror-model';
 import {Decoration} from 'prosemirror-view';
 import {NodeSelection} from 'prosemirror-state';
 import React from 'react';
-import ReactDOM from 'react-dom';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 
@@ -21,9 +20,9 @@ import {
   createPopUp,
 } from '../../../commands';
 import {v1 as uuid} from 'uuid';
-import {observe, unobserve} from './ResizeObserver';
 import {resolveVideo, VideoResult} from './resolveVideo';
 
+import {observe, unobserve} from './ResizeObserver';
 import type {ResizeObserverEntry} from './ResizeObserver';
 import {CustomNodeView} from './CustomNodeView';
 import type {NodeViewProps} from './CustomNodeView';
@@ -86,7 +85,6 @@ function getMaxResizeWidth(el): number {
 export class VideoViewBody extends React.PureComponent {
   declare props: NodeViewProps;
 
-  _body?: React.ReactInstance;
   _id = uuid();
   _inlineEditor?: PopUpHandle;
   _mounted = false;
@@ -269,11 +267,12 @@ export class VideoViewBody extends React.PureComponent {
             <iframe
               className="molm-czi-image-view-body-img"
               data-align={align}
-              frameBorder={0}
+              style={{ border: 'none' }}
               height={height}
               id={`${this._id}-img`}
               src={src}
               width={width}
+              title={`image-${this._id}`}
             />
             {errorView}
           </span>
@@ -285,7 +284,7 @@ export class VideoViewBody extends React.PureComponent {
 
   _renderInlineEditor(): void {
     const el = document.getElementById(this._id);
-    if (!el || el.getAttribute('data-active') !== 'true') {
+    if (!el || el.dataset.active !== 'true') {
       this._inlineEditor?.close(undefined);
       return;
     }
@@ -394,34 +393,34 @@ export class VideoViewBody extends React.PureComponent {
     editorView.dispatch(tr);
   };
 
+  _bodyEl: HTMLElement | null = null;
   _onBodyRef = (ref?: React.ReactInstance): void => {
     if (ref) {
-      this._body = ref;
       // Mounting
-      const el = ReactDOM.findDOMNode(ref);
+      const el = (ref as unknown as HTMLElement);
       if (el instanceof HTMLElement) {
+        this._bodyEl = el;
         observe(el, this._onBodyResize);
       }
     } else {
       // Unmounting.
-      const el = this._body && ReactDOM.findDOMNode(this._body);
-      if (el instanceof HTMLElement) {
-        unobserve(el);
+      if (this._bodyEl instanceof HTMLElement) {
+        unobserve(this._bodyEl);
       }
-      this._body = null;
+      this._bodyEl = null;
     }
   };
 
   _onBodyResize = (_info: ResizeObserverEntry): void => {
-    const width = this._body
-      ? getMaxResizeWidth(ReactDOM.findDOMNode(this._body))
+    const width = this._bodyEl
+      ? getMaxResizeWidth(this._bodyEl)
       : MAX_SIZE;
 
     this.setState({
       maxSize: {
         width,
         height: MAX_SIZE,
-        complete: !!this._body,
+        complete: !!this._bodyEl,
       },
     });
   };

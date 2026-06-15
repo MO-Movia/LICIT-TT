@@ -49,6 +49,13 @@ describe('HangingIndentMarkSpec', () => {
       });
     });
 
+    it('should return false when parsing a string node', () => {
+      const parser = HangingIndentMarkSpec.parseDOM[0];
+      const result = parser.getAttrs('span[prefix]' as HTMLElement & string);
+
+      expect(result).toBe(false);
+    });
+
     it('should parse span with empty prefix attribute', () => {
       (mockElement as HTMLElement).setAttribute('prefix', '');
 

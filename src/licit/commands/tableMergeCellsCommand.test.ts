@@ -40,7 +40,7 @@ jest.mock('prosemirror-model', (): typeof import('prosemirror-model') => ({
     parent: jest.fn(),
     before: jest.fn(),
     after: jest.fn(),
-  })) as unknown as typeof import('prosemirror-model').ResolvedPos,
+  })),
 }));
 
 

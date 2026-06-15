@@ -78,7 +78,7 @@ function processPromise(
   const parsedURL = url.parse(srcStr);
   // Removed the port validation from here
   const { protocol } = parsedURL;
-  if (!/(http:|https:|data:)/.test(protocol || window.location.protocol)) {
+  if (!/(http:|https:|data:)/.test(protocol || globalThis.location.protocol)) {
     resolve(result);
     return;
   }
@@ -88,8 +88,7 @@ function processPromise(
   const dispose = () => {
     if (img) {
       if (isImgInstance(img)) {
-        const pe = img.parentNode;
-        pe?.removeChild(img);
+        img.remove();
       }
       img.onload = null;
       img.onerror = null;
@@ -127,8 +126,8 @@ function processPromise(
   document.body.appendChild(img);
 }
 function isOffline(): boolean {
-  if (Object.prototype.hasOwnProperty.call(window.navigator, 'onLine')) {
-    return !window.navigator.onLine;
+  if (Object.hasOwn(globalThis.navigator, 'onLine')) {
+    return !globalThis.navigator.onLine;
   }
   return false;
 }

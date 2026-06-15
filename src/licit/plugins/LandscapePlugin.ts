@@ -1,7 +1,7 @@
 
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Plugin, PluginKey, TextSelection, EditorState, Transaction } from 'prosemirror-state';
@@ -139,11 +139,11 @@ class LandscapeScrollProxyView {
         });
     }
 
-    private onEditorScroll = (): void => {
+    private readonly onEditorScroll = (): void => {
         this.refresh();
     };
 
-    private onProxyScroll = (): void => {
+    private readonly onProxyScroll = (): void => {
         if (!this.activeLandscape || !this.proxyScrollbar || this.syncingFromLandscape) {
             return;
         }
@@ -152,7 +152,7 @@ class LandscapeScrollProxyView {
         this.syncingFromProxy = false;
     };
 
-    private onLandscapeScroll = (): void => {
+    private readonly onLandscapeScroll = (): void => {
         if (!this.activeLandscape || !this.proxyScrollbar || this.syncingFromProxy) {
             return;
         }
@@ -175,10 +175,12 @@ class LandscapeScrollProxyView {
             threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
         });
 
-        nodes.forEach((node) => this.observer.observe(node));
+        for (const node of nodes) {
+            this.observer.observe(node);
+        }
     }
 
-    private onIntersection = (): void => {
+    private readonly onIntersection = (): void => {
         this.refresh();
     };
 
@@ -207,7 +209,7 @@ class LandscapeScrollProxyView {
         let bestNode: HTMLElement = null;
         let bestScore = Number.NEGATIVE_INFINITY;
 
-        nodes.forEach((node) => {
+        for (const node of nodes) {
             const rect = node.getBoundingClientRect();
             const overlap = Math.min(rect.bottom, rootRect.bottom) - Math.max(rect.top, rootRect.top);
             if (overlap <= 0) {
@@ -219,7 +221,7 @@ class LandscapeScrollProxyView {
                 bestScore = score;
                 bestNode = node;
             }
-        });
+        };
 
         return bestNode;
     }

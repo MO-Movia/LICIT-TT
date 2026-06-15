@@ -79,7 +79,7 @@ describe('ExportPDF', () => {
 
       titleElements.forEach((el) => {
         expect(el.classList.contains('title-element')).toBe(true);
-        expect(el.hasAttribute('data-title-level')).toBe(true);
+        expect((el as HTMLElement).dataset.titleLevel).toBeDefined();
         expect(el.id).toContain('title-element-');
       });
 
@@ -170,5 +170,81 @@ describe('ExportPDF', () => {
     const expdf = new ExportPDF();
     expect(expdf.exportPdf(editorView,doc)).toBeDefined();
     expect(expdf.exportPdf(editorView,doc)).toBeDefined();
+  });
+  it('should handle exportPdf when doc type is not doc', () => {
+    const schema = new Schema({
+      nodes: basicSchema.spec.nodes,
+      marks: basicSchema.spec.marks,
+    });
+
+    // Create a simple document node
+    const content = schema.node('doc', null, [
+      schema.node('paragraph', null, [
+        schema.text('This is a test paragraph in the mock ProseMirror view.')
+      ])
+    ]);
+
+    // Create a mock state
+    const state = EditorState.create({
+      doc: content,
+      schema,
+    });
+
+    // Create a DOM container for the editor
+    const editorContainer = document.createElement('div');
+    document.body.appendChild(editorContainer);
+
+    // Create a mock EditorView
+    const editorView = new EditorView(editorContainer, {
+      state,
+    });
+    const doc = {
+      type: 'not-doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'Hello, this is a test document!',
+            },
+          ],
+        },
+      ],
+    };
+
+    const expdf = new ExportPDF();
+    expect(expdf.exportPdf(editorView,doc)).toBeDefined();
+  });
+  it('should handle exportPdf when doc is null', () => {
+    const schema = new Schema({
+      nodes: basicSchema.spec.nodes,
+      marks: basicSchema.spec.marks,
+    });
+
+    // Create a simple document node
+    const content = schema.node('doc', null, [
+      schema.node('paragraph', null, [
+        schema.text('This is a test paragraph in the mock ProseMirror view.')
+      ])
+    ]);
+
+    // Create a mock state
+    const state = EditorState.create({
+      doc: content,
+      schema,
+    });
+
+    // Create a DOM container for the editor
+    const editorContainer = document.createElement('div');
+    document.body.appendChild(editorContainer);
+
+    // Create a mock EditorView
+    const editorView = new EditorView(editorContainer, {
+      state,
+    });
+
+    const expdf = new ExportPDF();
+    expect(expdf.exportPdf(editorView, null)).toBeDefined();
   });
 });

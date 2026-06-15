@@ -16,6 +16,14 @@ interface MyNode {
   };
 }
 
+type ToggleMarkUpdateContext = {
+  node: Node;
+  pos: number;
+  startPos: number;
+  endPos: number;
+  style: Style;
+};
+
 function markApplies(
   doc: Node,
   ranges: readonly SelectionRange[],
@@ -213,14 +221,142 @@ export function addMarksToNode(
   return tr;
 }
 
+function isStyledNode(node: Node, nodeNames: string[]): boolean {
+  return nodeNames.includes(node.type.name) && Boolean(node.attrs.styleName);
+}
+
+function buildOverrideMarkAttrs(
+  value: number | string,
+  attrName: string,
+  defaultValue: string | undefined
+): Record<string, unknown> | null {
+  if (!value) {
+    return null;
+  }
+
+  return {
+    [attrName]: value,
+    overridden: defaultValue !== value.toString(),
+  };
+}
+
+function getUpdatedMarkAttrs(
+  markName: string,
+  style: Style,
+  value: number | string
+): Record<string, unknown> | null {
+  switch (markName) {
+    case 'mark-text-color':
+      return buildOverrideMarkAttrs(
+        value,
+        'color',
+        style?.styles?.color || '#000000'
+      );
+    case 'mark-font-size':
+      return buildOverrideMarkAttrs(
+        value,
+        'pt',
+        style?.styles?.fontSize
+      );
+    case 'mark-font-type':
+      return buildOverrideMarkAttrs(
+        value,
+        'name',
+        style?.styles?.fontName
+      );
+    case 'mark-text-highlight':
+      return buildOverrideMarkAttrs(
+        value,
+        'highlightColor',
+        style?.styles?.textHighlight || '#ffffff'
+      );
+    default:
+      return null;
+  }
+}
+
+function applyUpdatedMarkAttrs(
+  tr: Transform,
+  markType: MarkType,
+  node: Node,
+  pos: number,
+  startPos: number,
+  style: Style,
+  value: number | string
+): void {
+  if (pos > startPos) {
+    return;
+  }
+
+  const nodeMark = node.marks.find((mark) => mark.type.name === markType.name);
+  if (!nodeMark) {
+    return;
+  }
+
+  const attrs = getUpdatedMarkAttrs(nodeMark.type.name, style, value);
+  if (!attrs || !Object.keys(attrs).length) {
+    return;
+  }
+
+  tr.addMark(pos, pos + node.nodeSize, markType.create(attrs));
+}
+
+function getToggleMarkAttrs(
+  markName: string,
+  style: Style
+): Record<string, unknown> | null {
+  switch (markName) {
+    case 'strong':
+      return { strong: style?.styles?.strong ?? true };
+    case 'em':
+      return { em: style?.styles?.em ?? true };
+    case 'underline':
+      return { underline: style?.styles?.underline ?? true };
+    case 'strike':
+      return { strike: style?.styles?.strike ?? true };
+    default:
+      return null;
+  }
+}
+
+function applyToggleMarkUpdate(
+  tr: Transform,
+  markType: MarkType,
+  overrideMarkType: MarkType | undefined,
+  context: ToggleMarkUpdateContext
+): void {
+  const {node, pos, startPos, endPos, style} = context;
+  if (!overrideMarkType || !node.isText || pos > startPos) {
+    return;
+  }
+
+  const attrs = getToggleMarkAttrs(markType.name, style);
+  if (!attrs) {
+    return;
+  }
+
+  const hasMark = node.marks.find((mark) => mark.type.name === markType.name);
+  if (hasMark) {
+    tr.removeMark(pos, endPos, overrideMarkType);
+    return;
+  }
+
+  const overridenMark = node.marks.find(
+    (mark) => mark.type.name === overrideMarkType.name
+  );
+  const mergedAttrs = overridenMark
+    ? { ...overridenMark.attrs, ...attrs }
+    : attrs;
+
+  tr.addMark(startPos, endPos, overrideMarkType?.create(mergedAttrs));
+}
+
 export function updateMarksAttrs(
   markType: MarkType,
   tr: Transform,
   state: EditorState,
   value: number | string
 ) {
-  let attrs = {};
-
   const startPos = tr.doc?.resolve(state.selection.from);
   const endPos = tr.doc?.resolve(state.selection.to);
   let _startPos = startPos?.pos;
@@ -238,57 +374,14 @@ export function updateMarksAttrs(
   let style: Style = null;
   tr.doc?.nodesBetween(startPos?.pos, endPos?.pos, (node, pos) => {
     if (node.type.name === 'table') {
-      return true;
+      return;
     }
-    if (node.type.name === 'paragraph' && node.attrs.styleName) {
+    if (isStyledNode(node, ['paragraph'])) {
       style = getStyleByName(node.attrs.styleName);
-    } else {
-      const nodesMarkType = node.marks.find(
-        (mark) => mark.type.name === markType.name
-      );
-
-      if (pos <= _startPos) {
-        switch (nodesMarkType?.type.name) {
-          case 'mark-text-color': {
-            const defTextColor = style?.styles?.color || '#000000';
-            if (defTextColor === value.toString()) {
-              attrs = value ? {color: value, overridden: false} : null;
-            } else {
-              attrs = value ? {color: value, overridden: true} : null;
-            }
-            break;
-          }
-          case 'mark-font-size':
-            if (style?.styles?.fontSize === value?.toString()) {
-              attrs = value ? {pt: value, overridden: false} : null;
-            } else {
-              attrs = value ? {pt: value, overridden: true} : null;
-            }
-            break;
-          case 'mark-font-type':
-            if (style?.styles?.fontName === value?.toString()) {
-              attrs = value ? {name: value, overridden: false} : null;
-            } else {
-              attrs = value ? {name: value, overridden: true} : null;
-            }
-            break;
-          case 'mark-text-highlight': {
-            const defHiglightColor = style?.styles?.textHighlight || '#ffffff';
-
-            if (defHiglightColor === value?.toString()) {
-              attrs = value ? {highlightColor: value, overridden: false} : null;
-            } else {
-              attrs = value ? {highlightColor: value, overridden: true} : null;
-            }
-            break;
-          }
-        }
-        if (attrs && Object.keys(attrs).length !== 0) {
-          tr.addMark(pos, pos + node.nodeSize, markType.create(attrs));
-        }
-      }
+      return;
     }
-    return true;
+
+    applyUpdatedMarkAttrs(tr, markType, node, pos, _startPos, style, value);
   });
 }
 
@@ -297,8 +390,6 @@ export function updateToggleMarks(
   tr: Transform,
   state: EditorState
 ) {
-  let attrs = {};
-
   const startPos = tr.doc.resolve(state.selection.from);
   const endPos = tr.doc.resolve(state.selection.to);
   let _startPos = startPos.pos;
@@ -315,47 +406,24 @@ export function updateToggleMarks(
   }
 
   let style: Style = null;
+  const overrideMarkType = schema?.marks?.[MARK_OVERRIDE];
   tr.doc.nodesBetween(startPos.pos, endPos.pos, (node, pos) => {
-    if (
-      (node.type.name === 'paragraph' ||
-        node.type.name === 'enhanced_table_figure_notes') &&
-      node.attrs.styleName
-    ) {
+    if (isStyledNode(node, ['paragraph', 'enhanced_table_figure_notes'])) {
       style = getStyleByName(node.attrs.styleName);
-    } else if (node.isText) {
-      const hasMarks = node.marks.find(
-        (mark) => mark.type.name === markType.name
-      );
-
-      if (pos <= _startPos) {
-        const overrideMarkType = schema.marks[MARK_OVERRIDE];
-        if (hasMarks) {
-          tr.removeMark(pos, endPos.pos, overrideMarkType);
-        }
-        switch (markType.name) {
-          case 'strong':
-            attrs = { strong: style?.styles?.strong ?? true };
-            break;
-          case 'em':
-            attrs = { em: style?.styles?.em ?? true };
-            break;
-          case 'underline':
-            attrs = { underline: style?.styles?.underline ?? true };
-            break;
-          case 'strike':
-            attrs = {strike: style?.styles?.strike ?? true};
-            break;
-        }
-        if (!hasMarks) {
-          const overridenMark = node.marks.find(
-            (mark) => mark.type.name === overrideMarkType.name
-          );
-          if (overridenMark) {
-            attrs = {...overridenMark.attrs, ...attrs};
-          }
-          tr.addMark(_startPos, endPos.pos, overrideMarkType?.create(attrs));
-        }
-      }
+      return;
     }
+
+    applyToggleMarkUpdate(
+      tr,
+      markType,
+      overrideMarkType,
+      {
+        node,
+        pos,
+        startPos: _startPos,
+        endPos: endPos.pos,
+        style,
+      }
+    );
   });
 }

@@ -68,13 +68,13 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
               );
             }
 
-            HEADING_NAMES.forEach((obj) => {
+            for (const obj of HEADING_NAMES) {
               if (RESERVED_STYLE_NONE != obj.styleName)
                 HEADING_COMMANDS[obj.styleName] = new CustomStyleCommand(
                   obj,
                   obj.styleName
                 );
-            });
+            };
           }
         }
         return [HEADING_COMMANDS];
@@ -152,11 +152,6 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
         // [FS] IRAD-1231 2021-03-02
         // Show the custom style as None for paste paragraph from outside.
         else {
-          const updatedAttrs = {
-            ...node.attrs,
-            styleName: RESERVED_STYLE_NONE,
-          };
-          node = { ...node, attrs: updatedAttrs } as unknown as Node;
           customStyleName = RESERVED_STYLE_NONE;
         }
       }

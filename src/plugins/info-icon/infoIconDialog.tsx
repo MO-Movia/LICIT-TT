@@ -244,13 +244,13 @@ export class InfoIconDialog extends React.PureComponent<
     const iconName = this.state.infoIcon?.unicode;
     const lcList = localStorage.getItem(SELECTEDINFOICON);
     const lcListItem = JSON.parse(lcList);
-    lcListItem.forEach((element, i) => {
+    for (const [i, element] of lcListItem.entries()) {
       if (element.unicode === iconName) {
         lcListItem.splice(i, 1);
         localStorage.setItem(SELECTEDINFOICON, JSON.stringify(lcListItem));
         this.setState({faIcons: this.getCacheIcons(), infoIcon: null});
       }
-    });
+    };
   }
 
   disableInfoWIndow(isEditable: boolean): void {
@@ -292,7 +292,4 @@ export class InfoIconDialog extends React.PureComponent<
       }
     }
   }
-
-
-
 }

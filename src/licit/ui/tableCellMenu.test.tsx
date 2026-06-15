@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import * as React from 'react';
@@ -38,13 +38,7 @@ describe('TableCellMenu', () => {
     mockEditorState = { doc: {} } as EditorState;
     mockEditorView = { dispatch: jest.fn() } as unknown as EditorView;
     mockActionNode = document.createElement('div');
-    mockPluginView = {} as PluginView & {
-      _menu?: (
-        editorState: EditorState,
-        actionNode: Node,
-        defaultCommands: unknown
-      ) => unknown;
-    };
+    mockPluginView = {};
 
     jest.clearAllMocks();
   });

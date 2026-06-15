@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
@@ -58,54 +58,40 @@ waitForUserInput = (): Promise<null> => Promise.resolve(null);
         }
 
         const depth = this.findLandscapeDepth($from, type);
-
-        // If selection is inside a landscape node, unwrap it by removing the node wrapper
         if (depth > -1) {
-            const nodeStart = $from.before(depth);
-            const nodeEnd = $from.after(depth);
-            const landscapeNode = $from.node(depth);
-
-            if (dispatch) {
-                // Delete the landscape node and insert its children (unwrap)
-                let tr = state.tr;
-                tr = tr.deleteRange(nodeStart, nodeEnd);
-                tr = tr.insert(nodeStart, landscapeNode.content);
-
-                // Map original selection position and place the cursor at a valid textblock
-                const mappedPos = tr.mapping.map($from.pos);
-                const safePos = Math.min(Math.max(0, mappedPos), tr.doc.content.size);
-
-                // Ensure the selection lands inside a textblock; search forward then backward if needed
-                const resolved = tr.doc.resolve(safePos);
-                let posForSelection = safePos;
-                if (!resolved.parent.isTextblock) {
-                    // Try to find the nearest textblock position: search forward first
-                    for (let i = safePos; i <= tr.doc.content.size; i++) {
-                        const r = tr.doc.resolve(Math.min(i, tr.doc.content.size));
-                        if (r.parent.isTextblock) {
-                            posForSelection = r.pos;
-                            break;
-                        }
-                    }
-                    // If forward search didn't change posForSelection, search backward
-                    if (posForSelection === safePos) {
-                        for (let i = safePos - 1; i >= 0; i--) {
-                            const r = tr.doc.resolve(i);
-                            if (r.parent.isTextblock) {
-                                posForSelection = r.pos;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                tr = tr.setSelection(TextSelection.near(tr.doc.resolve(posForSelection)));
-                dispatch(tr.scrollIntoView());
-            }
-
-            return true;
+            return this.unwrapLandscapeSection(state, dispatch, depth);
         }
 
+        return this.handleLandscapeInsertion(state, dispatch, type, $from, $to);
+    }
+
+    private unwrapLandscapeSection(
+        state: EditorState,
+        dispatch: ((tr: Transaction) => void) | undefined,
+        depth: number
+    ): boolean {
+        const { $from } = state.selection;
+        const nodeStart = $from.before(depth);
+        const nodeEnd = $from.after(depth);
+        const landscapeNode = $from.node(depth);
+
+        if (dispatch) {
+            let tr = state.tr.deleteRange(nodeStart, nodeEnd);
+            tr = tr.insert(nodeStart, landscapeNode.content);
+            tr = this.restoreTextblockSelection(tr, $from.pos);
+            dispatch(tr.scrollIntoView());
+        }
+
+        return true;
+    }
+
+    private handleLandscapeInsertion(
+        state: EditorState,
+        dispatch: ((tr: Transaction) => void) | undefined,
+        type: NodeType,
+        $from: ResolvedPos,
+        $to: ResolvedPos
+    ): boolean {
         const tableDepth = this.findSharedTableDepth($from, $to);
         if (tableDepth > -1) {
             return this.wrapTableInLandscape(state, dispatch, type, tableDepth);
@@ -115,12 +101,73 @@ waitForUserInput = (): Promise<null> => Promise.resolve(null);
             return this.insertEmptyLandscapeSection(state, dispatch, type);
         }
 
-        const range = $from.blockRange($to);
-        if (!range) {
+        return this.wrapSelectionInLandscape(state, dispatch, type, $from, $to);
+    }
+
+    private wrapSelectionInLandscape(
+        state: EditorState,
+        dispatch: ((tr: Transaction) => void) | undefined,
+        type: NodeType,
+        $from: ResolvedPos,
+        $to: ResolvedPos
+    ): boolean {
+        if (!$from.blockRange($to)) {
             return false;
         }
 
         return wrapIn(type)(state, dispatch);
+    }
+
+    private restoreTextblockSelection(
+        tr: Transaction,
+        originalPos: number
+    ): Transaction {
+        const mappedPos = tr.mapping.map(originalPos);
+        const safePos = this.clampPosition(mappedPos, tr.doc.content.size);
+        const selectionPos = this.findNearestTextblockPosition(tr, safePos);
+        return tr.setSelection(TextSelection.near(tr.doc.resolve(selectionPos)));
+    }
+
+    private clampPosition(pos: number, max: number): number {
+        return Math.min(Math.max(0, pos), max);
+    }
+
+    private findNearestTextblockPosition(
+        tr: Transaction,
+        safePos: number
+    ): number {
+        const forwardPos = this.findTextblockPosition(
+            tr,
+            safePos,
+            tr.doc.content.size,
+            1
+        );
+        if (forwardPos !== null) {
+            return forwardPos;
+        }
+
+        const backwardPos = this.findTextblockPosition(tr, safePos - 1, 0, -1);
+        return backwardPos ?? safePos;
+    }
+
+    private findTextblockPosition(
+        tr: Transaction,
+        start: number,
+        boundary: number,
+        step: 1 | -1
+    ): number | null {
+        for (
+            let pos = this.clampPosition(start, tr.doc.content.size);
+            step > 0 ? pos <= boundary : pos >= boundary;
+            pos += step
+        ) {
+            const resolved = tr.doc.resolve(pos);
+            if (resolved.parent.isTextblock) {
+                return resolved.pos;
+            }
+        }
+
+        return null;
     }
 
     private findLandscapeDepth(

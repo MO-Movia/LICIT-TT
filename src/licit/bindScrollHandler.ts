@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 type ScrollHandle = {
@@ -42,7 +42,7 @@ export default function bindScrollHandler(
         el?.removeEventListener('scroll', onScroll, false);
       }
       onScroll = null;
-      if (rid) window.cancelAnimationFrame(rid);
+      if (rid) globalThis.window.cancelAnimationFrame(rid);
       rid = 0;
     },
   };

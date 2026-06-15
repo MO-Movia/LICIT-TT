@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {createEditor, doc, p} from 'jest-prosemirror';
 import {
   EditorState,
@@ -11,7 +18,6 @@ import {
   PluginKey,
   Transaction,
 } from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
 import {MultimediaPlugin} from './index';
 import {resolveImage} from './ui/resolveImage';
 import * as resolveImageMod from './ui/resolveImage';
@@ -88,7 +94,7 @@ describe('MultimediaPlugin', () => {
 
     ImgSrcCmd.executeWithUserInput(
       state,
-      view.dispatch as (tr: Transform) => void,
+      view.dispatch,
       view,
       ImageArgs
     );
@@ -222,7 +228,7 @@ describe('resolveImage (img instance)', () => {
 
     const isImgInsMock = jest.spyOn(resolveImageMod, 'isImgInstance');
     isImgInsMock.mockReturnValue(true);
-    global.document.createElement = (function (create) {
+    globalThis.document.createElement = (function (create) {
       return function (...args) {
         const element = create.apply(this, args);
 
@@ -363,7 +369,6 @@ describe('resolveImage', () => {
 
 describe('resolveImage (group 2)', () => {
   it('should resolve Image - onLoad offline', async () => {
-    const spy = jest.spyOn(Object, 'hasOwn').mockReturnValue(true);
     const res = {
       complete: true,
       height: 400,
@@ -373,8 +378,8 @@ describe('resolveImage (group 2)', () => {
       width: 200,
     };
 
-    await resolveImage(res.src);
-    expect(spy).toBeCalled();
+    const resolved = await resolveImage(res.src);
+    expect(resolved.src).toBe(res.src);
   });
 });
 

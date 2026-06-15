@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {
@@ -95,9 +95,10 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
             const { state } = view;
             const { selection } = state;
             const { from, to } = selection;
-            const frompos = from - 1 < 0 ? 0 : from - 1;
+            const frompos = Math.max(from - 1, 0);
             const selectedPara = state.doc.slice(frompos, to);
-            selectedPara.content.forEach((node) => {
+            for (let i = 0; i < selectedPara.content.childCount; i++) {
+              const node = selectedPara.content.child(i);
               if (this.isTargetNodeAllowed(node) && node.attrs[ATTR_OBJID]) {
                 this.getState(view.state)?.cutObjectIds.push({
                   objectId: node.attrs[ATTR_OBJID],
@@ -105,7 +106,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
                   selectionId: node.attrs[ATTR_SELECTIONID],
                 });
               }
-            });
+            };
           },
         },
 
@@ -122,12 +123,12 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
               (obj) => obj.objectId === node.attrs?.objectId
             );
             newattrs.objectMetaData = cutObjectIds[0].objectMetaData;
-            if (index !== -1) {
-              newattrs.objectId = node.attrs.objectId;
-              this.getState(view.state).cutObjectIds.splice(index, 1);
-            } else {
+            if (index === -1) {
               newattrs.objectId = cutObjectIds[0].objectId;
               this.getState(view.state).cutObjectIds.shift();
+            } else {
+              newattrs.objectId = node.attrs.objectId;
+              this.getState(view.state).cutObjectIds.splice(index, 1);
             }
             const pos = from - 1;
             tr = tr.setNodeMarkup(pos, undefined, newattrs);
@@ -261,11 +262,11 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
   getChangedRanges(transactions): Ranges[] {
     const ranges: Ranges[] = [];
     for (const tr of transactions) {
-      tr.mapping.maps.forEach(map => {
-        map.forEach((newStart, newEnd) => {
+      for (const map of tr.mapping.maps) {
+        map.forEach((newStart, newEnd) => { //NOSONAR
           ranges.push({ from: newStart, to: newEnd });
         });
-      });
+      };
     }
     return ranges;
   }
@@ -351,7 +352,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     const merged = [ranges[0]];
 
     for (let i = 1; i < ranges.length; i++) {
-      const last = merged[merged.length - 1];
+      const last = merged.at(-1);
       const current = ranges[i];
       if (current.from <= last.to + 1) {
         last.to = Math.max(last.to, current.to);
@@ -466,16 +467,18 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
       const deletedIds = new Set();
       const prevNodesById = this.nodeAssignment(prevState);
       const nextNodesById = this.nodeAssignment(nextState);
-      Object.keys(prevNodesById)
-        .filter((id) => nextNodesById[id] === undefined)
-        .forEach((id) => deletedIds.add(id));
+      for (const id of Object.keys(prevNodesById).filter((id) => nextNodesById[id] === undefined)) {
+        deletedIds.add(id);
+      }
 
       if (0 < deletedIds.size) {
         // New deleted items have been found.
         // Add any previously deleted items to the set to prevent the same id from
         // appearing in the list multiple times.
         const existingIds = nextState.doc.attrs[ATTR_DELETEDOBJIDS] ?? [];
-        existingIds.forEach((id: string) => deletedIds.add(id));
+        for (const id of existingIds) {
+          deletedIds.add(id);
+        }
 
         // Build step to change document.
         const step = new SetDocAttrStep(
@@ -493,19 +496,18 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
   createNewAttributes(schema: Schema): void {
     const contentArr = [];
 
-    ALLOWED_NODES.forEach((name) => {
+    for (const name of ALLOWED_NODES) {
       const content = this.getContent(name, schema);
       if (content) {
-        contentArr.push(content);
-        contentArr.push(schema.nodes[name]);
+        contentArr.push(content, schema.nodes[name]);
       }
-    });
+    };
 
-    contentArr.forEach((content) => {
-      NEWATTRS.forEach((attr) => {
+    for (const content of contentArr) {
+      for (const attr of NEWATTRS) {
         this.createAttribute(content, attr, null);
-      });
-    });
+      };
+    };
   }
 
   applyEffectiveSchema(schema: Schema): Schema {

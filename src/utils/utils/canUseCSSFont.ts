@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 const cached = {};
@@ -8,7 +8,7 @@ const cached = {};
 export default function canUseCSSFont(fontName: string): Promise<boolean> {
   const doc = document;
 
-  if (Object.prototype.hasOwnProperty.call(cached, fontName)) {
+  if (Object.hasOwn(cached, fontName)) {
     return Promise.resolve(cached[fontName]);
   }
 
@@ -40,8 +40,24 @@ export default function canUseCSSFont(fontName: string): Promise<boolean> {
       resolve(result);
     };
     doc.fonts.ready.then(check).catch((error) => {
-    console.error('Font loading check failed:', error);
-    resolve(false); 
+      console.error('Font loading check failed:', error);
+      resolve(false);
+    });
   });
-  });
+}
+
+export async function initFont(font: string, source: string) {
+  // Inject CSS Fonts required for toolbar icons.
+  const fontSupported = await canUseCSSFont(font);
+  if (!fontSupported) {
+    console.warn('Add CSS from ', source);
+  }
+}
+
+const CSS_CDN_URL = '//fonts.googleapis.com/icon?family=Material+Icons';
+const CSS_FONT = 'Material Icons';
+export function initMaterialIconsFonts(callback?: () => void) {
+  initFont(CSS_FONT, CSS_CDN_URL)
+    .finally(() => callback?.())
+    .catch(console.error);
 }

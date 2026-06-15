@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import uuid from './ui/uuid';
@@ -72,7 +72,7 @@ export default function splitListItem(
   }
 
   const { $from, $to, node } = selection as NodeSelection;
-  if ((node && node.isBlock) || $from.depth < 2 || !$from.sameParent($to)) {
+  if (node?.isBlock || $from.depth < 2 || !$from.sameParent($to)) {
     return tr;
   }
 

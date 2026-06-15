@@ -22,12 +22,12 @@ import {
   getDetailsBullet,
   BULLET_POINTS,
 } from '../CustomStyleNodeSpec';
-import type { Style } from '../StyleRuntime';
+import type { HTMLStyles, Style } from '../StyleRuntime';
 import { AlertInfo } from './AlertInfo';
 
 let customStyles: Style[] = [];
 const otherStyleSelected = false;
-const editedStyles = [];
+const editedStyles: string[] = [];
 const FONT_PT_SIZES = [6, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 30, 36, 42, 48, 60, 72, 90];
 
 const FONT_TYPE_NAMES = [
@@ -69,15 +69,95 @@ const LEVEL_VALUES = [
 
 const SAMPLE_TEXT = `Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample.
 Sample Text Sample Text Sample Text Sample Text Sample Text`;
- 
-export class CustomStyleEditor extends React.PureComponent<any, any> {
+
+type StyleValue = string | number | boolean | null | undefined;
+
+type CustomStyleEditorStyles = Omit<
+  HTMLStyles,
+  | 'bulletLevel'
+  | 'color'
+  | 'fontSize'
+  | 'indent'
+  | 'lineHeight'
+  | 'nextLineStyleName'
+  | 'paragraphSpacingAfter'
+  | 'paragraphSpacingBefore'
+  | 'strike'
+  | 'styleLevel'
+  | 'textHighlight'
+> & {
+  [key: string]: StyleValue;
+  bulletLevel?: string | boolean;
+  color?: StyleValue;
+  fontSize?: string | number;
+  indent?: string | number;
+  isHangingIndent?: boolean;
+  lineHeight?: StyleValue;
+  nextLineStyleName?: StyleValue;
+  paragraphSpacingAfter?: string | number;
+  paragraphSpacingBefore?: string | number;
+  strike?: string | boolean;
+  styleLevel?: StyleValue;
+  super?: boolean;
+  textHighlight?: StyleValue;
+};
+
+type CustomStyleEditorDocNode = {
+  attrs?: {
+    styleName?: string;
+  };
+  content?: {
+    content?: unknown[];
+  };
+  nodesBetween?: (
+    from: number,
+    to: number,
+    callback: (node: CustomStyleEditorDocNode) => void
+  ) => void;
+  nodeSize?: number;
+};
+
+type CustomStyleEditorView = {
+  state?: {
+    doc?: CustomStyleEditorDocNode;
+  };
+};
+
+type CustomStyleEditorState = Omit<Style, 'styleName' | 'styles'> & {
+  [key: string]: unknown;
+  customStyles?: Style[] | string;
+  description?: string;
+  disableControl?: boolean;
+  editorView?: CustomStyleEditorView;
+  isHidden?: boolean | string;
+  isRadioDisabled?: boolean;
+  mode?: number;
+  otherStyleSelected?: boolean | string;
+  selectedStyle?: string;
+  selectedStyleMode?: string;
+  styleName?: string;
+  styles?: CustomStyleEditorStyles;
+};
+
+type CustomStyleEditorProps = Omit<Partial<CustomStyleEditorState>, 'styles'> & {
+  close?: (value?: unknown) => void;
+  mode?: number;
+  styleName?: string;
+  theme?: string;
+};
+
+export class CustomStyleEditor extends React.PureComponent<
+  CustomStyleEditorProps,
+  CustomStyleEditorState
+> {
   _popUp = null;
 
-  constructor(props) {
+  constructor(props: CustomStyleEditorProps) {
     super(props);
     editedStyles.splice(0, editedStyles.length);
     this.state = {
       ...props,
+      styleName: props.styleName ?? '',
       selectedStyleMode: 'none',
       isHidden: false,
       otherStyleSelected,
@@ -109,6 +189,37 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     this.getCustomStyles();
   }
 
+  toggleStyleState(style: string) {
+    const nextStyles = { ...this.state.styles };
+    nextStyles[style] =
+      nextStyles[style] === true ? undefined : !nextStyles[style];
+    return { styles: nextStyles };
+  }
+
+  renameStyleState(event) {
+    if (!event) {
+      return null;
+    }
+
+    const oldName = this.state.styleName;
+    const newName = event.target.value;
+    const styles = { ...this.state.styles };
+    if (styles.nextLineStyleName === oldName) {
+      styles.nextLineStyleName = newName;
+    }
+
+    return { styleName: newName, styles };
+  }
+
+  getStyleValueState(styleKey: string, value) {
+    return {
+      styles: {
+        ...this.state.styles,
+        [styleKey]: value,
+      },
+    };
+  }
+
   // To set the selected style values
   onStyleClick(style: string, event) {
     let state = null;
@@ -119,27 +230,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       case 'strike':
       case 'super':
       case 'underline':
-        // copy the current style values, and flip the matching value
-        state = { styles: { ...this.state.styles } };
-        if (state.styles[style] === true) {
-          state.styles[style] = undefined;
-        } else {
-          state.styles[style] = !state.styles[style];
-        }
-
+        state = this.toggleStyleState(style);
         break;
 
       case 'name':
-        if (event) {
-          const oldName = this.state.styleName;
-          const newName = event.target.value;
-          state = { styleName: newName, styles: null };
-          state.styles = { ...this.state.styles };
-          if (this.state.styles.nextLineStyleName === oldName) {
-            // Update next line style as well.
-            state.styles.nextLineStyleName = newName;
-          }
-        }
+        state = this.renameStyleState(event);
         break;
 
       case 'description':
@@ -152,22 +247,18 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       // Not able to set paragraph spacing before and after.
       case 'before':
         if (event) {
-          state = {
-            styles: {
-              ...this.state.styles,
-              paragraphSpacingBefore: event.target.value,
-            },
-          };
+          state = this.getStyleValueState(
+            'paragraphSpacingBefore',
+            event.target.value
+          );
         }
         break;
       case 'after':
         if (event) {
-          state = {
-            styles: {
-              ...this.state.styles,
-              paragraphSpacingAfter: event.target.value,
-            },
-          };
+          state = this.getStyleValueState(
+            'paragraphSpacingAfter',
+            event.target.value
+          );
         }
         break;
       default:
@@ -180,9 +271,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     }
   }
 
-  // Build styles to display the example piece
-  buildStyle() {
-    const style: React.CSSProperties = {};
+  applyBasePreviewStyle(style: React.CSSProperties) {
     if (this.state.styles.fontName) {
       style.fontFamily = this.state.styles.fontName;
     }
@@ -193,135 +282,190 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       style.fontWeight = 'bold';
     }
     if (this.state.styles.color) {
-      style.color = this.state.styles.color;
-    }
-    if (this.state.styles.underline) {
-      style.textDecoration =
-        undefined !== style.textDecoration
-          ? `${style.textDecoration}${' underline'}`
-          : 'underline';
-    }
-    if (this.state.styles.strike) {
-      style.textDecoration =
-        undefined !== style.textDecoration
-          ? `${style.textDecoration}${' line-through'}`
-          : 'line-through';
+      style.color = this.state.styles.color as unknown as React.CSSProperties['color'];
     }
     if (this.state.styles.em) {
       style.fontStyle = 'italic';
     }
     if (this.state.styles.textHighlight) {
-      style.backgroundColor = this.state.styles.textHighlight;
+      style.backgroundColor =
+        this.state.styles.textHighlight as unknown as React.CSSProperties['backgroundColor'];
     }
     if (this.state.styles.align) {
-      style.textAlign = this.state.styles.align;
+      style.textAlign = this.state.styles.align as React.CSSProperties['textAlign'];
     }
     if (this.state.styles.lineHeight) {
-      // [FS] IRAD-1104 2020-11-13
-      // Issue fix : Linespacing Double and Single not applied in the sample text paragraph
-      style.lineHeight = getLineSpacingValue(this.state.styles.lineHeight);
+      style.lineHeight = getLineSpacingValue(
+        this.state.styles.lineHeight as string
+      );
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Paragraph space before is not applied in the sample text.
     if (this.state.styles.paragraphSpacingBefore) {
       style.marginTop = `${this.state.styles.paragraphSpacingBefore}px`;
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Paragraph space after is not applied in the sample text.
     if (this.state.styles.paragraphSpacingAfter) {
       style.marginBottom = `${this.state.styles.paragraphSpacingAfter}px`;
     }
-    // [FS] IRAD-1111 2020-12-10
-    // Issue fix : Indent is not applied in the sample text.
-    if (!this.state.styles.isLevelbased) {
-      if (this.state.styles.indent) {
-        style.marginLeft = `${parseInt(this.state.styles.indent) * 2}px`;
+  }
+
+  appendTextDecoration(
+    style: React.CSSProperties,
+    decoration: string
+  ) {
+    style.textDecoration =
+      undefined === style.textDecoration
+        ? decoration
+        : `${style.textDecoration} ${decoration}`;
+  }
+
+  applyTextDecorationPreviewStyle(style: React.CSSProperties) {
+    if (this.state.styles.underline) {
+      this.appendTextDecoration(style, 'underline');
+    }
+    if (this.state.styles.strike) {
+      this.appendTextDecoration(style, 'line-through');
+    }
+  }
+
+  getPreviewIndent() {
+    const { styles } = this.state;
+
+    if (!styles.isLevelbased) {
+      const { indent } = styles;
+
+      if (typeof indent === 'number') {
+        return `${indent * 2}px`;
       }
-    } else {
-      const levelValue = document?.getElementById('levelValue');
-      if (
-        // this covers null & undefined
-        levelValue instanceof window.HTMLSelectElement &&
-        levelValue.value
-      ) {
-        style.marginLeft = `${parseInt(levelValue.value) * 2}px`;
+
+      if (typeof indent === 'string') {
+        const parsed = Number.parseInt(indent, 10);
+        return Number.isNaN(parsed) ? null : `${parsed * 2}px`;
       }
+
+      return null;
     }
 
+    const levelValue = document?.getElementById('levelValue');
+
+    if (
+      levelValue instanceof globalThis.HTMLSelectElement &&
+      levelValue.value
+    ) {
+      const parsed = Number.parseInt(levelValue.value, 10);
+      return Number.isNaN(parsed) ? null : `${parsed * 2}px`;
+    }
+
+    return null;
+  }
+
+  setPreviewIndent(style: React.CSSProperties) {
+    const marginLeft = this.getPreviewIndent();
+    if (marginLeft) {
+      style.marginLeft = marginLeft;
+    }
+  }
+
+  clearElementChildren(element: HTMLElement) {
+    while (element.firstChild) {
+      element.firstChild.remove();
+    }
+  }
+
+  createBoldPartialFragment() {
+    const fragment = document.createDocumentFragment();
+    if (this.state.styles.boldSentence) {
+      const [firstSentence, ...rest] = SAMPLE_TEXT.split('.');
+      const boldElement = document.createElement('strong');
+      boldElement.innerText = `${firstSentence}.`;
+      fragment.appendChild(boldElement);
+      fragment.appendChild(document.createTextNode(rest.join('.')));
+      return fragment;
+    }
+
+    const [firstWord, ...rest] = SAMPLE_TEXT.split(' ');
+    const boldElement = document.createElement('strong');
+    boldElement.innerText = firstWord;
+    fragment.appendChild(boldElement);
+    fragment.appendChild(document.createTextNode(` ${rest.join(' ')}`));
+    return fragment;
+  }
+
+  renderBoldPartialPreview(
+    sampleDiv: HTMLElement,
+    style: React.CSSProperties
+  ): string {
+    const fragment = this.createBoldPartialFragment();
+    this.clearElementChildren(sampleDiv);
+    const newContentContainer = document.createElement('div');
+    for (const child of fragment.childNodes) {
+      newContentContainer.appendChild(child.cloneNode(true));
+    };
+    sampleDiv.appendChild(newContentContainer);
+    style.fontWeight = 'normal';
+    return sampleDiv.innerText;
+  }
+
+  applyNumberingPreview(sampleDiv: HTMLElement) {
+    const numberingLevel = this.getNumberingLevel(
+      typeof this.state.styles.styleLevel === 'boolean'
+        ? Number(this.state.styles.styleLevel)
+        : this.state.styles.styleLevel,
+      typeof this.state.styles.prefixValue === 'string' ||
+        typeof this.state.styles.prefixValue === 'number'
+        ? this.state.styles.prefixValue
+        : ''
+    );
+    const numberingNode = document.createTextNode(numberingLevel);
+    if (this.state.styles.boldNumbering) {
+      const boldElement = document.createElement('strong');
+      boldElement.appendChild(numberingNode);
+      sampleDiv.prepend(boldElement);
+      return;
+    }
+    sampleDiv.prepend(numberingNode);
+  }
+
+  applyBulletPreview(sampleDiv: HTMLElement, textSample: string) {
+    const bulletDetails = getDetailsBullet(this.state.styles.bulletLevel);
+    const bulletSymbol = document.createElement('strong');
+    bulletSymbol.style.color = bulletDetails.color;
+    bulletSymbol.innerText = bulletDetails.symbol;
+
+    sampleDiv.innerHTML = '';
+    sampleDiv.appendChild(bulletSymbol);
+    sampleDiv.appendChild(document.createTextNode(textSample));
+  }
+
+  syncPreviewSample(style: React.CSSProperties) {
     const sampleDiv = document.getElementById('sampletextdiv');
-    if (sampleDiv) {
-      // [FS] IRAD-1394 2021-06-02
-      // Issue: numbering sample not working when select Bold first sentence
-      let textSample = SAMPLE_TEXT;
-      if (this.state.styles.boldPartial) {
-        const fragment = document.createDocumentFragment();
-        if (this.state.styles.boldSentence) {
-          const [firstSentence, ...rest] = SAMPLE_TEXT.split('.');
-          const boldElement = document.createElement('strong');
-          boldElement.innerText = `${firstSentence}.`;
-          fragment.appendChild(boldElement);
-          fragment.appendChild(document.createTextNode(rest.join('.')));
-        } else {
-          const [firstWord, ...rest] = SAMPLE_TEXT.split(' ');
-          const boldElement = document.createElement('strong');
-          boldElement.innerText = firstWord;
-          fragment.appendChild(boldElement);
-          fragment.appendChild(document.createTextNode(` ${rest.join(' ')}`));
-        }
-        // Clear previous content using a loop
-        while (sampleDiv.firstChild) {
-          sampleDiv.removeChild(sampleDiv.firstChild);
-        }
-        const newContentContainer = document.createElement('div');
-
-        // Populate the fragment dynamically
-        fragment.childNodes.forEach((child) => {
-          newContentContainer.appendChild(child.cloneNode(true));
-        });
-
-        // Append the fragment or new content to the sampleDiv
-        sampleDiv.appendChild(newContentContainer);
-        textSample = sampleDiv.innerText;
-
-        // [FS] IRAD-1473 2021-06-30
-        // Style Example not showing properly when select Bold and Bold First Sentence
-        style.fontWeight = 'normal';
-      } else {
-        sampleDiv.innerText = SAMPLE_TEXT;
-      }
-
-      if (
-        this.state.styles.styleLevel &&
-        (this.state.styles.hasNumbering || this.state.styles.isList)
-      ) {
-        const numberingLevel = this.getNumberingLevel(
-          this.state.styles.styleLevel,
-          this.state.styles.prefixValue
-        );
-        const numberingNode = document.createTextNode(numberingLevel);
-        if (this.state.styles.boldNumbering) {
-          const boldElement = document.createElement('strong');
-          boldElement.appendChild(numberingNode);
-          // [FS] IRAD-1252 2024-11-19
-          // Bold the first sentence/word not working when apply numbering
-          sampleDiv.prepend(boldElement);
-        } else {
-          // [FS] IRAD-1252 2024-11-19
-          // Bold the first sentence/word not working when apply numbering
-          sampleDiv.prepend(numberingNode);
-        }
-      }
-      if (this.state.styles.styleLevel && this.state.styles.hasBullet) {
-        const bulletDetails = getDetailsBullet(this.state.styles.bulletLevel);
-        const bulletSymbol = document.createElement('strong');
-        bulletSymbol.style.color = bulletDetails.color;
-        bulletSymbol.innerText = bulletDetails.symbol;
-
-        sampleDiv.innerHTML = ''; // Clear previous content
-        sampleDiv.appendChild(bulletSymbol);
-        sampleDiv.appendChild(document.createTextNode(textSample));
-      }
+    if (!sampleDiv) {
+      return;
     }
+
+    let textSample = SAMPLE_TEXT;
+    if (this.state.styles.boldPartial) {
+      textSample = this.renderBoldPartialPreview(sampleDiv, style);
+    } else {
+      sampleDiv.innerText = SAMPLE_TEXT;
+    }
+
+    if (
+      this.state.styles.styleLevel &&
+      (this.state.styles.hasNumbering || this.state.styles.isList)
+    ) {
+      this.applyNumberingPreview(sampleDiv);
+    }
+    if (this.state.styles.styleLevel && this.state.styles.hasBullet) {
+      this.applyBulletPreview(sampleDiv, textSample);
+    }
+  }
+
+  // Build styles to display the example piece
+  buildStyle() {
+    const style: React.CSSProperties = {};
+    this.applyBasePreviewStyle(style);
+    this.applyTextDecorationPreviewStyle(style);
+    this.setPreviewIndent(style);
+    this.syncPreviewSample(style);
 
     return style;
   }
@@ -329,7 +473,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
   // get the numbering corresponding to the level
   getNumberingLevel(level: string | number, prefixValue: string | number) {
     let levelStyle = '';
-    for (let i = 0; i < parseInt(`${level}`); i++) {
+    for (let i = 0; i < Number.parseInt(`${level}`); i++) {
       if (i === 0 && prefixValue) {
         levelStyle = levelStyle + prefixValue + '1.';
       } else {
@@ -500,7 +644,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
         hiddenDiv.style.display = 'block';
       }
       const selectedStyle = document.getElementById('nextStyleValue');
-      if (selectedStyle instanceof window.HTMLSelectElement) {
+      if (selectedStyle instanceof globalThis.window.HTMLSelectElement) {
         this.setState((prevState) => ({
           otherStyleSelected: true,
           styles: {
@@ -554,7 +698,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
           ).style.maxHeight = '100%';
 
           // Ensure the next line style is set
-          this.setNextLineStyle(this.state.styles.nextLineStyleName);
+          this.setNextLineStyle(
+            typeof this.state.styles.nextLineStyleName === 'string'
+              ? this.state.styles.nextLineStyleName
+              : ''
+          );
         }
       );
     }
@@ -628,74 +776,6 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     }));
   }
 
-  handleNone() {
-    this.setState((prevState) => ({
-      styles: {
-        ...prevState.styles,
-        selectedStyleMode: 'none',
-        toc: false,
-        tot: false,
-        tof: false,
-        prefixValue: '',
-        hasNumbering: false,
-        nextLineStyleName: RESERVED_STYLE_NONE,
-        styleLevel: 0,
-      },
-    }));
-  }
-
-  handleTOC(val) {
-    this.setState((prevState) => ({
-      styles: {
-        ...prevState.styles,
-        selectedStyleMode: 'toc',
-        toc: val.target.checked,
-        tot: false,
-        tof: false,
-        prefixValue: '',
-        hasNumbering: false,
-        styleLevel: 0,
-        nextLineStyleName: RESERVED_STYLE_NONE,
-      },
-    }));
-  }
-
-  handleTOT(val) {
-    this.setState((prevState) => ({
-      styles: {
-        ...prevState.styles,
-        selectedStyleMode: 'tot',
-        toc: false,
-        tot: val.target.checked,
-        tof: false,
-        prefixValue: val.target.checked ? 'TABLE ' : '',
-        hasNumbering: val.target.checked,
-        nextLineStyleName: val.target.checked
-          ? RESERVED_STYLE_NONE
-          : prevState.styles.nextLineStyleName,
-        styleLevel: val.target.checked ? 2 : 0,
-      },
-    }));
-  }
-
-  handleTOF(val) {
-    this.setState((prevState) => ({
-      styles: {
-        ...prevState.styles,
-        selectedStyleMode: 'tof',
-        toc: false,
-        tot: false,
-        tof: val.target.checked,
-        prefixValue: val.target.checked ? 'FIGURE ' : '',
-        hasNumbering: val.target.checked,
-        nextLineStyleName: val.target.checked
-          ? RESERVED_STYLE_NONE
-          : prevState.styles.nextLineStyleName,
-        styleLevel: val.target.checked ? 2 : 0,
-      },
-    }));
-  }
-
   handleList(val) {
     const selectedStyle = val.target.value;
     const isList = selectedStyle === 'listStyle';
@@ -734,8 +814,11 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
 
   isCustomStyleAlreadyApplied() {
     let found = false;
-    const { doc } = this.state.editorView.state;
-    doc.nodesBetween(0, doc.nodeSize - 2, (node) => {
+    const doc = this.state.editorView?.state?.doc;
+    if (!doc?.nodesBetween) {
+      return found;
+    }
+    doc.nodesBetween(0, (doc.nodeSize ?? 2) - 2, (node) => {
       if (node.content?.content?.length) {
         if (!found && node.attrs.styleName === this.state.styleName) {
           found = true;
@@ -774,16 +857,6 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
   }
 
   // [FS] IRAD-1201 2021-02-17
-  // to check if the "select style" option selected by user
-  selectStyleCheckboxState() {
-    let chceked = false;
-    if (this.state.styles.nextLineStyleName) {
-      chceked =
-        this.state.styles.nextLineStyleName !== RESERVED_STYLE_NONE &&
-        this.state.styles.nextLineStyleName !== this.state.styleName;
-    }
-    return chceked;
-  }
 
   componentDidMount() {
     const acc = document.getElementsByClassName('molsp-licit-accordion');
@@ -806,28 +879,29 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       const mp2 = document.getElementsByClassName(
         'molsp-panel2'
       )[0] as HTMLElement;
-      mp2.style.maxHeight = null;
+      if (mp2) {
+        mp2.style.maxHeight = null;
+      }
     } else {
       const mp2 = document.getElementsByClassName(
         'molsp-panel2'
       )[0] as HTMLElement;
       setTimeout(() => {
-        mp2.style.maxHeight = '374px';
+        if (mp2) {
+          mp2.style.maxHeight = '374px';
+        }
       }, 0);
     }
 
-    const mp = document.getElementsByClassName('molsp-panel')[0] as HTMLElement;
-    mp.style.maxHeight = mp.scrollHeight + 'px';
-    const mp1 = document.getElementsByClassName(
-      'molsp-panel1'
-    )[0] as HTMLElement;
-    mp1.style.maxHeight = mp1.scrollHeight + 'px';
-    const mp3 = document.getElementsByClassName(
-      'molsp-panel3'
-    )[0] as HTMLElement;
-    mp3.style.maxHeight = mp3.scrollHeight + 'px';
+    this.expandPanel('molsp-panel');
+    this.expandPanel('molsp-panel1');
+    this.expandPanel('molsp-panel3');
 
-    this.setNextLineStyle(this.state.styles.nextLineStyleName);
+    this.setNextLineStyle(
+      typeof this.state.styles.nextLineStyleName === 'string'
+        ? this.state.styles.nextLineStyleName
+        : ''
+    );
     // [FS] IRAD-1153 2021-02-25
     // Numbering level not showing in Preview text when modify style
     if (
@@ -839,1179 +913,463 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
     }
   }
 
+  expandPanel(className: string) {
+    const panel = document.getElementsByClassName(className)[0];
+    if (panel instanceof HTMLElement) {
+      panel.style.maxHeight = `${panel.scrollHeight}px`;
+    }
+  }
+
   render() {
     return (
       <div className="molsp-customedit-div">
-        <div className="molsp-customedit-head">
-          <span>{this.state.mode === 0 ? 'Create Style' : 'Edit Style'}</span>
-        </div>
+        {this.renderHeader()}
         <div className="molsp-customedit-body">
-          <div className="molsp-sectiondiv">
-            <div
-              style={
-                3 > this.props.mode ? { display: 'none' } : { display: 'block' }
-              }
-            >
-              <p className="molsp-formp">Styles:</p>
-              <select
-                className="molsp-stylenameinput molsp-fontstyle"
-                defaultValue={'DEFAULT'}
-                onChange={this.onSelectCustomStyle.bind(this)}
-                style={{ height: '24px' }}
-              >
-                <option disabled value="DEFAULT">
-                  {' '}
-                  -- select a style --{' '}
-                </option>
-                {this.state.customStyles.map((style) => (
-                  <option key={style.styleName} value={style.styleName}>
-                    {style.styleName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <p className="molsp-formp">
-              Style Name:{' '}
-              <span id="errormsg" style={{ display: 'none', color: 'red' }}>
-                {isCustomStyleExists(this.state.styleName)
-                  ? 'Style name already exists'
-                  : ''}
-              </span>
-            </p>
-            <span>
-              <input
-                autoFocus
-                className="molsp-stylenameinput molsp-fontstyle"
-                data-cy="cyStyleName"
-                disabled={this.state.mode === 1 || this.state.mode === 3}
-                id="txtName"
-                key="name"
-                onChange={this.onStyleClick.bind(this, 'name')}
-                type="text"
-                value={this.state.styleName || ''}
-              />
-            </span>
-            <p className="molsp-formp">Description:</p>
-            <span>
-              <input
-                className="molsp-stylenameinput molsp-fontstyle"
-                key="description"
-                onChange={this.onStyleClick.bind(this, 'description')}
-                type="text"
-                value={this.state.description || ''}
-              />
-            </span>
+          {this.renderTopSelectionAndPreview()}
+          {this.renderAttributesAccordion()}
+        </div>
+        {this.renderButtons()}
+      </div>
+    );
+  }
 
-            <p className="molsp-formp">Preview:</p>
-            <div
-              className="molsp-textareadiv"
-              style={
-                3 === this.props.mode
-                  ? { height: '164px' }
-                  : { height: '215px' }
-              }
-            >
-              <div className="molsp-sampletext">
-                Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph
-                Paragraph Paragraph Paragraph Paragraph
-              </div>
-              <div
-                className={
-                  this.state.styles.super
-                    ? 'molsp-hide-sampletext'
-                    : 'molsp-visible-sampletext'
-                }
-                id="sampletextdiv"
-                style={this.buildStyle()}
-              >
-                {SAMPLE_TEXT}
-              </div>
-              <sup
-                className={
-                  this.state.styles.super
-                    ? 'molsp-visible-sampletext'
-                    : 'molsp-hide-sampletext'
-                }
-                id="mo-sup"
-                style={this.buildStyle()}
-              >
-                {SAMPLE_TEXT}
-              </sup>
-              <div className="molsp-sampletext">
-                Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph
-                Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph
-                Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph
-                Paragraph Paragraph
-              </div>
-            </div>
-          </div>
+  // Header section
+  renderHeader() {
+    return (
+      <div className="molsp-customedit-head">
+        <span>{this.state.mode === 0 ? 'Create Style' : 'Edit Style'}</span>
+      </div>
+    );
+  }
 
-          <div
-            className="molsp-sectiondiv molsp-editorsection"
-            style={this.disableRename()}
+  // Top selection + name + preview area
+  renderTopSelectionAndPreview() {
+    return (
+      <div className="molsp-sectiondiv">
+        <div style={3 > this.props.mode ? { display: 'none' } : { display: 'block' }}>
+          <p className="molsp-formp">Styles:</p>
+          <select
+            className="molsp-stylenameinput molsp-fontstyle"
+            defaultValue={'DEFAULT'}
+            onChange={this.onSelectCustomStyle.bind(this)}
+            style={{ height: '24px' }}
           >
-            <p className="molsp-formp">Style Attributes:</p>
-            <div
+            <option disabled value="DEFAULT"> {' '} -- select a style -- {' '}</option>
+             {(Array.isArray(this.state.customStyles)
+                  ? this.state.customStyles
+                  : []
+                ).map((style) => (
+              <option key={style.styleName} value={style.styleName}>
+                {style.styleName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <p className="molsp-formp">
+          Style Name:{' '}
+          <span id="errormsg" style={{ display: 'none', color: 'red' }}>
+            {isCustomStyleExists(this.state.styleName) ? 'Style name already exists' : ''}
+          </span>
+        </p>
+        <span>
+          <input
+            autoFocus
+            className="molsp-stylenameinput molsp-fontstyle"
+            data-cy="cyStyleName"
+            disabled={this.state.mode === 1 || this.state.mode === 3}
+            id="txtName"
+            key="name"
+            onChange={this.onStyleClick.bind(this, 'name')}
+            type="text"
+            value={this.state.styleName || ''}
+          />
+        </span>
+        <p className="molsp-formp">Description:</p>
+        <span>
+          <input
+            className="molsp-stylenameinput molsp-fontstyle"
+            key="description"
+            onChange={this.onStyleClick.bind(this, 'description')}
+            type="text"
+            value={this.state.description || ''}
+          />
+        </span>
+
+        <p className="molsp-formp">Preview:</p>
+        <div className="molsp-textareadiv" style={3 === this.props.mode ? { height: '164px' } : { height: '215px' }}>
+          <div className="molsp-sampletext">Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph</div>
+          <div
+            className={this.state.styles.super ? 'molsp-hide-sampletext' : 'molsp-visible-sampletext'}
+            id="sampletextdiv"
+            style={this.buildStyle()}
+          >
+            {SAMPLE_TEXT}
+          </div>
+          <sup
+            className={this.state.styles.super ? 'molsp-visible-sampletext' : 'molsp-hide-sampletext'}
+            id="mo-sup"
+            style={this.buildStyle()}
+          >
+            {SAMPLE_TEXT}
+          </sup>
+          <div className="molsp-sampletext">Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph Paragraph</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main accordion with attributes (delegates to smaller renderers)
+  renderAttributesAccordion() {
+    return (
+      <div
+        className="molsp-sectiondiv molsp-editorsection"
+        style={this.disableRename()}
+      >
+        <p className="molsp-formp">Style Attributes:</p>
+        <div
+          style={{
+            height: '329px',
+            overflow: 'hidden auto',
+            overflowX: 'hidden',
+            border: '1px solid',
+          }}
+        >
+          {this.renderFontAccordion()}
+          {this.renderParagraphAccordion()}
+          {this.renderHierarchyAccordion()}
+          {this.renderIndentAccordion()}
+          {this.renderStyleSettingsAccordion()}
+        </div>
+      </div>
+    );
+  }
+
+  renderFontAccordion() {
+    return (
+      <>
+        <button
+          className="molsp-licit-accordion molsp-accactive"
+          id="accordion1"
+        >
+          <div className="molsp-indentdiv">
+            <span
+              className="molsp-iconspan czi-icon text_format"
+              style={{ marginTop: '1px' }}
+            >
+              text_format
+            </span>
+            <span
               style={{
-                height: '329px',
-                overflow: 'hidden auto',
-                overflowX: 'hidden',
-                border: '1px solid',
+                marginLeft: '-10px',
+                marginTop: '2px',
+                color: '#444',
               }}
             >
-              <button
-                className="molsp-licit-accordion molsp-accactive"
-                id="accordion1"
-              >
-                <div className="molsp-indentdiv">
-                  <span
-                    className="molsp-iconspan czi-icon text_format"
-                    style={{ marginTop: '1px' }}
-                  >
-                    text_format
-                  </span>
-                  <span
-                    style={{
-                      marginLeft: '-10px',
-                      marginTop: '2px',
-                      color: '#444',
-                    }}
-                  >
-                    Font
-                  </span>
-                </div>
-              </button>
-              <div className="molsp-panel" style={{ marginBottom: '5px' }}>
-                <div className="molsp-sectiondiv">
-                  <select
-                    className="molsp-fonttype molsp-fontstyle"
-                    data-cy="cyStyleFont"
-                    onChange={this.onFontNameChange.bind(this)}
-                    value={this.state.styles.fontName || 'Tahoma'}
-                  >
-                    {FONT_TYPE_NAMES.map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    className="molsp-fontsize molsp-fontstyle"
-                    data-cy="cyStyleFontSize"
-                    onChange={this.onFontSizeChange.bind(this)}
-                    value={this.state.styles.fontSize || 12}
-                  >
-                    {FONT_PT_SIZES.map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="molsp-font-buttons">
-                  <span
-                    aria-label=" Bold"
-                    className="czi-tooltip-surface molsp-markbutton-container"
-                    data-tooltip=" Bold"
-                    id="86ba3aa0-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                    style={{ marginLeft: '5px', marginRight: '5px' }}
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className={
-                        this.state.styles.strong
-                          ? 'czi-custom-button use-icon active molsp-markbuttons'
-                          : 'czi-custom-button use-icon molsp-markbuttons molsp-formatbuttons'
-                      }
-                      onClick={this.onStyleClick.bind(this, 'strong')}
-                    >
-                      <span
-                        className="molsp-iconspan czi-icon format_bold editor-markbuttons"
-                        data-cy="cyStyleBold"
-                      >
-                        format_bold
-                      </span>
-                    </button>
-                  </span>
-                  <span
-                    aria-label=" Italic"
-                    className="czi-tooltip-surface molsp-fontstyle molsp-markbutton-container"
-                    data-tooltip=" Italic"
-                    id="86ba61b0-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className={
-                        this.state.styles.em
-                          ? 'czi-custom-button use-icon active molsp-markbuttons'
-                          : 'czi-custom-button use-icon molsp-markbuttons molsp-formatbuttons'
-                      }
-                      onClick={this.onStyleClick.bind(this, 'em')}
-                    >
-                      <span className="molsp-iconspan czi-icon format_italic editor-markbuttons">
-                        format_italic
-                      </span>
-                      <span> </span>
-                    </button>
-                  </span>
-                  <span
-                    aria-label=" Underline"
-                    className="czi-tooltip-surface molsp-fontstyle molsp-markbutton-container"
-                    data-tooltip=" Underline"
-                    id="86ba88c0-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className={
-                        this.state.styles.underline
-                          ? 'czi-custom-button use-icon active molsp-markbuttons'
-                          : 'czi-custom-button use-icon molsp-markbuttons molsp-formatbuttons'
-                      }
-                      onClick={this.onStyleClick.bind(this, 'underline')}
-                    >
-                      <span className="molsp-iconspan czi-icon  format_underline editor-markbuttons">
-                        format_underline
-                      </span>
-                      <span> </span>
-                    </button>
-                  </span>
-                  <span
-                    aria-label=" Text color"
-                    className="czi-tooltip-surface molsp-fontstyle molsp-markbutton-container"
-                    data-tooltip=" Text color"
-                    id="86bad6e1-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className="czi-custom-button use-icon molsp-markbuttons"
-                      onClick={this.showColorDialog.bind(this, true)}
-                    >
-                      <span
-                        className="molsp-iconspan czi-icon format_color_text editor-markbuttons"
-                        style={{
-                          color:
-                            this.state.styles.color !== 'rgba(0,0,0,0)'
-                              ? this.state.styles.color
-                              : '#666',
-                        }}
-                      >
-                        format_color_text
-                      </span>
-                      <span> </span>
-                    </button>
-                  </span>
-                  <span
-                    aria-label=" Highlight color"
-                    className="czi-tooltip-surface molsp-fontstyle molsp-markbutton-container"
-                    data-tooltip=" Highlight color"
-                    id="86bafdf0-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className="czi-custom-button use-icon molsp-markbuttons"
-                      onClick={this.showColorDialog.bind(this, false)}
-                    >
-                      <span
-                        className="molsp-iconspan czi-icon border_color editor-markbuttons"
-                        style={{
-                          color:
-                            this.state.styles.textHighlight !== 'rgba(0,0,0,0)'
-                              ? this.state.styles.textHighlight
-                              : '#666',
-                        }}
-                      >
-                        border_color
-                      </span>
-                      <span> </span>
-                    </button>
-                  </span>
-                </div>
+              Font
+            </span>
+          </div>
+        </button>
+        <div className="molsp-panel" style={{ marginBottom: '5px' }}>
+          <div className="molsp-sectiondiv">
+            <select
+              className="molsp-fonttype molsp-fontstyle"
+              data-cy="cyStyleFont"
+              onChange={this.onFontNameChange.bind(this)}
+              value={this.state.styles.fontName || 'Tahoma'}
+            >
+              {FONT_TYPE_NAMES.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            <select
+              className="molsp-fontsize molsp-fontstyle"
+              data-cy="cyStyleFontSize"
+              onChange={this.onFontSizeChange.bind(this)}
+              value={this.state.styles.fontSize || 12}
+            >
+              {FONT_PT_SIZES.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="molsp-font-buttons">
+          <button
+            aria-label=" Bold"
+            className={this.state.styles.strong ? 'czi-custom-button use-icon active molsp-markbuttons' : 'czi-custom-button use-icon molsp-markbuttons molsp-formatbuttons'}
+            onClick={this.onStyleClick.bind(this, 'strong')}
+          >
+            <span className="molsp-iconspan czi-icon format_bold editor-markbuttons" data-cy="cyStyleBold">format_bold</span>
+          </button>
 
-                <div className="molsp-formp molsp-hierarchydiv">
-                  <span style={{ float: 'left' }}>
-                    <label>
-                      <input
-                        checked={this.state.styles.boldPartial}
-                        onChange={this.handleBoldPartial.bind(this)}
-                        type="checkbox"
-                      />
-                      <span
-                        style={{
-                          marginLeft: '2px',
-                          position: 'relative',
-                          top: '-2px',
-                        }}
-                      >
-                        Bold the
-                      </span>
-                    </label>
-                  </span>
-                  <span>
-                    <input
-                      checked={this.state.styles.boldSentence}
-                      disabled={!this.state.styles.boldPartial}
-                      name="boldscentence"
-                      onChange={this.onScentenceRadioChanged.bind(this)}
-                      style={{ marginLeft: '21px' }}
-                      type="radio"
-                      value="0"
-                    />
-                    <span
-                      style={{
-                        marginLeft: '4px',
-                        marginTop: '3px',
-                        marginBottom: '0',
-                      }}
-                    >
-                      First Sentence
-                    </span>
-                    <input
-                      checked={!this.state.styles.boldSentence}
-                      disabled={!this.state.styles.boldPartial}
-                      name="boldscentence"
-                      onChange={this.onScentenceRadioChanged.bind(this)}
-                      style={{ marginLeft: '21px' }}
-                      type="radio"
-                      value="1"
-                    />
-                    <span
-                      style={{
-                        marginLeft: '4px',
-                        marginTop: '3px',
-                        marginBottom: '0',
-                      }}
-                    >
-                      First Word
-                    </span>
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '9px',
-                    padding: '8px 0',
-                  }}
-                >
-                  {[
-                    {
-                      label: 'None',
-                      value: 'none',
-                      handler: this.handleNone.bind(this),
-                      cy: 'cyStyleNone',
-                    },
-                    {
-                      label: 'TOC',
-                      value: 'toc',
-                      handler: this.handleTOC.bind(this),
-                      cy: 'cyStyleTOC',
-                    },
-                    {
-                      label: 'Table',
-                      value: 'tot',
-                      handler: this.handleTOT.bind(this),
-                      cy: 'cyStyleTOT',
-                    },
-                    {
-                      label: 'Figure',
-                      value: 'tof',
-                      handler: this.handleTOF.bind(this),
-                      cy: 'cyStyleTOF',
-                    },
-                  ].map((item) => (
-                    <label
-                      key={item.value}
-                      style={{
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <input
-                        checked={
-                          this.state.styles.selectedStyleMode === item.value
-                        }
-                        data-cy={item.cy}
-                        name="styleOption"
-                        onChange={item.handler}
-                        style={{ marginRight: '4px' }}
-                        type="radio"
-                      />
-                      <span
-                        style={{
-                          position: 'relative',
-                          top: '-1px',
-                        }}
-                      >
-                        {item.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <button className="molsp-licit-accordion molsp-accactive">
-                <div className="molsp-indentdiv">
-                  <span
-                    className="molsp-iconspan czi-icon format_textdirection_l_to_r"
-                    style={{ marginTop: '1px' }}
-                  >
-                    format_textdirection_l_to_r
-                  </span>
-                  <span
-                    style={{
-                      marginLeft: '-10px',
-                      marginTop: '2px',
-                      color: '#444',
-                    }}
-                  >
-                    Paragraph
-                  </span>
-                </div>
-              </button>
-              <div className="molsp-panel1">
-                <p className="molsp-formp">Alignment:</p>
-                <div className="molsp-czi-custom-buttons">
-                  <span
-                    aria-label=" Align Left"
-                    className="czi-tooltip-surface"
-                    data-tooltip=" Align Left"
-                    id="86ba3aa0-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className={
-                        this.state.styles.align === 'left'
-                          ? 'czi-custom-button use-icon molsp-activealignbuttons ' + this.props.theme
-                          : 'czi-custom-button molsp-alignbuttons ' + this.props.theme
-                      }
-                      onClick={this.onAlignButtonClick.bind(this, 'left')}
-                    >
-                      <span className="molsp-iconspan czi-icon format_align_left">
-                        format_align_left
-                      </span>
-                    </button>
-                  </span>
-                  <span
-                    aria-label=" Align Center"
-                    className="czi-tooltip-surface molsp-alignbuttons"
-                    data-tooltip=" Align Center"
-                    id="86ba61b0-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className={
-                        this.state.styles.align === 'center'
-                          ? 'czi-custom-button use-icon molsp-activealignbuttons '+ this.props.theme
-                          : 'czi-custom-button  molsp-alignbuttons '+ this.props.theme
-                      }
-                      onClick={this.onAlignButtonClick.bind(this, 'center')}
-                    >
-                      <span className="molsp-iconspan czi-icon format_align_center">
-                        format_align_center
-                      </span>
-                    </button>
-                  </span>
-                  <span
-                    aria-label=" Align Right"
-                    className="czi-tooltip-surface molsp-alignbuttons"
-                    data-tooltip=" Align Right"
-                    id="86ba88c0-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className={
-                        this.state.styles.align === 'right'
-                          ? 'czi-custom-button use-icon molsp-activealignbuttons '+ this.props.theme
-                          : 'czi-custom-button  molsp-alignbuttons '+ this.props.theme
-                      }
-                      onClick={this.onAlignButtonClick.bind(this, 'right')}
-                    >
-                      <span className="molsp-iconspan czi-icon format_align_right">
-                        format_align_right
-                      </span>
-                    </button>
-                  </span>
-                  <span
-                    aria-label=" Justify"
-                    className="czi-tooltip-surface molsp-alignbuttons"
-                    data-tooltip=" Justify"
-                    id="86baafd0-ff11-11ea-930a-95c69ca4f97f"
-                    role="tooltip"
-                  >
-                    <button
-                      aria-disabled="false"
-                      aria-pressed="false"
-                      className={
-                        this.state.styles.align === 'justify'
-                          ? 'czi-custom-button use-icon molsp-activealignbuttons '+ this.props.theme
-                          : 'czi-custom-button  molsp-alignbuttons '+ this.props.theme
-                      }
-                      onClick={this.onAlignButtonClick.bind(this, 'justify')}
-                    >
-                      <span className="molsp-iconspan czi-icon format_align_justify">
-                        format_align_justify
-                      </span>
-                    </button>
-                  </span>
-                </div>
-                <p className="molsp-formp">Line Spacing:</p>
-                <select
-                  className="molsp-linespacing molsp-fontstyle"
-                  onChange={this.onLineSpaceChange.bind(this)}
-                  value={this.state.styles.lineHeight || ''}
-                >
-                  {LINE_SPACE.map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
-                <p className="molsp-formp">Paragraph Spacing:</p>
+          <button
+            className={this.state.styles.em ? 'czi-custom-button use-icon active molsp-markbuttons' : 'czi-custom-button use-icon molsp-markbuttons molsp-formatbuttons'}
+            onClick={this.onStyleClick.bind(this, 'em')}
+          >
+            <span className="molsp-iconspan czi-icon format_italic editor-markbuttons">format_italic</span>
+          </button>
 
-                <div className="molsp-spacingdiv">
-                  <span style={{ fontSize: '12px' }}>Before: </span>
-                  <span>
-                    <input
-                      className="molsp-spacinginput molsp-fontstyle"
-                      data-cy="cyStyleBeforeSpace"
-                      key="before"
-                      onChange={this.onStyleClick.bind(this, 'before')}
-                      type="text"
-                      value={this.state.styles.paragraphSpacingBefore || ''}
-                    />
-                  </span>
-                  <span style={{ fontSize: '12px', marginLeft: '3px' }}>
-                    {' '}
-                    pts
-                  </span>
+          <button
+            className={this.state.styles.underline ? 'czi-custom-button use-icon active molsp-markbuttons' : 'czi-custom-button use-icon molsp-markbuttons molsp-formatbuttons'}
+            onClick={this.onStyleClick.bind(this, 'underline')}
+          >
+            <span className="molsp-iconspan czi-icon  format_underline editor-markbuttons">format_underline</span>
+          </button>
 
-                  <span style={{ fontSize: '12px', marginLeft: '23px' }}>
-                    After:{' '}
-                  </span>
-                  <span>
-                    <input
-                      className="molsp-spacinginput molsp-fontstyle"
-                      data-cy="cyStyleAfterSpace"
-                      key="after"
-                      onChange={this.onStyleClick.bind(this, 'after')}
-                      type="text"
-                      value={this.state.styles.paragraphSpacingAfter || ''}
-                    />
-                  </span>
-                  <span style={{ fontSize: '12px', marginLeft: '3px' }}>
-                    pts
-                  </span>
-                </div>
-              </div>
-              <button
-                className="molsp-licit-accordion molsp-accactive"
-                disabled={this.state.styleName === RESERVED_STYLE_NONE}
-              >
-                <div className="molsp-indentdiv">
-                  <span
-                    className="molsp-iconspan czi-icon account_tree"
-                    style={{
-                      color:
-                        this.state.styleName === RESERVED_STYLE_NONE
-                          ? 'rgb(167, 158, 158)'
-                          : 'black',
-                    }}
-                  >
-                    account_tree
-                  </span>
-                  <span
-                    style={{
-                      marginLeft: '-7px',
-                      marginTop: '2px',
-                      color:
-                        this.state.styleName === RESERVED_STYLE_NONE
-                          ? 'rgb(167, 158, 158)'
-                          : '#444',
-                    }}
-                  >
-                    Hierarchy
-                  </span>
-                </div>
-              </button>
-              <div
-                className="molsp-panel2 molsp-formp"
-                style={{ maxHeight: '100%' }}
-              >
-                {this.state.styles.hasNumbering || this.state.styles.isList ? (
-                  <div
-                    className="molsp-hierarchydiv"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginLeft: '-1px',
-                    }}
-                  >
-                    <div className="molsp-hierarchydiv">
-                      <label>
-                        <input
-                          checked={!this.state.styles.isList}
-                          disabled={
-                            this.state.styleName === RESERVED_STYLE_NONE
-                          }
-                          onChange={(e) => this.handleList(e)}
-                          type="radio"
-                          value="userDefined"
-                        />
-                        <span
-                          style={{
-                            marginLeft: '2px',
-                            position: 'relative',
-                            top: '-2px',
-                          }}
-                        >
-                        User-defined Numbering/Bullets
-                        </span>
-                      </label>
-                      <br />
-                      <label>
-                        <input
-                          checked={this.state.styles.isList}
-                          disabled={
-                            this.state.disableControl ||
-                            this.state.styleName === RESERVED_STYLE_NONE ||
-                            this.state.styles.tot ||
-                            this.state.styles.tof
-                          }
-                          onChange={this.handleList.bind(this)}
-                          type="radio"
-                          value="listStyle"
-                        />
-                        <span
-                          style={{
-                            marginLeft: '2px',
-                            position: 'relative',
-                            top: '-2px',
-                          }}
-                        >
-                        List-style (Auto Numbering)
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="molsp-hierarchydiv"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginLeft: '-1px',
-                    }}
-                  >
-                    <div className="molsp-hierarchydiv">
-                      <label>
-                        <input
-                          checked={this.state.selectedStyle === 'userDefined'}
-                          disabled={
-                            this.state.styleName === RESERVED_STYLE_NONE
-                          }
-                          onChange={(e) => this.handleList(e)}
-                          type="radio"
-                          value="userDefined"
-                        />
-                        <span
-                          style={{
-                            marginLeft: '2px',
-                            position: 'relative',
-                            top: '-2px',
-                          }}
-                        >
-                          User-defined Numbering/Bullets
-                        </span>
-                      </label>
-                      <br />
-                      <label>
-                        <input
-                          checked={this.state.selectedStyle === 'listStyle'}
-                          disabled={
-                            this.state.styleName === RESERVED_STYLE_NONE
-                          }
-                          onChange={this.handleList.bind(this)}
-                          type="radio"
-                          value="listStyle"
-                        />
-                        <span
-                          style={{
-                            marginLeft: '2px',
-                            position: 'relative',
-                            top: '-2px',
-                          }}
-                        >
-                          List-style (Auto Numbering)
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                )}
-                <div
-                  className="molsp-hierarchydiv"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    paddingLeft: '22px',
-                  }}
-                >
-                  <p className="molsp-formp" style={{ margin: '0' }}>
-                    Level:
-                  </p>
-                  <select
-                    className="molsp-leveltype molsp-fontstyle"
-                    data-cy="cyStyleLevel"
-                    disabled={
-                      this.state.styles.isList === true ||
-                      this.state.styleName === RESERVED_STYLE_NONE ||
-                      this.state.styles.tot ||
-                      this.state.styles.tof
-                    }
-                    id="levelValue"
-                    onChange={this.onLevelChange.bind(this)}
-                    value={this.state.styles.styleLevel || ''}
-                  >
-                    {LEVEL_VALUES.map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="molsp-hierarchydiv" style={{ display: 'flex' }}>
-                  <fieldset className="formatting-fieldset">
-                    <legend className="formatting-legend">Formatting</legend>
-                    <div>
-                      <label>
-                        <input
-                          checked={
-                            !this.state.styles.hasNumbering &&
-                            !this.state.styles.hasBullet
-                          }
-                          className="molsp-chknumbering"
-                          disabled={
-                            this.state.styles.isList === true ||
-                            this.state.styleName === RESERVED_STYLE_NONE ||
-                            this.state.styles.tot ||
-                            this.state.styles.tof
-                          }
-                          name="formatting"
-                          onChange={() => {
-                            this.setState((prevState) => ({
-                              styles: {
-                                ...prevState.styles,
-                                hasNumbering: false,
-                                boldNumbering: false,
-                                hasBullet: false,
-                                hideNumbering: false,
-                              },
-                            }));
-                          }}
-                          type="radio"
-                          value="none"
-                        />
-                        <span
-                          style={{
-                            marginLeft: '2px',
-                            position: 'relative',
-                            top: '-2px',
-                          }}
-                        >
-                          None
-                        </span>
-                      </label>
-                      <br />
-                      <label>
-                        <input
-                          checked={this.state.styles.hasNumbering}
-                          className="molsp-chknumbering"
-                          disabled={
-                            this.state.styles.styleLevel === undefined ||
-                            this.state.isRadioDisabled ||
-                            this.state.styles.styleLevel === 0 ||
-                            (this.state.styles.styleLevel === 1 &&
-                              this.state.styles.isList === true) ||
-                            this.state.styleName === RESERVED_STYLE_NONE
-                          }
-                          name="formatting"
-                          onChange={this.handleNumbering.bind(this)}
-                          type="radio"
-                          value="numbering"
-                        />
-                        <span
-                          style={{
-                            marginLeft: '2px',
-                            position: 'relative',
-                            top: '-2px',
-                          }}
-                        >
-                          Numbering (1.1)
-                        </span>
-                      </label>
-                      <div style={{ marginLeft: '20px', marginTop: '5px' }}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            marginBottom: '5px',
-                          }}
-                        >
-                          <input
-                            checked={this.state.styles.hideNumbering}
-                            className="molsp-chkboldnumbering"
-                            disabled={
-                              this.checkCondition(
-                                this.state.styles.hasNumbering
-                              ) ||
-                              this.state.styleName === RESERVED_STYLE_NONE ||
-                              this.state.styles.tot ||
-                              this.state.styles.tof
-                            }
-                            onChange={this.handleHideNumbering.bind(this)}
-                            type="checkbox"
-                            value="HideNumbering"
-                          />
-                          <span style={{ marginLeft: '5px' }}>
-                            Hide Numbering
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            marginBottom: '5px',
-                          }}
-                        >
-                          <input
-                            checked={this.state.styles.boldNumbering}
-                            className="molsp-chkboldnumbering"
-                            disabled={
-                              this.checkCondition(
-                                this.state.styles.hasNumbering
-                              ) || this.state.styleName === RESERVED_STYLE_NONE
-                            }
-                            onChange={this.handleBoldNumbering.bind(this)}
-                            type="checkbox"
-                          />
-                          <span style={{ marginLeft: '5px' }}>Bold</span>
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            marginTop: '5px',
-                            marginLeft: '-6px',
-                          }}
-                        >
-                          <span style={{ marginRight: '5px' }}>Prefix:</span>
-                          <input
-                            disabled={
-                              this.checkCondition(
-                                this.state.styles.hasNumbering
-                              ) || this.state.styleName === RESERVED_STYLE_NONE
-                            }
-                            onChange={(e) => this.handlePrefix(e)}
-                            style={{ width: '62px' }}
-                            type="text"
-                            value={this.state.styles.prefixValue}
-                          />
-                        </div>
-                      </div>
-                      <label>
-                        <input
-                          checked={this.state.styles?.hasBullet}
-                          className="molsp-chknumbering"
-                          disabled={
-                            this.state.isRadioDisabled ||
-                            this.state.styles.styleLevel === 0 ||
-                            this.state.styles.styleLevel === undefined ||
-                            (this.state.styles.styleLevel === 1 &&
-                              this.state.styles.isList === true) ||
-                            this.state.styleName === RESERVED_STYLE_NONE ||
-                            this.state.styles.tot ||
-                            this.state.styles.tof
-                          }
-                          name="bullet"
-                          onChange={this.handleBulletPoints.bind(this)}
-                          type="radio"
-                        />
-                        <span
-                          style={{
-                            marginLeft: '2px',
-                            position: 'relative',
-                            top: '-2px',
-                          }}
-                        >
-                          Bullet{' '}
-                        </span>
-                        <span>
-                          <select
-                            className="molsp-fontstyle"
-                            disabled={
-                              this.checkCondition(
-                                this.state.styles?.hasBullet
-                              ) || this.state.styleName === RESERVED_STYLE_NONE
-                            }
-                            id="bulletValue"
-                            onChange={this.onBulletLevelChange.bind(this)}
-                            style={{ textAlign: 'center' }}
-                            value={this.state.styles.bulletLevel || ''}
-                          >
-                            {BULLET_POINTS.map((value) => (
-                              <option key={value.key} value={value.key}>
-                                {value.symbol}
-                              </option>
-                            ))}
-                          </select>
-                        </span>
-                      </label>
-                    </div>
-                  </fieldset>
-                </div>
-                <p className="molsp-formp">Indenting:</p>
-                <div className="molsp-hierarchydiv">
-                  <div className="molsp-indentdiv">
-                    <input
-                      checked={this.state.styles.isLevelbased}
-                      disabled={
-                        this.state.styles.isList === true ||
-                        this.state.styleName === RESERVED_STYLE_NONE
-                      }
-                      name="indenting"
-                      onChange={this.onIndentRadioChanged.bind(this)}
-                      type="radio"
-                      value="0"
-                    />
-                    <span
-                      style={{
-                        marginLeft: '4px',
-                        marginTop: '3px',
-                        marginBottom: '0',
-                      }}
-                    >
-                      Based On Level
-                    </span>
-                  </div>
-                  <div className="molsp-indentdiv">
-                    <input
-                      checked={!this.state.styles.isLevelbased}
-                      disabled={
-                        this.state.styles.isList === true ||
-                        this.state.styleName === RESERVED_STYLE_NONE
-                      }
-                      name="indenting"
-                      onChange={this.onIndentRadioChanged.bind(this)}
-                      type="radio"
-                      value="1"
-                    />
-                    <span
-                      style={{
-                        marginLeft: '4px',
-                        marginTop: '3px',
-                        marginBottom: '0',
-                      }}
-                    >
-                      Specified
-                    </span>
-                    <span>
-                      <select
-                        className="molsp-leveltype molsp-specifiedindent molsp-fontstyle"
-                        data-cy="cyStyleIndent"
-                        disabled={
-                          this.state.styles.isList === true ||
-                          this.state.styleName === RESERVED_STYLE_NONE
-                        }
-                        onChange={this.onIndentChange.bind(this)}
-                        style={{ width: '99px !important' }}
-                        value={this.state.styles.indent || ''}
-                      >
-                        {LEVEL_VALUES.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                      </select>
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <input
-                      checked={this.state.styles.isHangingIndent}
-                      id='hanging-indent-checkbox'
-                      onChange={this.onHangingIndentChange.bind(this)}
-                      type="checkbox"
-                    />
-                    <label htmlFor='hanging-indent-checkbox' style={{ marginLeft: '4px' }}>Hanging Indent</label>
-                  </div>
+          <button className="czi-custom-button use-icon molsp-markbuttons" onClick={this.showColorDialog.bind(this, true)}>
+            <span className="molsp-iconspan czi-icon format_color_text editor-markbuttons" style={{ color: typeof this.state.styles.color === 'string' && this.state.styles.color !== 'rgba(0,0,0,0)' ? this.state.styles.color : '#666' }}>format_color_text</span>
+          </button>
 
-                  <div style={{ display: 'flex', alignItems: 'center', marginLeft: '34px' }}>
-                    <label htmlFor='indent-position-input' style={{ marginRight: '8px' }}>Indent position: </label>
-                    <input
-                      disabled={
-                        !this.state.styles.isHangingIndent
-                      }
-                      id='indent-position-input'
-                      onChange={this.onIndentPositionChange.bind(this)}
-                      style={{ width: '34px', marginRight: '6px' }}
-                      type="text"
-                      value={this.state.styles.indentPosition ?? ''}
-                    />
-                    <span>inches</span>
-                  </div>
-                </div>
-              </div>
+          <button className="czi-custom-button use-icon molsp-markbuttons" onClick={this.showColorDialog.bind(this, false)}>
+            <span className="molsp-iconspan czi-icon border_color editor-markbuttons" style={{ color: typeof this.state.styles.textHighlight === 'string' && this.state.styles.textHighlight !== 'rgba(0,0,0,0)' ? this.state.styles.textHighlight : '#666' }}>border_color</span>
+          </button>
+        </div>
 
-              <button className="molsp-licit-accordion molsp-accactive">
-                <div className="molsp-indentdiv">
-                  <span
-                    style={{
-                      marginLeft: '0',
-                      marginTop: '2px',
-                      color: '#444',
-                    }}
-                  >
-                    Style Settings
-                  </span>
-                </div>
-              </button>
+        <div className="molsp-formp molsp-hierarchydiv">
+          <span style={{ float: 'left' }}>
+            <label>
+              <input checked={this.state.styles.boldPartial} onChange={this.handleBoldPartial.bind(this)} type="checkbox" />
+              <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>Bold the</span>
+            </label>
+          </span>
 
-              <div className="molsp-panel3 molsp-formp">
-                <p className="molsp-formp">Select style for next line:</p>
-                <div className="molsp-hierarchydiv">
-                  <div className="molsp-settingsdiv">
-                    <input
-                      checked={
-                        !(this.state.styles.tot || this.state.styles.tof) &&
-                        this.state.styles.nextLineStyleName ===
-                        this.state.styleName &&
-                        !this.state.otherStyleSelected
-                      }
-                      name="nextlinestyle"
-                      onChange={this.onNextLineStyleSelected.bind(this, 1)}
-                      style={{
-                        marginLeft: '0.5px',
-                      }}
-                      type="radio"
-                      value="1"
-                    />
-                    <span
-                      style={{
-                        marginLeft: '4px',
-                        marginTop: '3px',
-                        marginBottom: '0',
-                      }}
-                    >
-                      Continue this style
-                    </span>
-                  </div>
-                  <div
-                    className="molsp-settingsdiv"
-                    style={{
-                      marginLeft: '15px',
-                    }}
-                  >
-                    <input
-                      checked={
-                        this.state.styles.tot ||
-                        this.state.styles.tof ||
-                        this.state.styles.nextLineStyleName ===
-                        RESERVED_STYLE_NONE
-                      }
-                      name="nextlinestyle"
-                      onChange={this.onNextLineStyleSelected.bind(this, 0)}
-                      type="radio"
-                      value="2"
-                    />
-                    <span
-                      style={{
-                        marginLeft: '4px',
-                        marginTop: '3px',
-                        marginBottom: '0',
-                      }}
-                    >
-                      None
-                    </span>
-                  </div>
-                  <div className="molsp-indentdiv">
-                    <input
-                      checked={this.state.otherStyleSelected}
-                      disabled={this.state.styles.tot || this.state.styles.tof}
-                      name="nextlinestyle"
-                      onChange={this.onNextLineStyleSelected.bind(this, 2)}
-                      type="radio"
-                      value="0"
-                    />
-                    <span
-                      style={{
-                        marginLeft: '4px',
-                        marginTop: '3px',
-                        marginBottom: '0',
-                        width: '62px',
-                      }}
-                    >
-                      Select style
-                    </span>
-                    <span id="nextStyle" style={{ display: 'none' }}>
-                      <select
-                        className="molsp-fontstyle molsp-stylenameinput"
-                        id="nextStyleValue"
-                        onChange={this.onOtherStyleSelectionChanged.bind(this)}
-                        style={{
-                          height: '20px',
-                          marginLeft: '7px',
-                          width: '97px',
-                        }}
-                        value={this.state.styles.nextLineStyleName}
-                      >
-                        {customStyles.map((style) => (
-                          <option key={style.styleName}>
-                            {style.styleName}
-                          </option>
-                        ))}
-                      </select>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <span>
+            <input checked={this.state.styles.boldSentence} disabled={!this.state.styles.boldPartial} name="boldscentence" onChange={this.onScentenceRadioChanged.bind(this)} style={{ marginLeft: '21px' }} type="radio" value="0" />
+            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>First Sentence</span>
+            <input checked={!this.state.styles.boldSentence} disabled={!this.state.styles.boldPartial} name="boldscentence" onChange={this.onScentenceRadioChanged.bind(this)} style={{ marginLeft: '21px' }} type="radio" value="1" />
+            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>First Word</span>
+          </span>
+        </div>
+        </div>
+      </>
+    );
+  }
+
+  renderParagraphAccordion() {
+    return (
+      <div>
+        <button className="molsp-licit-accordion molsp-accactive">
+          <div className="molsp-indentdiv">
+            <span className="molsp-iconspan czi-icon format_textdirection_l_to_r" style={{ marginTop: '1px' }}>format_textdirection_l_to_r</span>
+            <span style={{ marginLeft: '-10px', marginTop: '2px', color: '#444' }}>Paragraph</span>
+          </div>
+        </button>
+
+        <div className="molsp-panel1">
+          <p className="molsp-formp">Alignment:</p>
+          <div className="molsp-czi-custom-buttons">
+            <button className={this.state.styles.align === 'left' ? 'czi-custom-button use-icon molsp-activealignbuttons ' + this.props.theme : 'czi-custom-button molsp-alignbuttons ' + this.props.theme} onClick={this.onAlignButtonClick.bind(this, 'left')}>
+              <span className="molsp-iconspan czi-icon format_align_left">format_align_left</span>
+            </button>
+            <button className={this.state.styles.align === 'center' ? 'czi-custom-button use-icon molsp-activealignbuttons '+ this.props.theme : 'czi-custom-button  molsp-alignbuttons '+ this.props.theme} onClick={this.onAlignButtonClick.bind(this, 'center')}>
+              <span className="molsp-iconspan czi-icon format_align_center">format_align_center</span>
+            </button>
+            <button className={this.state.styles.align === 'right' ? 'czi-custom-button use-icon molsp-activealignbuttons '+ this.props.theme : 'czi-custom-button  molsp-alignbuttons '+ this.props.theme} onClick={this.onAlignButtonClick.bind(this, 'right')}>
+              <span className="molsp-iconspan czi-icon format_align_right">format_align_right</span>
+            </button>
+            <button className={this.state.styles.align === 'justify' ? 'czi-custom-button use-icon molsp-activealignbuttons '+ this.props.theme : 'czi-custom-button  molsp-alignbuttons '+ this.props.theme} onClick={this.onAlignButtonClick.bind(this, 'justify')}>
+              <span className="molsp-iconspan czi-icon format_align_justify">format_align_justify</span>
+            </button>
+          </div>
+
+          <p className="molsp-formp">Line Spacing:</p>
+          <select className="molsp-linespacing molsp-fontstyle" onChange={this.onLineSpaceChange.bind(this)} value={typeof this.state.styles.lineHeight === 'string' || typeof this.state.styles.lineHeight === 'number' ? this.state.styles.lineHeight : ''}>
+            {LINE_SPACE.map((value) => (<option key={value} value={value}>{value}</option>))}
+          </select>
+
+          <p className="molsp-formp">Paragraph Spacing:</p>
+          <div className="molsp-spacingdiv">
+            <span style={{ fontSize: '12px' }}>Before: </span>
+            <span>
+              <input className="molsp-spacinginput molsp-fontstyle" data-cy="cyStyleBeforeSpace" key="before" onChange={this.onStyleClick.bind(this, 'before')} type="text" value={this.state.styles.paragraphSpacingBefore || ''} />
+            </span>
+            <span style={{ fontSize: '12px', marginLeft: '3px' }}> pts</span>
+
+            <span style={{ fontSize: '12px', marginLeft: '23px' }}>After: </span>
+            <span>
+              <input className="molsp-spacinginput molsp-fontstyle" data-cy="cyStyleAfterSpace" key="after" onChange={this.onStyleClick.bind(this, 'after')} type="text" value={this.state.styles.paragraphSpacingAfter || ''} />
+            </span>
+            <span style={{ fontSize: '12px', marginLeft: '3px' }}> pts</span>
           </div>
         </div>
-        <div className="molsp-btns">
-          <button
-            className="molsp-buttonstyle"
-            data-cy="cyStyleCancel"
-            onClick={this._cancel}
-          >
-            {this.state.mode === 3 ? 'Close' : 'Cancel'}
-          </button>
-          <button
-            className="molsp-btnsave molsp-buttonstyle"
-            data-cy="cyStyleSave"
-            onClick={this._save.bind(this)}
-            onKeyDown={this.handleKeyDown}
-          >
-            Save
-          </button>
+      </div>
+    );
+  }
+
+  renderHierarchyAccordion() {
+    const hasNumberingOrList = this.state.styles.hasNumbering || this.state.styles.isList;
+    return (
+      <>
+        <button className="molsp-licit-accordion molsp-accactive" disabled={this.state.styleName === RESERVED_STYLE_NONE}>
+          <div className="molsp-indentdiv">
+            <span className="molsp-iconspan czi-icon account_tree" style={{ color: this.state.styleName === RESERVED_STYLE_NONE ? 'rgb(167, 158, 158)' : 'black' }}>account_tree</span>
+            <span style={{ marginLeft: '-7px', marginTop: '2px', color: this.state.styleName === RESERVED_STYLE_NONE ? 'rgb(167, 158, 158)' : '#444' }}>Hierarchy</span>
+          </div>
+        </button>
+        <div className="molsp-panel2 molsp-formp" style={{ maxHeight: '100%' }}>
+          {hasNumberingOrList ? (
+            <div className="molsp-hierarchydiv" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginLeft: '-1px' }}>
+              <div className="molsp-hierarchydiv">
+                <label>
+                  <input checked={!this.state.styles.isList} disabled={this.state.styleName === RESERVED_STYLE_NONE} onChange={(e) => this.handleList(e)} type="radio" value="userDefined" />
+                  <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>User-defined Numbering/Bullets</span>
+                </label>
+                <br />
+                <label>
+                  <input checked={this.state.styles.isList} disabled={this.state.disableControl || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} onChange={this.handleList.bind(this)} type="radio" value="listStyle" />
+                  <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>List-style (Auto Numbering)</span>
+                </label>
+              </div>
+            </div>
+          ) : (
+            <div className="molsp-hierarchydiv" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginLeft: '-1px' }}>
+              <div className="molsp-hierarchydiv">
+                <label>
+                  <input checked={this.state.selectedStyle === 'userDefined'} disabled={this.state.styleName === RESERVED_STYLE_NONE} onChange={(e) => this.handleList(e)} type="radio" value="userDefined" />
+                  <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>User-defined Numbering/Bullets</span>
+                </label>
+                <br />
+                <label>
+                  <input checked={this.state.selectedStyle === 'listStyle'} disabled={this.state.styleName === RESERVED_STYLE_NONE} onChange={this.handleList.bind(this)} type="radio" value="listStyle" />
+                  <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>List-style (Auto Numbering)</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          <div className="molsp-hierarchydiv" style={{ display: 'flex', alignItems: 'center', paddingLeft: '22px' }}>
+            <p className="molsp-formp" style={{ margin: '0' }}>Level:</p>
+            <select className="molsp-leveltype molsp-fontstyle" data-cy="cyStyleLevel" disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} id="levelValue" onChange={this.onLevelChange.bind(this)} value={typeof this.state.styles.styleLevel === 'number' || typeof this.state.styles.styleLevel === 'string' ? this.state.styles.styleLevel : ''}>
+              {LEVEL_VALUES.map((value) => (<option key={value} value={value}>{value}</option>))}
+            </select>
+          </div>
+
+          {this.renderFormattingFieldset()}
         </div>
+      </>
+    );
+  }
+
+  renderFormattingFieldset() {
+    return (
+      <div className="molsp-hierarchydiv" style={{ display: 'flex' }}>
+        <fieldset className="formatting-fieldset">
+          <legend className="formatting-legend">Formatting</legend>
+          <div>
+            <label>
+              <input checked={!this.state.styles.hasNumbering && !this.state.styles.hasBullet} className="molsp-chknumbering" disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} name="formatting" onChange={() => { this.setState((prevState) => ({ styles: { ...prevState.styles, hasNumbering: false, boldNumbering: false, hasBullet: false, hideNumbering: false } })); }} type="radio" value="none" />
+              <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>None</span>
+            </label>
+            <br />
+            <label>
+              <input checked={this.state.styles.hasNumbering} className="molsp-chknumbering" disabled={this.state.styles.styleLevel === undefined || this.state.isRadioDisabled || this.state.styles.styleLevel === 0 || (this.state.styles.styleLevel === 1 && this.state.styles.isList === true) || this.state.styleName === RESERVED_STYLE_NONE} name="formatting" onChange={this.handleNumbering.bind(this)} type="radio" value="numbering" />
+              <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>Numbering (1.1)</span>
+            </label>
+
+            <div style={{ marginLeft: '20px', marginTop: '5px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
+                <input checked={!!this.state.styles.hideNumbering} className="molsp-chkboldnumbering" disabled={this.checkCondition(this.state.styles.hasNumbering) || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} onChange={this.handleHideNumbering.bind(this)} type="checkbox" value="HideNumbering" />
+                <span style={{ marginLeft: '5px' }}>Hide Numbering</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
+                <input checked={this.state.styles.boldNumbering} className="molsp-chkboldnumbering" disabled={this.checkCondition(this.state.styles.hasNumbering) || this.state.styleName === RESERVED_STYLE_NONE} onChange={this.handleBoldNumbering.bind(this)} type="checkbox" />
+                <span style={{ marginLeft: '5px' }}>Bold</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px', marginLeft: '-6px' }}>
+                <span style={{ marginRight: '5px' }}>Prefix:</span>
+                <input disabled={this.checkCondition(this.state.styles.hasNumbering) || this.state.styleName === RESERVED_STYLE_NONE} onChange={(e) => this.handlePrefix(e)} style={{ width: '62px' }} type="text" value={this.state.styles.prefixValue} />
+              </div>
+            </div>
+
+            <label>
+              <input checked={this.state.styles?.hasBullet} className="molsp-chknumbering" disabled={this.state.isRadioDisabled || this.state.styles.styleLevel === 0 || this.state.styles.styleLevel === undefined || (this.state.styles.styleLevel === 1 && this.state.styles.isList === true) || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} name="bullet" onChange={this.handleBulletPoints.bind(this)} type="radio" />
+              <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>Bullet{' '}</span>
+              <span>
+                <select className="molsp-fontstyle" disabled={this.checkCondition(this.state.styles?.hasBullet) || this.state.styleName === RESERVED_STYLE_NONE} id="bulletValue" onChange={this.onBulletLevelChange.bind(this)} style={{ textAlign: 'center' }} value={typeof this.state.styles.bulletLevel === 'string' ? this.state.styles.bulletLevel : ''}>
+                  {BULLET_POINTS.map((value) => (<option key={value.key} value={value.key}>{value.symbol}</option>))}
+                </select>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    );
+  }
+
+  renderIndentAccordion() {
+    return (
+      <div>
+        <p className="molsp-formp">Indenting:</p>
+        <div className="molsp-hierarchydiv">
+          <div className="molsp-indentdiv">
+            <input checked={this.state.styles.isLevelbased} disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE} name="indenting" onChange={this.onIndentRadioChanged.bind(this)} type="radio" value="0" />
+            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>Based On Level</span>
+          </div>
+          <div className="molsp-indentdiv">
+            <input checked={!this.state.styles.isLevelbased} disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE} name="indenting" onChange={this.onIndentRadioChanged.bind(this)} type="radio" value="1" />
+            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>Specified</span>
+            <span>
+              <select className="molsp-leveltype molsp-specifiedindent molsp-fontstyle" data-cy="cyStyleIndent" disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE} onChange={this.onIndentChange.bind(this)} style={{ width: '99px !important' }} value={typeof this.state.styles.indent === 'string' || typeof this.state.styles.indent === 'number' ? this.state.styles.indent : ''}>
+                {LEVEL_VALUES.map((value) => (<option key={value} value={value}>{value}</option>))}
+              </select>
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <input checked={!!this.state.styles.isHangingIndent} id='hanging-indent-checkbox' onChange={this.onHangingIndentChange.bind(this)} type="checkbox" />
+            <label htmlFor='hanging-indent-checkbox' style={{ marginLeft: '4px' }}>Hanging Indent</label>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginLeft: '34px' }}>
+            <label htmlFor='indent-position-input' style={{ marginRight: '8px' }}>Indent position: </label>
+            <input disabled={!this.state.styles.isHangingIndent} id='indent-position-input' onChange={this.onIndentPositionChange.bind(this)} style={{ width: '34px', marginRight: '6px' }} type="text" value={typeof this.state.styles.indentPosition === 'string' || typeof this.state.styles.indentPosition === 'number' ? this.state.styles.indentPosition : ''} />
+            <span>inches</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderStyleSettingsAccordion() {
+    return (
+      <div className="molsp-panel3 molsp-formp">
+        <p className="molsp-formp">Select style for next line:</p>
+        <div className="molsp-hierarchydiv">
+          <div className="molsp-settingsdiv">
+            <input checked={!(this.state.styles.tot || this.state.styles.tof) && this.state.styles.nextLineStyleName === this.state.styleName && !this.state.otherStyleSelected} name="nextlinestyle" onChange={this.onNextLineStyleSelected.bind(this, 1)} style={{ marginLeft: '0.5px' }} type="radio" value="1" />
+            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>Continue this style</span>
+          </div>
+          <div className="molsp-settingsdiv" style={{ marginLeft: '15px' }}>
+            <input checked={this.state.styles.tot || this.state.styles.tof || this.state.styles.nextLineStyleName === RESERVED_STYLE_NONE} name="nextlinestyle" onChange={this.onNextLineStyleSelected.bind(this, 0)} type="radio" value="2" />
+            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>None</span>
+          </div>
+          <div className="molsp-indentdiv">
+            <input checked={!!this.state.otherStyleSelected} disabled={this.state.styles.tot || this.state.styles.tof} name="nextlinestyle" onChange={this.onNextLineStyleSelected.bind(this, 2)} type="radio" value="0" />
+            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0', width: '62px' }}>Select style</span>
+            <span id="nextStyle" style={{ display: 'none' }}>
+              <select className="molsp-fontstyle molsp-stylenameinput" id="nextStyleValue" onChange={this.onOtherStyleSelectionChanged.bind(this)} style={{ height: '20px', marginLeft: '7px', width: '97px' }} value={typeof this.state.styles.nextLineStyleName === 'string' ? this.state.styles.nextLineStyleName : ''}>
+                {customStyles.map((style) => (<option key={style.styleName}>{style.styleName}</option>))}
+              </select>
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderButtons() {
+    return (
+      <div className="molsp-btns">
+        <button className="molsp-buttonstyle" data-cy="cyStyleCancel" onClick={this._cancel}>
+          {this.state.mode === 3 ? 'Close' : 'Cancel'}
+        </button>
+        <button className="molsp-btnsave molsp-buttonstyle" data-cy="cyStyleSave" onClick={this._save} onKeyDown={this.handleKeyDown}>
+          Save
+        </button>
       </div>
     );
   }
@@ -2024,9 +1382,9 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
         ...prev,
         customStyles: customStyles ?? [],
       }));
-      this.props.close(editedStyles);
+      this.props.close?.(editedStyles);
     } else {
-      this.props.close();
+      this.props.close?.();
     }
   };
 
@@ -2051,7 +1409,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
       const { customStyles, ...newState } = this.state;
       // Update the state with the new state object
       this.setState(newState);
-      this.props.close(newState);
+      this.props.close?.(newState);
     }
   };
 
@@ -2116,7 +1474,7 @@ export class CustomStyleEditor extends React.PureComponent<any, any> {
 
       display = 'block';
       const selectedStyle = document.getElementById('nextStyleValue');
-      if (selectedStyle instanceof window.HTMLSelectElement) {
+      if (selectedStyle instanceof globalThis.window.HTMLSelectElement) {
         selectedStyle.value = nextLineStyleName;
       }
     } else {

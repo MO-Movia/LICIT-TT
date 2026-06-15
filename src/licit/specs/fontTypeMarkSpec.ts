@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Mark, MarkSpec, Node } from 'prosemirror-model';
@@ -28,9 +28,9 @@ export const FONT_TYPE_NAMES = [
 // Preload fonts that are listed by default,
 // so that even if the font is not available locally, load from web.
 export function preLoadFonts(): void {
-  FONT_TYPE_NAMES.forEach((name) => {
+  for (const name of FONT_TYPE_NAMES) {
     loadAndCacheFont(name);
-  });
+  };
 }
 
 // resolve each font after it is loaded.

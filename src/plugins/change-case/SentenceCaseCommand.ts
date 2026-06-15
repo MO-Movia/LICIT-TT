@@ -40,39 +40,62 @@ export class SentanceCaseCommand extends UICommand {
   ): boolean => {
     const { from, to, $anchor } = state.selection;
     let tr: Transaction = state.tr;
-    let prevNode = null;
+    let previousContent = null;
     let paragraphContent = "";
     tr = this.toLower(state, tr);
     state.doc.nodesBetween(from, to, (node, pos) => {
-      let currentSentence = "";
       if (node.type.name === "paragraph") {
         paragraphContent = node.textContent;
       }
-      if (node.isText && pos <= to && pos + node.nodeSize >= from) {
-        const start = Math.max(pos, from);
-        const end = Math.min(pos + node.nodeSize, to);
-        const text = node.textBetween(start - pos, end - pos);
-        if (paragraphContent.startsWith(text)) {
-          currentSentence = this.capitalizeFirstParagraphCharacter(text);
-          currentSentence = this.parseSelectedText(currentSentence);
-          prevNode = currentSentence;
-        } else {
-          if (prevNode === null && $anchor.nodeBefore) {
-            prevNode = $anchor.nodeBefore.text;
-          }
-          currentSentence = this.checkPreviousNode(prevNode, text);
-        }
-
-        tr.replaceWith(
-          start,
-          end,
-          state.schema.text(currentSentence, node.marks)
-        );
+      if (!this.isSelectedTextNode(node, pos, from, to)) {
+        return;
       }
+
+      const { start, end, text } = this.getSelectedTextRange(node, pos, from, to);
+      const transformedText = this.getSentenceCaseText(
+        text,
+        paragraphContent,
+        previousContent,
+        $anchor?.nodeBefore?.text ?? null
+      );
+      previousContent = transformedText;
+
+      tr.replaceWith(
+        start,
+        end,
+        state.schema.text(transformedText, node.marks)
+      );
     });
     dispatch(tr.scrollIntoView());
     return true;
   };
+
+  isSelectedTextNode(node, pos: number, from: number, to: number): boolean {
+    return node.isText && pos <= to && pos + node.nodeSize >= from;
+  }
+
+  getSelectedTextRange(node, pos: number, from: number, to: number) {
+    const start = Math.max(pos, from);
+    const end = Math.min(pos + node.nodeSize, to);
+    const text = node.textBetween(start - pos, end - pos);
+    return { start, end, text };
+  }
+
+  getSentenceCaseText(
+    text: string,
+    paragraphContent: string,
+    previousContent: string | null,
+    anchorBeforeText: string | null
+  ): string {
+    if (paragraphContent.startsWith(text)) {
+      return this.parseSelectedText(
+        this.capitalizeFirstParagraphCharacter(text)
+      );
+    }
+
+    const currentPreviousContent = previousContent ?? anchorBeforeText;
+    return this.checkPreviousNode(currentPreviousContent, text);
+  }
 
   parseSelectedText(txt: string): string {
     let retString = "";
@@ -101,51 +124,80 @@ export class SentanceCaseCommand extends UICommand {
   }
 
   processPreviousContent(prevCont: string, currentString: string): boolean {
-    let isParagrphStart = false;
-    if (prevCont && prevCont.trim().length > 0) {
-      let delimeitorSepChars;
-      const charectersToInclude = [">", "}", ")", "]", '"'];
-      const startsWithSpaces = /^\s{1,10000}/;
-      const endWithSpaces = / {1,10000}$/;
-      if (prevCont === "." || prevCont === "?" || prevCont === "!") {
-        return true;
-      }
-      delimeitorSepChars = prevCont.split(".");
-      if (delimeitorSepChars?.length == 1) {
-        delimeitorSepChars = prevCont.split("?");
-      }
-      if (delimeitorSepChars?.length == 1) {
-        delimeitorSepChars = prevCont.split("!");
-      }
-      if (delimeitorSepChars.length > 0) {
-        delimeitorSepChars = delimeitorSepChars.reverse();
-        if (
-          delimeitorSepChars.length > 1 &&
-          (delimeitorSepChars[0].trim() === "" ||
-            delimeitorSepChars[0].trim() === "?" ||
-            delimeitorSepChars[0].trim() === "!" ||
-            endWithSpaces.test(prevCont) ||
-            startsWithSpaces.test(currentString))
-        ) {
-          return true;
-        } else {
-          for (const str of delimeitorSepChars) {
-            if (isParagrphStart) {
-              return true;
-            }
-            for (const char of str) {
-              if (charectersToInclude.includes(char)) {
-                isParagrphStart = true;
-              } else {
-                isParagrphStart = false;
-                break;
-              }
-            }
-          }
-        }
+    if (!prevCont || prevCont.trim().length === 0) {
+      return false;
+    }
+    if (this.isSingleSentenceDelimiter(prevCont)) {
+      return true;
+    }
+
+    const delimiterSeparatedChars = this.getDelimiterSeparatedChars(prevCont);
+    if (!delimiterSeparatedChars.length) {
+      return false;
+    }
+
+    if (this.startsNewSentence(delimiterSeparatedChars, prevCont, currentString)) {
+      return true;
+    }
+
+    return this.endsWithSentenceWrapper(delimiterSeparatedChars);
+  }
+
+  isSingleSentenceDelimiter(value: string): boolean {
+    return value === "." || value === "?" || value === "!";
+  }
+
+  getDelimiterSeparatedChars(prevCont: string): string[] {
+    const delimiters = [".", "?", "!"];
+    for (const delimiter of delimiters) {
+      const parts = prevCont.split(delimiter);
+      if (parts.length > 1) {
+        return parts.reverse();
       }
     }
-    return isParagrphStart;
+    return prevCont.split(".").reverse();
+  }
+
+  startsNewSentence(
+    delimiterSeparatedChars: string[],
+    prevCont: string,
+    currentString: string
+  ): boolean {
+    const startsWithSpaces = /^\s{1,10000}/;
+    const endWithSpaces = / {1,10000}$/;
+    const currentChunk = delimiterSeparatedChars[0]?.trim();
+
+    return (
+      delimiterSeparatedChars.length > 1 &&
+      (
+        currentChunk === "" ||
+        currentChunk === "?" ||
+        currentChunk === "!" ||
+        endWithSpaces.test(prevCont) ||
+        startsWithSpaces.test(currentString)
+      )
+    );
+  }
+
+  endsWithSentenceWrapper(delimiterSeparatedChars: string[]): boolean {
+    const charactersToInclude = new Set([">", "}", ")", "]", '"']);
+
+    for (const chunk of delimiterSeparatedChars) {
+      let isParagraphStart = true;
+
+      for (const char of chunk) {
+        if (!charactersToInclude.has(char)) {
+          isParagraphStart = false;
+          break;
+        }
+      }
+
+      if (isParagraphStart) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   checkPreviousNode(str: string, currentString: string): string {
@@ -160,15 +212,15 @@ export class SentanceCaseCommand extends UICommand {
   capitalizeFirstParagraphCharacter(inputString: string): string {
     // Capitalizing the starting letter of a paragraph
     const regex = /^([^a-zA-Z]*[a-z])(.*)/;
-    const matches = inputString.match(regex);
+    const matches = regex.exec(inputString);
     if (matches) {
       const specialCharacters = matches[1];
       const remainingString = matches[2];
       const capitalizedFirstChar = specialCharacters
-        .charAt(specialCharacters.length - 1)
+        .at(-1)
         .toUpperCase();
       const finalString =
-        specialCharacters.slice(0, specialCharacters.length - 1) +
+        specialCharacters.slice(0, -1) +
         capitalizedFirstChar +
         remainingString;
       return finalString;

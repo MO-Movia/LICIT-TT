@@ -153,5 +153,48 @@ describe('SentanceCaseCommand', () => {
     it('should handle checkDelimeter', () => {
         expect(plugin.checkDelimeter('This is a text?.')).toBeUndefined();
     });
+    it('should detect single sentence delimiters', () => {
+        expect(plugin.isSingleSentenceDelimiter('.')).toBeTruthy();
+        expect(plugin.isSingleSentenceDelimiter('text')).toBeFalsy();
+    });
+    it('should split previous content by available delimiters', () => {
+        expect(plugin.getDelimiterSeparatedChars('Alpha? Beta')).toStrictEqual([' Beta', 'Alpha']);
+        expect(plugin.getDelimiterSeparatedChars('No delimiter')).toStrictEqual(['No delimiter']);
+    });
+    it('should detect when a new sentence starts', () => {
+        expect(plugin.startsNewSentence(['', 'Alpha'], 'Alpha. ', ' Beta')).toBeTruthy();
+        expect(plugin.startsNewSentence(['Alpha'], 'Alpha', 'Beta')).toBeFalsy();
+    });
+    it('should detect wrapped sentence endings', () => {
+        expect(plugin.endsWithSentenceWrapper(['"])'])).toBeTruthy();
+        expect(plugin.endsWithSentenceWrapper(['a)'])).toBeFalsy();
+    });
+    it('should process previous content for empty, delimiter, and wrapped values', () => {
+        expect(plugin.processPreviousContent('', 'text')).toBeFalsy();
+        expect(plugin.processPreviousContent('!', 'text')).toBeTruthy();
+        expect(plugin.processPreviousContent('Alpha.")]', 'next')).toBeTruthy();
+        expect(plugin.processPreviousContent('Alpha?Beta', 'next')).toBeFalsy();
+    });
+    it('should resolve sentence case text from paragraph start and previous content', () => {
+        expect(plugin.getSentenceCaseText('hello world', 'hello world', null, null)).toBe('Hello world');
+        expect(plugin.getSentenceCaseText('next sentence', 'prefix next sentence', '.', null)).toBe('Next sentence');
+        expect(plugin.getSentenceCaseText('follow up', 'prefix follow up', null, '!')
+        ).toBe('Follow up');
+    });
+    it('should expose text node selection helpers', () => {
+        const textNode = mySchema.text('Hello');
+        const nonTextNode = mySchema.nodes.paragraph.create(null, textNode);
+        expect(plugin.isSelectedTextNode(textNode, 5, 5, 7)).toBeTruthy();
+        expect(plugin.isSelectedTextNode(nonTextNode, 5, 5, 7)).toBeFalsy();
+        expect(plugin.getSelectedTextRange(textNode, 5, 6, 9)).toStrictEqual({
+            start: 6,
+            end: 9,
+            text: 'ell',
+        });
+    });
+    it('should choose between previous-node parsing and capitalization', () => {
+        expect(plugin.checkPreviousNode('.', 'hello there')).toBe('Hello there');
+        expect(plugin.checkPreviousNode('plain text', 'HELLO there')).toBe('HELLO there');
+    });
 
 });

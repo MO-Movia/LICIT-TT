@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import {
   createPopUp,
   unrenderPopUp,
@@ -12,9 +12,14 @@ import {
   showModalMask,
 } from './createPopUp';
 
-jest.mock('react-dom', () => ({
-  render: jest.fn(),
-  unmountComponentAtNode: jest.fn(),
+const mockRender = jest.fn();
+const mockUnmount = jest.fn();
+
+jest.mock('react-dom/client', () => ({
+  createRoot: jest.fn(() => ({
+    render: mockRender,
+    unmount: mockUnmount,
+  })),
 }));
 
 describe('createPopUp', () => {
@@ -27,6 +32,12 @@ describe('createPopUp', () => {
     document.getElementById = mockGetElementById;
   });
 
+  beforeEach(() => {
+    mockRender.mockClear();
+    mockUnmount.mockClear();
+    (createRoot as jest.Mock).mockClear();
+  });
+
   afterAll(() => {
     document.getElementById = originalGetElementById;
   });
@@ -37,7 +48,7 @@ describe('createPopUp', () => {
     unrenderPopUp(rootId);
 
     expect(mockGetElementById).toHaveBeenCalledWith(rootId);
-    expect(ReactDOM.unmountComponentAtNode).toBeDefined();
+    expect(mockUnmount).toBeDefined();
     expect(hideModalMask).toBeDefined();
   });
 
@@ -68,7 +79,7 @@ describe('createPopUp', () => {
     const popUpParams = {modal: false};
     const handle = createPopUp(View, undefined, popUpParams);
     expect(handle).toBeDefined();
-    expect(ReactDOM.render).toHaveBeenCalled();
+    expect(mockRender).toHaveBeenCalled();
   });
 
   it('creates a pop-up with undefined popUpParams', () => {

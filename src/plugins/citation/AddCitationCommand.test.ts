@@ -9,6 +9,8 @@ import { Transform } from 'prosemirror-transform';
 import {
   AddCitationCommand,
   ShowTexteHighLightMark,
+  addTexthighlightMark,
+  removeTexthighlightMark,
 } from './AddCitationCommand';
 import { PopUpHandle } from '../../commands';
 import { Node, ResolvedPos, Schema } from 'prosemirror-model';
@@ -39,7 +41,7 @@ type CitationProps = {
   isCitationObject: boolean;
   sourceText: string;
 };
-const citation = {
+const citation: CitationProps = {
   overallDocumentCapco: 'TBD',
   author: 'Jerry Rodgers',
   authorTitle: 'Author',
@@ -211,7 +213,7 @@ describe('AddCitationCommand', () => {
       addctcomd.saveCitationUseObject(
         mockeditorstate as unknown as EditorState,
         tr as unknown as Transform,
-        { isCitationObject: false } as unknown as CitationProps
+        { isCitationObject: false }
       )
     ).toStrictEqual(tr);
   });
@@ -295,7 +297,7 @@ describe('AddCitationCommand', () => {
         } as unknown as EditorState,
         undefined as unknown as () => undefined,
         {} as unknown as EditorView,
-        citation as unknown as CitationProps
+        citation
       )
     ).toBeFalsy();
   });
@@ -315,7 +317,7 @@ describe('AddCitationCommand', () => {
         {
           focus: () => undefined,
         } as unknown as EditorView,
-        null as unknown as CitationProps
+        null
       )
     ).toBeDefined();
   });
@@ -339,7 +341,7 @@ describe('AddCitationCommand', () => {
         {
           focus: () => undefined,
         } as unknown as EditorView,
-        null as unknown as CitationProps
+        null
       )
     ).toBeDefined();
   });
@@ -361,7 +363,7 @@ describe('AddCitationCommand', () => {
         } as unknown as EditorState,
         () => undefined,
         undefined as unknown as EditorView,
-        {} as unknown as CitationProps
+        {}
       )
     ).toBeDefined();
   });
@@ -521,7 +523,7 @@ describe('AddCitationCommand', () => {
       editorView: mockEditorView,
       isCitationObject: true,
       sourceText: 'Source Text',
-    } as unknown as CitationProps;
+    };
     addctcomd.citationBuilder = jest.fn().mockReturnValue('Mock citation text');
     addctcomd.showCitations(mockCitation);
 
@@ -541,5 +543,71 @@ describe('AddCitationCommand', () => {
         state: { selection: { empty: false } },
       } as unknown as EditorView)
     ).toBeDefined();
+  });
+  describe('exported functions', () => {
+    it('should handle addTexthighlightMark', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(addTexthighlightMark(mockTr, mockState, 0, 10)).toBeDefined();
+    });
+    it('should handle removeTexthighlightMark', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              type: 'mark',
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        removeMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(removeTexthighlightMark(mockTr, mockState, 0, 10)).toBeDefined();
+    });
+    it('should handle ShowTexteHighLightMark with hasCitation true', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(ShowTexteHighLightMark(mockTr, mockState, 0, true, '#ff0000', 10)).toBeDefined();
+    });
+    it('should handle ShowTexteHighLightMark with hasCitation false', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(ShowTexteHighLightMark(mockTr, mockState, 0, false, '#ff0000', 10)).toBeDefined();
+    });
   });
 });

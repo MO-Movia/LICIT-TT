@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {TableHeader} from '@tiptap/extension-table-header';
@@ -179,7 +179,7 @@ export const TableHeaderEx = TableHeader.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.backgroundColor.replace(/['"]{1,10000}/g, '');
+          return element.style.backgroundColor.replaceAll(/['"]/g, '');
         },
       },
       borderLeft: {
@@ -230,7 +230,7 @@ export const TableHeaderEx = TableHeader.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.borderColor.replace(/['"]{1,10000}/g, '');
+          return element.style.borderColor.replaceAll(/['"]/g, '');
         },
       },
     };

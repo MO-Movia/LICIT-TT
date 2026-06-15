@@ -83,7 +83,7 @@ describe('customstyle', () => {
         return null;
       },
     });
-    expect(saveStyleSet([{ styleName: 'Heading11', description: 'Bold heading' } as unknown as Style])).toBeDefined();
+    expect(saveStyleSet([{ styleName: 'Heading11', description: 'Bold heading' }])).toBeDefined();
   });
 
   it('should handle addStyleToList', () => {

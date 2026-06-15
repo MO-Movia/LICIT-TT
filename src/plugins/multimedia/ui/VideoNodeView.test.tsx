@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {VideoNodeView, VideoViewBody} from './VideoNodeView';
 import {EditorState} from 'prosemirror-state';
 import {schema} from 'prosemirror-schema-basic';
@@ -95,7 +102,7 @@ describe('video node view', () => {
 
 describe('Video view body', () => {
   const videoviewbody = new VideoViewBody(
-    dummyNodeWithImage as unknown as Node
+    dummyNodeWithImage
   );
   videoviewbody.props = {
     decorations: [],
@@ -249,7 +256,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
     videoviewbody.props = {
       decorations: [],
@@ -308,7 +315,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
 
     videoviewbody.state = {
@@ -386,7 +393,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
 
     videoviewbody.state = {
@@ -454,7 +461,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
 
     videoviewbody.state = {
@@ -528,7 +535,7 @@ describe('Video view body', () => {
       },
     };
     const videoviewbody = new VideoViewBody(
-      dummyNodeWithImage as unknown as Node
+      dummyNodeWithImage
     );
 
     videoviewbody.state = {
@@ -688,10 +695,10 @@ describe('Video view body', () => {
         left: 9,
       },
     };
-    videoviewbody._body = document.createElement('div');
+    videoviewbody._bodyEl = document.createElement('div');
     expect(videoviewbody._onBodyResize(resizeobserverentry)).toBeUndefined();
   });
-  it('should handle _onBodyResize with this._body undefined', () => {
+  it('should handle _onBodyResize with this._bodyEl undefined', () => {
     const mockReactInstance = document.createElement('div');
     const resizeobserverentry = {
       target: mockReactInstance,
@@ -706,7 +713,7 @@ describe('Video view body', () => {
         left: 9,
       },
     };
-    videoviewbody._body = undefined;
+    videoviewbody._bodyEl = undefined;
     expect(videoviewbody._onBodyResize(resizeobserverentry)).toBeUndefined();
   });
 
@@ -789,22 +796,22 @@ describe('Video view body', () => {
   });
   it('should handle _renderInlineEditor (case 3)', () => {
     const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
+    elem.dataset.active = 'true';
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
     expect(videoviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toBeCalled();
+    expect(spy).toHaveBeenCalled ();
   });
   it('should handle _renderInlineEditor else statement', () => {
     videoviewbody._inlineEditor = {
       update: () => undefined,
     } as unknown as PopUpHandle;
     const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
+    elem.dataset.active = 'true';
     const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
     expect(videoviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toBeCalled();
+    expect(spy).toHaveBeenCalled ();
   });
 
   it('should handle _onResizeEnd', () => {
@@ -866,7 +873,7 @@ describe('Video view body', () => {
         align: 'left',
         fitToParent: 'fit',
       },
-    }) as unknown as Node;
+    });
     const videoviewbody = new VideoViewBody(mockImageNode);
     videoviewbody.props = {
       decorations: [],
@@ -943,7 +950,7 @@ describe('Video view body', () => {
         align: 'left',
         fitToParent: 'fit',
       },
-    }) as unknown as Node;
+    });
     const videoviewbody = new VideoViewBody(mockImageNode);
     videoviewbody.props = {
       decorations: [],
@@ -960,6 +967,6 @@ describe('Video view body', () => {
     expect(videoviewbody._onChange({align: 'left'})).toBeUndefined();
     videoviewbody._mounted = true;
     expect(videoviewbody._onChange({align: 'left'})).toBeUndefined();
-    expect(videoviewbody._onChange(undefined)).toBeUndefined();
+    expect(videoviewbody._onChange()).toBeUndefined();
   });
 });

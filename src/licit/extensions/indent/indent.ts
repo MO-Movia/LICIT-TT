@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {
@@ -11,7 +11,7 @@ import {
   MARK_SPACER,
   PARAGRAPH,
 } from '../../../commands';
-import {HAIR_SPACE_CHAR, SPACER_SIZE_TAB} from '../../specs/spacerMarkSpec';
+import { HAIR_SPACE_CHAR, SPACER_SIZE_TAB } from '../../specs/spacerMarkSpec';
 import {
   CommandProps,
   Extension,
@@ -19,9 +19,9 @@ import {
   isList,
   KeyboardShortcutCommand,
 } from '@tiptap/core';
-import {EditorState, TextSelection, Transaction} from 'prosemirror-state';
-import {findParentNodeOfType} from 'prosemirror-utils';
-import {Fragment, Schema, Node as ProsemirrorNode} from 'prosemirror-model';
+import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
+import { findParentNodeOfType } from 'prosemirror-utils';
+import { Fragment, Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -76,8 +76,8 @@ export const Indent = Extension.create<IndentOptions, never>({
             },
 
             parseHTML: (element) => {
-              const attr = element.getAttribute('data-indent');
-              if (attr !== null) {
+              const attr = element.dataset.indent;
+              if (attr != null) {
                 const val = Number.parseInt(attr, 10);
                 return Number.isNaN(val)
                   ? this.options.defaultIndentLevel
@@ -94,13 +94,13 @@ export const Indent = Extension.create<IndentOptions, never>({
     return {
       indent:
         () =>
-        ({state, dispatch, editor}) => {
+        ({ state, dispatch, editor }) => {
           if (!(state.selection instanceof TextSelection)) return false;
 
-          const {$from} = state.selection;
+          const { $from } = state.selection;
           const tr = state.tr;
 
-          const {listDepth, listItemDepth} = findListDepths($from);
+          const { listDepth, listItemDepth } = findListDepths($from);
           const isInList = listDepth !== -1 && listItemDepth !== -1;
 
           if (isInList) {
@@ -170,8 +170,8 @@ export const Indent = Extension.create<IndentOptions, never>({
         },
       outdent:
         () =>
-        ({tr, state, dispatch, editor}: CommandProps) => {
-          const {selection} = state;
+        ({ tr, state, dispatch, editor }: CommandProps) => {
+          const { selection } = state;
           tr = tr.setSelection(selection);
           tr = updateIndentLevel(
             tr,
@@ -192,12 +192,12 @@ export const Indent = Extension.create<IndentOptions, never>({
   addKeyboardShortcuts() {
     return {
       Tab: () => {
-        const {state} = this.editor;
-        const {selection} = state;
+        const { state } = this.editor;
+        const { selection } = state;
 
         // Check if we're inside a list item at all
         if (selection instanceof TextSelection && selection.empty) {
-          const {$from} = selection;
+          const { $from } = selection;
 
           // Check if cursor is inside a list item
           let isInListItem = false;
@@ -217,7 +217,7 @@ export const Indent = Extension.create<IndentOptions, never>({
         }
 
         // Otherwise, insert tab space
-        const {view} = this.editor;
+        const { view } = this.editor;
         const tr = insertTabSpace(state, state.tr, state.schema);
 
         if (tr.docChanged) {
@@ -273,12 +273,12 @@ const updateIndentLevel = (
   extensions: Extensions,
   type: IndentType
 ): Transaction => {
-  const {doc, selection} = tr;
+  const { doc, selection } = tr;
   if (!doc || !selection) return tr;
   if (!(selection instanceof TextSelection)) {
     return tr;
   }
-  const {from, to} = selection;
+  const { from, to } = selection;
   doc.nodesBetween(from, to, (node, pos) => {
     if (options.names.includes(node.type.name)) {
       tr = setNodeIndentMarkup(
@@ -297,7 +297,7 @@ const updateIndentLevel = (
 
 const indent: () => KeyboardShortcutCommand =
   () =>
-  ({editor}) => {
+  ({ editor }) => {
     if (
       !isList(editor.state.doc.type.name, editor.extensionManager.extensions)
     ) {
@@ -307,14 +307,14 @@ const indent: () => KeyboardShortcutCommand =
   };
 const outdent: (outdentOnlyAtHead: boolean) => KeyboardShortcutCommand =
   (outdentOnlyAtHead) =>
-  ({editor}) => {
+  ({ editor }) => {
     if (
       !(
         isList(
           editor.state.doc.type.name,
           editor.extensionManager.extensions
         ) ||
-        (outdentOnlyAtHead && editor.state.selection.$head.parentOffset !== 0)
+        (outdentOnlyAtHead && editor.state.selection.$head.parentOffset === 0)
       )
     ) {
       return editor.commands.outdent();
@@ -326,7 +326,7 @@ function insertTabSpace(
   tr: Transaction,
   schema: Schema
 ): Transaction {
-  const {selection} = tr;
+  const { selection } = tr;
   if (!selection.empty || !(selection instanceof TextSelection)) {
     return tr;
   }
@@ -348,7 +348,7 @@ function insertTabSpace(
     return tr;
   }
 
-  const {to} = selection;
+  const { to } = selection;
 
   const textNode = schema.text(HAIR_SPACE_CHAR);
   tr = tr.insert(to, Fragment.from(textNode));
@@ -382,7 +382,7 @@ function findListDepths($from) {
     }
   }
 
-  return {listDepth, listItemDepth};
+  return { listDepth, listItemDepth };
 }
 
 // Helper function to find the actual item index
@@ -444,7 +444,7 @@ export function createSplitLists(
       beforeItems.push(listNode.child(i));
     }
     const beforeList = listNode.type.create(
-      {...listNode.attrs},
+      { ...listNode.attrs },
       Fragment.from(beforeItems)
     );
     tr.insert(insertPosition, beforeList);
