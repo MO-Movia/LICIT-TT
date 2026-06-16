@@ -570,6 +570,141 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     );
   }
 
+  private hasTextSelection(
+    prevState: EditorState,
+    nextState: EditorState
+  ): boolean {
+    return (
+      nextState.selection instanceof TextSelection &&
+      prevState.selection instanceof TextSelection
+    );
+  }
+
+  private setDirtyFlagByCapcoPosition(
+    prevState: EditorState,
+    nextState: EditorState,
+    tr: Transaction,
+    docChanged: boolean,
+    capcoPos: number
+  ): Transaction {
+    const para = nextState.doc.nodeAt(capcoPos);
+    if (!para) {
+      return tr;
+    }
+
+    const prevPara = prevState.doc.nodeAt(capcoPos);
+    const isDirty = !!prevPara?.attrs.dirty;
+    if (!docChanged || isDirty || para.attrs.dirty) {
+      return tr;
+    }
+
+    tr ??= nextState.tr;
+    return tr.setNodeMarkup(capcoPos, null, {
+      ...para.attrs,
+      dirty: true,
+    });
+  }
+
+  private setDirtyFlagBySelection(
+    prevState: EditorState,
+    nextState: EditorState,
+    tr: Transaction,
+    docChanged: boolean
+  ): Transaction {
+    const { selection, schema } = nextState;
+    const para = this.getParentBySelection(
+      nextState.doc,
+      selection as TextSelection,
+      schema.nodes.paragraph
+    );
+    const prevPara = this.getParentBySelection(
+      prevState.doc,
+      prevState.selection as TextSelection,
+      schema.nodes.paragraph
+    );
+
+    const isDirty = this.isCurrentOrPreviousParagraphDirty(
+      tr,
+      schema.nodes.paragraph,
+      prevPara
+    );
+    const isOnLoad = this.isOnLoadParagraphChange(para, prevPara);
+    tr = this.markParagraphDirty(tr, nextState, para, docChanged, isOnLoad, isDirty);
+    return this.markParentTableDirty(tr, nextState, para, schema.nodes.table);
+  }
+
+  private isCurrentOrPreviousParagraphDirty(
+    tr: Transaction,
+    paragraphType: NodeType,
+    prevPara
+  ): boolean {
+    const currentPara = this.getParagraphFromTransactionSelection(
+      tr,
+      paragraphType
+    );
+    return !!currentPara?.node.attrs.dirty || !!prevPara?.node.attrs.dirty;
+  }
+
+  private getParagraphFromTransactionSelection(
+    tr: Transaction,
+    paragraphType: NodeType
+  ) {
+    const curSelection = tr?.['curSelection'];
+    return curSelection
+      ? this.getParentBySelection(tr.doc, curSelection, paragraphType)
+      : null;
+  }
+
+  private isOnLoadParagraphChange(para, prevPara): boolean {
+    // On document load the last paragraph becomes dirty; compare positions to avoid that.
+    return !!para && !!prevPara && para.pos - prevPara.pos > 3;
+  }
+
+  private markParagraphDirty(
+    tr: Transaction,
+    nextState: EditorState,
+    para,
+    docChanged: boolean,
+    isOnLoad: boolean,
+    isDirty: boolean
+  ): Transaction {
+    if (!para || !docChanged || isOnLoad || isDirty || para.node.attrs.dirty) {
+      return tr;
+    }
+
+    tr ??= nextState.tr;
+    return tr.setNodeMarkup(para.pos, null, {
+      ...para.node.attrs,
+      dirty: true,
+    });
+  }
+
+  private markParentTableDirty(
+    tr: Transaction,
+    nextState: EditorState,
+    para,
+    tableType: NodeType
+  ): Transaction {
+    if (!para) {
+      return tr;
+    }
+
+    const parentTable = this.getParentByPosition(
+      nextState.doc,
+      para.pos,
+      tableType
+    );
+    if (!parentTable || parentTable.node.attrs.dirty) {
+      return tr;
+    }
+
+    tr ??= nextState.tr;
+    return tr.setNodeMarkup(parentTable.pos, null, {
+      ...parentTable.node.attrs,
+      dirty: true,
+    });
+  }
+
   // set the dirty flag on each changes on editor and also for undo operations.
   setDirtyFlagOnChange(
     prevState: EditorState,
@@ -578,98 +713,26 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     docChanged: boolean,
     capcoPos: number
   ): Transaction {
-    let isDirty = false;
-    let isOnLoad = false;
-    const { selection, schema } = nextState;
-    if (
-      !(
-        selection instanceof TextSelection &&
-        prevState.selection instanceof TextSelection
-      )
-    ) {
+    if (!this.hasTextSelection(prevState, nextState)) {
       return tr;
     }
-    let para = null;
-    let para1 = null;
-    if (null != capcoPos) {
-      para = nextState.doc.nodeAt(capcoPos);
-      para1 = prevState.doc.nodeAt(capcoPos);
-      if (para) {
-        if (!isDirty) {
-          isDirty = !!para1?.attrs.dirty;
-        }
-        if (para && docChanged && (!isDirty && !para.attrs.dirty)) {
-          tr ??= nextState.tr;
-          tr = tr.setNodeMarkup(capcoPos, null, {
-            ...para.attrs,
-            dirty: true,
-          });
-        }
-      }
 
-    }
-    else {
-      para = this.getParentBySelection(
-        nextState.doc,
-        selection,
-        schema.nodes.paragraph
+    if (capcoPos == null) {
+      return this.setDirtyFlagBySelection(
+        prevState,
+        nextState,
+        tr,
+        docChanged
       );
-      para1 = this.getParentBySelection(
-        prevState.doc,
-        prevState.selection,
-        schema.nodes.paragraph
-
-      );
-
-      if (tr) {
-        let para2 = null;
-        if (capcoPos) {
-          para2 = tr.doc.nodeAt(capcoPos);
-        }
-        else {
-          const curSelection = tr['curSelection'];
-          if (curSelection) {
-            para2 = this.getParentBySelection(
-              tr.doc,
-              curSelection,
-              schema.nodes.paragraph
-
-            );
-          }
-          isDirty = !!para2?.node.attrs.dirty;
-        }
-      }
-
-      if (!isDirty) {
-        isDirty = !!para1?.node.attrs.dirty;
-      }
-      if (para && para1) {
-        // on document load the last paragraph becomes dirty, to avoid that we check the position between the two paragraphs
-        isOnLoad = para.pos - para1.pos > 3;
-      }
-      if (para && docChanged && !isOnLoad && (!isDirty && !para.node.attrs.dirty)) {
-        tr ??= nextState.tr;
-        tr = tr.setNodeMarkup(para.pos, null, {
-          ...para.node.attrs,
-          dirty: true,
-        });
-      }
-      if (para) {
-        const parentTable = this.getParentByPosition(
-          nextState.doc,
-          para.pos,
-          schema.nodes.table
-        );
-        if (parentTable && !parentTable.node.attrs.dirty) {
-          tr ??= nextState.tr;
-          tr = tr.setNodeMarkup(parentTable.pos, null, {
-            ...parentTable.node.attrs,
-            dirty: true,
-          });
-        }
-      }
     }
-    return tr;
+
+    return this.setDirtyFlagByCapcoPosition(
+      prevState,
+      nextState,
+      tr,
+      docChanged,
+      capcoPos
+    );
   }
 }
 
