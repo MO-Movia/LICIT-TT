@@ -3,66 +3,51 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import React from 'react';
-import {EditorState} from 'prosemirror-state';
-import {builders} from 'prosemirror-test-builder';
-import {schema} from 'jest-prosemirror';
-import {MultimediaPlugin} from '../index';
-import {Icon} from './Icon';
-
-jest.mock('./Icon', () => {
-  class Icon extends React.PureComponent<{
-    title?: string;
-    type?: string;
-  }> {
-    static get(type?: string, title?: string) {
-      return React.createElement('span', {
-        'data-icon': type || '',
-        title: title || '',
-      });
-    }
-
-    render() {
-      return React.createElement('span', {
-        'data-icon': this.props.type || '',
-        title: this.props.title || '',
-      });
-    }
-  }
-
-  return {
-    __esModule: true,
-    Icon,
-  };
-});
+import { Icon } from './Icon';
 
 describe('initialize icon', () => {
-  const plugin = new MultimediaPlugin();
-  const effSchema = plugin.getEffectiveSchema(schema);
-  const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+  it('renders the superscript branch', () => {
+    const rendered = new Icon({ type: 'superscript', title: 'Super' }).render();
 
-  const state = EditorState.create({
-    doc: doc(p('Hello World!!')),
-    schema: schema,
-  });
-  state.plugins.concat([plugin]);
-
-  const props = {type: 'type', title: 'title'};
-  const icon = new Icon(props);
-  it('should handle Icon', () => {
-    expect(icon).toBeDefined();
+    expect(rendered.props.className).toContain('molm-czi-icon');
+    expect(rendered.props.className).toContain('superscript');
   });
 
-  it('should handle Icon (case 2)', () => {
-    expect(icon.render()).toBeDefined();
+  it('renders the subscript branch', () => {
+    const rendered = new Icon({ type: 'subscript', title: 'Sub' }).render();
+
+    expect(rendered.props.className).toContain('molm-czi-icon');
+    expect(rendered.props.className).toContain('subscript');
   });
 
-  test.each(['superscript', 'subscript', undefined])(
-    'should handle Icon type',
-    (type) => {
-      const props = {type, title: 'title'};
-      const icon = new Icon(props);
-      expect(icon.render()).toBeDefined();
-    }
-  );
+  it('renders an unknown icon when the type is empty', () => {
+    const rendered = new Icon({ type: '' as never, title: 'Fallback' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon-unknown');
+    expect(rendered.props.children).toBe('Fallback');
+  });
+
+  it('renders an unknown icon when the type is invalid', () => {
+    const rendered = new Icon({ type: 'INVALID-TYPE', title: '' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon-unknown');
+    expect(rendered.props.children).toBe('INVALID-TYPE');
+  });
+
+  it('renders a normal icon when the type is valid', () => {
+    const rendered = new Icon({ type: 'video_embed', title: 'Video' }).render();
+
+    expect(rendered.props.className).toContain('molm-czi-icon');
+    expect(rendered.props.className).toContain('video_embed');
+    expect(rendered.props.children).toBe('video_embed');
+  });
+
+  it('reuses cached icons for the same key', () => {
+    const first = Icon.get('video_embed', 'Video');
+    const second = Icon.get('video_embed', 'Video');
+    const different = Icon.get('video_embed', 'Other');
+
+    expect(first).toBe(second);
+    expect(first).not.toBe(different);
+  });
 });

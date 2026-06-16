@@ -13,6 +13,7 @@ import { InfoIconNodeSpec } from './infoIconNodeSpec';
 import { markActive, getLink } from './plugins/menu/index';
 import { createEditor, doc, p } from 'jest-prosemirror';
 import type { PopUpHandle } from '../../commands/ui/PopUp';
+import { InfoIconPlugin, INFO_ICON, KEY_INFO_ICON, bindInfoIconView } from './infoIconPlugin';
 
 describe('Info Icon Command', () => {
   const info = {
@@ -97,5 +98,55 @@ describe('Info Icon Menu Helpers', () => {
     const { marks } = view.state.schema;
     expect(typeof markActive(view.state, marks.strong)).toBe('boolean');
     expect(getLink(view)).toBe('Hello');
+  });
+});
+
+describe('InfoIconPlugin', () => {
+  it('adds the info icon node to the schema and key commands', () => {
+    const plugin = new InfoIconPlugin();
+    const schemaWithInfoIcon = plugin.getEffectiveSchema(schema);
+    const keyCommands = plugin.initKeyCommands() as {
+      props?: { handleKeyDown?: unknown };
+      spec?: unknown;
+    };
+
+    expect(schemaWithInfoIcon.nodes[INFO_ICON]).toBeDefined();
+    expect(keyCommands).toBeDefined();
+  });
+
+  it('creates button commands for light and dark themes', () => {
+    const plugin = new InfoIconPlugin();
+    const lightButtons = plugin.initButtonCommands('light') as Record<string, unknown>;
+    const darkButtons = plugin.initButtonCommands('dark') as Record<string, unknown>;
+
+    expect(Object.keys(lightButtons)[0]).toContain('Add Info Icon');
+    expect(Object.keys(darkButtons)[0]).toContain('Add Info Icon');
+    expect(lightButtons).not.toEqual(darkButtons);
+  });
+
+  it('binds node views and executes the static create helper', () => {
+    const plugin = new InfoIconPlugin();
+    const schemaWithInfoIcon = plugin.getEffectiveSchema(schema);
+    const infoNode = schemaWithInfoIcon.node(INFO_ICON, {
+      from: 0,
+      to: 1,
+      description: 'desc',
+      infoIcon: 'icon',
+    });
+    const view = {
+      state: EditorState.create({
+        doc: schemaWithInfoIcon.node('doc', null, [
+          schemaWithInfoIcon.node('paragraph', null, []),
+        ]),
+        schema: schemaWithInfoIcon,
+      }),
+    } as unknown as EditorView;
+    const dispatch = jest.fn();
+
+    expect(bindInfoIconView(infoNode, view, () => 1)).toBeInstanceOf(InfoIconView);
+    expect(
+      InfoIconPlugin.createInfoIcon(view.state, dispatch as never, view)
+    ).toBe(false);
+    expect(KEY_INFO_ICON.common).toContain('Mod-Alt');
   });
 });

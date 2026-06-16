@@ -57,6 +57,16 @@ describe('ListTypeButton (pure Jest test)', () => {
     expect(result.props.theme).toBe('dark');
   });
 
+  it('should disable the button when the component is disabled', () => {
+    const instance = new ListTypeButton({
+      ...mockProps,
+      disabled: true,
+    });
+    const result = instance.render() as React.ReactElement;
+
+    expect(result.props.disabled).toBe(true);
+  });
+
   it('should toggle expanded state on click', () => {
     const instance = new ListTypeButton(mockProps);
     expect(instance.state.expanded).toBe(false);
@@ -81,6 +91,22 @@ describe('ListTypeButton (pure Jest test)', () => {
         onClose: expect.any(Function),
       })
     );
+  });
+
+  it('should update an existing popup instead of recreating it', () => {
+    const update = jest.fn();
+    const instance = new ListTypeButton(mockProps);
+    instance._menu = { update };
+
+    instance._showMenu();
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...mockProps,
+        onCommand: expect.any(Function),
+      })
+    );
+    expect(createPopUp).not.toHaveBeenCalled();
   });
 
   it('should close menu on componentWillUnmount', () => {

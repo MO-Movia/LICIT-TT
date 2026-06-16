@@ -12,6 +12,16 @@ import { schema, builders } from 'prosemirror-test-builder';
 import { InfoIconNodeSpec } from './infoIconNodeSpec';
 import {EditorView} from 'prosemirror-view';
 import { SyntheticEvent } from 'react';
+import { SELECTEDINFOICON } from './constants';
+
+const mockCreatePopUp = jest.fn<any, any>(() => ({
+    close: jest.fn(),
+    update: jest.fn(),
+}));
+
+jest.mock('../../commands', () => ({
+    createPopUp: (...args: unknown[]) => mockCreatePopUp.apply(null, args as never),
+}));
 
 const infoIconProps = {
     infoIcon: { name: 'fa-facebook', unicode: '#12fc3' },
@@ -30,6 +40,11 @@ const infoIconProps = {
     },
 };
 describe('InfoIconDialog', () => {
+    beforeEach(() => {
+        mockCreatePopUp.mockClear();
+        localStorage.clear();
+    });
+
     it('should render the InfoIconDialog component', () => {
         const expectedContent = document.createElement('div');
         expectedContent.id = 'content';
@@ -142,9 +157,11 @@ describe('InfoIconDialog', () => {
         const instance = new InfoIconDialog({...infoIconProps});
         const infoIconForm = document.createElement('div');
         infoIconForm.id = 'infoPopup';
-        infoIconForm.style.setProperty('pointerEvents', 'unset');
+        jest.spyOn(document, 'getElementById').mockReturnValue(infoIconForm);
         instance.disableInfoWIndow(true);
-        expect(infoIconForm.style.pointerEvents).toBe('');
+        expect(infoIconForm.style.pointerEvents).toBe('unset');
+        instance.disableInfoWIndow(false);
+        expect(infoIconForm.style.pointerEvents).toBe('none');
     });
 
     it('should setVisible value when calling setVisible fn', () => {
@@ -247,5 +264,120 @@ describe('InfoIconDialog', () => {
         };
         const instance = new InfoIconDialog({...infoIconProps});
         expect(instance.validateInsert()).toBeUndefined();
+    });
+
+    it('renders alternate header and action states', () => {
+        const instance = new InfoIconDialog({
+            ...infoIconProps,
+            infoIcon: null,
+            isOpen: false,
+            mode: 2,
+        });
+        const rendered = instance.render() as React.ReactElement;
+
+        expect(JSON.stringify(rendered)).toContain('Select Icon');
+        expect(JSON.stringify(rendered)).toContain('Update');
+    });
+
+    it('uses cached icons from localStorage when available', () => {
+        const cachedIcons = [{ id: 'cached', name: 'fa-cache', unicode: 'u1' }];
+        localStorage.setItem(SELECTEDINFOICON, JSON.stringify(cachedIcons));
+
+        const instance = new InfoIconDialog({...infoIconProps});
+
+        expect(instance.state.faIcons).toEqual(infoIconProps.faIcons);
+        expect(instance.getCacheIcons()).toEqual(cachedIcons);
+    });
+
+    it('seeds localStorage with default icons when cache is empty', () => {
+        const instance = new InfoIconDialog({...infoIconProps, faIcons: []});
+        const icons = instance.getCacheIcons();
+
+        expect(Array.isArray(icons)).toBe(true);
+        expect(icons).toHaveLength(10);
+        expect(localStorage.getItem(SELECTEDINFOICON)).not.toBeNull();
+    });
+
+    it('enables insert in create mode only when icon and text are present', () => {
+        const instance = new InfoIconDialog({
+            ...infoIconProps,
+            mode: 1,
+            isEditorEmpty: false,
+        });
+        const setStateSpy = jest.spyOn(instance, 'setState');
+
+        instance.validateInsert();
+        expect(setStateSpy).toHaveBeenCalledWith(expect.any(Function));
+
+        (instance.state as any).infoIcon = null;
+        (instance.state as any).isEditorEmpty = true;
+        instance.validateInsert();
+        expect(setStateSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('enables insert in edit mode only when icon or description changed', () => {
+        const setStateSpy = jest.spyOn(InfoIconDialog.prototype, 'setState');
+        const editorView = {
+            state: {
+                schema: schema,
+                doc: schema.node('doc', null, [schema.node('paragraph')]),
+            },
+        } as unknown as EditorView;
+        const instance = new InfoIconDialog({
+            ...infoIconProps,
+            editorView,
+            mode: 2,
+            description: '',
+            selectedIconName: 'fa-facebook',
+        });
+
+        (instance.state as any).editorView = editorView;
+        (instance.state as any).infoIcon = { name: 'fa-other', unicode: '#x' } as never;
+        instance.validateInsert();
+        (instance.state as any).infoIcon = null;
+        instance.validateInsert();
+
+        expect(setStateSpy).toHaveBeenCalledWith({isButtonEnabled: true});
+        expect(setStateSpy).toHaveBeenCalledWith({isButtonEnabled: false});
+        setStateSpy.mockRestore();
+    });
+
+    it('updates the icon list when the add popup closes with a value', () => {
+        const cachedIcons = [{ id: 'cached', name: 'fa-cache', unicode: 'u1' }];
+        localStorage.setItem(SELECTEDINFOICON, JSON.stringify(cachedIcons));
+        const instance = new InfoIconDialog({...infoIconProps});
+        const disableSpy = jest.spyOn(instance, 'disableInfoWIndow');
+        const setStateSpy = jest.spyOn(instance, 'setState');
+
+        instance._onAdd({} as SyntheticEvent);
+        const options = mockCreatePopUp.mock.calls[0][2] as { onClose: (value: string) => void };
+        options.onClose('saved');
+
+        expect(disableSpy).toHaveBeenCalledWith(false);
+        expect(setStateSpy).toHaveBeenCalledWith({faIcons: cachedIcons});
+        expect(instance._popUp).toBeNull();
+    });
+
+    it('removes the selected icon from localStorage when requested', () => {
+        const cachedIcons = [
+            { id: 'keep', name: 'fa-keep', unicode: '#keep' },
+            { id: 'drop', name: 'fa-drop', unicode: '#drop' },
+        ];
+        localStorage.setItem(SELECTEDINFOICON, JSON.stringify(cachedIcons));
+        const instance = new InfoIconDialog({
+            ...infoIconProps,
+            infoIcon: { name: 'fa-drop', unicode: '#drop' },
+        });
+        const setStateSpy = jest.spyOn(instance, 'setState');
+
+        instance._onRemove();
+
+        expect(JSON.parse(localStorage.getItem(SELECTEDINFOICON))).toEqual([
+            { id: 'keep', name: 'fa-keep', unicode: '#keep' },
+        ]);
+        expect(setStateSpy).toHaveBeenCalledWith({
+            faIcons: [{ id: 'keep', name: 'fa-keep', unicode: '#keep' }],
+            infoIcon: null,
+        });
     });
 });

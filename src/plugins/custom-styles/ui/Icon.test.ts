@@ -6,94 +6,53 @@
 import React from 'react';
 import { Icon, SubscriptIcon, SuperscriptIcon } from './Icon';
 
-jest.mock('./Icon', () => {
-  class SuperscriptIcon extends React.PureComponent {
-    render() {
-      return React.createElement('sup', null, 'x');
-    }
-  }
-
-  class SubscriptIcon extends React.PureComponent {
-    render() {
-      return React.createElement('sub', null, 'x');
-    }
-  }
-
-  class Icon extends React.PureComponent<{
-    title?: string;
-    type?: string;
-  }> {
-    static get(type?: string, title?: string) {
-      return React.createElement('span', {
-        'data-icon': type || '',
-        title: title || '',
-      });
-    }
-
-    render() {
-      return React.createElement('span', {
-        'data-icon': this.props.type || '',
-        title: this.props.title || '',
-      });
-    }
-  }
-
-  return {
-    __esModule: true,
-    Icon,
-    SubscriptIcon,
-    SuperscriptIcon,
-  };
-});
-
 describe('Icon', () => {
-  const props = {
-    type: 'superscript',
-    title: '',
-  };
-  const icon = new Icon(props);
-  it('should handle icon', () => {
-    expect(icon).toBeDefined();
-  });
-  it('should handle render when props is superscript', () => {
-    const props = {
-      type: 'superscript',
-      title: '',
-    };
-    const icon = new Icon(props);
-    expect(icon.render()).toBeDefined();
+  it('renders superscript and subscript helper icons', () => {
     expect(new SuperscriptIcon({}).render()).toBeDefined();
-  });
-  it('should handle render when props is subscript', () => {
-    const props = {
-      type: 'subscript',
-      title: '',
-    };
-    const icon = new Icon(props);
-    expect(icon.render()).toBeDefined();
     expect(new SubscriptIcon({}).render()).toBeDefined();
   });
 
-  it('should handle render when props anything else', () => {
-    const props = {
-      type: 'any',
-      title: '',
-    };
-    const icon = new Icon(props);
+  it('renders the superscript icon branch', () => {
+    const rendered = new Icon({ type: 'superscript', title: '' }).render();
 
-    expect(icon.render()).toBeDefined();
-  });
-  it('should handle render when props is null', () => {
-    const props = {
-      type: '',
-      title: '',
-    };
-    const icon = new Icon(props);
-
-    expect(icon.render()).toBeDefined();
+    expect(rendered.props.className).toBe('czi-icon superscript');
+    expect(rendered.props.children.type).toBe(SuperscriptIcon);
   });
 
-  it('should handle render when props is null (case 2)', () => {
-    expect(Icon.get('', 'edit')).toBeDefined();
+  it('renders the subscript icon branch', () => {
+    const rendered = new Icon({ type: 'subscript', title: '' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon subscript');
+    expect(rendered.props.children.type).toBe(SubscriptIcon);
+  });
+
+  it('renders unknown icons using the title fallback', () => {
+    const rendered = new Icon({ type: '', title: 'edit' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon-unknown');
+    expect(rendered.props.children).toBe('edit');
+  });
+
+  it('renders unknown icons using the raw type when the title is missing', () => {
+    const rendered = new Icon({ type: 'bad icon!', title: '' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon-unknown');
+    expect(rendered.props.children).toBe('bad icon!');
+  });
+
+  it('renders valid icon types as text icons', () => {
+    const rendered = new Icon({ type: 'any_icon', title: '' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon any_icon');
+    expect(rendered.props.children).toBe('any_icon');
+  });
+
+  it('caches icons by type and title', () => {
+    const first = Icon.get('edit', 'Edit');
+    const second = Icon.get('edit', 'Edit');
+    const different = Icon.get('edit', 'Rename');
+
+    expect(first).toBe(second);
+    expect(first).not.toBe(different);
   });
 });

@@ -12,6 +12,8 @@ import {Schema} from 'prosemirror-model';
 import {EditorState, TextSelection} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {createEditor, doc, p} from 'jest-prosemirror';
+import {GlossaryPlugin, KEY_GLOSSARY} from './glossaryPlugin';
+import {GLOSSARY} from './types';
 
 describe('Glossary Helpers', () => {
   const runtime = {
@@ -103,5 +105,19 @@ describe('Glossary Helpers', () => {
     const glossaryCmd = new GlossaryCommand(runtime);
     const result = glossaryCmd.isEnabled(state);
     expect(result).toBeFalsy();
+  });
+
+  it('should build plugin schema, key commands, and themed buttons', () => {
+    const plugin = new GlossaryPlugin(runtime as never);
+    const effectiveSchema = plugin.getEffectiveSchema(schema);
+    const keyCommands = plugin.initKeyCommands();
+    const lightButtons = plugin.initButtonCommands('light') as Record<string, unknown>;
+    const darkButtons = plugin.initButtonCommands('dark') as Record<string, unknown>;
+
+    expect(effectiveSchema.nodes[GLOSSARY]).toBeDefined();
+    expect(keyCommands).toBeDefined();
+    expect(Object.keys(lightButtons)[0]).toContain('Insert Glossary/Acronym');
+    expect(Object.keys(darkButtons)[0]).toContain('Insert Glossary/Acronym');
+    expect(KEY_GLOSSARY.common).toContain('Mod-Alt');
   });
 });
