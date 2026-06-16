@@ -4,12 +4,17 @@
  */
 
 import { schema, builders } from 'prosemirror-test-builder';
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { Schema } from 'prosemirror-model';
 import { InfoIconView } from './infoIconView';
 import { InfoIconCommand } from './infoIconCommand';
 import { InfoIconNodeSpec } from './infoIconNodeSpec';
+import {
+  bindInfoIconView,
+  InfoIconPlugin,
+  INFO_ICON,
+} from './infoIconPlugin';
 import { markActive, getLink } from './plugins/menu/index';
 import { createEditor, doc, p } from 'jest-prosemirror';
 import type { PopUpHandle } from '../../commands/ui/PopUp';
@@ -97,5 +102,70 @@ describe('Info Icon Menu Helpers', () => {
     const { marks } = view.state.schema;
     expect(typeof markActive(view.state, marks.strong)).toBe('boolean');
     expect(getLink(view)).toBe('Hello');
+  });
+});
+
+describe('InfoIconPlugin', () => {
+  it('adds node spec and creates commands for both themes', () => {
+    const plugin = new InfoIconPlugin();
+    const effectiveSchema = plugin.getEffectiveSchema(schema);
+
+    expect(effectiveSchema.nodes[INFO_ICON]).toBeDefined();
+    expect(plugin.initKeyCommands()).toBeDefined();
+    expect(Object.keys(plugin.initButtonCommands('light') as object)[0]).toContain(
+      'Add Info Icon'
+    );
+    expect(Object.keys(plugin.initButtonCommands('dark') as object)[0]).toContain(
+      'Add Info Icon'
+    );
+  });
+
+  it('binds node views during plugin state init', () => {
+    const plugin = new InfoIconPlugin();
+    const state = EditorState.create({ schema });
+    plugin.spec.state?.init?.call(plugin, {}, {});
+
+    expect(plugin.spec.props?.nodeViews?.[INFO_ICON]).toBeDefined();
+    expect(
+      plugin.spec.state?.apply?.(
+        {} as Transaction,
+        state,
+        state,
+        state
+      )
+    ).toBeUndefined();
+  });
+
+  it('delegates createInfoIcon to command execution', () => {
+    expect(
+      InfoIconPlugin.createInfoIcon(
+        {} as EditorState,
+        jest.fn(),
+        {} as EditorView
+      )
+    ).toBe(false);
+  });
+
+  it('bindInfoIconView returns an InfoIconView instance', () => {
+    const pluginSchema = new Schema({
+      nodes: schema.spec.nodes.addToEnd('infoicon', InfoIconNodeSpec),
+      marks: schema.spec.marks,
+    });
+    const { doc: pluginDoc, p: pluginPara } = builders(pluginSchema, {
+      p: { nodeType: 'paragraph' },
+    });
+    const infoNode = pluginSchema.node(pluginSchema.nodes.infoicon, {
+      description: 'Test',
+      infoIcon: 'faInfo',
+    });
+    const state = EditorState.create({
+      doc: pluginDoc(pluginPara('Hello ', infoNode)),
+      schema: pluginSchema,
+    });
+    const view = new EditorView(document.createElement('div'), { state });
+
+    expect(bindInfoIconView(infoNode, view, () => 1)).toBeInstanceOf(
+      InfoIconView
+    );
   });
 });

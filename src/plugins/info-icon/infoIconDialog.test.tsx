@@ -11,7 +11,8 @@ import { EditorState } from 'prosemirror-state';
 import { schema, builders } from 'prosemirror-test-builder';
 import { InfoIconNodeSpec } from './infoIconNodeSpec';
 import {EditorView} from 'prosemirror-view';
-import { SyntheticEvent } from 'react';
+import React, { SyntheticEvent } from 'react';
+import { SELECTEDINFOICON } from './constants';
 
 const infoIconProps = {
     infoIcon: { name: 'fa-facebook', unicode: '#12fc3' },
@@ -30,6 +31,20 @@ const infoIconProps = {
     },
 };
 describe('InfoIconDialog', () => {
+    const makeSync = (instance: InfoIconDialog): InfoIconDialog => {
+        const syncInstance = instance as unknown as {
+            state: Record<string, unknown>;
+            setState: (update: unknown, cb?: () => void) => void;
+        };
+        syncInstance.setState = (update, cb) => {
+            const patch =
+                typeof update === 'function' ? update(syncInstance.state) : update;
+            syncInstance.state = { ...syncInstance.state, ...(patch as object) };
+            cb?.();
+        };
+        return instance;
+    };
+
     it('should render the InfoIconDialog component', () => {
         const expectedContent = document.createElement('div');
         expectedContent.id = 'content';
@@ -247,5 +262,228 @@ describe('InfoIconDialog', () => {
         };
         const instance = new InfoIconDialog({...infoIconProps});
         expect(instance.validateInsert()).toBeUndefined();
+    });
+
+    it('renders select-icon and closed overflow branches', () => {
+        const instance = makeSync(
+            new InfoIconDialog({
+                ...infoIconProps,
+                infoIcon: null,
+                isOpen: false,
+                isButtonEnabled: true,
+            })
+        );
+        const rendered = instance.render() as React.ReactElement;
+        const body = rendered.props.children[2];
+        const iconContainer = body.props.children[1];
+        const iconList = iconContainer.props.children[0];
+        const overflow = iconContainer.props.children[1];
+
+        expect(
+            body.props.children[0].props.children.props.children.props.children
+        ).toBe('Select Icon');
+        expect(iconList.props.children.filter(Boolean)).toHaveLength(10);
+        expect(overflow.props.children[1]).toBe(false);
+    });
+
+    it('selectInfoIcon toggles selected icon and validates insert state', () => {
+        const instance = makeSync(new InfoIconDialog({...infoIconProps}));
+        jest.spyOn(instance, 'validateInsert');
+
+        instance.selectInfoIcon({ name: 'fa-new', unicode: 'new' });
+        expect(instance.state.infoIcon).toEqual({ name: 'fa-new', unicode: 'new' });
+
+        instance.selectInfoIcon({ name: 'fa-new', unicode: 'new' });
+        expect(instance.state.infoIcon).toBeNull();
+        expect(instance.validateInsert).toHaveBeenCalledTimes(2);
+    });
+
+    it('validateInsert enables and disables update mode based on changes', () => {
+        const schemaForEditor = new Schema({
+            nodes: {
+                doc: { content: 'paragraph+' },
+                paragraph: { content: 'text*', toDOM: () => ['p', 0] },
+                text: { group: 'inline' },
+            },
+        });
+        const editorDoc = schemaForEditor.node('doc', null, [
+            schemaForEditor.node('paragraph', null, [schemaForEditor.text('changed')]),
+        ]);
+        const instance = makeSync(
+            new InfoIconDialog({
+                ...infoIconProps,
+                mode: 2,
+                selectedIconName: 'fa-old',
+                editorView: {
+                    state: { schema: schemaForEditor, doc: editorDoc },
+                } as unknown as EditorView,
+            })
+        );
+
+        instance.validateInsert();
+        expect(instance.state.isButtonEnabled).toBe(true);
+
+        (instance.state as unknown as Record<string, unknown>).selectedIconName =
+            instance.state.infoIcon.name;
+        (instance.state as unknown as Record<string, unknown>).description =
+            '<p>changed</p>';
+        instance.validateInsert();
+        expect(instance.state.isButtonEnabled).toBe(false);
+    });
+
+    it('validateInsert follows create mode icon and editor-empty state', () => {
+        const instance = makeSync(new InfoIconDialog({...infoIconProps, mode: 1}));
+
+        (instance.state as unknown as Record<string, unknown>).infoIcon = {
+            name: 'fa-info',
+            unicode: 'info',
+        };
+        (instance.state as unknown as Record<string, unknown>).isEditorEmpty = false;
+        instance.validateInsert();
+        expect(instance.state.isButtonEnabled).toBe(true);
+
+        (instance.state as unknown as Record<string, unknown>).isEditorEmpty = true;
+        instance.validateInsert();
+        expect(instance.state.isButtonEnabled).toBe(false);
+    });
+
+    it('removes selected cached icon and handles editable window state', () => {
+        const instance = makeSync(new InfoIconDialog({...infoIconProps}));
+        localStorage.setItem(
+            SELECTEDINFOICON,
+            JSON.stringify([
+                { name: 'fa-facebook', unicode: '#12fc3' },
+                { name: 'fa-other', unicode: 'other' },
+            ])
+        );
+        const popup = document.createElement('div');
+        popup.id = 'infoPopup';
+        document.body.appendChild(popup);
+        jest.spyOn(document, 'getElementById').mockReturnValue(popup);
+
+        instance._onRemove();
+        instance.disableInfoWIndow(false);
+        expect(JSON.parse(localStorage.getItem(SELECTEDINFOICON))).toHaveLength(1);
+        expect(instance.state.infoIcon).toBeNull();
+        expect(popup.style.pointerEvents).toBe('none');
+
+        instance.disableInfoWIndow(true);
+        expect(popup.style.pointerEvents).toBe('unset');
+        popup.remove();
+    });
+
+    it('rendered keyboard handlers select icons and toggle overflow only for activation keys', () => {
+        const instance = makeSync(new InfoIconDialog({...infoIconProps}));
+        jest.spyOn(instance, 'selectInfoIcon');
+        jest.spyOn(instance, 'setVisible');
+        const rendered = instance.render() as React.ReactElement;
+        const iconContainer = rendered.props.children[2].props.children[1];
+        const firstIcon = iconContainer.props.children[0].props.children[0].props.children;
+        const overflowIcon = iconContainer.props.children[1].props.children[0];
+
+        firstIcon.props.onKeyDown({ key: 'Enter' });
+        firstIcon.props.onKeyDown({ key: 'Escape' });
+        overflowIcon.props.onKeyDown({ key: ' ' });
+        overflowIcon.props.onKeyDown({ key: 'Escape' });
+
+        expect(instance.selectInfoIcon).toHaveBeenCalledTimes(1);
+        expect(instance.setVisible).toHaveBeenCalledTimes(1);
+    });
+
+    it('renders open overflow controls with disabled remove when no icon is selected', () => {
+        const instance = makeSync(
+            new InfoIconDialog({...infoIconProps, infoIcon: null, isOpen: true})
+        );
+        const rendered = instance.render() as React.ReactElement;
+        const iconContainer = rendered.props.children[2].props.children[1];
+        const controls = iconContainer.props.children[1].props.children[1];
+
+        expect(controls.props.children[1].props.disabled).toBe(true);
+    });
+
+    it('getCacheIcons initializes and then reads cached icons', () => {
+        localStorage.removeItem(SELECTEDINFOICON);
+        const instance = new InfoIconDialog({...infoIconProps});
+        const initialized = instance.getCacheIcons();
+
+        localStorage.setItem(
+            SELECTEDINFOICON,
+            JSON.stringify([{ name: 'fa-cached', unicode: 'cached' }])
+        );
+
+        expect(initialized).toHaveLength(10);
+        expect(instance.getCacheIcons()).toEqual([
+            { name: 'fa-cached', unicode: 'cached' },
+        ]);
+    });
+
+    it('validateInsert disables update mode when no icon is selected', () => {
+        const schemaForEditor = new Schema({
+            nodes: {
+                doc: { content: 'paragraph+' },
+                paragraph: { content: 'text*', toDOM: () => ['p', 0] },
+                text: { group: 'inline' },
+            },
+        });
+        const editorDoc = schemaForEditor.node('doc', null, [
+            schemaForEditor.node('paragraph', null, [schemaForEditor.text('text')]),
+        ]);
+        const instance = makeSync(
+            new InfoIconDialog({
+                ...infoIconProps,
+                mode: 2,
+                infoIcon: null,
+                editorView: {
+                    state: { schema: schemaForEditor, doc: editorDoc },
+                } as unknown as EditorView,
+            })
+        );
+        instance.validateInsert();
+        expect(instance.state.isButtonEnabled).toBe(false);
+    });
+
+    it('onRemove leaves cache unchanged when selected icon is not found', () => {
+        const instance = makeSync(
+            new InfoIconDialog({
+                ...infoIconProps,
+                infoIcon: { name: 'fa-missing', unicode: 'missing' },
+            })
+        );
+        localStorage.setItem(
+            SELECTEDINFOICON,
+            JSON.stringify([{ name: 'fa-other', unicode: 'other' }])
+        );
+
+        instance._onRemove();
+        expect(JSON.parse(localStorage.getItem(SELECTEDINFOICON))).toEqual([
+            { name: 'fa-other', unicode: 'other' },
+        ]);
+    });
+
+    it('disableInfoWIndow is a no-op when popup element is absent', () => {
+        jest.spyOn(document, 'getElementById').mockReturnValue(null);
+        const instance = new InfoIconDialog({...infoIconProps});
+
+        expect(() => instance.disableInfoWIndow(false)).not.toThrow();
+    });
+
+    it('constructor falls back to props icons when cache is empty', () => {
+        const spy = jest
+            .spyOn(InfoIconDialog.prototype, 'getCacheIcons')
+            .mockReturnValue([]);
+        const icons = [{ name: 'fa-prop', unicode: 'prop' }];
+        const instance = new InfoIconDialog({...infoIconProps, faIcons: icons});
+
+        expect(instance.state.faIcons).toBe(icons);
+        spy.mockRestore();
+    });
+
+    it('render uses Update label outside insert mode', () => {
+        const instance = makeSync(new InfoIconDialog({...infoIconProps, mode: 2}));
+        const rendered = instance.render() as React.ReactElement;
+        const body = rendered.props.children[2];
+        const insertContainer = body.props.children[5];
+
+        expect(insertContainer.props.children.props.children).toBe('Update');
     });
 });

@@ -7,8 +7,5 @@ module.exports = [
   }),
   {
     files: config.TS_FILES,
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-    },
   },
 ];
