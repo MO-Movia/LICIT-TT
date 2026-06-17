@@ -11,6 +11,8 @@
   padding: 5px;
   font-size: 18px;
   color: green;
+  border: 1px solid black;
+  margin-right: 2px;
 }
 
 /* Style for the Add Notes button inside the control */
@@ -27,7 +29,6 @@
 .enhanced-table-figure {
   padding: 0;
   margin: 0;
-  border: 2px solid black;
   /* Default width: use portrait width or a fixed value; for example: */
   width: 100%;
   /* adjust as needed for your document's portrait width */

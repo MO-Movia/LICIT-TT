@@ -171,11 +171,31 @@ describe('getParagraphNodeAttrs', () => {
   });
 
   test('should parse paddingTop and paddingBottom', () => {
+    mockElement.style.marginTop = '0pt';
+    mockElement.style.marginBottom = '3pt';
+    mockElement.style.marginLeft = '1pt';
+    mockElement.style.marginRight = '2pt';
     mockElement.style.paddingTop = '10px';
     mockElement.style.paddingBottom = '20px';
     const attrs = getParagraphNodeAttrs(mockElement);
+    expect(attrs.marginTop).toBe('0pt');
+    expect(attrs.marginBottom).toBe('3pt');
+    expect(attrs.marginLeft).toBe('1pt');
+    expect(attrs.marginRight).toBe('2pt');
     expect(attrs.paddingTop).toBe('10px');
     expect(attrs.paddingBottom).toBe('20px');
+  });
+
+  test('should parse margin values from inline style text with varied casing/spacing', () => {
+    mockElement.setAttribute(
+      'style',
+      'MARGIN-TOP : 0.00pt ; margin-bottom : 0.00pt ; margin-left: 1.00pt; MARGIN-RIGHT : 2.00pt;'
+    );
+    const attrs = getParagraphNodeAttrs(mockElement);
+    expect(attrs.marginTop).toBe('0pt');
+    expect(attrs.marginBottom).toBe('0pt');
+    expect(attrs.marginLeft).toBe('1pt');
+    expect(attrs.marginRight).toBe('2pt');
   });
 
   test('should parse all custom attributes', () => {
@@ -242,6 +262,19 @@ describe('getParagraphStyle', () => {
   test('should include paddingTop when not empty', () => {
     const style = getParagraphStyle({paddingTop: '10px'});
     expect(style).toContain('padding-top: 10px;');
+  });
+
+  test('should include explicit margin values', () => {
+    const style = getParagraphStyle({
+      marginTop: '0pt',
+      marginBottom: '2pt',
+      marginLeft: '1pt',
+      marginRight: '3pt',
+    });
+    expect(style).toContain('margin-top: 0pt;');
+    expect(style).toContain('margin-bottom: 2pt;');
+    expect(style).toContain('margin-left: 1pt;');
+    expect(style).toContain('margin-right: 3pt;');
   });
 
   test('should not include paddingTop when empty', () => {

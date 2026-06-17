@@ -28,6 +28,55 @@ describe('getAttrs', () => {
       styleName: 'test_styles',
     });
   });
+
+  it('should fallback to DOM paragraph margins when base attrs miss them', () => {
+    const marginDom = document.createElement('div');
+    marginDom.setAttribute('styleName', 'CellHeading');
+    marginDom.style.marginTop = '0pt';
+    marginDom.style.marginBottom = '0pt';
+    marginDom.style.marginLeft = '1pt';
+    marginDom.style.marginRight = '2pt';
+
+    const attrs = getCustomStyleAttrs(base, marginDom);
+    expect(attrs).toStrictEqual({
+      attrs: {
+        styleName: '',
+      },
+      styleName: 'CellHeading',
+      marginTop: '0pt',
+      marginBottom: '0pt',
+      marginLeft: '1pt',
+      marginRight: '2pt',
+    });
+  });
+
+  it('should fallback to raw inline style margins when base attrs are empty strings', () => {
+    const rawMarginDom = document.createElement('div');
+    rawMarginDom.setAttribute('styleName', 'CellHeading');
+    rawMarginDom.setAttribute(
+      'style',
+      'MARGIN-TOP : 0.00pt ; margin-bottom : 0.00pt ; margin-left: 1.00pt; MARGIN-RIGHT : 2.00pt;'
+    );
+    const baseWithEmptyMargins = () => ({
+      attrs: { styleName: '' },
+      marginTop: '',
+      marginBottom: '',
+      marginLeft: '',
+      marginRight: '',
+    });
+
+    const attrs = getCustomStyleAttrs(baseWithEmptyMargins, rawMarginDom);
+    expect(attrs).toStrictEqual({
+      attrs: {
+        styleName: '',
+      },
+      styleName: 'CellHeading',
+      marginTop: '0pt',
+      marginBottom: '0pt',
+      marginLeft: '1pt',
+      marginRight: '2pt',
+    });
+  });
 });
 describe('toCustomStyleDOM', () => {
   const base = () => {
@@ -725,6 +774,37 @@ describe('toCustomStyleDOM', () => {
         styleName: 'FS_B01',
       },
     ]);
+  });
+
+  it('should preserve explicit paragraph margins over styleName spacing', () => {
+    jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        styleLevel: 1,
+        paragraphSpacingBefore: '10',
+        paragraphSpacingAfter: '10',
+      },
+      styleName: '',
+    });
+
+    const node = {
+      type: 'paragraph',
+      attrs: {
+        align: null,
+        lineSpacing: null,
+        styleName: 'CellHeading',
+        marginTop: '0pt',
+        marginBottom: '0pt',
+        marginLeft: '1pt',
+        marginRight: '2pt',
+      },
+      content: [],
+    };
+
+    const result = toCustomStyleDOM(base, node as unknown as Node);
+    expect(result[1].style).toContain('margin-top: 0pt !important;');
+    expect(result[1].style).toContain('margin-bottom: 0pt !important;');
+    expect(result[1].style).toContain('margin-left: 1pt !important;');
+    expect(result[1].style).toContain('margin-right: 2pt !important;');
   });
 
   it('should reset list style counters in window variables', () => {

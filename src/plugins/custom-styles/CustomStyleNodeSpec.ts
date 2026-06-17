@@ -54,9 +54,96 @@ const STYLENAME = 'styleName';
 type toDOMFn = (node: Node) => DOMOutputSpec;
 type getAttrsFn = (p: Node | string | HTMLElement) => KeyValuePair;
 
+function getInlineStyleProperty(
+  dom: HTMLElement,
+  propertyName: string
+): string | null {
+  const inlineStyle = dom.getAttribute('style') || '';
+  if (!inlineStyle) {
+    return null;
+  }
+
+  const escapedProperty = propertyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regexp = new RegExp(`(?:^|;)\\s*${escapedProperty}\\s*:\\s*([^;]+)`, 'i');
+  const match = inlineStyle.match(regexp);
+  if (!match || !match[1]) {
+    return null;
+  }
+
+  const value = match[1].trim();
+  return value || null;
+}
+
+function resolveMarginValue(dom: HTMLElement, cssProperty: string): string | null {
+  const fromStyleMap: Record<string, string> = {
+    'margin-top': dom.style.marginTop,
+    'margin-bottom': dom.style.marginBottom,
+    'margin-left': dom.style.marginLeft,
+    'margin-right': dom.style.marginRight,
+  };
+  const fromStyle = fromStyleMap[cssProperty] ?? '';
+  if (fromStyle) {
+    return fromStyle;
+  }
+
+  const attrNameMap: Record<string, string> = {
+    'margin-top': 'marginTop',
+    'margin-bottom': 'marginBottom',
+    'margin-left': 'marginLeft',
+    'margin-right': 'marginRight',
+  };
+  const attrName = attrNameMap[cssProperty] ?? cssProperty;
+
+  return (
+    getInlineStyleProperty(dom, cssProperty) ??
+    dom.getAttribute(cssProperty) ??
+    dom.getAttribute(attrName) ??
+    null
+  );
+}
+
 function getAttrs(base: getAttrsFn | undefined, dom: HTMLElement) {
   const attrs = base(dom);
+  if (!attrs) {
+    return attrs;
+  }
   attrs[STYLENAME] = dom.getAttribute(STYLENAME);
+  const domMarginTop = resolveMarginValue(dom, 'margin-top');
+  if (
+    (attrs.marginTop === undefined ||
+      attrs.marginTop === null ||
+      attrs.marginTop === '') &&
+    domMarginTop
+  ) {
+    attrs.marginTop = domMarginTop;
+  }
+  const domMarginBottom = resolveMarginValue(dom, 'margin-bottom');
+  if (
+    (attrs.marginBottom === undefined ||
+      attrs.marginBottom === null ||
+      attrs.marginBottom === '') &&
+    domMarginBottom
+  ) {
+    attrs.marginBottom = domMarginBottom;
+  }
+  const domMarginLeft = resolveMarginValue(dom, 'margin-left');
+  if (
+    (attrs.marginLeft === undefined ||
+      attrs.marginLeft === null ||
+      attrs.marginLeft === '') &&
+    domMarginLeft
+  ) {
+    attrs.marginLeft = domMarginLeft;
+  }
+  const domMarginRight = resolveMarginValue(dom, 'margin-right');
+  if (
+    (attrs.marginRight === undefined ||
+      attrs.marginRight === null ||
+      attrs.marginRight === '') &&
+    domMarginRight
+  ) {
+    attrs.marginRight = domMarginRight;
+  }
   return attrs;
 }
 
@@ -168,7 +255,11 @@ function getStyle(attrs) {
   return getStyleEx(
     attrs.align,
     attrs.lineSpacing,
-    attrs.styleName
+    attrs.styleName,
+    attrs.marginTop,
+    attrs.marginBottom,
+    attrs.marginLeft,
+    attrs.marginRight
     // attrs.indent
   );
 }

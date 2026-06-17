@@ -28,8 +28,8 @@ export class CapcoView implements NodeView {
     const spec = DOMSerializer.renderSpec(
       outerView.dom.ownerDocument,
       this.node.type.spec.toDOM(this.node)
-    );
-    this.dom = spec.dom;
+    );   
+    this.dom = spec.dom as HTMLElement;
   }
 
   update(node: Node): boolean {
