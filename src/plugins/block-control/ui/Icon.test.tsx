@@ -10,20 +10,11 @@ import { EnhancedTableFigure } from '../index';
 import { Icon } from './Icon';
 
 describe('initialize icon', () => {
-  const plugin = new EnhancedTableFigure();
-  const effSchema = plugin.getEffectiveSchema(schema);
-  const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
+  it('renders the superscript branch', () => {
+    const rendered = new Icon({ type: 'superscript', title: 'Super' }).render();
 
-  const state = EditorState.create({
-    doc: doc(p('Hello World!!')),
-    schema: schema,
-  });
-  state.plugins.concat([plugin]);
-
-  const props = { type: 'type', title: 'title' };
-  const icon = new Icon(props);
-  it('should handle Icon', () => {
-    expect(icon).toBeDefined();
+    expect(rendered.props.className).toContain('molm-czi-icon');
+    expect(rendered.props.className).toContain('superscript');
   });
 
   it('should handle Icon (case 2)', () => {

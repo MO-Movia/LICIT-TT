@@ -13,6 +13,8 @@ import {Schema} from 'prosemirror-model';
 import {EditorState, TextSelection} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {createEditor, doc, p} from 'jest-prosemirror';
+import {GlossaryPlugin, KEY_GLOSSARY} from './glossaryPlugin';
+import {GLOSSARY} from './types';
 
 describe('Glossary Helpers', () => {
   const runtime = {

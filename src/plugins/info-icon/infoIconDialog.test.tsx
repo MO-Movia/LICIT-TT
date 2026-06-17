@@ -157,9 +157,11 @@ describe('InfoIconDialog', () => {
         const instance = new InfoIconDialog({...infoIconProps});
         const infoIconForm = document.createElement('div');
         infoIconForm.id = 'infoPopup';
-        infoIconForm.style.setProperty('pointerEvents', 'unset');
+        jest.spyOn(document, 'getElementById').mockReturnValue(infoIconForm);
         instance.disableInfoWIndow(true);
-        expect(infoIconForm.style.pointerEvents).toBe('');
+        expect(infoIconForm.style.pointerEvents).toBe('unset');
+        instance.disableInfoWIndow(false);
+        expect(infoIconForm.style.pointerEvents).toBe('none');
     });
 
     it('should setVisible value when calling setVisible fn', () => {

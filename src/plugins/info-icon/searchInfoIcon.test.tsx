@@ -5,6 +5,26 @@
 
 import { SearchInfoIcon } from './searchInfoIcon';
 import { SELECTEDINFOICON } from './constants';
+import { FONTAWESOMEICONS } from './ui/FaIcon';
+
+const syncSetState = (wrapper: SearchInfoIcon) => {
+    wrapper.setState = (
+        nextState:
+            | Partial<typeof wrapper.state>
+            | ((
+                prevState: typeof wrapper.state,
+                props: typeof wrapper.props
+            ) => Partial<typeof wrapper.state>),
+        callback?: () => void
+    ) => {
+        const resolved =
+            typeof nextState === 'function'
+                ? nextState(wrapper.state, wrapper.props)
+                : nextState;
+        wrapper.state = { ...wrapper.state, ...resolved };
+        callback?.();
+    };
+};
 
 describe('should render the SearchInfoIcon component', () => {
     const subMenuProps = {
@@ -75,8 +95,18 @@ describe('should render the SearchInfoIcon component', () => {
         expect(wrapper).toBeDefined();
     });
 
+    it('showAlert clears popup handle when popup closes', () => {
+        const wrapper = new SearchInfoIcon(subMenuProps);
+        wrapper.showAlert();
+        expect(wrapper._popUp).not.toBeNull();
+        wrapper._popUp?.close(undefined);
+
+        expect(wrapper._popUp).toBeNull();
+    });
+
     it('should call searchIcon', () => {
         const wrapper = new SearchInfoIcon(subMenuProps);
+        syncSetState(wrapper);
         const clickEvent = {
             target: {
                 value: 'test'
@@ -111,6 +141,7 @@ describe('should render the SearchInfoIcon component', () => {
 
     it('should call selectInfoIcon with null value', () => {
         const wrapper = new SearchInfoIcon(subMenuProps);
+        syncSetState(wrapper);
         const inputSearch = {
             name: '',
             unicode: '',
@@ -124,24 +155,7 @@ describe('should render the SearchInfoIcon component', () => {
 
     it('should update selectedIcon when selectInfoIcon is called with a different icon', () => {
         const wrapper = new SearchInfoIcon(subMenuProps);
-
-        const setStateSync = (
-          nextState:
-            | Partial<typeof wrapper.state>
-            | ((
-                prevState: typeof wrapper.state,
-                props: typeof wrapper.props
-              ) => Partial<typeof wrapper.state>),
-          callback?: () => void
-        ) => {
-          const resolved =
-            typeof nextState === 'function'
-              ? nextState(wrapper.state, wrapper.props)
-              : nextState;
-          wrapper.state = { ...wrapper.state, ...resolved };
-          callback?.();
-        };
-        wrapper.setState = setStateSync;
+        syncSetState(wrapper);
         wrapper.setState({
           selectedIcon: { name: 'icon1', selected: true, unicode: 'U+1234' },
         });
@@ -153,6 +167,106 @@ describe('should render the SearchInfoIcon component', () => {
     wrapper.selectInfoIcon(newIcon);
     expect(wrapper.state.selectedIcon).toEqual(newIcon);
   });
+
+    it('should use default icons and selected icon when props are empty', () => {
+        const wrapper = new SearchInfoIcon({
+            icons: null,
+            selectedIcon: null,
+            close: () => null,
+        } as never);
+
+        expect(wrapper.state.icons).toBe(FONTAWESOMEICONS);
+        expect(wrapper.state.selectedIcon).toEqual({ name: '', selected: false, unicode: '' });
+    });
+
+    it('should enable the info popup when the element exists', () => {
+        const wrapper = new SearchInfoIcon(subMenuProps);
+        document.body.innerHTML = '';
+        const infoPopupDiv = document.createElement('div');
+        infoPopupDiv.id = 'infoPopup';
+        infoPopupDiv.style.pointerEvents = 'none';
+        document.body.appendChild(infoPopupDiv);
+
+        wrapper.enableInfoWIndow();
+
+        expect(infoPopupDiv.style.pointerEvents).not.toBe('none');
+    });
+
+    it('save shows duplicate alert and still closes with current state', () => {
+        const close = jest.fn();
+        const wrapper = new SearchInfoIcon({
+            ...subMenuProps,
+            close,
+            selectedIcon: { name: 'fa-dup', unicode: 'u1', selected: true },
+        });
+        const showAlertSpy = jest.spyOn(wrapper, 'showAlert').mockImplementation(() => undefined);
+        jest.spyOn(wrapper, 'getCacheIcons').mockReturnValue([
+            { name: 'fa-dup', unicode: 'u1', selected: false },
+        ]);
+
+        wrapper._save();
+
+        expect(showAlertSpy).toHaveBeenCalled();
+        expect(close).toHaveBeenCalledWith(wrapper.state);
+    });
+
+    it('save trims old cache entries before storing a new icon', () => {
+        const close = jest.fn();
+        const wrapper = new SearchInfoIcon({
+            ...subMenuProps,
+            close,
+            selectedIcon: { name: 'new-icon', unicode: 'u-new', selected: true },
+        });
+        const cachedIcons = Array.from({ length: 10 }, (_, index) => ({
+            name: `icon-${index}`,
+            unicode: `u-${index}`,
+            selected: false,
+        }));
+        jest.spyOn(wrapper, 'getCacheIcons').mockReturnValue(cachedIcons);
+
+        wrapper._save();
+
+        const stored = JSON.parse(localStorage.getItem(SELECTEDINFOICON) || '[]');
+        expect(stored).toHaveLength(10);
+        expect(stored[0].name).toBe('icon-1');
+        expect(stored[9].name).toBe('new-icon');
+        expect(close).toHaveBeenCalledWith(wrapper.state);
+    });
+
+    it('save appends to cache when there is room', () => {
+        const wrapper = new SearchInfoIcon({
+            ...subMenuProps,
+            selectedIcon: { name: 'fresh-icon', unicode: 'u-fresh', selected: true },
+        });
+        jest.spyOn(wrapper, 'getCacheIcons').mockReturnValue([
+            { name: 'icon-1', unicode: 'u-1', selected: false },
+        ]);
+
+        wrapper._save();
+
+        const stored = JSON.parse(localStorage.getItem(SELECTEDINFOICON) || '[]');
+        expect(stored).toEqual([
+            { name: 'icon-1', unicode: 'u-1', selected: false },
+            { name: 'fresh-icon', unicode: 'u-fresh', selected: true },
+        ]);
+    });
+
+    it('selectInfoIcon clears the selection when the same icon is chosen again', () => {
+        const selectedIcon = {
+            name: 'fa fa-500px',
+            unicode: 'x0457',
+            selected: true,
+        };
+        const wrapper = new SearchInfoIcon({
+            ...subMenuProps,
+            selectedIcon,
+        });
+        syncSetState(wrapper);
+
+        wrapper.selectInfoIcon(selectedIcon);
+
+        expect(wrapper.state.selectedIcon).toEqual({ name: '', selected: false, unicode: '' });
+    });
 
 
 });

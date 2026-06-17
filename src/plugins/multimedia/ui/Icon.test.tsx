@@ -10,20 +10,32 @@ import {MultimediaPlugin} from '../index';
 import {Icon} from './Icon';
 
 describe('initialize icon', () => {
-  const plugin = new MultimediaPlugin();
-  const effSchema = plugin.getEffectiveSchema(schema);
-  const {doc, p} = builders(effSchema, {p: {nodeType: 'paragraph'}});
+  it('renders the superscript branch', () => {
+    const rendered = new Icon({ type: 'superscript', title: 'Super' }).render();
 
-  const state = EditorState.create({
-    doc: doc(p('Hello World!!')),
-    schema: schema,
+    expect(rendered.props.className).toContain('molm-czi-icon');
+    expect(rendered.props.className).toContain('superscript');
   });
-  state.plugins.concat([plugin]);
 
-  const props = {type: 'type', title: 'title'};
-  const icon = new Icon(props);
-  it('should handle Icon', () => {
-    expect(icon).toBeDefined();
+  it('renders the subscript branch', () => {
+    const rendered = new Icon({ type: 'subscript', title: 'Sub' }).render();
+
+    expect(rendered.props.className).toContain('molm-czi-icon');
+    expect(rendered.props.className).toContain('subscript');
+  });
+
+  it('renders an unknown icon when the type is empty', () => {
+    const rendered = new Icon({ type: '' as never, title: 'Fallback' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon-unknown');
+    expect(rendered.props.children).toBe('Fallback');
+  });
+
+  it('renders an unknown icon when the type is invalid', () => {
+    const rendered = new Icon({ type: 'INVALID-TYPE', title: '' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon-unknown');
+    expect(rendered.props.children).toBe('INVALID-TYPE');
   });
 
   it('should handle Icon (case 2)', () => {

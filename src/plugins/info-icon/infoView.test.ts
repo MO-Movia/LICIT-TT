@@ -26,6 +26,20 @@ describe('Info Plugin Extended', () => {
   });
   const newInfoIconNode = mySchema.node(mySchema.nodes.infoicon, info);
   const { doc, p } = builders(mySchema, { p: { nodeType: 'paragraph' } });
+  const createInfoView = () => {
+    const state = EditorState.create({
+      doc: doc(p('hello', newInfoIconNode, ' world')),
+      schema: mySchema,
+    });
+    const dom = document.createElement('div');
+    document.body.appendChild(dom);
+    const view = new EditorView({ mount: dom }, { state });
+    return {
+      dom,
+      view,
+      cView: new InfoIconView(view.state.doc.nodeAt(6), view, undefined),
+    };
+  };
 
   it('Infoiconview call createInfoIconTooltip', () => {
     const before = 'hello';
@@ -825,5 +839,176 @@ describe('Info Plugin Extended', () => {
 
     cView.setContentRight(event, parent, tooltip, ttContent);
     expect(tooltip.style.right).toBeTruthy();
+  });
+
+  it('showSourceText calls open when classList exists', () => {
+    const { cView } = createInfoView();
+    const openSpy = jest.spyOn(cView, 'open').mockImplementation(() => undefined);
+
+    cView.showSourceText(new MouseEvent('mouseover'));
+
+    expect(openSpy).toHaveBeenCalled();
+  });
+
+  it('hideSourceText closes for unrelated targets and keeps fa targets open', () => {
+    const { cView } = createInfoView();
+    const closeSpy = jest.spyOn(cView, 'close').mockImplementation(() => undefined);
+    const unrelatedEvent = new MouseEvent('mouseout');
+    const faEvent = new MouseEvent('mouseout');
+    Object.defineProperty(unrelatedEvent, 'relatedTarget', {
+      value: { className: 'outside-target' },
+    });
+    Object.defineProperty(faEvent, 'relatedTarget', {
+      value: { className: 'fa' },
+    });
+
+    cView.hideSourceText(unrelatedEvent);
+    cView.hideSourceText(faEvent);
+
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroyPopup closes popups and removes orphan submenu nodes', () => {
+    const { cView } = createInfoView();
+    const popupClose = jest.fn();
+    const subPopupClose = jest.fn();
+    cView._popUp = { close: popupClose, update: jest.fn() };
+    cView._popUp_subMenu = { close: subPopupClose, update: jest.fn() };
+
+    cView.destroyPopup();
+    expect(popupClose).toHaveBeenCalledWith('');
+    expect(subPopupClose).toHaveBeenCalledWith('');
+
+    cView._popUp_subMenu = null;
+    const submenu = document.createElement('div');
+    submenu.className = 'molcit-infoicon-submenu';
+    document.body.appendChild(submenu);
+    cView.destroyPopup();
+
+    expect(document.getElementsByClassName('molcit-infoicon-submenu')).toHaveLength(0);
+  });
+
+  it('onEditInfo onClose updates only when a value is provided', () => {
+    const { cView, view } = createInfoView();
+    cView._popUp_subMenu = { close: jest.fn(), update: jest.fn() };
+    const updateSpy = jest.spyOn(cView, 'updateInfoIcon').mockImplementation(() => undefined);
+
+    cView.onEditInfo(view);
+    expect(cView._popUp).not.toBeNull();
+
+    cView._popUp?.close(undefined);
+    expect(updateSpy).not.toHaveBeenCalled();
+
+    cView.onEditInfo(view);
+    const payload = { infoIcon: 'changed', editorView: view };
+    cView._popUp?.close(payload);
+
+    expect(updateSpy).toHaveBeenCalledWith(view, payload);
+  });
+
+  it('open creates a tooltip and wires helper methods when none exists', () => {
+    const { cView } = createInfoView();
+    document.body.innerHTML = '';
+    const editor = document.createElement('div');
+    editor.className = 'ProseMirror czi-prosemirror-editor';
+    document.body.appendChild(editor);
+
+    const setContentRightSpy = jest.spyOn(cView, 'setContentRight').mockImplementation((_e, _p, tooltip) => {
+      tooltip.style.right = '0px';
+    });
+    const adjustSpy = jest.spyOn(cView, 'adjustTooltipPosition').mockImplementation(() => undefined);
+    const addLinksSpy = jest.spyOn(cView, 'addClickListenerToLinks').mockImplementation(() => undefined);
+    const event = new MouseEvent('mouseover');
+    Object.defineProperty(event, 'clientX', {
+      value: 120,
+    });
+    Object.defineProperty(event, 'clientY', {
+      value: 10,
+    });
+    Object.defineProperty(event, 'currentTarget', {
+      value: cView.dom,
+    });
+
+    cView.open(event);
+
+    const tooltipContent = (cView.dom as Element).querySelector('#tooltip-content') as HTMLDivElement;
+    expect(setContentRightSpy).toHaveBeenCalled();
+    expect(adjustSpy).toHaveBeenCalled();
+    expect(addLinksSpy).toHaveBeenCalledWith(tooltipContent);
+  });
+
+  it('addClickListenerToLinks uses runtime dialog when available and window.open otherwise', () => {
+    const { cView, view } = createInfoView();
+    const tooltipContent = document.createElement('div');
+    const firstLink = document.createElement('a');
+    const secondLink = document.createElement('a');
+    firstLink.href = 'example.com/one';
+    secondLink.href = 'example.com/two';
+    tooltipContent.appendChild(firstLink);
+    tooltipContent.appendChild(secondLink);
+    const openLinkDialog = jest.fn();
+    view['runtime'] = { openLinkDialog } as never;
+    view.editable = true as never;
+    const windowOpenSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+
+    cView.addClickListenerToLinks(tooltipContent);
+    firstLink.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(openLinkDialog).toHaveBeenCalledWith('http://localhost/example.com/one', 'Any unsaved changes will be lost');
+
+    view['runtime'] = {} as never;
+    secondLink.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(windowOpenSpy).toHaveBeenCalledWith('http://localhost/example.com/two', '_blank');
+  });
+
+  it('setContentRight aligns non-table tooltips to the right edge when needed', () => {
+    const { cView } = createInfoView();
+    const event = new MouseEvent('mouseover', {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'clientX', {
+      value: 950,
+    });
+    Object.defineProperty(event, 'currentTarget', {
+      value: { offsetParent: { tagName: 'DIV' } },
+    });
+
+    const parent = document.createElement('div');
+    Object.defineProperty(parent, 'clientWidth', {
+      value: 1000,
+    });
+    Object.defineProperty(parent, 'getBoundingClientRect', {
+      value: () => ({ left: 100 }),
+    });
+
+    const tooltip = document.createElement('div');
+    Object.defineProperty(tooltip, 'clientWidth', {
+      value: 300,
+    });
+
+    cView.setContentRight(event, parent, tooltip, document.createElement('div'));
+
+    expect(tooltip.style.right).toBe('0px');
+    expect(tooltip.style.position).toBe('');
+  });
+
+  it('adjustTooltipPosition leaves non-table tooltips unchanged and utility methods return constants', () => {
+    const { cView } = createInfoView();
+    const event = new MouseEvent('mouseover', {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'currentTarget', {
+      value: { offsetParent: { tagName: 'DIV' } },
+    });
+    const tooltip = document.createElement('div');
+
+    cView.adjustTooltipPosition(event, tooltip);
+
+    expect(tooltip.style.top).toBe('');
+    expect(cView.stopEvent(new Event('click'))).toBe(false);
+    expect(cView.ignoreMutation()).toBe(true);
   });
 });
