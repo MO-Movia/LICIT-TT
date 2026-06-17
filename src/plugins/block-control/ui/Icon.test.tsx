@@ -3,10 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { EditorState } from 'prosemirror-state';
-import { builders } from 'prosemirror-test-builder';
-import { schema } from 'jest-prosemirror';
-import { EnhancedTableFigure } from '../index';
 import { Icon } from './Icon';
 
 describe('initialize icon', () => {
@@ -17,30 +13,41 @@ describe('initialize icon', () => {
     expect(rendered.props.className).toContain('superscript');
   });
 
-  it('should handle Icon (case 2)', () => {
-    const rendered = icon.render();
+  it('renders the subscript branch', () => {
+    const rendered = new Icon({ type: 'subscript', title: 'Sub' }).render();
+
     expect(rendered.props.className).toContain('molm-czi-icon');
-    expect(rendered.props.children).toBe('type');
+    expect(rendered.props.className).toContain('subscript');
   });
 
-  test.each([
-    ['superscript', 'molm-czi-icon superscript'],
-    ['subscript', 'molm-czi-icon subscript'],
-    ['', 'czi-icon-unknown'],
-    ['123', 'czi-icon-unknown'],
-  ])(
-    'should handle Icon type',
-    (type, className) => {
-      const props = { type, title: 'title' };
-      const icon = new Icon(props);
-      const rendered = icon.render();
-      expect(rendered.props.className).toBe(className);
-    }
-  );
+  it('renders an unknown icon when the type is empty', () => {
+    const rendered = new Icon({ type: '' as never, title: 'Fallback' }).render();
 
-  it('should cache static icons by type and title', () => {
-    expect(Icon.get('image', 'Image')).toBe(Icon.get('image', 'Image'));
-    expect(Icon.get('', 'Unknown').props.title).toBe('Unknown');
-    expect(Icon.get('image')).toBe(Icon.get('image'));
+    expect(rendered.props.className).toBe('czi-icon-unknown');
+    expect(rendered.props.children).toBe('Fallback');
+  });
+
+  it('renders an unknown icon when the type is invalid', () => {
+    const rendered = new Icon({ type: 'INVALID-TYPE', title: '' }).render();
+
+    expect(rendered.props.className).toBe('czi-icon-unknown');
+    expect(rendered.props.children).toBe('INVALID-TYPE');
+  });
+
+  it('renders a normal icon when the type is valid', () => {
+    const rendered = new Icon({ type: 'table_row', title: 'Rows' }).render();
+
+    expect(rendered.props.className).toContain('molm-czi-icon');
+    expect(rendered.props.className).toContain('table_row');
+    expect(rendered.props.children).toBe('table_row');
+  });
+
+  it('reuses cached icons for the same key', () => {
+    const first = Icon.get('table_row', 'Rows');
+    const second = Icon.get('table_row', 'Rows');
+    const different = Icon.get('table_row', 'Other');
+
+    expect(first).toBe(second);
+    expect(first).not.toBe(different);
   });
 });
