@@ -3,7 +3,8 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { TableCell } from '@tiptap/extension-table-cell';
+import TableCell from '@tiptap/extension-table-cell';
+import { normalizeCssSize, normalizeValue } from '../table.utils';
 
 const DEFAULT_CELL_WIDTH = null;
 const DEFAULT_LETTER_SPACING = '0px';
@@ -11,99 +12,10 @@ const DEFAULT_LINE_HEIGHT = 'normal';
 const DEFAULT_BORDER_WIDTH = '1px';
 const DEFAULT_CELL_STYLE = '';
 
-const normalizeCssSize = (value: unknown, fallback: string): string => {
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
-    return `${value}px`;
-  }
-
-  if (typeof value !== 'string') {
-    return fallback;
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return fallback;
-  }
-
-  if (/^\d{1,10000}(\.\d{1,10000})?$/.test(trimmed)) {
-    return `${trimmed}px`;
-  }
-
-  return trimmed;
-};
-
 export const TableCellEx = TableCell.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      cellWidth: {
-        default: DEFAULT_CELL_WIDTH,
-        renderHTML: (attributes) => {
-          const cellWidth = normalizeCssSize(
-            attributes.cellWidth,
-            DEFAULT_CELL_WIDTH
-          );
-          return {
-            cellWidth,
-            style: `width: ${cellWidth}; min-width: ${cellWidth};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('cellWidth') ??
-            element.dataset.cellWidth ??
-            element.style.width,
-            DEFAULT_CELL_WIDTH
-          );
-        },
-      },
-      cellStyle: {
-        default: DEFAULT_CELL_STYLE,
-        renderHTML: (attributes) => {
-          const cellStyle =
-            typeof attributes.cellStyle === 'string'
-              ? attributes.cellStyle.trim()
-              : DEFAULT_CELL_STYLE;
-
-          if (!cellStyle) {
-            return {};
-          }
-
-          return {
-            cellStyle,
-            style: cellStyle,
-          };
-        },
-        parseHTML: (element) => {
-          return (
-            element.getAttribute('cellStyle') ??
-            element.dataset.cellStyle ??
-            DEFAULT_CELL_STYLE
-          );
-        },
-      },
-      fontSize: {
-        default: null,
-        renderHTML: (attributes) => {
-          const fontSize = normalizeCssSize(
-            attributes.fontSize,
-            null
-          );
-          return {
-            fontSize,
-            style: `font-size: ${fontSize};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('fontSize') ??
-            element.dataset.fontSize ??
-            element.style.fontSize,
-            null
-          );
-        },
-      },
-
       fontName: {
         default: null,
         renderHTML: (attributes) => {
@@ -112,8 +24,7 @@ export const TableCellEx = TableCell.extend({
           }
 
           const fontName = normalizeCssSize(
-            attributes.fontName,
-            null
+            attributes.fontName
           );
 
           return {
@@ -125,72 +36,7 @@ export const TableCellEx = TableCell.extend({
           return normalizeCssSize(
             element.getAttribute('fontName') ??
             element.dataset.fontName ??
-            element.style.fontFamily,
-            null
-          );
-        },
-      },
-
-      letterSpacing: {
-        default: DEFAULT_LETTER_SPACING,
-        renderHTML: (attributes) => {
-          const letterSpacing = normalizeCssSize(
-            attributes.letterSpacing,
-            DEFAULT_LETTER_SPACING
-          );
-          return {
-            letterSpacing,
-            style: `letter-spacing: ${letterSpacing};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('letterSpacing') ??
-            element.dataset.letterSpacing ??
-            element.style.letterSpacing,
-            DEFAULT_LETTER_SPACING
-          );
-        },
-      },
-      marginTop: {
-        default: null,
-        renderHTML: (attributes) => {
-          const marginTop = normalizeCssSize(
-            attributes.marginTop,
-            null
-          );
-          return {
-            marginTop,
-            style: `margin-top: ${marginTop};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('marginTop') ??
-            element.dataset.marginTop ??
-            element.style.marginTop,
-            null
-          );
-        },
-      },
-      marginBottom: {
-        default: null,
-        renderHTML: (attributes) => {
-          const marginBottom = normalizeCssSize(
-            attributes.marginBottom,
-            null
-          );
-          return {
-            marginBottom: marginBottom,
-            style: `margin-bottom: ${marginBottom};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('marginBottom') ??
-            element.dataset.marginBottom ??
-            element.style.marginBottom,
-            null
+            element.style.fontFamily
           );
         },
       },
@@ -198,8 +44,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           const paddingTop = normalizeCssSize(
-            attributes.paddingTop,
-            null
+            attributes.paddingTop
           );
           return {
             paddingTop: paddingTop,
@@ -211,8 +56,7 @@ export const TableCellEx = TableCell.extend({
             element.getAttribute('PaddingTop') ??
             element.getAttribute('paddingTop') ??
             element.dataset.paddingTop ??
-            element.style.paddingTop,
-            null
+            element.style.paddingTop
           );
         },
       },
@@ -220,8 +64,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           const paddingBottom = normalizeCssSize(
-            attributes.paddingBottom,
-            null
+            attributes.paddingBottom
           );
           return {
             paddingBottom: paddingBottom,
@@ -232,8 +75,7 @@ export const TableCellEx = TableCell.extend({
           return normalizeCssSize(
             element.getAttribute('paddingBottom') ??
             element.dataset.paddingBottom ??
-            element.style.paddingBottom,
-            null
+            element.style.paddingBottom
           );
         },
       },
@@ -241,8 +83,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           const paddingRight = normalizeCssSize(
-            attributes.paddingRight,
-            null
+            attributes.paddingRight
           );
           return {
             paddingRight: paddingRight,
@@ -254,8 +95,7 @@ export const TableCellEx = TableCell.extend({
             element.getAttribute('paddingRight') ??
             element.getAttribute('paddingRight') ??
             element.dataset.paddingRight ??
-            element.style.paddingRight,
-            null
+            element.style.paddingRight
           );
         },
       },
@@ -277,8 +117,7 @@ export const TableCellEx = TableCell.extend({
         default: DEFAULT_LINE_HEIGHT,
         renderHTML: (attributes) => {
           const lineHeight = normalizeCssSize(
-            attributes.lineHeight,
-            DEFAULT_LINE_HEIGHT
+            attributes.lineHeight
           );
           return {
             lineHeight: lineHeight,
@@ -289,8 +128,7 @@ export const TableCellEx = TableCell.extend({
           return normalizeCssSize(
             element.getAttribute('lineHeight') ??
             element.dataset.lineHeight ??
-            element.style.lineHeight,
-            DEFAULT_LINE_HEIGHT
+            element.style.lineHeight
           );
         },
       },
@@ -298,8 +136,7 @@ export const TableCellEx = TableCell.extend({
         default: DEFAULT_BORDER_WIDTH,
         renderHTML: (attributes) => {
           const borderWidth = normalizeCssSize(
-            attributes.borderWidth,
-            DEFAULT_BORDER_WIDTH
+            attributes.borderWidth
           );
           return {
             borderWidth: borderWidth,
@@ -311,8 +148,7 @@ export const TableCellEx = TableCell.extend({
             element.getAttribute('borderWidth') ??
             element.getAttribute('borderWidth') ??
             element.dataset.borderWidth ??
-            element.style.borderWidth,
-            DEFAULT_BORDER_WIDTH
+            element.style.borderWidth
           );
         },
       },
@@ -327,7 +163,7 @@ export const TableCellEx = TableCell.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.backgroundColor.replace(/['"]{1,10000}/g, '');
+          return element.style.backgroundColor.replace(/['"]+/g, '');
         },
       },
       borderLeft: {
@@ -378,7 +214,122 @@ export const TableCellEx = TableCell.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.borderColor.replace(/['"]{1,10000}/g, '');
+          return element.style.borderColor.replace(/['"]+/g, '');
+        },
+      },
+      cellStyle: {
+        default: null,
+        renderHTML: (attributes) => {
+          const cellStyle = normalizeValue(attributes.cellStyle);
+          if (!cellStyle) {
+            return {};
+          }
+
+          return {
+            'data-cell-style': cellStyle,
+            style: cellStyle,
+          };
+        },
+        parseHTML: (element) => {
+          return normalizeValue(element.dataset.cellStyle);
+        },
+      },
+      cellWidth: {
+        default: null,
+        renderHTML: (attributes) => {
+          const cellWidth = normalizeCssSize(attributes.cellWidth);
+          if (!cellWidth) {
+            return {};
+          }
+
+          return {
+            'data-cell-width': cellWidth,
+            style: `width: ${cellWidth}; min-width: ${cellWidth};`,
+          };
+        },
+        parseHTML: (element) => {
+          return (
+            normalizeValue(element.dataset.cellWidth) ||
+            normalizeValue(element.style.width)
+          );
+        },
+      },
+      fontSize: {
+        default: null,
+        renderHTML: (attributes) => {
+          const fontSize = normalizeCssSize(attributes.fontSize);
+          if (!fontSize) {
+            return {};
+          }
+
+          return {
+            'data-cell-font-size': fontSize,
+            style: `font-size: ${fontSize}; --czi-cell-font-size: ${fontSize};`,
+          };
+        },
+        parseHTML: (element) => {
+          return (
+            normalizeValue(element.dataset.cellFontSize) ||
+            normalizeValue(element.style.fontSize)
+          );
+        },
+      },
+      letterSpacing: {
+        default: null,
+        renderHTML: (attributes) => {
+          const letterSpacing = normalizeCssSize(attributes.letterSpacing);
+          if (!letterSpacing) {
+            return {};
+          }
+
+          return {
+            style: `letter-spacing: ${letterSpacing};`,
+          };
+        },
+        parseHTML: (element) => {
+          return normalizeValue(element.style.letterSpacing);
+        },
+      },
+      marginTop: {
+        default: null,
+        renderHTML: (attributes) => {
+          const marginTop = normalizeCssSize(attributes.marginTop);
+          if (!marginTop) {
+            return {};
+          }
+
+          return {
+            'data-cell-margin-top': marginTop,
+            style: `margin-top: ${marginTop}; padding-top: ${marginTop}; --czi-cell-margin-top: ${marginTop};`,
+          };
+        },
+        parseHTML: (element) => {
+          return (
+            normalizeValue(element.dataset.cellMarginTop) ||
+            normalizeValue(element.style.marginTop) ||
+            normalizeValue(element.style.paddingTop)
+          );
+        },
+      },
+      MarginBottom: {
+        default: null,
+        renderHTML: (attributes) => {
+          const marginBottom = normalizeCssSize(attributes.MarginBottom);
+          if (!marginBottom) {
+            return {};
+          }
+
+          return {
+            'data-cell-margin-bottom': marginBottom,
+            style: `margin-bottom: ${marginBottom}; padding-bottom: ${marginBottom}; --czi-cell-margin-bottom: ${marginBottom};`,
+          };
+        },
+        parseHTML: (element) => {
+          return (
+            normalizeValue(element.dataset.cellMarginBottom) ||
+            normalizeValue(element.style.marginBottom) ||
+            normalizeValue(element.style.paddingBottom)
+          );
         },
       },
       borderLeftWidth: {

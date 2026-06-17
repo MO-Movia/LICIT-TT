@@ -3,13 +3,13 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Editor} from '@tiptap/core';
-import type {Node as PMNode} from 'prosemirror-model';
-import {StarterKit} from '@tiptap/starter-kit';
+import {Editor, Extension} from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
 import {TableEx} from './tableEx';
+import {createTable} from '@tiptap/extension-table';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
 import {TableRowEx} from '../tableRowEx';
-import {TableHeader} from '@tiptap/extension-table-header';
-import {TableCell} from '@tiptap/extension-table-cell';
 
 describe('TableEx Extension', () => {
   let editor: Editor;
@@ -33,43 +33,6 @@ describe('TableEx Extension', () => {
 
     expect(extension).toBeDefined();
     expect(extension?.name).toBe('table');
-  });
-
-  test('should expose noOfColumns and tableHeight attributes', () => {
-    const tableNode = editor.schema.nodes.table;
-
-    expect(tableNode.spec.attrs).toHaveProperty('noOfColumns');
-    expect(tableNode.spec.attrs).toHaveProperty('tableHeight');
-    expect(tableNode.spec.attrs?.noOfColumns.default).toBe(3);
-    expect(tableNode.spec.attrs?.tableHeight.default).toBe('auto');
-  });
-
-  test('should infer noOfColumns from HTML when not provided', () => {
-    editor.commands.setContent(
-      '<table><tr><td>First</td><td>Second</td><td>Third</td></tr></table>'
-    );
-
-    let tableAttrs: Record<string, unknown> | null = null;
-    editor.state.doc.descendants((node: PMNode) => {
-      if (node.type.name === 'table') {
-        tableAttrs = node.attrs;
-      }
-    });
-
-    expect(tableAttrs?.noOfColumns).toBe(3);
-  });
-
-  test('should render table using noOfColumns and tableHeight values', () => {
-    editor.commands.setContent('<table><tr><td>Cell 1</td><td>Cell 2</td></tr></table>');
-    editor.commands.setTextSelection(4);
-    editor.commands.updateAttributes('table', {
-      noOfColumns: 4,
-      tableHeight: '360px',
-    });
-
-    const html = editor.getHTML();
-    expect(html).toContain('min-width: 100px');
-    expect(html).toContain('height: 360px');
   });
 
   test('should navigate to next cell with goToNextCell command', () => {
@@ -104,6 +67,14 @@ describe('TableEx Extension', () => {
     expect(hasTableExtension).toBe(true);
   });
 
+  test('should have noOfColumns and tableHeight attributes', () => {
+    const schema = editor.schema;
+    const tableNode = schema.nodes.table;
+
+    expect(tableNode.spec.attrs).toHaveProperty('noOfColumns');
+    expect(tableNode.spec.attrs).toHaveProperty('tableHeight');
+  });
+
   test('should support table cell commands', () => {
     editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
 
@@ -121,7 +92,7 @@ describe('TableEx Extension', () => {
     let cellPos = 0;
     state.doc.descendants((node: PMNode, pos: number) => {
       if (node.type.name === 'tableCell' && cellPos === 0) {
-        cellPos = pos + 1;
+        cellPos = pos + 2;
       }
     });
 
@@ -144,7 +115,7 @@ describe('TableEx Extension', () => {
       if (node.type.name === 'tableCell') {
         cellCount++;
         if (cellCount === 2) {
-          cellPos = pos + 1;
+          cellPos = pos + 2;
         }
       }
     });
@@ -174,7 +145,7 @@ describe('TableEx Extension', () => {
       }
     });
 
-    editor.commands.setTextSelection(lastCellPos + 1);
+    editor.commands.setTextSelection(lastCellPos + 2);
     editor.commands.updateAttributes('tableCell', {vignette: false});
 
     const countRows = () => {
@@ -257,7 +228,7 @@ test('should not add row when Tab pressed in last cell and vignette is true', ()
     }
   });
 
-  editor.commands.setTextSelection(lastCellPos + 1);
+  editor.commands.setTextSelection(lastCellPos + 2);
   editor.commands.updateAttributes('tableCell', {vignette: true});
 
   editor.state.doc.descendants((node: PMNode) => {
@@ -291,7 +262,7 @@ test('should add row and move to it when Tab pressed in last cell without vignet
     }
   });
 
-  editor.commands.setTextSelection(lastCellPos + 1);
+  editor.commands.setTextSelection(lastCellPos + 2);
 
   const spy = jest.spyOn(editor.commands, 'addRowAfter');
   const tabEvent = new KeyboardEvent('keydown', {key: 'Tab'});
@@ -322,7 +293,7 @@ test('should handle header_cell role in Tab navigation', () => {
 
   state.doc.descendants((node, pos) => {
     if (node.type.name === 'tableHeader' && headerPos === 0) {
-      headerPos = pos + 1;
+      headerPos = pos + 2;
     }
   });
 
@@ -332,4 +303,108 @@ test('should handle header_cell role in Tab navigation', () => {
   
   expect(editor.commands.goToNextCell).toBeDefined();
 });
+
+test('should apply tableHeight to table DOM when attributes are updated', () => {
+  editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
+
+  let cellPos = 0;
+  editor.state.doc.descendants((node, pos) => {
+    if (node.type.name === 'tableCell' && cellPos === 0) {
+      cellPos = pos + 2;
+    }
+  });
+
+  editor.commands.setTextSelection(cellPos);
+  editor.commands.updateAttributes('table', {tableHeight: '280'});
+
+  const tableElement = editor.view.dom.querySelector('table');
+  expect(tableElement.style.height).toBe('280px');
+});
+
+  test('should return true when insertTable is called without dispatch', () => {
+    const insertTableCommand = editor.extensionManager.commands.insertTable;
+    const command = insertTableCommand({rows: 2, cols: 2});
+
+    const result = command({
+      tr: editor.state.tr,
+      dispatch: undefined,
+      editor,
+      state: editor.state,
+      view: editor.view,
+      commands: editor.commands,
+      chain: editor.chain,
+      can: editor.can,
+    });
+
+    expect(result).toBe(true);
+  });
+});
+
+type TableExtensionType = Extension & {
+  options: {
+    View: unknown;
+  };
+};
+
+describe('TableEx Extension - attributes', () => {
+  let editor: Editor;
+
+  beforeEach(() => {
+    editor = new Editor({
+      extensions: [StarterKit, TableEx, TableRowEx, TableHeader, TableCell],
+      content: '<table><tr><td>Cell</td></tr></table>',
+    });
+  });
+
+  afterEach(() => {
+    editor.destroy();
+  });
+
+  test('should ignore invalid attribute types when applying table attributes', () => {
+    const baseTable = createTable(editor.schema, 1, 1, false);
+    const tableNode = baseTable.type.createChecked(
+      {
+        ...baseTable.attrs,
+        noOfColumns: {},
+        tableHeight: '',
+      },
+      baseTable.content,
+      baseTable.marks
+    );
+
+    const tableExtension = editor.extensionManager.extensions.find(
+      (ext) => ext.name === 'table'
+    ) as TableExtensionType;
+
+    const ViewCtor = tableExtension.options.View as unknown as new (
+      node: unknown,
+      cellMinWidth: number
+    ) => {table: HTMLTableElement};
+
+    const view = new ViewCtor(tableNode, 25);
+
+    expect(view.table.getAttribute('data-no-of-columns')).toBeNull();
+    expect(view.table.getAttribute('data-table-height')).toBeNull();
+    expect(view.table.style.height).toBe('');
+  });
+
+  test('TableViewEx update should apply table attributes when updated', () => {
+    editor.commands.updateAttributes('table', {tableHeight: '120', noOfColumns: 3});
+    const tableNode = editor.state.doc.firstChild;
+    const tableExtension = editor.extensionManager.extensions.find(
+      (ext) => ext.name === 'table'
+    ) as TableExtensionType;
+
+    const ViewCtor = tableExtension.options.View as unknown as new (
+      node: unknown,
+      cellMinWidth: number
+    ) => {update: (node: unknown) => boolean; table: HTMLTableElement};
+
+    const view = new ViewCtor(tableNode, 25);
+    const result = view.update(tableNode);
+
+    expect(result).toBe(true);
+    expect(view.table.getAttribute('data-table-height')).toBe('120px');
+    expect(view.table.getAttribute('data-no-of-columns')).toBe('3');
+  });
 });

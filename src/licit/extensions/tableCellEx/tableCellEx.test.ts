@@ -4,11 +4,10 @@
  */
 
 import {Editor} from '@tiptap/core';
-import type {Node as PMNode} from 'prosemirror-model';
-import {StarterKit} from '@tiptap/starter-kit';
-import {TableRowEx} from '../tableRowEx';
+import StarterKit from '@tiptap/starter-kit';
 import {Table} from '@tiptap/extension-table';
-import {TableHeader} from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
 import {TableCellEx} from './tableCellEx';
 
 describe('TableCellEx Extension', () => {
@@ -16,7 +15,7 @@ describe('TableCellEx Extension', () => {
 
   beforeEach(() => {
     editor = new Editor({
-      extensions: [StarterKit, Table, TableRowEx, TableHeader, TableCellEx],
+      extensions: [StarterKit, Table, TableRow, TableHeader, TableCellEx],
       content: '<table><tr><td>Cell</td></tr></table>',
     });
   });
@@ -24,6 +23,7 @@ describe('TableCellEx Extension', () => {
   afterEach(() => {
     editor.destroy();
   });
+
 
   test('should have backgroundColor attribute', () => {
     const schema = editor.schema;
@@ -44,7 +44,7 @@ describe('TableCellEx Extension', () => {
     expect(node.spec.attrs).toHaveProperty('borderBottom');
   });
 
-  test('should have cell layout and typography attributes', () => {
+  test('should have the additional table cell attributes', () => {
     const schema = editor.schema;
     const node = schema.nodes.tableCell;
 
@@ -62,13 +62,13 @@ describe('TableCellEx Extension', () => {
     expect(node.spec.attrs?.marginBottom.default).toBe('0px');
   });
 
-  test('should render backgroundColor as string when vignette is true', () => {
-    editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
-
+  test('should render width font size and margins on cell attributes', () => {
     editor
       .chain()
-      .setCellAttribute('backgroundColor', 'red')
-      .setCellAttribute('vignette', true)
+      .setCellAttribute('cellWidth', '120')
+      .setCellAttribute('fontSize', '14')
+      .setCellAttribute('marginTop', '6')
+      .setCellAttribute('MarginBottom', '8')
       .run();
 
     const html = editor.getHTML();
@@ -103,13 +103,30 @@ describe('TableCellEx Extension', () => {
   test('should render cellStyle inline CSS when provided', () => {
     editor
       .chain()
-      .setCellAttribute('cellStyle', 'line-height: 20px; text-align: center;')
+      .setCellAttribute('fontSize', '45')
+      .setCellAttribute('cellStyle', 'vertical-align: top;')
       .run();
 
     const html = editor.getHTML();
-    expect(html).toContain('line-height: 20px');
-    expect(html).toContain('text-align: center');
+    expect(html).toContain('--czi-cell-font-size: 45px');
+    expect(html).toContain('vertical-align: top');
+    expect(html).not.toContain('45pxvertical-align');
   });
+
+test('should render backgroundColor as string when vignette is true', () => {
+  editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
+
+  editor
+    .chain()
+    .setCellAttribute('backgroundColor', 'red')   
+    .setCellAttribute('vignette', true)          
+    .run();
+
+  const html = editor.getHTML();
+
+  expect(html).toContain('<table style="min-width: 25px;"><colgroup><col style="min-width: 25px;"></colgroup><tbody><tr><td colspan="1" rowspan="1" style="background-color: red;"><p>Cell</p></td></tr></tbody></table>');
+});
+
 
   test('should render nested color value when vignette is false', () => {
     // Add backgroundColor as object
@@ -194,7 +211,7 @@ describe('TableCellEx Extension', () => {
       '<table><tr><td style="border-bottom: 4px double #000">Cell</td></tr></table>'
     );
     const html = editor.getHTML();
-    expect(html).toContain('border-bottom: 4px double rgb(0, 0, 0)');
+    expect(html).toContain('<table style="min-width: 25px;"><colgroup><col style="min-width: 25px;"></colgroup><tbody><tr><td colspan="1" rowspan="1" style="border-bottom: 4px double rgb(0, 0, 0);"><p>Cell</p></td></tr></tbody></table>');
   });
 
   test('should parse border side values correctly', () => {
