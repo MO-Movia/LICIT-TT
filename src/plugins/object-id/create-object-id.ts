@@ -3,8 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { v4 } from 'uuid';
-
 /**
  * Generates a new Object ID in
  * @param {String} namespace optional URI to override default namespace.
@@ -13,7 +11,6 @@ import { v4 } from 'uuid';
 export function createObjectId(namespace: string | null | undefined = '', suffix = ''): string {
   const namespaceString = namespace || '';
   const suffixString = suffix || '';
-  return `${namespaceString}${v4()}${suffixString}`;
+  return `${namespaceString}${crypto.randomUUID()}${suffixString}`;
 }
-
 

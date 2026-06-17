@@ -9,7 +9,6 @@ import { Node, Schema, Slice } from 'prosemirror-model';
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 import { createPopUp, PopUpHandle, Rect } from '../../commands';
 import { FloatingMenu } from './FloatingPopup';
-import { v4 as uuidv4 } from 'uuid';
 import { insertReference } from '../referencing';
 import { createSliceManager } from './slice';
 import { FloatRuntime, FloatingMenuItem } from './model';
@@ -256,7 +255,7 @@ export function createSliceObject(editorView: EditorView): SliceModel {
 
   const firstParagraphText = paragraphEntries.find(entry => entry.text)?.text ?? '';
 
-  sliceModel.id = instanceUrl + uuidv4();
+  sliceModel.id = instanceUrl + crypto.randomUUID();
   sliceModel.ids = objectIds;
   sliceModel.from = objectIds.length > 0 ? objectIds[0] : '';
   sliceModel.to = objectIds.length > 0 ? objectIds.at(-1) : '';
@@ -464,7 +463,7 @@ export function getDecorations(doc: Node, state: EditorState): DecorationSet {
         // --- Slice ---
         if (decoFlags.isSlice) {
           const SliceMark = document.createElement('span');
-          SliceMark.id = `slicemark-${uuidv4()}`;
+          SliceMark.id = `slicemark-${crypto.randomUUID()}`;
           SliceMark.style.fontFamily = 'FontAwesome';
           SliceMark.innerHTML = '&#xf097';
           SliceMark.onclick = () => { };
