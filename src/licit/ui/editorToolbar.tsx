@@ -8,7 +8,7 @@ import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import * as React from 'react';
 import CommandButton from './commandButton';
-import CommandMenuButton from './commandMenuButton';
+import CommandMenuButton, {isUICommandLike} from './commandMenuButton';
 import { CustomButton, ThemeContext } from '../../commands';
 import {COMMAND_GROUPS, CommandGroup, parseLabel} from './editorToolbarConfig';
 import Icon from './icon';
@@ -313,7 +313,7 @@ class EditorToolbar extends React.PureComponent {
               editorView={editorView}
             />
           );
-        } else if (obj instanceof UICommand) {
+        } else if (isUICommandLike(obj)) {
           return this._renderButton(label, obj, String(theme));
         } else if (Array.isArray(obj)) {
           return this._renderMenuButton(label, obj);
@@ -356,7 +356,7 @@ class EditorToolbar extends React.PureComponent {
             editorView={editorView}
           />
         );
-      } else if (obj instanceof UICommand) {
+      } else if (isUICommandLike(obj)) {
         buttons.push(this._renderButton(label, obj, String(theme)));
       } else if (Array.isArray(obj)) {
         buttons.push(this._renderMenuButton(label, obj));

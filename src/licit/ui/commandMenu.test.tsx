@@ -29,6 +29,16 @@ class MockCommand extends UICommand {
   renderLabel = jest.fn().mockReturnValue('MockLabel');
 }
 
+const createBundledCommandLike = (): UICommand =>
+  ({
+    cancel: jest.fn(),
+    execute: jest.fn().mockReturnValue(true),
+    isActive: jest.fn().mockReturnValue(false),
+    isEnabled: jest.fn().mockReturnValue(true),
+    renderLabel: jest.fn().mockReturnValue('BundledLabel'),
+    shouldRespondToUIEvent: jest.fn().mockReturnValue(true),
+  }) as unknown as UICommand;
+
 describe('CommandMenu', () => {
   let mockDispatch: jest.Mock;
   let mockEditorState: EditorState;
@@ -90,6 +100,26 @@ describe('CommandMenu', () => {
       const rendered = instance.render();
       expect(rendered).toBeTruthy();
     }).not.toThrow();
+  });
+
+  it('renders command-like items from separately bundled plugin exports', () => {
+    const bundledCommand = createBundledCommandLike();
+    const instance = new CommandMenu({
+      commandGroups: [{'Bundled Action': bundledCommand}],
+      dispatch: mockDispatch,
+      editorState: mockEditorState,
+      editorView: mockEditorView,
+      onCommand: mockOnCommand,
+      theme: 'dark',
+      title: 'Bundled',
+    });
+
+    const rendered = instance.render();
+    const children = React.Children.toArray(rendered.props.children);
+    const menuItem = children[0] as React.ReactElement<{value: UICommand}>;
+
+    expect(children).toHaveLength(1);
+    expect(menuItem.props.value).toBe(bundledCommand);
   });
 
   it('_onUIEnter should call _execute when command responds', () => {
