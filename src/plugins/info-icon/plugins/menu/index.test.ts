@@ -8,18 +8,19 @@ import { EditorState } from 'prosemirror-state';
 import { MarkType } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
-const mockCreatePopUp = jest.fn();
+const mockCreatePopUp = jest.fn<unknown, unknown[]>();
 const mockRenderGrouped = jest.fn<unknown, []>(() => ({
   dom: document.createElement('div'),
   update: jest.fn(),
 }));
 
 jest.mock('../../../../commands', () => ({
-  createPopUp: (...args: unknown[]) => mockCreatePopUp(...args),
+  createPopUp: (...args: unknown[]): unknown => mockCreatePopUp(...args),
 }));
 
 jest.mock('prosemirror-menu', () => {
-  const actual = jest.requireActual('prosemirror-menu');
+  const actual =
+    jest.requireActual<Record<string, unknown>>('prosemirror-menu');
   return {
     ...actual,
     renderGrouped: (_view: unknown, _content: unknown) => {
@@ -173,7 +174,11 @@ describe('info-icon menu index', () => {
       const mockView = {} as unknown as EditorView;
       const result = addLinkCommand(mockView);
 
-      const [, , popUpProps] = mockCreatePopUp.mock.calls[0];
+      const [, , popUpProps] = mockCreatePopUp.mock.calls[0] as [
+        unknown,
+        unknown,
+        { onClose: (value: string) => void },
+      ];
       popUpProps.onClose('done');
 
       await expect(result).resolves.toBe('done');

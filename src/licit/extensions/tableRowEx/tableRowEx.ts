@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import TableRow from '@tiptap/extension-table-row';
+import { TableRow } from '@tiptap/extension-table-row';
 import {normalizeCssSize, normalizeValue} from '../table.utils';
 
 export const TableRowEx = TableRow.extend({

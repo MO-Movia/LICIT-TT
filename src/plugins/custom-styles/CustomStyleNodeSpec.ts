@@ -63,10 +63,13 @@ function getInlineStyleProperty(
     return null;
   }
 
-  const escapedProperty = propertyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedProperty = propertyName.replaceAll(
+    /[.*+?^${}()|[\]\\]/g,
+    String.raw`\$&`
+  );
   const regexp = new RegExp(`(?:^|;)\\s*${escapedProperty}\\s*:\\s*([^;]+)`, 'i');
-  const match = inlineStyle.match(regexp);
-  if (!match || !match[1]) {
+  const match = regexp.exec(inlineStyle);
+  if (!match?.[1]) {
     return null;
   }
 
@@ -94,12 +97,22 @@ function resolveMarginValue(dom: HTMLElement, cssProperty: string): string | nul
   };
   const attrName = attrNameMap[cssProperty] ?? cssProperty;
 
-  return (
+  const value =
     getInlineStyleProperty(dom, cssProperty) ??
     dom.getAttribute(cssProperty) ??
     dom.getAttribute(attrName) ??
-    null
-  );
+    null;
+
+  return normalizeMarginValue(value);
+}
+
+function normalizeMarginValue(value: string | null): string | null {
+  if (!value) {
+    return value;
+  }
+
+  const normalized = /^(-?\d+)\.00(pt|px|%)$/i.exec(value);
+  return normalized ? `${normalized[1]}${normalized[2]}` : value;
 }
 
 function getAttrs(base: getAttrsFn | undefined, dom: HTMLElement) {
@@ -350,6 +363,31 @@ function applyParagraphSpacingStyle(style: string, styles): string {
   return nextStyle;
 }
 
+function applyExplicitMarginStyle(
+  style: string,
+  margins: {
+    marginTop?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    marginRight?: string;
+  }
+): string {
+  let nextStyle = style;
+  if (margins.marginTop) {
+    nextStyle += `margin-top: ${margins.marginTop} !important;`;
+  }
+  if (margins.marginBottom) {
+    nextStyle += `margin-bottom: ${margins.marginBottom} !important;`;
+  }
+  if (margins.marginLeft) {
+    nextStyle += `margin-left: ${margins.marginLeft} !important;`;
+  }
+  if (margins.marginRight) {
+    nextStyle += `margin-right: ${margins.marginRight} !important;`;
+  }
+  return nextStyle;
+}
+
 function applyTextFormattingStyle(style: string, styles): string {
   let nextStyle = style;
   if (styles.strong) {
@@ -454,7 +492,15 @@ function applyReservedStyleData(styleData, styleName: string) {
   );
 }
 
-function getStyleEx(align, lineSpacing, styleName) {
+function getStyleEx(
+  align,
+  lineSpacing,
+  styleName,
+  marginTop?,
+  marginBottom?,
+  marginLeft?,
+  marginRight?
+) {
   const styleData = createStyleData(align, lineSpacing);
   if (null === styleName || 'None' === styleName) {
     return styleData;
@@ -463,6 +509,12 @@ function getStyleEx(align, lineSpacing, styleName) {
   const styleProps = getCustomStyleByName(styleName);
   if (styleProps?.styles) {
     applyCustomStyleData(styleData, align, styleProps);
+    styleData.style = applyExplicitMarginStyle(styleData.style, {
+      marginTop,
+      marginBottom,
+      marginLeft,
+      marginRight,
+    });
     return styleData;
   }
 

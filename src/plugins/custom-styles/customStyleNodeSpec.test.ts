@@ -77,6 +77,20 @@ describe('getAttrs', () => {
       marginRight: '2pt',
     });
   });
+
+  it('should preserve raw inline margin precision when it is not a zero decimal', () => {
+    const rawMarginDom = document.createElement('div');
+    rawMarginDom.setAttribute('styleName', 'CellHeading');
+    rawMarginDom.setAttribute('margin-left', '1.50pt');
+    const baseWithEmptyMargin = () => ({
+      attrs: { styleName: '' },
+      marginLeft: '',
+    });
+
+    expect(getCustomStyleAttrs(baseWithEmptyMargin, rawMarginDom)).toMatchObject({
+      marginLeft: '1.50pt',
+    });
+  });
 });
 describe('toCustomStyleDOM', () => {
   const base = () => {

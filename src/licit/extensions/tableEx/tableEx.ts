@@ -6,7 +6,6 @@
 import {findParentNodeClosestToPos} from '@tiptap/core';
 import  { Table,
   createTable,
-  TableOptions,
   TableView as TiptapTableView,
 } from '@tiptap/extension-table';
 import {Node as ProseMirrorNode} from 'prosemirror-model';
@@ -31,17 +30,17 @@ class TableViewEx extends TiptapTableView {
     const tableHeight = normalizeCssSize(node.attrs.tableHeight);
     if (tableHeight) {
       this.table.style.height = tableHeight;
-      this.table.setAttribute('data-table-height', tableHeight);
+      this.table.dataset.tableHeight = tableHeight;
     } else {
       this.table.style.removeProperty('height');
-      this.table.removeAttribute('data-table-height');
+      delete this.table.dataset.tableHeight;
     }
 
     const noOfColumns = normalizeValue(node.attrs.noOfColumns);
     if (noOfColumns) {
-      this.table.setAttribute('data-no-of-columns', noOfColumns);
+      this.table.dataset.noOfColumns = noOfColumns;
     } else {
-      this.table.removeAttribute('data-no-of-columns');
+      delete this.table.dataset.noOfColumns;
     }
   }
 }
@@ -50,7 +49,7 @@ export const TableEx = Table.extend({
   addOptions() {
     return {
       ...this.parent?.(),
-      View: TableViewEx as NodeViewConstructor,
+      View: TableViewEx,
     };
   },
 
@@ -70,7 +69,7 @@ export const TableEx = Table.extend({
           };
         },
         parseHTML: (element) => {
-          const noOfColumns = element.getAttribute('data-no-of-columns');
+          const noOfColumns = element.dataset.noOfColumns;
           if (!noOfColumns) {
             return null;
           }
@@ -154,5 +153,3 @@ export const TableEx = Table.extend({
     };
   },
 });
-
-type NodeViewConstructor = NonNullable<TableOptions['View']>;

@@ -6,7 +6,6 @@
 import { UICommand } from '../../../core';
 import { RESERVED_STYLE_NONE } from '../CustomStyleNodeSpec';
 import { CustomStyleSubMenu } from './CustomStyleSubMenu';
-import { RESERVED_STYLE_NONE } from '../CustomStyleNodeSpec';
 
 describe('CustomStyleSubMenu', () => {
   it('should handle onclick', () => {
@@ -52,4 +51,3 @@ describe('CustomStyleSubMenu', () => {
     expect(rendered.props.children[1]).toBe(false);
   });
 });
-

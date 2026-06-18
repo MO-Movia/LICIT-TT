@@ -4,7 +4,6 @@
  */
 
 import {Editor} from '@tiptap/core';
-import type {Node as PMNode} from 'prosemirror-model';
 import {StarterKit} from '@tiptap/starter-kit';
 import {Table} from '@tiptap/extension-table';
 import {TableHeader} from '@tiptap/extension-table-header';

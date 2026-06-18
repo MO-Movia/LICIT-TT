@@ -7,10 +7,8 @@
  * Throws if value is null or undefined, otherwise returns value.
  */
 export default function nullthrows<T>(value?: T | null, message?: string): T {
-  if (value != null) {
-    return value;
+  if (value == null) {
+    throw new Error(message ?? `Got unexpected ${String(value)}`);
   }
-  throw new Error(
-    message !== undefined ? message : `Got unexpected ${String(value)}`
-  );
+  return value;
 }

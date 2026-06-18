@@ -16,7 +16,7 @@ jest.mock('../ui/tableGridSizeEditor', () => {
   return jest.fn(() => '<div>Mocked Table Grid Size Editor</div>');
 });
 
-jest.mock('nullthrows', () => jest.fn(<T>(val: T) => val));
+jest.mock('nullthrows', () => jest.fn(<T>(val: T) => val), {virtual: true});
 
 describe('TableInsertCommand', () => {
   let command;
@@ -179,9 +179,9 @@ describe('TableInsertCommand', () => {
 
   it('waitForUserInput should resolve with undefined if _popUp is already set', async () => {
     const eventMock = {
-      currentTarget: document.createElement('div') as unknown,
+      currentTarget: document.createElement('div'),
       type: 'mouseenter',
-    } as React.SyntheticEvent;
+    } as unknown as React.SyntheticEvent;
     command._popUp = {close: closeMock};
     const result = await command.waitForUserInput(
       editorState,
@@ -194,9 +194,9 @@ describe('TableInsertCommand', () => {
 
   it('should handle invalid target in waitForUserInput gracefully', async () => {
     const eventMock = {
-      currentTarget: document.createElement('div') as unknown,
+      currentTarget: document.createElement('div'),
       type: 'mouseenter',
-    } as React.SyntheticEvent;
+    } as unknown as React.SyntheticEvent;
     // Making the target null to simulate an invalid event
     eventMock.currentTarget = null;
     const result = await command.waitForUserInput(

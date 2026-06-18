@@ -3,14 +3,11 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import TableCell from '@tiptap/extension-table-cell';
+import { TableCell } from '@tiptap/extension-table-cell';
 import { normalizeCssSize, normalizeValue } from '../table.utils';
 
-const DEFAULT_CELL_WIDTH = null;
-const DEFAULT_LETTER_SPACING = '0px';
 const DEFAULT_LINE_HEIGHT = 'normal';
 const DEFAULT_BORDER_WIDTH = '1px';
-const DEFAULT_CELL_STYLE = '';
 
 export const TableCellEx = TableCell.extend({
   addAttributes() {
@@ -163,7 +160,7 @@ export const TableCellEx = TableCell.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.backgroundColor.replace(/['"]+/g, '');
+          return element.style.backgroundColor.replaceAll(/['"]+/g, '');
         },
       },
       borderLeft: {
@@ -214,7 +211,7 @@ export const TableCellEx = TableCell.extend({
           };
         },
         parseHTML: (element) => {
-          return element.style.borderColor.replace(/['"]+/g, '');
+          return element.style.borderColor.replaceAll(/['"]+/g, '');
         },
       },
       cellStyle: {
@@ -311,10 +308,10 @@ export const TableCellEx = TableCell.extend({
           );
         },
       },
-      MarginBottom: {
+      marginBottom: {
         default: null,
         renderHTML: (attributes) => {
-          const marginBottom = normalizeCssSize(attributes.MarginBottom);
+          const marginBottom = normalizeCssSize(attributes.marginBottom);
           if (!marginBottom) {
             return {};
           }

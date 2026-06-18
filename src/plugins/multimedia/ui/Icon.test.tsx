@@ -3,10 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {EditorState} from 'prosemirror-state';
-import {builders} from 'prosemirror-test-builder';
-import {schema} from 'jest-prosemirror';
-import {MultimediaPlugin} from '../index';
 import {Icon} from './Icon';
 
 describe('initialize icon', () => {
@@ -39,6 +35,7 @@ describe('initialize icon', () => {
   });
 
   it('should handle Icon (case 2)', () => {
+    const icon = new Icon({ type: 'type', title: 'type' });
     const rendered = icon.render();
     expect(rendered.props.className).toContain('molm-czi-icon');
     expect(rendered.props.children).toBe('type');

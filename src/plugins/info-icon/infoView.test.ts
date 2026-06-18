@@ -931,7 +931,7 @@ describe('Info Plugin Extended', () => {
 
     cView.open(event);
 
-    const tooltipContent = (cView.dom as Element).querySelector('#tooltip-content') as HTMLDivElement;
+    const tooltipContent = (cView.dom as Element).querySelector('#tooltip-content');
     expect(setContentRightSpy).toHaveBeenCalled();
     expect(adjustSpy).toHaveBeenCalled();
     expect(addLinksSpy).toHaveBeenCalledWith(tooltipContent);
@@ -947,8 +947,11 @@ describe('Info Plugin Extended', () => {
     tooltipContent.appendChild(firstLink);
     tooltipContent.appendChild(secondLink);
     const openLinkDialog = jest.fn();
-    view['runtime'] = { openLinkDialog } as never;
-    view.editable = true as never;
+    const runtimeView = view as EditorView & {
+      runtime?: { openLinkDialog?: jest.Mock };
+    };
+    runtimeView.runtime = { openLinkDialog };
+    view.editable = true;
     const windowOpenSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
 
     cView.addClickListenerToLinks(tooltipContent);
@@ -956,7 +959,7 @@ describe('Info Plugin Extended', () => {
 
     expect(openLinkDialog).toHaveBeenCalledWith('http://localhost/example.com/one', 'Any unsaved changes will be lost');
 
-    view['runtime'] = {} as never;
+    runtimeView.runtime = {};
     secondLink.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(windowOpenSpy).toHaveBeenCalledWith('http://localhost/example.com/two', '_blank');

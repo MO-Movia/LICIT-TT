@@ -151,7 +151,8 @@ describe('VideoEditor', () => {
         src: 'https://youtu.be/new',
         validValue: null,
       },
-      didSrcChangeSpy
+      expect.any(Function)
     );
+    expect(didSrcChangeSpy).not.toHaveBeenCalled();
   });
 });

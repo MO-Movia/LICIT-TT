@@ -65,6 +65,12 @@ type HangingIndentContentState = {
   startsWithTab: boolean;
   spacerChild: Node | null;
 };
+type StyleWithNextLine = {
+  styleName?: string;
+  styles?: {
+    nextLineStyleName?: string;
+  };
+};
 type LooseState = {
   doc?: Node;
   selection?: EditorState['selection'];
@@ -921,11 +927,11 @@ function applyListIndent(
 }
 
 function getNextParagraphStyleName(
-  style,
+  style: StyleWithNextLine,
   $from: EditorState['selection']['$from']
 ): string {
   if (isInsideListItem($from)) {
-    return style.styleName;
+    return style.styleName ?? RESERVED_STYLE_NONE;
   }
   return style.styles?.nextLineStyleName ?? RESERVED_STYLE_NONE;
 }

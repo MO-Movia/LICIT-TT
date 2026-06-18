@@ -173,7 +173,7 @@ describe('should render the SearchInfoIcon component', () => {
             icons: null,
             selectedIcon: null,
             close: () => null,
-        } as never);
+        });
 
         expect(wrapper.state.icons).toBe(FONTAWESOMEICONS);
         expect(wrapper.state.selectedIcon).toEqual({ name: '', selected: false, unicode: '' });

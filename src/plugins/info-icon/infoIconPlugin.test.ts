@@ -18,7 +18,6 @@ import {
 import { markActive, getLink } from './plugins/menu/index';
 import { createEditor, doc, p } from 'jest-prosemirror';
 import type { PopUpHandle } from '../../commands/ui/PopUp';
-import { InfoIconPlugin, INFO_ICON, KEY_INFO_ICON, bindInfoIconView } from './infoIconPlugin';
 
 describe('Info Icon Command', () => {
   const info = {

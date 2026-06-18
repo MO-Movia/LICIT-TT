@@ -131,7 +131,7 @@ describe('customstyle', () => {
         styleName: 'Normal',
         docType: 'asd',
         styles: { paragraphSpacingAfter: '3' },
-      } as unknown as Style,
+      },
     ]);
 
     const style = getCustomStyleByName('CellHeading');

@@ -668,7 +668,7 @@ describe('FloatingMenuPlugin helpers', () => {
     callbacks.createCitation();
     callbacks.createInfoIcon();
     callbacks.createSlice();
-    callbacks.showReferences();
+    await callbacks.showReferences();
     callbacks.addComment();
     callbacks.addTag();
     await flushPromises();
@@ -999,7 +999,7 @@ describe('FloatingMenuPlugin helpers', () => {
     );
     expect(rescannedByStep.decorations).toBeDefined();
     jest.spyOn(plugin, 'getState').mockReturnValue(pluginState);
-    expect(plugin.spec.props.decorations.call(plugin, { doc } as never)).toBe(
+    expect(plugin.spec.props.decorations.call(plugin, { doc })).toBe(
       pluginState.decorations
     );
 

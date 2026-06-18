@@ -44,6 +44,17 @@ export type AttrType = {
 };
 
 const ALIGN_PATTERN = /(left|right|center|justify)/;
+type ParagraphStyleAttrs = Pick<
+  AttrType,
+  | 'align'
+  | 'lineSpacing'
+  | 'marginTop'
+  | 'marginBottom'
+  | 'marginLeft'
+  | 'marginRight'
+  | 'paddingTop'
+  | 'paddingBottom'
+>;
 
 function getInlineStyleProperty(
   dom: HTMLElement,
@@ -54,10 +65,13 @@ function getInlineStyleProperty(
     return null;
   }
 
-  const escapedProperty = propertyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedProperty = propertyName.replaceAll(
+    /[.*+?^${}()|[\]\\]/g,
+    String.raw`\$&`
+  );
   const regexp = new RegExp(`(?:^|;)\\s*${escapedProperty}\\s*:\\s*([^;]+)`, 'i');
-  const match = inlineStyle.match(regexp);
-  if (!match || !match[1]) {
+  const match = regexp.exec(inlineStyle);
+  if (!match?.[1]) {
     return null;
   }
 
@@ -156,19 +170,10 @@ function getAttrs(dom: HTMLElement): Record<string, unknown> {
 }
 
 function getStyle(attrs: {[key: string]: unknown}): string {
-  return getStyleEx(
-    attrs.align,
-    attrs.lineSpacing,
-    attrs.marginTop,
-    attrs.marginBottom,
-    attrs.marginLeft,
-    attrs.marginRight,
-    attrs.paddingTop,
-    attrs.paddingBottom
-  );
+  return getStyleEx(attrs);
 }
 
-function getStyleEx(
+function getStyleEx({
   align,
   lineSpacing,
   marginTop,
@@ -176,8 +181,8 @@ function getStyleEx(
   marginLeft,
   marginRight,
   paddingTop,
-  paddingBottom
-): string {
+  paddingBottom,
+}: ParagraphStyleAttrs): string {
   let style = '';
   if (align && align !== 'left') {
     style += `text-align: ${align};`;
