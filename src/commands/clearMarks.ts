@@ -151,7 +151,7 @@ export function clearMarks(tr: Transform, schema: Schema): Transform {
 
   });
 
-  nodesToReset.forEach(({ node, pos }) => {
+  for (const { node, pos } of nodesToReset) {
     style = getStyleByName(node.attrs.styleName);
 
     const newAttrs = {
@@ -166,7 +166,7 @@ export function clearMarks(tr: Transform, schema: Schema): Transform {
       overriddenAlignValue: null,
     };
     tr = tr.setNodeMarkup(pos, node.type, newAttrs, node.marks);
-  });
+  }
 
   return tr;
 }

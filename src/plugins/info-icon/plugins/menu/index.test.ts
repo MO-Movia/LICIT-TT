@@ -3,12 +3,43 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { markActive, getLink, addLinkCommand } from './index';
+import menuBarPlugin, { markActive, getLink, addLinkCommand } from './index';
 import { EditorState } from 'prosemirror-state';
 import { MarkType } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
+const mockCreatePopUp = jest.fn<unknown, unknown[]>();
+const mockRenderGrouped = jest.fn<unknown, []>(() => ({
+  dom: document.createElement('div'),
+  update: jest.fn(),
+}));
+
+jest.mock('../../../../commands', () => ({
+  createPopUp: (...args: unknown[]): unknown => mockCreatePopUp(...args),
+}));
+
+jest.mock('prosemirror-menu', () => {
+  const actual =
+    jest.requireActual<Record<string, unknown>>('prosemirror-menu');
+  return {
+    ...actual,
+    renderGrouped: (_view: unknown, _content: unknown) => {
+      mockRenderGrouped();
+      return {
+        dom: document.createElement('div'),
+        update: jest.fn(),
+      };
+    },
+  };
+});
+
 describe('info-icon menu index', () => {
+  beforeEach(() => {
+    mockCreatePopUp.mockReset();
+    mockCreatePopUp.mockReturnValue({ close: jest.fn(), update: jest.fn() });
+    mockRenderGrouped.mockClear();
+  });
+
   describe('markActive', () => {
     it('should return false for empty selection without stored marks', () => {
       const mockState = {
@@ -139,13 +170,55 @@ describe('info-icon menu index', () => {
       expect(result).toBeInstanceOf(Promise);
     });
 
-    it('should resolve promise when onClose is called', () => {
+    it('should resolve promise when onClose is called', async () => {
       const mockView = {} as unknown as EditorView;
       const result = addLinkCommand(mockView);
-      
-      // The promise should resolve (though in real usage it would be resolved by the popup close)
-      // For testing purposes, we just verify it returns a promise
-      expect(result).toBeInstanceOf(Promise);
+
+      const [, , popUpProps] = mockCreatePopUp.mock.calls[0] as [
+        unknown,
+        unknown,
+        { onClose: (value: string) => void },
+      ];
+      popUpProps.onClose('done');
+
+      await expect(result).resolves.toBe('done');
+    });
+  });
+
+  describe('menuBarPlugin', () => {
+    it('returns null when the editor has no parent node', () => {
+      const plugin = menuBarPlugin();
+      const pluginView = plugin.spec.view({
+        dom: document.createElement('div'),
+      } as unknown as EditorView);
+
+      expect(pluginView).toBeNull();
+    });
+
+    it('renders grouped menu content when a parent node exists', () => {
+      const plugin = menuBarPlugin();
+      const host = document.createElement('div');
+      const editorDom = document.createElement('div');
+      host.appendChild(editorDom);
+      const state = {
+        schema: {
+          marks: {
+            strong: {},
+            em: {},
+            link: {},
+          },
+        },
+      } as unknown as EditorState;
+      const view = {
+        dom: editorDom,
+        state,
+      } as unknown as EditorView;
+
+      const pluginView = plugin.spec.view(view);
+
+      expect(pluginView).toBeDefined();
+      expect(mockRenderGrouped).toHaveBeenCalled();
+      expect(host.querySelector('.ProseMirror-menubar')).not.toBeNull();
     });
   });
 });

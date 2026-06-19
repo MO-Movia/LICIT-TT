@@ -24,6 +24,35 @@ import {EditorViewEx} from '../constants';
 export interface Arr {
   [key: string]: UICommand;
 }
+
+type UICommandCandidate = Partial<
+  Record<
+    | 'cancel'
+    | 'execute'
+    | 'isActive'
+    | 'isEnabled'
+    | 'renderLabel'
+    | 'shouldRespondToUIEvent',
+    unknown
+  >
+>;
+
+export function isUICommandLike(value: unknown): value is UICommand {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const command = value as UICommandCandidate;
+  return (
+    typeof command.cancel === 'function' &&
+    typeof command.execute === 'function' &&
+    typeof command.isActive === 'function' &&
+    typeof command.isEnabled === 'function' &&
+    typeof command.renderLabel === 'function' &&
+    typeof command.shouldRespondToUIEvent === 'function'
+  );
+}
+
 type CommandMenuProps = {
   commandGroups: Array<Arr>;
   dispatch: (tr: Transform) => void;
@@ -61,7 +90,7 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
     for (const [ii, group] of commandGroups.entries()) {
       for (const label of Object.keys(group)) {
         const command = group[label];
-        if (command instanceof UICommand) {
+        if (isUICommandLike(command)) {
           const {icon} = parseLabel(label, theme.toString());
           children.push(
             this._renderCustomMenuItem(label, command, editorState, icon, theme)
@@ -120,7 +149,7 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
     const {icon, title} = parseLabel(label, theme);
     let isDropdown = false;
     if (commandGroups && commandGroups.length > 0) {
-      isDropdown = commandGroups[0] instanceof UICommand;
+      isDropdown = isUICommandLike(commandGroups[0]);
     }
 
     return (

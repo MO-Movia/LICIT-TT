@@ -7,6 +7,7 @@ import React, { SyntheticEvent } from 'react';
 import { EditorState } from 'prosemirror-state';
 import { Schema, Node } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
+import { EditorView } from 'prosemirror-view';
 import { UICommand } from '../../../core';
 import { uuid } from './Uuid';
 import { CustomStyleItem } from './CustomStyleItem';
@@ -39,8 +40,30 @@ let HEADING_COMMANDS = {
   [RESERVED_STYLE_NONE]: new HeadingCommand(0),
 };
 
- 
-export class CustomMenuUI extends React.PureComponent<any, any> {
+type CustomMenuCommandGroup = Record<string, unknown>;
+
+type CustomMenuUIProps = {
+  dispatch: (tr: Transform) => void;
+  editorState: EditorState;
+  editorView: Partial<EditorView> & { disabled?: boolean };
+  onCommand?: () => void;
+  staticCommand: CustomMenuCommandGroup[];
+  theme?: string;
+};
+
+type CustomMenuUIState = {
+  expanded: boolean;
+  style: {
+    display: string;
+    top: string;
+    left: string;
+  };
+};
+
+export class CustomMenuUI extends React.PureComponent<
+  CustomMenuUIProps,
+  CustomMenuUIState
+> {
   _popUp = null;
   _stylePopup = null;
   _styleName = null;
@@ -78,7 +101,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
   }
 
   closeStylePopup() {
-    this.props.editorView.focus();
+    this.props.editorView.focus?.();
     this._stylePopup?.close();
     this._stylePopup = null;
   }
@@ -101,7 +124,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
     const matchingStyle = this.findMatchingStyle(normalizedResult, val.styleName);
     const tr = matchingStyle ? getTransform(matchingStyle) : null;
     if (tr) {
-      this.props.editorView.dispatch(tr);
+      this.props.editorView.dispatch?.(tr);
     }
     this.closeStylePopup();
   }
@@ -177,7 +200,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
             disabled={!!editorView?.disabled}
             dispatch={dispatch}
             editorState={editorState}
-            editorView={editorView}
+            editorView={editorView as EditorView}
             hasText={true}
             index={index}
             key={label}
@@ -203,7 +226,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
             disabled={!!editorView?.disabled}
             dispatch={dispatch}
             editorState={editorState}
-            editorView={editorView}
+            editorView={editorView as EditorView}
             hasText={false}
             index={index}
             key={label}
@@ -391,7 +414,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
   _execute = (command: UICommand, e: SyntheticEvent<Element>) => {
     if (undefined !== command) {
       const { dispatch, editorState, editorView, onCommand } = this.props;
-      command.execute(editorState, dispatch, editorView, e);
+      command.execute(editorState, dispatch, editorView as EditorView, e);
       onCommand?.();
     }
   };
@@ -568,7 +591,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
               }
             }
           }
-          this.props.editorView.focus();
+          this.props.editorView.focus?.();
         },
       }
     );

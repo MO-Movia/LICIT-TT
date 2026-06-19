@@ -37,6 +37,7 @@ const VideoUploadEdrProps = {
   close: () => undefined
 };
 const testCases=[VideoUploadEditorProps,VideoUploadEdrProps];
+const TEST_UUID = '00000000-0000-4000-8000-000000000000';
 describe('Video Upload Editor', () => {
 
 
@@ -140,18 +141,17 @@ describe('Video Upload Editor (group 2)', () => {
      });
      it('should handle render',()=>{
       const vue = new VideoUploadEditor({});
-      vue.state = {error:null,id:'id',pending:true};
+      vue.state = {error:null,id: TEST_UUID,pending:true};
       expect(vue.render()).toBeDefined();
      });
      it('should handle render when there is error',()=>{
       const vue = new VideoUploadEditor({});
-      vue.state = {error:true,id:'id',pending:false};
+      vue.state = {error:true,id: TEST_UUID,pending:false};
       expect(vue.render()).toBeDefined();
      });
      it('should handle _onSelectFile',()=>{
       const vue = new VideoUploadEditor({});
-      vue.state = {error:true,id:'id',pending:false};
+      vue.state = {error:true,id: TEST_UUID,pending:false};
       expect(vue._onSelectFile({target:{files:[{}]}} as unknown as React.SyntheticEvent<HTMLInputElement>)).toBeUndefined();
      });
 });
-

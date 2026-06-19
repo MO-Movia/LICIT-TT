@@ -3,8 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import url from 'url';
-
 export type ImageResult = {
   complete: boolean;
   height: number;
@@ -20,6 +18,15 @@ const queue: {
   resolve: (value: ImageResult | PromiseLike<ImageResult>) => void;
   reject: (reason?: { value: ImageResult | PromiseLike<ImageResult> }) => void;
 }[] = [];
+
+function getProtocol(src: string): string {
+  try {
+    return new URL(src, globalThis.location?.href || 'http://localhost/')
+      .protocol;
+  } catch {
+    return globalThis.location?.protocol || '';
+  }
+}
 
 export function resolveImage(src: string): Promise<ImageResult> {
   return new Promise((resolve, reject) => {
@@ -75,10 +82,9 @@ function processPromise(
 
   resolveRes(srcStr, result, resolve);
 
-  const parsedURL = url.parse(srcStr);
   // Removed the port validation from here
-  const { protocol } = parsedURL;
-  if (!/(http:|https:|data:)/.test(protocol || globalThis.location.protocol)) {
+  const protocol = getProtocol(srcStr);
+  if (!/(http:|https:|data:)/.test(protocol)) {
     resolve(result);
     return;
   }

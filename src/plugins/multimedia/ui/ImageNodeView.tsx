@@ -336,12 +336,11 @@ export class ImageViewBody extends React.PureComponent<
     );
   }
 
-  assignVal(focused: boolean, readOnly: boolean, currentSrc: string) {
+  assignVal(focused: boolean, readOnly: boolean, src = '') {
     // It's only active when the image's fully loaded.
     const loading = false;
     const active = focused && !readOnly;
     // Keep displaying current src while original size resolves.
-    const src = currentSrc || '';
     const aspectRatio = 1;
     const error = false;
     return { loading, active, src, aspectRatio, error };
@@ -369,7 +368,7 @@ export class ImageViewBody extends React.PureComponent<
 
   _renderInlineEditor(): void {
     const el = document.getElementById(this._id);
-    if (!el || el.getAttribute('data-active') !== 'true') {
+    if (el?.dataset.active !== 'true') {
       this._inlineEditor?.close?.(undefined);
       return;
     }

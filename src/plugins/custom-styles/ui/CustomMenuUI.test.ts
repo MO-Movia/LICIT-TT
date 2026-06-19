@@ -1575,7 +1575,7 @@ describe('Custom Menu UI', () => {
     const focusMock = jest.fn();
     const localProps = {
       ...CustomMenuTestProps,
-      editorView: { focus: focusMock } as unknown as EditorView,
+      editorView: { focus: focusMock },
     };
     const instance = new CustomMenuUI(localProps);
     instance._stylePopup = { close: closeMock };
@@ -1589,7 +1589,7 @@ describe('Custom Menu UI', () => {
     const focusMock = jest.fn();
     const localProps = {
       ...CustomMenuTestProps,
-      editorView: { focus: focusMock } as unknown as EditorView,
+      editorView: { focus: focusMock },
     };
     const instance = new CustomMenuUI(localProps);
     instance._stylePopup = null;
@@ -1602,7 +1602,7 @@ describe('Custom Menu UI', () => {
     const focusMock = jest.fn();
     const localProps = {
       ...CustomMenuTestProps,
-      editorView: { focus: focusMock } as unknown as EditorView,
+      editorView: { focus: focusMock },
     };
     const instance = new CustomMenuUI(localProps);
     const closeSpy = jest
@@ -1626,7 +1626,7 @@ describe('Custom Menu UI', () => {
       editorView: {
         focus: focusMock,
         dispatch: dispatchMock,
-      } as unknown as EditorView,
+      },
     };
     const instance = new CustomMenuUI(localProps);
     jest.spyOn(instance, 'closeStylePopup').mockImplementation(() => {});
@@ -1647,7 +1647,7 @@ describe('Custom Menu UI', () => {
       editorView: {
         focus: focusMock,
         dispatch: dispatchMock,
-      } as unknown as EditorView,
+      },
     };
     const instance = new CustomMenuUI(localProps);
     jest.spyOn(instance, 'closeStylePopup').mockImplementation(() => {});
@@ -1669,7 +1669,7 @@ describe('Custom Menu UI', () => {
       editorView: {
         focus: focusMock,
         dispatch: dispatchMock,
-      } as unknown as EditorView,
+      },
     };
     const instance = new CustomMenuUI(localProps);
     jest.spyOn(instance, 'closeStylePopup').mockImplementation(() => {});
@@ -1866,7 +1866,7 @@ describe('Custom Menu UI', () => {
       editorView: {
         ...editor.view,
         dispatch: jest.fn(),
-      } as unknown as EditorView,
+      },
     };
     const instance = new CustomMenuUI(localProps);
     const removeSpy = jest
@@ -2038,7 +2038,7 @@ describe('Custom Menu UI', () => {
     const focusMock = jest.fn();
     const instance = new CustomMenuUI({
       ...CustomMenuTestProps,
-      editorView: { focus: focusMock } as unknown as EditorView,
+      editorView: { focus: focusMock },
     });
     const editSpy = jest
       .spyOn(instance, 'handleEditModeSave')
@@ -2073,7 +2073,7 @@ describe('Custom Menu UI', () => {
     const focusMock = jest.fn();
     const instance = new CustomMenuUI({
       ...CustomMenuTestProps,
-      editorView: { focus: focusMock } as unknown as EditorView,
+      editorView: { focus: focusMock },
     });
     const renameSpy = jest
       .spyOn(instance, 'handleRenameModeSave')
@@ -2106,7 +2106,7 @@ describe('Custom Menu UI', () => {
     const focusMock = jest.fn();
     const instance = new CustomMenuUI({
       ...CustomMenuTestProps,
-      editorView: { focus: focusMock } as unknown as EditorView,
+      editorView: { focus: focusMock },
     });
     const editSpy = jest
       .spyOn(instance, 'handleEditModeSave')
@@ -2144,7 +2144,7 @@ describe('Custom Menu UI', () => {
     const focusMock = jest.fn();
     const instance = new CustomMenuUI({
       ...CustomMenuTestProps,
-      editorView: { focus: focusMock } as unknown as EditorView,
+      editorView: { focus: focusMock },
     });
     const editSpy = jest
       .spyOn(instance, 'handleEditModeSave')

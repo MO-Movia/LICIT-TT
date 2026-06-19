@@ -8,7 +8,6 @@ import React from 'react';
 
 import { CustomButton, preventEventDefault } from '../../../commands';
 import {LoadingIndicator} from './LoadingIndicator';
-import {v1 as uuid} from 'uuid';
 
 import type {EditorVideoRuntime, VideoLike} from '../Types';
 type VideoUploadEditorProps = {
@@ -22,7 +21,7 @@ export class VideoUploadEditor extends React.PureComponent {
 
   state = {
     error: null,
-    id: uuid(),
+    id: crypto.randomUUID(),
     pending: false,
   };
 
@@ -90,7 +89,7 @@ export class VideoUploadEditor extends React.PureComponent {
     }
     this.setState({
       error,
-      id: uuid(),
+      id: crypto.randomUUID(),
       pending: false,
     });
   };

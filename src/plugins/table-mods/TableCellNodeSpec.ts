@@ -5,6 +5,26 @@
 
 import {DOMOutputSpec, Node, NodeSpec} from 'prosemirror-model';
 
+const VALID_VERTICAL_ALIGNMENTS = new Set(['top', 'middle', 'bottom']);
+
+const normalizeVerticalAlignment = (
+  value: unknown,
+  fallback = 'top'
+): string => {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  if (!normalizedValue) {
+    return fallback;
+  }
+
+  return VALID_VERTICAL_ALIGNMENTS.has(normalizedValue)
+    ? normalizedValue
+    : fallback;
+};
+
 export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
   ...nodespec,
   attrs: {...nodespec.attrs, fullSize: {default: 0}, vAlign: {default: 'top'}},
@@ -12,18 +32,25 @@ export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
     {
       tag: 'td',
       getAttrs: (dom: HTMLElement) => {
+        const baseAttrs = nodespec.parseDOM[0].getAttrs(dom) as Record<
+          string,
+          unknown
+        >;
         const attrFS = dom.getAttribute('fullSize');
-        const attrsVAlign = dom.getAttribute('vAlign');
+        const attrsVAlign =
+          dom.getAttribute('vAlign') ??
+          dom.getAttribute('valign') ??
+          dom.style.verticalAlign;
         let fullSize = 0;
-        let vAlign = 'top';
+        const vAlign = normalizeVerticalAlignment(
+          attrsVAlign ?? baseAttrs?.verticalAlign ?? baseAttrs?.vAlign,
+          'top'
+        );
         if (attrFS) {
           fullSize = Number.parseInt(attrFS, 10);
         }
-        if (attrsVAlign) {
-          vAlign = attrsVAlign;
-        }
         return {
-          ...nodespec.parseDOM[0].getAttrs(dom),
+          ...baseAttrs,
           fullSize: fullSize,
           vAlign: vAlign,
         };
@@ -40,25 +67,19 @@ export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
     if (node.attrs.fullSize && node.attrs.fullSize === 1) {
       base[1].style = style + 'padding:0;margin:0;';
     }
-    if (node.attrs.vAlign) {
-      switch (node.attrs.vAlign) {
-        case 'top':
-          base[1].style = base[1].style + 'vertical-align: top;';
-          break;
-        case 'middle':
-          base[1].style = base[1].style + 'vertical-align: middle;';
-          break;
-        case 'bottom':
-          base[1].style = base[1].style + 'vertical-align: bottom;';
-          break;
-        default:
-          base[1].style = base[1].style + 'vertical-align: top;';
-          break;
-      }
+    const verticalAlignment = normalizeVerticalAlignment(
+      node.attrs.vAlign ?? node.attrs.verticalAlign,
+      'top'
+    );
+
+    const currentStyle = String(base[1].style ?? '');
+    if (!/vertical-align\s*:/i.test(currentStyle)) {
+      base[1].style = `${currentStyle}vertical-align: ${verticalAlignment};`;
     }
 
     base[1].fullSize = node.attrs.fullSize;
-    base[1].vAlign = node.attrs.vAlign;
+    base[1].vAlign = verticalAlignment;
+    base[1].valign = verticalAlignment;
 
     return base;
   },

@@ -19,10 +19,9 @@ import {
   atAnchorBottomCenter,
   createPopUp,
 } from '../../../commands';
-import {v1 as uuid} from 'uuid';
+import {observe, unobserve} from './ResizeObserver';
 import {resolveVideo, VideoResult} from './resolveVideo';
 
-import {observe, unobserve} from './ResizeObserver';
 import type {ResizeObserverEntry} from './ResizeObserver';
 import {CustomNodeView} from './CustomNodeView';
 import type {NodeViewProps} from './CustomNodeView';
@@ -85,7 +84,7 @@ function getMaxResizeWidth(el): number {
 export class VideoViewBody extends React.PureComponent {
   declare props: NodeViewProps;
 
-  _id = uuid();
+  _id = crypto.randomUUID();
   _inlineEditor?: PopUpHandle;
   _mounted = false;
 

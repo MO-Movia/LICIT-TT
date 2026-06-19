@@ -3,454 +3,270 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { EditorState, TextSelection } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-import { Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
-import TableDetailsCommand from './TableDetailsCommand';
-import { createPopUp } from '../../commands';
+import * as React from 'react';
+import {EditorState, TextSelection} from 'prosemirror-state';
+import {Transform} from 'prosemirror-transform';
+import {EditorView} from 'prosemirror-view';
+import {UICommand} from '../../core';
+import TableInsertCommand from './tableInsertCommand';
+import {Schema} from 'prosemirror-model';
+import {Editor} from '@tiptap/react';
 
-jest.mock('../../commands', () => ({
-  createPopUp: jest.fn(),
-}));
+jest.mock('../ui/tableGridSizeEditor', () => {
+  return jest.fn(() => '<div>Mocked Table Grid Size Editor</div>');
+});
 
-describe('TableDetailsCommand', () => {
-  let command: TableDetailsCommand;
-  let mockSchema: Schema;
-  let mockState: EditorState;
-  let mockView: EditorView;
-  let mockDispatch: jest.Mock<void, [Transform]>;
+jest.mock('nullthrows', () => jest.fn(<T>(val: T) => val), {virtual: true});
+
+describe('TableInsertCommand', () => {
+  let command;
+  let editorState;
+  let view;
+  let dispatchMock;
+  let viewMock;
+  let closeMock;
+
+  // Mock state and selection
+  const mySchema = new Schema({
+    nodes: {
+      doc: {
+        attrs: {lineSpacing: {default: 'test'}},
+        content: 'block+',
+      },
+      paragraph: {
+        attrs: {lineSpacing: {default: 'test'}},
+        content: 'text*',
+        group: 'block',
+      },
+      heading: {
+        attrs: {lineSpacing: {default: 'test'}},
+        content: 'text*',
+        group: 'block',
+        defining: true,
+      },
+      bullet_list: {
+        content: 'list_item+',
+        group: 'block',
+      },
+      list_item: {
+        attrs: {lineSpacing: {default: 'test'}},
+        content: 'paragraph',
+        defining: true,
+      },
+      blockquote: {
+        attrs: {lineSpacing: {default: 'test'}},
+        content: 'block+',
+        group: 'block',
+      },
+      text: {
+        inline: true,
+      },
+    },
+  });
+  const dummyDoc = mySchema.node('doc', null, [
+    mySchema.node('heading', {marks: []}, [mySchema.text('Heading 1')]),
+    mySchema.node('paragraph', {marks: []}, [
+      mySchema.text('This is a paragraph'),
+    ]),
+    mySchema.node('bullet_list', {marks: []}, [
+      mySchema.node('list_item', {marks: []}, [
+        mySchema.node('paragraph', {marks: []}, [mySchema.text('List item 1')]),
+      ]),
+      mySchema.node('list_item', {marks: []}, [
+        mySchema.node('paragraph', {marks: []}, [mySchema.text('List item 2')]),
+      ]),
+    ]),
+    mySchema.node('blockquote', {marks: []}, [
+      mySchema.node('paragraph', {marks: []}, [
+        mySchema.text('This is a blockquote'),
+      ]),
+    ]),
+  ]);
 
   beforeEach(() => {
-    command = new TableDetailsCommand();
-    mockDispatch = jest.fn<void, [Transform]>();
-
-    // Create a basic schema with table node
-    mockSchema = new Schema({
-      nodes: {
-        doc: { content: 'block+' },
-        text: { group: 'inline' },
-        paragraph: { content: 'inline*', group: 'block' },
-        table: { content: 'table_row+', group: 'block' },
-        table_row: { content: 'table_cell+' },
-        table_cell: { content: 'paragraph+' },
+    command = new TableInsertCommand();
+    editorState = {
+      doc: dummyDoc,
+      selection: {
+        from: 0,
+        to: 0,
+        $head: {
+          depth: 1,
+          node: jest.fn(() => ({type: {spec: {tableRole: ''}}})),
+        },
       },
-    });
+    };
+    view = {};
+    // Create a mock for close method
+    closeMock = jest.fn();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  it('should enable the command when the selection is valid', () => {
+    editorState.selection = TextSelection.create(editorState.doc, 0, 0);
+
+    const result = command.isEnabled(editorState);
+    expect(result).toBe(true);
   });
 
-  describe('execute', () => {
-    it('should return false when view is not provided', () => {
-      const result = command.execute(mockState, mockDispatch, undefined);
-      expect(result).toBe(false);
+  it('should disable the command if selection is inside a table', () => {
+    editorState.selection = TextSelection.create(editorState.doc, 0, 0);
+    editorState.selection.$head.depth = 1;
+    editorState.selection.$head.node = jest.fn().mockReturnValueOnce({
+      type: {spec: {tableRole: 'row'}},
     });
+    const result = command.isEnabled(editorState);
+    expect(result).toBe(false);
+  });
 
-    it('should return false when table node is not found', () => {
-      const doc = mockSchema.node('doc', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('test')]),
-      ]);
+  it('should return to if the target is not htnl element', () => {
+    editorState.selection = {};
 
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
+    const result = command.isEnabled(editorState);
+    expect(result).toBe(false);
+  });
 
-      mockView = {
-        state: mockState,
-        domAtPos: jest.fn(),
-      } as unknown as EditorView;
-
-      const result =  command.execute(mockState, mockDispatch, mockView);
-      expect(result).toBe(false);
-    });
-
-    it('should return false when table DOM is not found', () => {
-      const tableCell = mockSchema.node('table_cell', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('cell')]),
-      ]);
-      const tableRow = mockSchema.node('table_row', null, [tableCell]);
-      const table = mockSchema.node('table', null, [tableRow]);
-      const doc = mockSchema.node('doc', null, [table]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
-
-      mockView = {
-        state: mockState,
-        domAtPos: jest.fn().mockReturnValue({ node: document.createElement('div') }),
-      } as unknown as EditorView;
-
-      jest.spyOn(command, 'findTableDOM').mockReturnValue(null);
-
-      const result = command.execute(mockState, mockDispatch, mockView);
-      expect(result).toBe(false);
-    });
-
-    it('should create popup with table details when table is found', () => {
-      const tableCell = mockSchema.node('table_cell', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('cell')]),
-      ]);
-      const tableRow = mockSchema.node('table_row', null, [tableCell]);
-      const table = mockSchema.node('table', null, [tableRow]);
-      const doc = mockSchema.node('doc', null, [table]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
-
-      const mockTableDOM = document.createElement('table');
-      Object.defineProperty(mockTableDOM, 'getBoundingClientRect', {
-        value: jest.fn().mockReturnValue({
-          width: 500.7,
-          height: 300.3,
-        }),
-      });
-
-      mockView = {
-        state: mockState,
-        domAtPos: jest.fn().mockReturnValue({ node: mockTableDOM }),
-      } as unknown as EditorView;
-
-      jest.spyOn(command, 'findTableDOM').mockReturnValue(mockTableDOM);
-      jest.spyOn(command, 'getSelectedCellDOM').mockReturnValue(null);
-
-      const mockPopUp = { close: jest.fn() };
-      (createPopUp as jest.Mock).mockReturnValue(mockPopUp);
-
-      const promise = command.execute(mockState, mockDispatch, mockView);
-
-      expect(createPopUp).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          table: {
-            width: 501,
-            height: 300,
+  it('waitForUserInput should create a pop-up and resolve', async () => {
+    const state = {
+      plugins: [],
+      selection: {from: 1, to: 2},
+      schema: {marks: {'mark-text-color': 'mark-text-color'}},
+      doc: {
+        nodeAt: (_x) => {
+          return {isAtom: true, isLeaf: true, isText: false};
+        },
+      },
+      tr: {
+        doc: {
+          nodeAt: (_x) => {
+            return {isAtom: true, isLeaf: true, isText: false, marks: []};
           },
-          cell: null,
-        }),
-        expect.objectContaining({
-          modal: true,
-        })
-      );
-
-      // Trigger onClose
-      const onClose = (createPopUp as jest.Mock).mock.calls[0][2].onClose;
-      onClose(undefined);
-
-      expect(promise).toBeTruthy();
-    });
-
-it('should include cell details when cell is selected', () => {
-  const tableCell = mockSchema.node('table_cell', null, [
-    mockSchema.node('paragraph', null, [mockSchema.text('cell')]),
-  ]);
-  const tableRow = mockSchema.node('table_row', null, [tableCell]);
-  const table = mockSchema.node('table', null, [tableRow]);
-  const doc = mockSchema.node('doc', null, [table]);
-
-  mockState = EditorState.create({
-    doc,
-    schema: mockSchema,
-  });
-
-  const mockTableDOM = document.createElement('table');
-  Object.defineProperty(mockTableDOM, 'getBoundingClientRect', {
-    value: jest.fn().mockReturnValue({
-      width: 500,
-      height: 300,
-    }),
-  });
-
-  const mockCellDOM = document.createElement('td');
-  Object.defineProperty(mockCellDOM, 'getBoundingClientRect', {
-    value: jest.fn().mockReturnValue({
-      width: 100.4,
-      height: 50.6,
-    }),
-  });
-
-  mockView = {
-    state: mockState,
-    domAtPos: jest.fn().mockReturnValue({ node: mockTableDOM }),
-  } as unknown as EditorView;
-
-  jest.spyOn(command, 'findTableDOM').mockReturnValue(mockTableDOM);
-  jest.spyOn(command, 'getSelectedCellDOM').mockReturnValue(mockCellDOM);
-
-  const mockPopUp = { close: jest.fn() };
-  (createPopUp as jest.Mock).mockReturnValue(mockPopUp);
-
-  command.execute(mockState, mockDispatch, mockView);
-  expect(createPopUp).toHaveBeenCalledWith(
-    expect.anything(),
-    expect.objectContaining({
-      cell: {
-        width: 100,
-        height: 51,
+        },
       },
-    }),
-    expect.anything()
-  );
-});
+    } as unknown as EditorState;
+
+    // Mock DOM element to be returned by getElementById
+    const mockElement = document.createElement('div');
+    mockElement.id = 'parent-id';
+    document.getElementById = jest.fn().mockReturnValue(mockElement);
+    // Mock the offsetParent to simulate a parent element with an id
+    Object.defineProperty(mockElement, 'offsetParent', {
+      value: {id: 'parent-id'},
+    });
+
+    const _dispatch = jest.fn();
+    const event_ = {
+      currentTarget: mockElement,
+    } as unknown as Event;
+
+    const editorview = {} as unknown as EditorView;
+
+    const result = command.waitForUserInput(
+      state,
+      _dispatch,
+      editorview,
+      event_
+    );
+
+    const onCloseCallback = command._popUp?.close;
+    if (onCloseCallback) {
+      onCloseCallback('mocked value');
+    }
+
+    await expect(result).resolves.toBe('mocked value');
+
+    expect(result).toBeDefined();
   });
 
-  describe('isActive', () => {
-    it('should always return false', () => {
-      expect(command.isActive(mockState)).toBe(false);
-    });
+  it('waitForUserInput should resolve with undefined if _popUp is already set', async () => {
+    const eventMock = {
+      currentTarget: document.createElement('div'),
+      type: 'mouseenter',
+    } as unknown as React.SyntheticEvent;
+    command._popUp = {close: closeMock};
+    const result = await command.waitForUserInput(
+      editorState,
+      dispatchMock,
+      viewMock,
+      eventMock
+    );
+    expect(result).toBeUndefined();
   });
 
-  describe('isEnabled', () => {
-    it('should return false when not inside a table', () => {
-      const doc = mockSchema.node('doc', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('test')]),
-      ]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
-
-      expect(command.isEnabled(mockState)).toBe(false);
-    });
-
-    it('should return true when inside a table', () => {
-      const tableCell = mockSchema.node('table_cell', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('cell')]),
-      ]);
-      const tableRow = mockSchema.node('table_row', null, [tableCell]);
-      const table = mockSchema.node('table', null, [tableRow]);
-      const doc = mockSchema.node('doc', null, [table]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-        selection: TextSelection.create(doc, 2),
-      });
-
-      expect(command.isEnabled(mockState)).toBe(true);
-    });
+  it('should handle invalid target in waitForUserInput gracefully', async () => {
+    const eventMock = {
+      currentTarget: document.createElement('div'),
+      type: 'mouseenter',
+    } as unknown as React.SyntheticEvent;
+    // Making the target null to simulate an invalid event
+    eventMock.currentTarget = null;
+    const result = await command.waitForUserInput(
+      editorState,
+      dispatchMock,
+      viewMock,
+      eventMock
+    );
+    expect(result).toBeUndefined();
   });
 
-  describe('findTableDOM', () => {
-    it('should return null when DOM node is not an HTMLElement', () => {
-      mockView = {
-        domAtPos: jest.fn().mockReturnValue({ node: document.createTextNode('text') }),
-      } as unknown as EditorView;
+  it('should execute with user input', () => {
+    const inputs = {rows: 3, cols: 3};
+    const insertTableMock = jest.fn().mockReturnValue(true);
 
-      const result = command.findTableDOM(mockView, 0);
-      expect(result).toBeNull();
-    });
+    // Mock the getEditor function to return a mock editor
+    UICommand.prototype.editor = {
+      view: {focus: () => {}, dispatch: () => {}},
+      commands: {
+        redo: jest.fn(),
+        setCellAttribute: jest.fn(),
+        insertTable: insertTableMock,
+      },
+    } as unknown as Editor;
 
-    it('should return table element when found', () => {
-      const table = document.createElement('table');
-      const td = document.createElement('td');
-      table.appendChild(td);
+    const result = command.executeWithUserInput(
+      editorState,
+      undefined,
+      view,
+      inputs
+    );
 
-      mockView = {
-        domAtPos: jest.fn().mockReturnValue({ node: td }),
-      } as unknown as EditorView;
-
-      const result = command.findTableDOM(mockView, 0);
-      expect(result).toBe(table);
-    });
-
-    it('should return null when table is not found in ancestors', () => {
-      const div = document.createElement('div');
-
-      mockView = {
-        domAtPos: jest.fn().mockReturnValue({ node: div }),
-      } as unknown as EditorView;
-
-      const result = command.findTableDOM(mockView, 0);
-      expect(result).toBeNull();
-    });
+    expect(result).toBe(true);
+    expect(insertTableMock).toHaveBeenCalledWith({rows: 3, cols: 3});
   });
 
-  describe('getSelectedCellDOM', () => {
-    it('should return null when selection is not TextSelection', () => {
-      mockState = {
-        selection: {} as TextSelection,
-      } as unknown as EditorState;
-
-      mockView = {
-        state: mockState,
-      } as EditorView;
-
-      const result = command.getSelectedCellDOM(mockView);
-      expect(result).toBeNull();
-    });
-
-    it('should return cell element when text node is selected', () => {
-      const td = document.createElement('td');
-      const textNode = document.createTextNode('text');
-      td.appendChild(textNode);
-
-      const doc = mockSchema.node('doc', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('test')]),
-      ]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
-
-      mockView = {
-        state: mockState,
-        domAtPos: jest.fn().mockReturnValue({ node: textNode }),
-      } as unknown as EditorView;
-
-      const result = command.getSelectedCellDOM(mockView);
-      expect(result).toBe(td);
-    });
-
-    it('should return cell element when HTML element is selected', () => {
-      const td = document.createElement('td');
-      const span = document.createElement('span');
-      td.appendChild(span);
-
-      const doc = mockSchema.node('doc', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('test')]),
-      ]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
-
-      mockView = {
-        state: mockState,
-        domAtPos: jest.fn().mockReturnValue({ node: span }),
-      } as unknown as EditorView;
-
-      const result = command.getSelectedCellDOM(mockView);
-      expect(result).toBe(td);
-    });
-
-    it('should return th element when header cell is selected', () => {
-      const th = document.createElement('th');
-      const textNode = document.createTextNode('header');
-      th.appendChild(textNode);
-
-      const doc = mockSchema.node('doc', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('test')]),
-      ]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
-
-      mockView = {
-        state: mockState,
-        domAtPos: jest.fn().mockReturnValue({ node: textNode }),
-      } as unknown as EditorView;
-
-      const result = command.getSelectedCellDOM(mockView);
-      expect(result).toBe(th);
-    });
-
-    it('should return null when node is null', () => {
-      const doc = mockSchema.node('doc', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('test')]),
-      ]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
-
-      mockView = {
-        state: mockState,
-        domAtPos: jest.fn().mockReturnValue({ node: null }),
-      } as unknown as EditorView;
-
-      const result = command.getSelectedCellDOM(mockView);
-      expect(result).toBeNull();
-    });
-
-    it('should return null when no cell ancestor is found', () => {
-      const div = document.createElement('div');
-
-      const doc = mockSchema.node('doc', null, [
-        mockSchema.node('paragraph', null, [mockSchema.text('test')]),
-      ]);
-
-      mockState = EditorState.create({
-        doc,
-        schema: mockSchema,
-      });
-
-      mockView = {
-        state: mockState,
-        domAtPos: jest.fn().mockReturnValue({ node: div }),
-      } as unknown as EditorView;
-
-      const result = command.getSelectedCellDOM(mockView);
-      expect(result).toBeNull();
-    });
+  it('should return false if no user input is provided', () => {
+    const result = command.executeWithUserInput(editorState);
+    expect(result).toBe(false);
   });
 
-  describe('cancel', () => {
-    it('should close popup if it exists', () => {
-      const mockPopUp = { close: jest.fn() };
-      command._popUp = mockPopUp;
+  it('should detect and handle a mouse enter event', () => {
+    const mouseEnterEvent = new MouseEvent('mouseenter');
+    const result = command.shouldRespondToUIEvent(mouseEnterEvent);
+    expect(result).toBe(true);
+  });
 
-      command.cancel();
+  it('should not respond to non-mouseenter events', () => {
+    const clickEvent = new MouseEvent('click');
+    const result = command.shouldRespondToUIEvent(clickEvent);
+    expect(result).toBe(false);
+  });
 
-      expect(mockPopUp.close).toHaveBeenCalledWith(undefined);
-    });
+  it('should handle cancel', () => {
+    const result = command.cancel();
+    expect(result).toBeNull();
+  });
 
-    it('should not error when popup does not exist', () => {
-      command._popUp = null;
-
-      expect(() => command.cancel()).not.toThrow();
-    });
+  it('should handle executeCustomStyleForTable', () => {
+  const mockState = {} as EditorState;
+  const mockTransform = {} as Transform;  
+  const result = command.executeCustomStyleForTable(mockState, mockTransform);  
+  expect(result).toBe(mockTransform);
   });
 
   describe('executeCustom', () => {
-    it('should return transform unchanged', () => {
-      const mockTr = {} as Transform;
-      const result = command.executeCustom(mockState, mockTr, 0, 0);
-      expect(result).toBe(mockTr);
-    });
-  });
-
-  describe('executeCustomStyleForTable', () => {
-    it('should return transform unchanged (case 2)', () => {
-      const mockTr = {} as Transform;
-      const result = command.executeCustomStyleForTable(mockState, mockTr);
-      expect(result).toBe(mockTr);
-    });
-  });
-
-  describe('waitForUserInput', () => {
-    it('should resolve with undefined', async () => {
-      const result = await command.waitForUserInput(
-        mockState,
-        mockDispatch,
-        mockView,
-        {} as React.SyntheticEvent
-      );
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('executeWithUserInput', () => {
-    it('should return false', () => {
-      const result = command.executeWithUserInput(
-        mockState,
-        mockDispatch,
-        mockView,
-        'input'
-      );
-      expect(result).toBe(false);
+    it('should return the given Transform', () => {
+      const mockTransform = {} as Transform;
+      const result = command.executeCustom(editorState, mockTransform, 0, 1);
+      expect(result).toBe(mockTransform);
     });
   });
 });

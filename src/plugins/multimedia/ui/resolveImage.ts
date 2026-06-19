@@ -3,7 +3,6 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import url from 'url';
 import { isOffline } from './isOffline';
 
 export type ImageResult = {
@@ -18,6 +17,16 @@ export type ImageResult = {
 const cache: { [src: string]: ImageResult } = {};
 // Track in-flight requests to deduplicate concurrent calls for the same src
 const inFlight: Record<string, Promise<ImageResult>> = {};
+
+function getProtocol(src: string): string {
+  try {
+    return new URL(src, globalThis.location?.href || 'http://localhost/')
+      .protocol;
+  } catch {
+    return globalThis.location?.protocol || '';
+  }
+}
+
 export function resolveImage(src: string): Promise<ImageResult> {
   const srcStr = src || '';
   // return from cache immediately (no img element, no download)
@@ -55,14 +64,9 @@ function processPromise(src: string): Promise<ImageResult> {
       resolve(result);
       return;
     }
-    const parsedURL = url.parse(srcStr);
     // Removed the port validation from here
-    const { protocol } = parsedURL;
-    if (
-      !/(http:|https:|data:|blob:)/.test(
-        protocol || globalThis.location.protocol
-      )
-    ) {
+    const protocol = getProtocol(srcStr);
+    if (!/(http:|https:|data:|blob:)/.test(protocol)) {
       resolve(result);
       return;
     }
@@ -72,8 +76,7 @@ function processPromise(src: string): Promise<ImageResult> {
     const dispose = () => {
       if (img) {
         if (isImgInstance(img)) {
-          const pe = img.parentNode;
-          pe?.removeChild(img);
+          img?.remove();
         }
         img = null;
       }
