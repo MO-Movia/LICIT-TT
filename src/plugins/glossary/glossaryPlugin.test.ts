@@ -5,8 +5,9 @@
 
 import {cache, updateCache} from './glossaryView';
 import {GlossaryCommand} from './glossaryCommand';
-import type {IndexItem} from './types';
+import {GLOSSARY, type IndexItem} from './types';
 import {GlossaryNodeSpec} from './glossaryNodeSpec';
+import {GlossaryPlugin, KEY_GLOSSARY} from './glossaryPlugin';
 import {schema, builders} from 'prosemirror-test-builder';
 import {Schema} from 'prosemirror-model';
 import {EditorState, TextSelection} from 'prosemirror-state';
@@ -103,5 +104,39 @@ describe('Glossary Helpers', () => {
     const glossaryCmd = new GlossaryCommand(runtime);
     const result = glossaryCmd.isEnabled(state);
     expect(result).toBeFalsy();
+  });
+
+  it('GlossaryPlugin adds schema, key commands, and theme buttons', () => {
+    const plugin = new GlossaryPlugin(runtime);
+    const effectiveSchema = plugin.getEffectiveSchema(schema);
+
+    expect(effectiveSchema.nodes[GLOSSARY]).toBeDefined();
+    expect(KEY_GLOSSARY.common).toContain('Mod-Alt');
+    expect(plugin.initKeyCommands()).toBeDefined();
+    expect(Object.keys(plugin.initButtonCommands('light') as object)[0]).toContain(
+      'Insert Glossary/Acronym'
+    );
+    expect(Object.keys(plugin.initButtonCommands('dark') as object)[0]).toContain(
+      'Insert Glossary/Acronym'
+    );
+  });
+
+  it('GlossaryPlugin state keeps runtime through init and apply', () => {
+    const plugin = new GlossaryPlugin(runtime);
+    const initial = plugin.spec.state?.init?.call(
+      plugin,
+      {},
+      {}
+    );
+    const applied = plugin.spec.state?.apply?.(
+      {} as never,
+      initial,
+      {} as never,
+      {} as never
+    );
+
+    expect(initial).toEqual({runtime});
+    expect(applied).toBe(initial);
+    expect(plugin.props.nodeViews?.[GLOSSARY]).toBeDefined();
   });
 });

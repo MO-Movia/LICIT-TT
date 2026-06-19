@@ -40,6 +40,16 @@ execute = () => true;
   
 }
 
+const createBundledCommandLike = (): UICommand =>
+  ({
+    cancel: jest.fn(),
+    execute: jest.fn().mockReturnValue(true),
+    isActive: jest.fn().mockReturnValue(false),
+    isEnabled: jest.fn().mockReturnValue(true),
+    renderLabel: jest.fn().mockReturnValue(null),
+    shouldRespondToUIEvent: jest.fn().mockReturnValue(true),
+  }) as unknown as UICommand;
+
 //  Mock toolbar config with proper typing
 const mockToolbarConfig = [
   {
@@ -198,6 +208,45 @@ it('should toggle expanded state from false to true', () => {
     expect(toolbarConfigForTest[0].menuCommand).toBe(pluginMenuResult);
     expect(toolbarConfigForTest[0].key).toBe('pluginA');
     expect(matchingPlugin.initButtonCommands).toHaveBeenCalledWith('dark');
+  });
+
+  it('renders default toolbar buttons from separately bundled plugin exports', () => {
+    class TestableEditorToolbar extends EditorToolbar {
+      context = 'dark';
+    }
+
+    const bundledCommand = createBundledCommandLike();
+    const plugin = {
+      initButtonCommands: jest.fn(() => ({
+        'Bundled Action': bundledCommand,
+      })),
+    };
+    const editorStateWithPlugin = {
+      plugins: [plugin],
+    } as unknown as EditorState;
+    const instance = new TestableEditorToolbar({
+      editorState: editorStateWithPlugin,
+      editorView: mockEditorView,
+      toolbarConfig: undefined,
+    });
+    const getCommandGroups = (
+      instance as unknown as {
+        _getCommandGroups: (
+          toolbarConfig: ToolbarMenuConfig[],
+          theme: string
+        ) => React.ReactElement[];
+      }
+    )._getCommandGroups;
+
+    const commandGroups = getCommandGroups.call(instance, undefined, 'dark');
+    const buttons = React.Children.toArray(
+      commandGroups[commandGroups.length - 1].props.children
+    );
+    const button = buttons[0] as React.ReactElement<{command: UICommand}>;
+
+    expect(buttons).toHaveLength(1);
+    expect(button.props.command).toBe(bundledCommand);
+    expect(plugin.initButtonCommands).toHaveBeenCalledWith('dark');
   });
 
   it('should use default command groups when toolbarConfig is undefined', () => {

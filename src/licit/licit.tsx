@@ -19,7 +19,6 @@ import { Extension, Editor } from '@tiptap/core';
 import { EditorEvents, getSchema, JSONContent, useEditor } from '@tiptap/react';
 import {StarterKit} from '@tiptap/starter-kit';
 import {Underline} from '@tiptap/extension-underline';
-import { v4 as uuidv4 } from 'uuid';
 import {Collaboration} from '@tiptap/extension-collaboration';
 import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
@@ -480,7 +479,7 @@ const LicitComponent = (
   }: LicitProps,
   ref: ForwardedRef<LicitHandle>
 ): ReactElement => {
-  const instanceIDRef = useRef<string>(uuidv4());
+  const instanceIDRef = useRef<string>(crypto.randomUUID());
   const instanceID = instanceIDRef.current;
 
   // Track initialization state

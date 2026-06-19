@@ -54,9 +54,109 @@ const STYLENAME = 'styleName';
 type toDOMFn = (node: Node) => DOMOutputSpec;
 type getAttrsFn = (p: Node | string | HTMLElement) => KeyValuePair;
 
+function getInlineStyleProperty(
+  dom: HTMLElement,
+  propertyName: string
+): string | null {
+  const inlineStyle = dom.getAttribute('style') || '';
+  if (!inlineStyle) {
+    return null;
+  }
+
+  const escapedProperty = propertyName.replaceAll(
+    /[.*+?^${}()|[\]\\]/g,
+    String.raw`\$&`
+  );
+  const regexp = new RegExp(`(?:^|;)\\s*${escapedProperty}\\s*:\\s*([^;]+)`, 'i');
+  const match = regexp.exec(inlineStyle);
+  if (!match?.[1]) {
+    return null;
+  }
+
+  const value = match[1].trim();
+  return value || null;
+}
+
+function resolveMarginValue(dom: HTMLElement, cssProperty: string): string | null {
+  const fromStyleMap: Record<string, string> = {
+    'margin-top': dom.style.marginTop,
+    'margin-bottom': dom.style.marginBottom,
+    'margin-left': dom.style.marginLeft,
+    'margin-right': dom.style.marginRight,
+  };
+  const fromStyle = fromStyleMap[cssProperty] ?? '';
+  if (fromStyle) {
+    return fromStyle;
+  }
+
+  const attrNameMap: Record<string, string> = {
+    'margin-top': 'marginTop',
+    'margin-bottom': 'marginBottom',
+    'margin-left': 'marginLeft',
+    'margin-right': 'marginRight',
+  };
+  const attrName = attrNameMap[cssProperty] ?? cssProperty;
+
+  const value =
+    getInlineStyleProperty(dom, cssProperty) ??
+    dom.getAttribute(cssProperty) ??
+    dom.getAttribute(attrName) ??
+    null;
+
+  return normalizeMarginValue(value);
+}
+
+function normalizeMarginValue(value: string | null): string | null {
+  if (!value) {
+    return value;
+  }
+
+  const normalized = /^(-?\d+)\.00(pt|px|%)$/i.exec(value);
+  return normalized ? `${normalized[1]}${normalized[2]}` : value;
+}
+
 function getAttrs(base: getAttrsFn | undefined, dom: HTMLElement) {
   const attrs = base(dom);
+  if (!attrs) {
+    return attrs;
+  }
   attrs[STYLENAME] = dom.getAttribute(STYLENAME);
+  const domMarginTop = resolveMarginValue(dom, 'margin-top');
+  if (
+    (attrs.marginTop === undefined ||
+      attrs.marginTop === null ||
+      attrs.marginTop === '') &&
+    domMarginTop
+  ) {
+    attrs.marginTop = domMarginTop;
+  }
+  const domMarginBottom = resolveMarginValue(dom, 'margin-bottom');
+  if (
+    (attrs.marginBottom === undefined ||
+      attrs.marginBottom === null ||
+      attrs.marginBottom === '') &&
+    domMarginBottom
+  ) {
+    attrs.marginBottom = domMarginBottom;
+  }
+  const domMarginLeft = resolveMarginValue(dom, 'margin-left');
+  if (
+    (attrs.marginLeft === undefined ||
+      attrs.marginLeft === null ||
+      attrs.marginLeft === '') &&
+    domMarginLeft
+  ) {
+    attrs.marginLeft = domMarginLeft;
+  }
+  const domMarginRight = resolveMarginValue(dom, 'margin-right');
+  if (
+    (attrs.marginRight === undefined ||
+      attrs.marginRight === null ||
+      attrs.marginRight === '') &&
+    domMarginRight
+  ) {
+    attrs.marginRight = domMarginRight;
+  }
   return attrs;
 }
 
@@ -168,7 +268,11 @@ function getStyle(attrs) {
   return getStyleEx(
     attrs.align,
     attrs.lineSpacing,
-    attrs.styleName
+    attrs.styleName,
+    attrs.marginTop,
+    attrs.marginBottom,
+    attrs.marginLeft,
+    attrs.marginRight
     // attrs.indent
   );
 }
@@ -255,6 +359,31 @@ function applyParagraphSpacingStyle(style: string, styles): string {
   }
   if (styles.paragraphSpacingBefore) {
     nextStyle += `margin-top: ${styles.paragraphSpacingBefore}pt !important;`;
+  }
+  return nextStyle;
+}
+
+function applyExplicitMarginStyle(
+  style: string,
+  margins: {
+    marginTop?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    marginRight?: string;
+  }
+): string {
+  let nextStyle = style;
+  if (margins.marginTop) {
+    nextStyle += `margin-top: ${margins.marginTop} !important;`;
+  }
+  if (margins.marginBottom) {
+    nextStyle += `margin-bottom: ${margins.marginBottom} !important;`;
+  }
+  if (margins.marginLeft) {
+    nextStyle += `margin-left: ${margins.marginLeft} !important;`;
+  }
+  if (margins.marginRight) {
+    nextStyle += `margin-right: ${margins.marginRight} !important;`;
   }
   return nextStyle;
 }
@@ -363,7 +492,15 @@ function applyReservedStyleData(styleData, styleName: string) {
   );
 }
 
-function getStyleEx(align, lineSpacing, styleName) {
+function getStyleEx(
+  align,
+  lineSpacing,
+  styleName,
+  marginTop?,
+  marginBottom?,
+  marginLeft?,
+  marginRight?
+) {
   const styleData = createStyleData(align, lineSpacing);
   if (null === styleName || 'None' === styleName) {
     return styleData;
@@ -372,6 +509,12 @@ function getStyleEx(align, lineSpacing, styleName) {
   const styleProps = getCustomStyleByName(styleName);
   if (styleProps?.styles) {
     applyCustomStyleData(styleData, align, styleProps);
+    styleData.style = applyExplicitMarginStyle(styleData.style, {
+      marginTop,
+      marginBottom,
+      marginLeft,
+      marginRight,
+    });
     return styleData;
   }
 

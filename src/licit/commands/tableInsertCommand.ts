@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import nullthrows from 'nullthrows';
+import nullthrows from '../nullthrows';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';

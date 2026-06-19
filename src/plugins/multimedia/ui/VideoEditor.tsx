@@ -108,11 +108,13 @@ export class VideoEditor extends React.PureComponent<
         src,
         validValue: null,
       },
-      this._didSrcChange
+      () => {
+        void this._didSrcChange();
+      }
     );
   };
-  _didSrcChange = () => {
-    resolveVideo(this.state)
+  _didSrcChange = (): Promise<void> => {
+    return resolveVideo(this.state)
       .then((result) => {
         if (this.state.src === result.src) {
           this._setStateValues(result.src, result.width, result.height, true);

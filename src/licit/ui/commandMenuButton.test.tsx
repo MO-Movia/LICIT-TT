@@ -87,13 +87,120 @@ describe('CommandMenuButton', () => {
     prevState: Readonly<unknown>
   ) => unknown;
   expect(secondCall({ expanded: true })).toEqual({ expanded: false });
-});
+  });
 
   test('should call createPopUp when _showMenu is triggered', () => {
     const instance = new (CommandMenuButton)(mockProps);
     instance._showMenu();
 
     expect(createPopUp).toHaveBeenCalled();
+  });
+
+  test('should update an existing popup instead of recreating it', () => {
+    const update = jest.fn();
+    const instance = new (CommandMenuButton)(mockProps);
+    instance._menu = { update };
+
+    instance._showMenu();
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...mockProps,
+        onCommand: expect.any(Function),
+        theme: 'light',
+      })
+    );
+  });
+
+  test('should render a fallback label and child indicator when nested commands exist', () => {
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      label: undefined,
+    });
+    const rendered = instance.render() as unknown as React.ReactElement<{
+      hasChild: boolean;
+      label: string | null;
+    }>;
+
+    expect(rendered.props.hasChild).toBe(true);
+    expect(rendered.props.label).toBe('?');
+  });
+
+  test('should suppress the child indicator for expand buttons', () => {
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      title: 'Expand',
+      label: undefined,
+    });
+    const rendered = instance.render() as unknown as React.ReactElement<{
+      hasChild: boolean;
+      className: string;
+      label: string | null;
+    }>;
+
+    expect(rendered.props.hasChild).toBe(false);
+    expect(rendered.props.className).toContain('menu-expand-btn');
+    expect(rendered.props.label).toBeNull();
+  });
+
+  test('should recover when a command throws in isEnabled', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      commandGroups: [
+        {
+          Broken: {
+            isEnabled: jest.fn(() => {
+              throw new Error('broken');
+            }),
+          },
+        },
+      ],
+    });
+    const rendered = instance.render() as unknown as React.ReactElement<{
+      disabled: boolean;
+    }>;
+
+    expect(rendered.props.disabled).toBe(false);
+    expect(consoleSpy).toHaveBeenCalled();
+  });
+
+  test('should set child popup positioning props for submenu content', () => {
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      sub: true,
+      commandGroups: [{ Single: mockCommand }],
+    });
+
+    instance._showMenu();
+
+    expect(createPopUp).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Object),
+      expect.objectContaining({
+        IsChildDialog: true,
+        autoDismiss: true,
+        popUpId: 'mo-menuList-1',
+        position: expect.any(Function),
+      })
+    );
+  });
+
+  test('should clear popup id for insert table menus', () => {
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      commandGroups: [{ 'Insert Table...': mockCommand }],
+    });
+
+    instance._showMenu();
+
+    expect(createPopUp).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Object),
+      expect.objectContaining({
+        popUpId: null,
+      })
+    );
   });
 
   test('should close popup on _hideMenu', () => {

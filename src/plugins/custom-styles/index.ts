@@ -65,6 +65,12 @@ type HangingIndentContentState = {
   startsWithTab: boolean;
   spacerChild: Node | null;
 };
+type StyleWithNextLine = {
+  styleName?: string;
+  styles?: {
+    nextLineStyleName?: string;
+  };
+};
 type LooseState = {
   doc?: Node;
   selection?: EditorState['selection'];
@@ -661,9 +667,9 @@ export function applyStoredMarksAfterHardBreak(
   const marks = getMarkByStyleName(styleName, schema);
   if (!marks || marks.length === 0) return tr;
   // Set them as storedMarks so next typed character inherits them
-  marks.forEach((mark) => {
+  for (const mark of marks) {
     tr = (tr as Transaction).addStoredMark(mark);
-  });
+  }
   return tr;
 }
 
@@ -780,8 +786,7 @@ export function applyStyleForEmptyParagraph(
       if (
         node.content?.content &&
         0 < node.content.content.length &&
-        node.content.content[0].marks &&
-        0 === node.content.content[0].marks.length
+        0 === node.content.content[0].marks?.length
       ) {
         tr = applyLatestStyle(
           node.attrs.styleName ?? RESERVED_STYLE_NONE,
@@ -807,80 +812,157 @@ export function applyStyleForNextParagraph(
   tr: LooseTr,
   view: CSView
 ): LooseTr {
-  let modified = false;
-  if (!tr) {
-    tr = nextState.tr;
-  }
+  tr ??= nextState.tr;
   if (!nextState?.selection) {
     return tr;
   }
+
   const { $from } = nextState.selection;
-  if (view && isNewParagraph(prevState, nextState, view)) {
-    const prevParagraph = findPreviousParagraph($from);
-    const required = requiredAddAttr(prevParagraph);
-    if (required) {
-      let newattrs: Record<string, unknown> = {
-        styleName: prevParagraph.attrs.styleName,
-        indent: prevParagraph.attrs.indent,
-        align: prevParagraph.attrs.align,
-      };
-
-      const nextNodePos = $from.start();
-      const nextNode = nextState.doc.nodeAt(nextNodePos);
-      const IsActiveNode =
-        nextNodePos >= prevState.selection.from &&
-        nextNodePos <= nextState.selection.from;
-
-      if (nextNode && IsActiveNode && nextNode.type.name === 'paragraph') {
-        const posList = prevState.selection.from - 1;
-        const Listnode = prevState.doc.nodeAt(posList);
-        const style = getCustomStyleByName(prevParagraph.attrs.styleName);
-        if (style?.styles?.nextLineStyleName) {
-          // [FS] IRAD-1217 2021-02-24
-          // Select style for next line not working continuously for more that 2 paragraphs
-          if ($from.node(-1).type.name !== 'list_item') {
-            newattrs = setNodeAttrs(
-              resetTheDefaultStyleNameToNone(style.styles.nextLineStyleName),
-              newattrs
-            );
-          }
-          if (style.styles.isList === true) {
-            if (Listnode.isText === false) {
-              newattrs.indent = Listnode.attrs.indent;
-            } else {
-              const ListnodeAlt = prevState.doc.nodeAt(
-                posList - Listnode.nodeSize
-              );
-              newattrs.indent = ListnodeAlt.attrs.indent;
-            }
-          }
-          tr = tr.setNodeMarkup(nextNodePos, undefined, newattrs);
-          let styleName = style.styleName;
-          if ($from.node(-1).type.name !== 'list_item') {
-            styleName = style.styles?.nextLineStyleName ?? RESERVED_STYLE_NONE;
-          }
-
-          // get the nextLine Style from the current style object.
-          const marks = getMarkByStyleName(styleName, nextState.schema);
-          nextNode.descendants((child) => {
-            if (child.type.name === 'text') {
-              for (const mark of marks) {
-                tr = tr.addStoredMark(mark);
-              }
-            }
-          });
-          if (nextNode.content.size === 0) {
-            for (const mark of marks) {
-              tr = tr.addStoredMark(mark);
-            }
-          }
-          modified = true;
-        }
-      }
-    }
+  if (!view || !isNewParagraph(prevState, nextState, view)) {
+    return null;
   }
 
-  return modified ? tr : null;
+  const context = getNextParagraphStyleContext(prevState, nextState, $from);
+  if (!context) {
+    return null;
+  }
+
+  // [FS] IRAD-1217 2021-02-24
+  // Select style for next line not working continuously for more that 2 paragraphs
+  tr = tr.setNodeMarkup(context.nextNodePos, undefined, context.attrs);
+
+  const marks = getMarkByStyleName(context.styleName, nextState.schema);
+  return addStoredMarksForTextContent(tr, context.nextNode, marks);
+}
+
+function getNextParagraphStyleContext(
+  prevState: LooseState,
+  nextState: LooseState,
+  $from: EditorState['selection']['$from']
+): {
+  attrs: Record<string, unknown>;
+  nextNode: Node;
+  nextNodePos: number;
+  styleName: string;
+} | null {
+  const prevParagraph = findPreviousParagraph($from);
+  if (!requiredAddAttr(prevParagraph)) {
+    return null;
+  }
+
+  const nextNodePos = $from.start();
+  const nextNode = nextState.doc.nodeAt(nextNodePos);
+  if (!isActiveNextParagraph(nextNode, nextNodePos, prevState, nextState)) {
+    return null;
+  }
+
+  const style = getCustomStyleByName(prevParagraph.attrs.styleName);
+  if (!style?.styles?.nextLineStyleName) {
+    return null;
+  }
+
+  const attrs = getNextParagraphAttrs(prevParagraph, style, prevState, $from);
+  const styleName = getNextParagraphStyleName(style, $from);
+  return { attrs, nextNode, nextNodePos, styleName };
+}
+
+function isActiveNextParagraph(
+  nextNode: Node | null | undefined,
+  nextNodePos: number,
+  prevState: LooseState,
+  nextState: LooseState
+): nextNode is Node {
+  return (
+    nextNode?.type.name === 'paragraph' &&
+    nextNodePos >= prevState.selection.from &&
+    nextNodePos <= nextState.selection.from
+  );
+}
+
+function getNextParagraphAttrs(
+  prevParagraph: Node,
+  style,
+  prevState: LooseState,
+  $from: EditorState['selection']['$from']
+): Record<string, unknown> {
+  let attrs: Record<string, unknown> = {
+    styleName: prevParagraph.attrs.styleName,
+    indent: prevParagraph.attrs.indent,
+    align: prevParagraph.attrs.align,
+  };
+
+  if (!isInsideListItem($from)) {
+    attrs = setNodeAttrs(
+      resetTheDefaultStyleNameToNone(style.styles.nextLineStyleName),
+      attrs
+    );
+  }
+
+  return applyListIndent(attrs, style, prevState);
+}
+
+function applyListIndent(
+  attrs: Record<string, unknown>,
+  style,
+  prevState: LooseState
+): Record<string, unknown> {
+  if (style.styles.isList !== true) {
+    return attrs;
+  }
+
+  const posList = prevState.selection.from - 1;
+  const listNode = prevState.doc.nodeAt(posList);
+  if (!listNode) {
+    return attrs;
+  }
+
+  if (listNode.isText === false) {
+    attrs.indent = listNode.attrs.indent;
+    return attrs;
+  }
+
+  const listNodeAlt = prevState.doc.nodeAt(posList - listNode.nodeSize);
+  attrs.indent = listNodeAlt?.attrs?.indent;
+  return attrs;
+}
+
+function getNextParagraphStyleName(
+  style: StyleWithNextLine,
+  $from: EditorState['selection']['$from']
+): string {
+  if (isInsideListItem($from)) {
+    return style.styleName ?? RESERVED_STYLE_NONE;
+  }
+  return style.styles?.nextLineStyleName ?? RESERVED_STYLE_NONE;
+}
+
+function isInsideListItem($from: EditorState['selection']['$from']): boolean {
+  return $from.node(-1).type.name === 'list_item';
+}
+
+function addStoredMarksForTextContent(
+  tr: LooseTr,
+  nextNode: Node,
+  marks: Mark[]
+): LooseTr {
+  nextNode.descendants((child) => {
+    if (child.type.name === 'text') {
+      tr = addStoredMarks(tr, marks);
+    }
+  });
+
+  if (nextNode.content.size === 0) {
+    tr = addStoredMarks(tr, marks);
+  }
+
+  return tr;
+}
+
+function addStoredMarks(tr: LooseTr, marks: Mark[]): LooseTr {
+  for (const mark of marks) {
+    tr = tr.addStoredMark(mark);
+  }
+  return tr;
 }
 
 function findPreviousParagraph(

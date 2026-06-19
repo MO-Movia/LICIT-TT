@@ -28,7 +28,7 @@ export class CapcoView implements NodeView {
     const spec = DOMSerializer.renderSpec(
       outerView.dom.ownerDocument,
       this.node.type.spec.toDOM(this.node)
-    );
+    );   
     this.dom = spec.dom;
   }
 

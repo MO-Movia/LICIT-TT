@@ -3,8 +3,8 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Schema, Slice} from 'prosemirror-model';
-import {DecorationSet, EditorView} from 'prosemirror-view';
+import { Schema, Slice } from 'prosemirror-model';
+import { DecorationSet, EditorView } from 'prosemirror-view';
 
 const mockCreatePopUp = jest.fn();
 const mockInsertReference = jest.fn();
@@ -34,7 +34,7 @@ jest.mock('../../core', () => ({
   }),
 }));
 
-import {getDefaultMenuItems} from './FloatingMenuDefaults';
+import { getDefaultMenuItems } from './FloatingMenuDefaults';
 import {
   CMPluginKey,
   FloatingMenuPlugin,
@@ -43,7 +43,6 @@ import {
   clipboardHasData,
   clipboardHasProseMirrorData,
   closeExistingPopup,
-  copySelectionPlain,
   copySelectionRich,
   createCitationHandler,
   createInfoIconHandler,
@@ -54,7 +53,6 @@ import {
   getDecorations,
   getDocSlices,
   openFloatingMenu,
-  pasteAsPlainText,
   pasteAsReference,
   pasteFromClipboard,
   positionAboveOrBelow,
@@ -79,17 +77,17 @@ const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
 function createFloatingSchema(): Schema {
   return new Schema({
     nodes: {
-      doc: {content: 'paragraph+'},
+      doc: { content: 'paragraph+' },
       paragraph: {
         content: 'text*',
         group: 'block',
         attrs: {
-          objectId: {default: null},
-          isDeco: {default: null},
+          objectId: { default: null },
+          isDeco: { default: null },
         },
         toDOM: () => ['p', 0],
       },
-      text: {group: 'inline'},
+      text: { group: 'inline' },
     },
     marks: {},
   });
@@ -116,7 +114,7 @@ function createMockView(overrides: Record<string, unknown> = {}): EditorView {
     schema.node('doc', null, [
       schema.node(
         'paragraph',
-        {objectId: 'para-1'},
+        { objectId: 'para-1' },
         [schema.text('Alpha paragraph')]
       ),
     ]);
@@ -125,10 +123,10 @@ function createMockView(overrides: Record<string, unknown> = {}): EditorView {
       empty: false,
       from: 1,
       to: doc.content.size,
-      $from: {depth: 1, start: () => 0, before: () => 0},
-      $to: {depth: 1, end: () => doc.content.size},
+      $from: { depth: 1, start: () => 0, before: () => 0 },
+      $to: { depth: 1, end: () => doc.content.size },
       content: () => ({
-        content: {toJSON: () => [{type: 'paragraph'}]},
+        content: { toJSON: () => [{ type: 'paragraph' }] },
         openStart: 0,
         openEnd: 0,
       }),
@@ -153,7 +151,7 @@ function createMockView(overrides: Record<string, unknown> = {}): EditorView {
       node: {
         attrs: {
           objectId: 'doc-object-id',
-          objectMetaData: {name: 'Document Name'},
+          objectMetaData: { name: 'Document Name' },
         },
       },
     },
@@ -161,7 +159,7 @@ function createMockView(overrides: Record<string, unknown> = {}): EditorView {
     editable: true,
     focus: jest.fn(),
     hasFocus: jest.fn(() => false),
-    posAtCoords: jest.fn(() => ({pos: 7})),
+    posAtCoords: jest.fn(() => ({ pos: 7 })),
     state: {
       ...baseState,
       ...(overrides.state as Record<string, unknown>),
@@ -222,23 +220,46 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('returns key command plugins and effective schema', () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     const schema = createFloatingSchema();
 
     const keyPlugins = plugin.initKeyCommands();
 
-    expect(keyPlugins).toHaveLength(4);
+    expect(keyPlugins).toHaveLength(1);
     expect(plugin.getEffectiveSchema(schema)).toBe(schema);
+  });
+
+  it('runs the paste reference key command', async () => {
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin.sliceManager = mockSliceManager as never;
+    mockSliceManager.createSliceViaDialog.mockResolvedValue(null);
+    clipboardReadText.mockResolvedValue(
+      JSON.stringify({ sliceModel: { id: 'slice-model-id' } })
+    );
+    const [keyPlugin] = plugin.initKeyCommands() as unknown as Array<{
+      map: Record<string, unknown>;
+    }>;
+    const command = keyPlugin.map['Mod-Alt-v'] as (
+      state: unknown,
+      dispatch: unknown,
+      view: EditorView
+    ) => Promise<void>;
+
+    await command(null, null, createMockView());
+
+    expect(mockSliceManager.createSliceViaDialog).toHaveBeenCalledWith({
+      id: 'slice-model-id',
+    });
   });
 
   it('copies rich text, updates popup state, and closes the popup', async () => {
     const plugin = new FloatingMenuPlugin(
-      {isReadonly: false} as never,
-      {instanceUrl: 'https://instance/', referenceUrl: 'https://ref/'}
+      { isReadonly: false } as never,
+      { instanceUrl: 'https://instance/', referenceUrl: 'https://ref/' }
     );
     const handle = {
       close: jest.fn(),
-      props: {existing: true},
+      props: { existing: true },
       update: jest.fn(),
     };
     plugin._popUpHandle = handle;
@@ -261,14 +282,34 @@ describe('FloatingMenuPlugin helpers', () => {
     expect(view.focus).toHaveBeenCalled();
     expect(clipboardWriteText).toHaveBeenCalled();
     expect(handle.update).toHaveBeenCalledWith(
-      expect.objectContaining({pasteAsReferenceEnabled: true})
+      expect.objectContaining({ pasteAsReferenceEnabled: true })
     );
     expect(handle.close).toHaveBeenCalledWith(null);
     expect(plugin._popUpHandle).toBeNull();
   });
 
+  it('handles rich copy while focused and logs clipboard write failures', async () => {
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    const view = createMockView({
+      hasFocus: jest.fn(() => true),
+    });
+    clipboardWriteText.mockRejectedValue(new Error('write failed'));
+    jest.spyOn(CMPluginKey, 'get').mockReturnValue(plugin);
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+    copySelectionRich(view, plugin);
+    await flushPromises();
+
+    expect(view.hasFocus).toHaveBeenCalled();
+    expect(view.focus).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Clipboard write failed',
+      expect.any(Error)
+    );
+  });
+
   it('skips rich copy when the selection is empty', () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     const view = createMockView({
       selection: {
         empty: true,
@@ -281,15 +322,15 @@ describe('FloatingMenuPlugin helpers', () => {
 
   it('creates a slice object from paragraph metadata and falls back to untitled', () => {
     const plugin = new FloatingMenuPlugin(
-      {isReadonly: false} as never,
-      {instanceUrl: 'https://instance/', referenceUrl: 'https://ref/'}
+      { isReadonly: false } as never,
+      { instanceUrl: 'https://instance/', referenceUrl: 'https://ref/' }
     );
     const schema = createFloatingSchema();
     const doc = schema.node('doc', null, [
-      schema.node('paragraph', {objectId: 'one'}, [schema.text('First text')]),
-      schema.node('paragraph', {objectId: 'two'}, []),
+      schema.node('paragraph', { objectId: 'one' }, [schema.text('First text')]),
+      schema.node('paragraph', { objectId: 'two' }, []),
     ]);
-    const view = createMockView({doc});
+    const view = createMockView({ doc });
     plugin._urlConfig = {
       instanceUrl: 'https://instance/',
       referenceUrl: 'https://ref/',
@@ -314,14 +355,14 @@ describe('FloatingMenuPlugin helpers', () => {
 
   it('creates an untitled slice object when paragraph ids and text are missing', () => {
     const plugin = new FloatingMenuPlugin(
-      {isReadonly: false} as never,
+      { isReadonly: false } as never,
       {}
     );
     const schema = createFloatingSchema();
     const doc = schema.node('doc', null, [
-      schema.node('paragraph', {objectId: undefined}, []),
+      schema.node('paragraph', { objectId: undefined }, []),
     ]);
-    const view = createMockView({doc});
+    const view = createMockView({ doc });
     plugin._urlConfig = {};
     jest.spyOn(CMPluginKey, 'get').mockReturnValue(plugin);
     jest.spyOn(globalThis, 'Date').mockImplementation(
@@ -336,54 +377,27 @@ describe('FloatingMenuPlugin helpers', () => {
     expect(result.from).toBeNull();
     expect(result.to).toBeNull();
     expect(result.name).toBe('Untitled - 2026-04-24');
-  });
+  }); 
 
-  it('copies plain text when a non-empty range is selected', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
-    const view = createMockView({
-      state: {
-        doc: {
-          slice: jest.fn(() => ({
-            content: {
-              size: 4,
-              textBetween: jest.fn(() => 'text copy'),
-            },
-          })),
-        },
-        selection: {
-          from: 1,
-          to: 3,
-        },
-      },
-    });
+  it('creates a slice object when plugin URL config is unavailable', () => {
+    const view = createMockView();
+    jest.spyOn(CMPluginKey, 'get').mockReturnValue(null);
+    jest.spyOn(globalThis, 'Date').mockImplementation(
+      () =>
+        ({
+          toISOString: () => '2026-04-24T00:00:00.000Z',
+        }) as Date
+    );
 
-    copySelectionPlain(view, plugin);
-    await flushPromises();
+    const result = createSliceObject(view);
 
-    expect(clipboardWriteText).toHaveBeenCalledWith('text copy');
-    expect(plugin._popUpHandle).toBeNull();
-  });
-
-  it('skips plain copy when the selection is collapsed', () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    const view = createMockView({
-      hasFocus: jest.fn(() => true),
-      state: {
-        selection: {
-          from: 4,
-          to: 4,
-        },
-      },
-    });
-
-    expect(copySelectionPlain(view, plugin)).toBeUndefined();
-    expect(clipboardWriteText).not.toHaveBeenCalled();
+    expect(result.referenceType).toBeUndefined();
+    expect(result.id).toContain('undefined');
   });
 
   it('pastes parsed slice JSON from the clipboard', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin._popUpHandle = { close: jest.fn() } as never;
     clipboardReadText.mockResolvedValue('{"content":[]}');
     const slice = {} as Slice;
     const fromJSONSpy = jest.spyOn(Slice, 'fromJSON').mockReturnValue(slice);
@@ -398,8 +412,8 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('pastes plain text from the clipboard', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin._popUpHandle = { close: jest.fn() } as never;
     clipboardReadText.mockResolvedValue('hello world');
     const view = createMockView();
 
@@ -414,10 +428,10 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('handles clipboard paste errors and still closes the popup', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin._popUpHandle = { close: jest.fn() } as never;
     clipboardReadText.mockRejectedValue(new Error('clipboard failed'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     await pasteFromClipboard(createMockView(), plugin);
 
@@ -426,8 +440,8 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('pastes as reference when slice creation succeeds', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin._popUpHandle = { close: jest.fn() } as never;
     plugin.sliceManager = mockSliceManager as never;
     mockSliceManager.createSliceViaDialog.mockResolvedValue({
       id: 'slice-id',
@@ -435,7 +449,7 @@ describe('FloatingMenuPlugin helpers', () => {
       from: 'slice-from',
     });
     clipboardReadText.mockResolvedValue(
-      JSON.stringify({sliceModel: {id: 'slice-model-id'}})
+      JSON.stringify({ sliceModel: { id: 'slice-model-id' } })
     );
     const view = createMockView();
     jest.spyOn(CMPluginKey, 'get').mockReturnValue(plugin);
@@ -456,12 +470,12 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('returns early when slice creation dialog is cancelled', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin._popUpHandle = { close: jest.fn() } as never;
     plugin.sliceManager = mockSliceManager as never;
     mockSliceManager.createSliceViaDialog.mockResolvedValue(null);
     clipboardReadText.mockResolvedValue(
-      JSON.stringify({sliceModel: {id: 'slice-model-id'}})
+      JSON.stringify({ sliceModel: { id: 'slice-model-id' } })
     );
 
     await pasteAsReference(createMockView(), plugin);
@@ -471,56 +485,17 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('handles missing slice dialog support in pasteAsReference', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin._popUpHandle = { close: jest.fn() } as never;
     plugin.sliceManager = {} as never;
     clipboardReadText.mockResolvedValue(
-      JSON.stringify({sliceModel: {id: 'slice-model-id'}})
+      JSON.stringify({ sliceModel: { id: 'slice-model-id' } })
     );
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     await pasteAsReference(createMockView(), plugin);
 
     expect(consoleSpy).toHaveBeenCalled();
-    expect(plugin._popUpHandle).toBeNull();
-  });
-
-  it('pastes plain text from parsed ProseMirror JSON content', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
-    clipboardReadText.mockResolvedValue('{"content":[]}');
-    jest.spyOn(Slice, 'fromJSON').mockReturnValue({
-      content: {
-        forEach: (cb: (node: {textContent: string}) => void) => {
-          cb({textContent: 'one'});
-          cb({textContent: 'two'});
-        },
-      },
-    } as unknown as Slice);
-    const view = createMockView();
-
-    await pasteAsPlainText(view, plugin);
-
-    expect(view.state.tr.insertText).toHaveBeenCalledWith(
-      'one\ntwo',
-      view.state.selection.from,
-      view.state.selection.to
-    );
-  });
-
-  it('falls back to raw clipboard text when plain-text JSON parsing fails', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
-    clipboardReadText.mockResolvedValue('raw text');
-    const view = createMockView();
-
-    await pasteAsPlainText(view, plugin);
-
-    expect(view.state.tr.insertText).toHaveBeenCalledWith(
-      'raw text',
-      view.state.selection.from,
-      view.state.selection.to
-    );
     expect(plugin._popUpHandle).toBeNull();
   });
 
@@ -546,7 +521,7 @@ describe('FloatingMenuPlugin helpers', () => {
     const doc = schema.node('doc', null, [
       schema.node('paragraph', {
         objectId: 'one',
-        isDeco: {isSlice: true, isTag: true, isComment: true},
+        isDeco: { isSlice: true, isTag: true, isComment: true },
       }, [schema.text('Decorated')]),
     ]);
     const state = {
@@ -561,10 +536,10 @@ describe('FloatingMenuPlugin helpers', () => {
   it('skips non-paragraph nodes and undecorated paragraphs', () => {
     const schema = createFloatingSchema();
     const doc = schema.node('doc', null, [
-      schema.node('paragraph', {objectId: 'one'}, [schema.text('Plain')]),
+      schema.node('paragraph', { objectId: 'one' }, [schema.text('Plain')]),
     ]);
 
-    const decorations = getDecorations(doc, {doc} as never);
+    const decorations = getDecorations(doc, { doc } as never);
 
     expect(decorations.find()).toHaveLength(1);
   });
@@ -572,7 +547,7 @@ describe('FloatingMenuPlugin helpers', () => {
   it('returns only paragraph decorations when non-paragraph nodes are present', () => {
     const schema = new Schema({
       nodes: {
-        doc: {content: 'block+'},
+        doc: { content: 'block+' },
         heading: {
           content: 'text*',
           group: 'block',
@@ -581,25 +556,25 @@ describe('FloatingMenuPlugin helpers', () => {
         paragraph: {
           content: 'text*',
           group: 'block',
-          attrs: {isDeco: {default: null}, objectId: {default: null}},
+          attrs: { isDeco: { default: null }, objectId: { default: null } },
           toDOM: () => ['p', 0],
         },
-        text: {group: 'inline'},
+        text: { group: 'inline' },
       },
       marks: {},
     });
     const doc = schema.node('doc', null, [
       schema.node('heading', null, [schema.text('Heading')]),
-      schema.node('paragraph', {objectId: 'one'}, [schema.text('Para')]),
+      schema.node('paragraph', { objectId: 'one' }, [schema.text('Para')]),
     ]);
 
-    const decorations = getDecorations(doc, {doc} as never);
+    const decorations = getDecorations(doc, { doc } as never);
 
     expect(decorations.find()).toHaveLength(1);
   });
 
   it('positions the popup using defaults and viewport clamping', () => {
-    expect(positionAboveOrBelow()).toEqual({x: 4, y: 4, w: 0, h: 0});
+    expect(positionAboveOrBelow()).toEqual({ x: 4, y: 4, w: 0, h: 0 });
 
     Object.defineProperty(globalThis, 'innerWidth', {
       configurable: true,
@@ -611,8 +586,8 @@ describe('FloatingMenuPlugin helpers', () => {
     });
 
     const anchored = positionAboveOrBelow(
-      {x: 190, y: 170, w: 20, h: 20},
-      {x: 0, y: 0, w: 180, h: 220}
+      { x: 190, y: 170, w: 20, h: 20 },
+      { x: 0, y: 0, w: 180, h: 220 }
     );
 
     expect(anchored.x).toBeGreaterThanOrEqual(6);
@@ -630,8 +605,8 @@ describe('FloatingMenuPlugin helpers', () => {
     });
 
     const anchored = positionAboveOrBelow(
-      {x: 20, y: 300, w: 20, h: 20},
-      {x: 0, y: 0, w: 100, h: 250}
+      { x: 20, y: 300, w: 20, h: 20 },
+      { x: 0, y: 0, w: 100, h: 250 }
     );
 
     expect(anchored.y).toBeLessThan(300);
@@ -648,8 +623,8 @@ describe('FloatingMenuPlugin helpers', () => {
     });
 
     const anchored = positionAboveOrBelow(
-      {x: 0, y: 0, w: 10, h: 10},
-      {x: 0, y: 0, w: 0, h: 0}
+      { x: 0, y: 0, w: 10, h: 10 },
+      { x: 0, y: 0, w: 0, h: 0 }
     );
 
     expect(anchored.x).toBe(6);
@@ -658,7 +633,7 @@ describe('FloatingMenuPlugin helpers', () => {
 
   it('creates menu callbacks with the expected enablement', () => {
     const view = createMockView();
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     const callbacks = createMenuCallbacks(view, plugin, false, true);
 
     expect(callbacks.enableCopy()).toBe(true);
@@ -668,6 +643,43 @@ describe('FloatingMenuPlugin helpers', () => {
     expect(callbacks.enableTagAndInfoicon()).toBe(true);
   });
 
+  it('wires menu action callbacks to their handlers', async () => {
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin.sliceManager = mockSliceManager as never;
+    mockSliceManager.createSliceViaDialog.mockResolvedValue(null);
+    mockSliceManager.insertReference.mockResolvedValue({
+      id: 'ref-id',
+      source: 'ref-source',
+      from: 'ref-from',
+    });
+    clipboardReadText
+      .mockResolvedValueOnce('plain callback text')
+      .mockResolvedValueOnce(
+        JSON.stringify({ sliceModel: { id: 'slice-model-id' } })
+      );
+    const view = createMockView();
+    jest.spyOn(CMPluginKey, 'get').mockReturnValue(plugin);
+
+    const callbacks = createMenuCallbacks(view, plugin);
+
+    callbacks.copyRich();
+    await callbacks.paste();
+    await callbacks.pasteAsReference();
+    callbacks.createCitation();
+    callbacks.createInfoIcon();
+    callbacks.createSlice();
+    await callbacks.showReferences();
+    callbacks.addComment();
+    callbacks.addTag();
+    await flushPromises();
+
+    expect(view.dispatch).toHaveBeenCalled();
+    expect(mockSliceManager.addCitation).toHaveBeenCalled();
+    expect(mockSliceManager.addInfoIcon).toHaveBeenCalled();
+    expect(mockSliceManager.createSliceViaDialog).toHaveBeenCalled();
+    expect(mockSliceManager.insertReference).toHaveBeenCalled();
+  });
+
   it('closes an existing popup and clears popup-open on close', () => {
     const wrapper = document.createElement('div');
     wrapper.className = 'pm-hamburger-wrapper popup-open';
@@ -675,8 +687,8 @@ describe('FloatingMenuPlugin helpers', () => {
     wrapper.appendChild(anchor);
     document.body.appendChild(wrapper);
 
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
-    plugin._popUpHandle = {close: jest.fn()} as never;
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
+    plugin._popUpHandle = { close: jest.fn() } as never;
 
     closeExistingPopup(plugin);
     expect(plugin._popUpHandle?.close).toHaveBeenCalledWith(null);
@@ -690,36 +702,36 @@ describe('FloatingMenuPlugin helpers', () => {
 
   it('opens a floating menu using supplied menu items', async () => {
     const plugin = new FloatingMenuPlugin(
-      {isReadonly: false} as never,
+      { isReadonly: false } as never,
       {},
-      [{id: 'custom'} as never]
+      [{ id: 'custom' } as never]
     );
-    mockCreatePopUp.mockReturnValue({close: jest.fn()});
+    mockCreatePopUp.mockReturnValue({ close: jest.fn() });
 
-    openFloatingMenu(plugin, createMockView(), 9, undefined, {x: 1, y: 2});
+    openFloatingMenu(plugin, createMockView(), 9, undefined, { x: 1, y: 2 });
     await flushPromises();
 
     expect(mockCreatePopUp).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        context: expect.objectContaining({paragraphPos: 9}),
-        items: [{id: 'custom'}],
+        context: expect.objectContaining({ paragraphPos: 9 }),
+        items: [{ id: 'custom' }],
         isReadonly: false,
       }),
       expect.objectContaining({
         autoDismiss: false,
-        contextPos: {x: 1, y: 2},
+        contextPos: { x: 1, y: 2 },
         position: positionAboveOrBelow,
       })
     );
   });
 
   it('handles errors while opening a floating menu', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     mockCreatePopUp.mockImplementation(() => {
       throw new Error('popup failed');
     });
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     openFloatingMenu(plugin, createMockView());
     await flushPromises();
@@ -728,7 +740,7 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('loads document slices and stores them', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     plugin.sliceManager = mockSliceManager as never;
     mockSliceManager.getDocumentSlices.mockResolvedValue(['slice-a']);
     const view = createMockView();
@@ -740,10 +752,10 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('handles document slice loading failures', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     plugin.sliceManager = mockSliceManager as never;
     mockSliceManager.getDocumentSlices.mockRejectedValue(new Error('load failed'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     await getDocSlices.call(plugin, createMockView());
 
@@ -756,7 +768,7 @@ describe('FloatingMenuPlugin helpers', () => {
         doc: {
           nodeAt: jest.fn(() => ({
             attrs: {
-              isDeco: {isSlice: false},
+              isDeco: { isSlice: false },
             },
           })),
         },
@@ -777,7 +789,7 @@ describe('FloatingMenuPlugin helpers', () => {
       1,
       undefined,
       expect.objectContaining({
-        isDeco: expect.objectContaining({isSlice: true}),
+        isDeco: expect.objectContaining({ isSlice: true }),
       })
     );
     expect(view.dispatch).toHaveBeenCalled();
@@ -805,7 +817,7 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('creates a new slice, inserts references, and handles plugin shortcuts', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     plugin.sliceManager = mockSliceManager as never;
     mockSliceManager.createSliceViaDialog.mockResolvedValue({
       id: 'slice-id',
@@ -823,7 +835,7 @@ describe('FloatingMenuPlugin helpers', () => {
         ...baseView.state,
         doc: Object.assign(baseView.state.doc, {
           nodeAt: jest.fn(() => ({
-            attrs: {isDeco: {isSlice: false}},
+            attrs: { isDeco: { isSlice: false } },
           })),
         }),
         tr: {
@@ -855,7 +867,7 @@ describe('FloatingMenuPlugin helpers', () => {
 
   it('handles missing plugins and rejected slice actions gracefully', async () => {
     jest.spyOn(CMPluginKey, 'get').mockReturnValue(null);
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
     const view = createMockView();
 
     expect(createNewSlice(view)).toBeUndefined();
@@ -863,7 +875,7 @@ describe('FloatingMenuPlugin helpers', () => {
     expect(createInfoIconHandler(view)).toBeUndefined();
     expect(createCitationHandler(view)).toBeUndefined();
 
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     plugin.sliceManager = mockSliceManager as never;
     mockSliceManager.createSliceViaDialog.mockRejectedValue(new Error('slice failed'));
     mockSliceManager.insertReference.mockRejectedValue(new Error('reference failed'));
@@ -889,14 +901,14 @@ describe('FloatingMenuPlugin helpers', () => {
   });
 
   it('adds an alt-right-click handler that opens only when a position is found', async () => {
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     plugin.sliceManager = mockSliceManager as never;
     const view = createMockView({
       posAtCoords: jest.fn()
         .mockReturnValueOnce(undefined)
-        .mockReturnValueOnce({pos: 11}),
+        .mockReturnValueOnce({ pos: 11 }),
     });
-    mockCreatePopUp.mockReturnValue({close: jest.fn()});
+    mockCreatePopUp.mockReturnValue({ close: jest.fn() });
 
     addAltRightClickHandler(view, plugin);
     view.dom.dispatchEvent(new MouseEvent('contextmenu', {
@@ -921,9 +933,9 @@ describe('FloatingMenuPlugin helpers', () => {
   it('covers plugin state transitions and view event handlers', async () => {
     const schema = createFloatingSchema();
     const doc = schema.node('doc', null, [
-      schema.node('paragraph', {objectId: 'one'}, [schema.text('A')]),
+      schema.node('paragraph', { objectId: 'one' }, [schema.text('A')]),
     ]);
-    const plugin = new FloatingMenuPlugin({isReadonly: false} as never);
+    const plugin = new FloatingMenuPlugin({ isReadonly: false } as never);
     plugin.sliceManager = mockSliceManager as never;
     plugin._urlConfig = {};
     const pluginState = plugin.spec.state.init({}, {
@@ -943,7 +955,7 @@ describe('FloatingMenuPlugin helpers', () => {
       } as never,
       pluginState,
       null,
-      {doc} as never
+      { doc } as never
     );
     expect(unchanged.decorations).toBeDefined();
 
@@ -953,9 +965,9 @@ describe('FloatingMenuPlugin helpers', () => {
         mapping: {},
         doc,
       } as never,
-      {decorations: undefined},
+      { decorations: undefined },
       null,
-      {doc} as never
+      { doc } as never
     );
     expect(unchangedWithoutDecos.decorations).toBeUndefined();
 
@@ -963,13 +975,13 @@ describe('FloatingMenuPlugin helpers', () => {
       {
         doc,
         docChanged: true,
-        getMeta: () => ({forceRescan: true}),
+        getMeta: () => ({ forceRescan: true }),
         mapping: {},
         steps: [],
       } as never,
       pluginState,
       null,
-      {doc} as never
+      { doc } as never
     );
     expect(rescanned.decorations).toBeDefined();
 
@@ -979,16 +991,20 @@ describe('FloatingMenuPlugin helpers', () => {
         docChanged: true,
         getMeta: () => undefined,
         mapping: {},
-        steps: [{toJSON: () => ({stepType: 'replace'})}],
+        steps: [{ toJSON: () => ({ stepType: 'replace' }) }],
       } as never,
       pluginState,
       null,
-      {doc} as never
+      { doc } as never
     );
     expect(rescannedByStep.decorations).toBeDefined();
+    jest.spyOn(plugin, 'getState').mockReturnValue(pluginState);
+    expect(plugin.spec.props.decorations.call(plugin, { doc })).toBe(
+      pluginState.decorations
+    );
 
-    const view = createMockView({state: {doc}});
-    mockCreatePopUp.mockReturnValue({close: jest.fn()});
+    const view = createMockView({ state: { doc } });
+    mockCreatePopUp.mockReturnValue({ close: jest.fn() });
     plugin.spec.view(view);
 
     const wrapper = document.createElement('span');
@@ -999,7 +1015,7 @@ describe('FloatingMenuPlugin helpers', () => {
     wrapper.appendChild(icon);
     view.dom.appendChild(wrapper);
 
-    icon.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true}));
+    icon.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
     view.dom.dispatchEvent(new MouseEvent('contextmenu', {
       altKey: true,
       bubbles: true,
@@ -1009,11 +1025,11 @@ describe('FloatingMenuPlugin helpers', () => {
     }));
     await flushPromises();
 
-    plugin._popUpHandle = {close: jest.fn()} as never;
+    plugin._popUpHandle = { close: jest.fn() } as never;
     const outside = document.createElement('div');
     document.body.appendChild(outside);
-    outside.dispatchEvent(new MouseEvent('click', {bubbles: true}));
-    view.dom.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true}));
+    outside.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    view.dom.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
     view.editable = false;
     view.dom.dispatchEvent(new MouseEvent('contextmenu', {
       altKey: true,

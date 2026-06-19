@@ -42,6 +42,18 @@ function isValidStyleName(styleName?: string) {
   );
 }
 
+function shouldFallbackToNormalStyle(styleName?: string): boolean {
+  if (!styleName) {
+    return true;
+  }
+
+  const normalized = styleName.trim().toLowerCase();
+  return (
+    normalized === RESERVED_STYLE_NONE.toLowerCase() ||
+    normalized === 'default'
+  );
+}
+
 export function addStyleToList(style: Style): Style[] {
   if (0 < customStyles.length && style?.styleName) {
     const index = customStyles.findIndex(
@@ -82,10 +94,15 @@ export function getCustomStyleByName(name: string): Style {
         style = customStyles[i];
         has = true;
       }
-      // Marks are not getting applied to an undefined style.
-      else {
-        style = DEFAULT_NORMAL_STYLE;
-      }
+    }
+
+    // Imported docs may carry style names that do not exist in the runtime
+    // style list (e.g. class-derived names like CellHeading). Do not coerce
+    // those unknown names to Normal, or we inject Normal spacing unexpectedly.
+    if (!has) {
+      style = shouldFallbackToNormalStyle(name)
+        ? DEFAULT_NORMAL_STYLE
+        : ({ styleName: name, styles: {} });
     }
   } else {
     style = DEFAULT_NORMAL_STYLE;
@@ -198,54 +215,95 @@ export function isPreviousLevelExists(previousLevel: number) {
 // To create a style object from the customstyles to show the styles in the example piece.
 export function getCustomStyle(customStyle) {
   const style: CSSStyle = {};
-  const styleHandlers = {
-    strong: () => {
-      if (!customStyle.boldPartial && customStyle.strong) {
-        style.fontWeight = 'bold';
-      }
-    },
-    em: () => {
-      if (customStyle.em) {
-        style.fontStyle = 'italic';
-      }
-    },
-    color: () => {
-      style.color = customStyle.color;
-    },
-    textHighlight: () => {
-      style.backgroundColor = customStyle.textHighlight;
-    },
-    fontSize: () => {
-      style.fontSize = customStyle.fontSize;
-    },
-    fontName: () => {
-      style.fontName = customStyle.fontName;
-    },
-    strike: () => {
-      if (customStyle.strike) {
-        style.textDecorationLine = 'line-through';
-      }
-    },
-    super: () => {
-      style.verticalAlign = 'super';
-    },
-    underline: () => {
-      if (customStyle.underline) {
-        style.textDecoration = 'underline';
-      }
-    },
-    textAlign: () => {
-      style.textAlign = customStyle.textAlign;
-    },
-    lineHeight: () => {
-      style.lineHeight = customStyle.lineHeight;
-    },
-  };
 
   for (const property in customStyle) {
-    styleHandlers[property]?.();
+    applyCustomStyleProperty(style, customStyle, property);
   }
   return style;
+}
+
+function applyCustomStyleProperty(
+  style: CSSStyle,
+  customStyle,
+  property: string
+): void {
+  const styleWithMargins = style as CSSStyle & {
+    marginTop?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    marginRight?: string;
+  };
+
+  switch (property) {
+    case 'strong':
+      applyStrongStyle(style, customStyle);
+      break;
+    case 'em':
+      applyConditionalStyle(style, customStyle[property], 'fontStyle', 'italic');
+      break;
+    case 'color':
+      style.color = customStyle[property];
+      break;
+    case 'textHighlight':
+      style.backgroundColor = customStyle[property];
+      break;
+    case 'fontSize':
+      style.fontSize = customStyle[property];
+      break;
+    case 'fontName':
+      style.fontName = customStyle[property];
+      break;
+    case 'strike':
+      applyConditionalStyle(
+        style,
+        customStyle[property],
+        'textDecorationLine',
+        'line-through'
+      );
+      break;
+    case 'super':
+      style.verticalAlign = 'super';
+      break;
+    case 'underline':
+      applyConditionalStyle(
+        style,
+        customStyle[property],
+        'textDecoration',
+        'underline'
+      );
+      break;
+    case 'textAlign':
+      style.textAlign = customStyle[property];
+      break;
+    case 'lineHeight':
+      style.lineHeight = customStyle[property];
+      break;
+    case 'marginTop':
+    case 'marginBottom':
+    case 'marginLeft':
+    case 'marginRight':
+      styleWithMargins[property] = customStyle[property];
+      break;
+    default:
+      break;
+  }
+}
+
+function applyStrongStyle(style: CSSStyle, customStyle): void {
+  if (!customStyle.boldPartial && customStyle.strong) {
+    style.fontWeight = 'bold';
+  }
+}
+
+function applyConditionalStyle(
+  style: CSSStyle,
+  enabled: unknown,
+  property: string,
+  value: string
+): void {
+  if (enabled) {
+    (style as Record<string, string>)[property] = value;
+  }
 }
 // method to save,retrive,rename and remove style from the style server.
 export function saveStyle(

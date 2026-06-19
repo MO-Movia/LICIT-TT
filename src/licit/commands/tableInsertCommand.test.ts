@@ -16,7 +16,10 @@ jest.mock('../ui/tableGridSizeEditor', () => {
   return jest.fn(() => '<div>Mocked Table Grid Size Editor</div>');
 });
 
-jest.mock('nullthrows', () => jest.fn(<T>(val: T) => val));
+jest.mock('../nullthrows', () => ({
+  __esModule: true,
+  default: jest.fn(<T>(val: T) => val),
+}));
 
 describe('TableInsertCommand', () => {
   let command;

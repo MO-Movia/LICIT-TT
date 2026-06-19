@@ -12,6 +12,8 @@ import { MARK_TEXT_COLOR } from './MarkNames';
 import { EditorView } from 'prosemirror-view';
 import * as applymark from './applyMark';
 import * as findNodesWithSameMark from './findNodesWithSameMark';
+import * as createPopUpModule from './ui/createPopUp';
+import type { PopUpHandle } from './ui/createPopUp';
 
 describe('TextColorCommand', () => {
   let plugin!: TextColorCommand;
@@ -399,6 +401,50 @@ describe('TextColorCommand', () => {
     );
 
     expect(result).toBeDefined();
+  });
+
+  it('should resolve selected color when popup closes with an active text color', async () => {
+    const popUpHandle: PopUpHandle = {
+      close: jest.fn(),
+      update: jest.fn(),
+    };
+    const createPopUpSpy = jest
+      .spyOn(createPopUpModule, 'createPopUp')
+      .mockReturnValue(popUpHandle);
+    const markType = { name: MARK_TEXT_COLOR };
+    const state = {
+      plugins: [],
+      selection: { from: 1, to: 2 },
+      schema: { marks: { 'mark-text-color': markType } },
+      doc: {},
+      tr: {
+        doc: {
+          nodeAt: () => ({
+            marks: [{ attrs: { color: 'green' } }],
+          }),
+        },
+      },
+    } as unknown as EditorState;
+    jest
+      .spyOn(findNodesWithSameMark, 'findNodesWithSameMark')
+      .mockReturnValue(null);
+
+    const promise = plugin.waitForUserInput(
+      state,
+      jest.fn(),
+      {} as unknown as EditorView,
+      { currentTarget: document.createElement('button') } as unknown as Event
+    );
+
+    const popUpParams = createPopUpSpy.mock.calls[0][2];
+    popUpParams.onClose?.('green');
+
+    await expect(promise).resolves.toBe('green');
+    popUpParams.onClose?.('ignored');
+    expect(createPopUpSpy.mock.calls[0][1]).toMatchObject({
+      hex: null,
+      Textcolor: 'green',
+    });
   });
 
   it('executeWithUserInput function() should return false when color is undefined', () => {

@@ -34,7 +34,7 @@ describe('TableHeaderEx Extension', () => {
     expect(headerNode.spec.attrs).toHaveProperty('fontSize');
     expect(headerNode.spec.attrs).toHaveProperty('letterSpacing');
     expect(headerNode.spec.attrs).toHaveProperty('marginTop');
-    expect(headerNode.spec.attrs).toHaveProperty('MarginBottom');
+    expect(headerNode.spec.attrs).toHaveProperty('marginBottom');
   });
 
   test('should parse custom style attrs from table header HTML', () => {
@@ -53,7 +53,7 @@ describe('TableHeaderEx Extension', () => {
     expect(headerAttrs?.fontSize).toBe('20px');
     expect(headerAttrs?.letterSpacing).toBe('2px');
     expect(headerAttrs?.marginTop).toBe('7px');
-    expect(headerAttrs?.MarginBottom).toBe('11px');
+    expect(headerAttrs?.marginBottom).toBe('11px');
   });
 
   test('should render table header styles and cellStyle', () => {
@@ -77,4 +77,3 @@ describe('TableHeaderEx Extension', () => {
     expect(html).toContain('font-size: 19px');
   });
 });
-

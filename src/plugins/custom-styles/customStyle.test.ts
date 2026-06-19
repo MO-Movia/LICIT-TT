@@ -10,6 +10,7 @@ import {
   isStylesLoaded,
   hasStyleRuntime,
   getCustomStyle,
+  getCustomStyleByName,
   saveStyle,
   setStyleRuntime,
   renameStyle,
@@ -52,6 +53,24 @@ describe('customstyle', () => {
     };
     const test = getCustomStyle(cstyle);
     expect(test).toBeDefined();
+  });
+  it('should map paragraph margin properties in getCustomStyle', () => {
+    const cstyle = {
+      marginTop: '0pt',
+      marginBottom: '0pt',
+      marginLeft: '1pt',
+      marginRight: '2pt',
+    };
+    const test = getCustomStyle(cstyle) as {
+      marginTop?: string;
+      marginBottom?: string;
+      marginLeft?: string;
+      marginRight?: string;
+    };
+    expect(test.marginTop).toBe('0pt');
+    expect(test.marginBottom).toBe('0pt');
+    expect(test.marginLeft).toBe('1pt');
+    expect(test.marginRight).toBe('2pt');
   });
   it('should handle saveStyle', () => {
     setStyleRuntime({
@@ -104,5 +123,19 @@ describe('customstyle', () => {
         { styleName: 'Normal', docType: 'asd', styles: { strong: true, styleLevel: 2 } },
       ])
     ).toBeUndefined();
+  });
+
+  it('should not fallback unknown style names to Normal style defaults', () => {
+    setStyles([
+      {
+        styleName: 'Normal',
+        docType: 'asd',
+        styles: { paragraphSpacingAfter: '3' },
+      },
+    ]);
+
+    const style = getCustomStyleByName('CellHeading');
+    expect(style.styleName).toBe('CellHeading');
+    expect(style.styles).toEqual({});
   });
 });

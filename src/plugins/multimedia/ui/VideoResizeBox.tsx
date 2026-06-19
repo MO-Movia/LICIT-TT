@@ -7,7 +7,6 @@ import cx from 'classnames';
 import React from 'react';
 
 import { clamp } from '../../../commands';
-import {v1 as uuid} from 'uuid';
 
 export type VideoResizeProps = {
   height: number;
@@ -222,7 +221,7 @@ export class VideoResizeBoxControl extends React.PureComponent {
 export class VideoResizeBox extends React.PureComponent {
   declare props: VideoResizeProps;
 
-  _id = uuid();
+  _id = crypto.randomUUID();
 
   render(): React.ReactElement<VideoResizeBoxControl> {
     const {onResizeEnd, width, height} = this.props;
