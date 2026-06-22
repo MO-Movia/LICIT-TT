@@ -1168,6 +1168,46 @@ describe('Object ID plugin', () => {
     expect(result).toBeNull();
   });
 
+  it('should set dirty flag for every capco position', () => {
+    const plugin = new ObjectIdPlugin();
+    const testSchema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          attrs: { dirty: { default: false } }
+        },
+        text: {}
+      }
+    });
+    const testDoc = testSchema.node('doc', null, [
+      testSchema.node('paragraph', { dirty: false }, [testSchema.text('a')]),
+      testSchema.node('paragraph', { dirty: false }, [testSchema.text('b')])
+    ]);
+    const state = EditorState.create({
+      schema: testSchema,
+      doc: testDoc,
+      selection: TextSelection.create(testDoc, 1, 4)
+    });
+    const tr = { setNodeMarkup: jest.fn().mockReturnThis() } as unknown as Transaction;
+
+    plugin.setDirtyFlagOnChange(state, state, tr, true, [0, 3]);
+
+    expect(tr.setNodeMarkup).toHaveBeenCalledTimes(2);
+    expect(tr.setNodeMarkup).toHaveBeenNthCalledWith(
+      1,
+      0,
+      null,
+      expect.objectContaining({ dirty: true })
+    );
+    expect(tr.setNodeMarkup).toHaveBeenNthCalledWith(
+      2,
+      3,
+      null,
+      expect.objectContaining({ dirty: true })
+    );
+  });
+
   it('should set dirty flag on parent table', () => {
     const plugin = new ObjectIdPlugin();
     const schema = new Schema({
@@ -1342,4 +1382,3 @@ describe('Object ID plugin', () => {
     expect(result).toBeDefined();
   });
 });
-

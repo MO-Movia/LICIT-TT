@@ -605,6 +605,28 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     });
   }
 
+  private setDirtyFlagByCapcoPositions(
+    prevState: EditorState,
+    nextState: EditorState,
+    tr: Transaction,
+    docChanged: boolean,
+    capcoPos: number | number[]
+  ): Transaction {
+    const capcoPositions = Array.isArray(capcoPos) ? capcoPos : [capcoPos];
+
+    return capcoPositions.reduce(
+      (updatedTr, pos) =>
+        this.setDirtyFlagByCapcoPosition(
+          prevState,
+          nextState,
+          updatedTr,
+          docChanged,
+          pos
+        ),
+      tr
+    );
+  }
+
   private setDirtyFlagBySelection(
     prevState: EditorState,
     nextState: EditorState,
@@ -711,7 +733,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     nextState: EditorState,
     tr: Transaction,
     docChanged: boolean,
-    capcoPos: number
+    capcoPos: number | number[]
   ): Transaction {
     if (!this.hasTextSelection(prevState, nextState)) {
       return tr;
@@ -726,7 +748,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
       );
     }
 
-    return this.setDirtyFlagByCapcoPosition(
+    return this.setDirtyFlagByCapcoPositions(
       prevState,
       nextState,
       tr,
