@@ -243,25 +243,7 @@ export class CapcoContextMenu extends React.Component<
     let pos = this.props.pos - 1; // nodeAt and setNodeMarkup resolve to the node AFTER the given position, so -1 to correct for that.
     let enhanced_capco_pos = pos;
     let node = this.props.editorView.state.doc.nodeAt(pos);
-    if (!node) {
-      const $from = this.props.editorView.state.selection.$from;
-
-      // Position before the current block for identifying the table node.
-      const posBefore = $from.before($from.depth);
-      const $before = this.props.editorView.state.doc.resolve(posBefore);
-
-      const indexBefore = $before.index() - 1;
-      if (indexBefore > 0) {
-        const prevNode = $before.node().child(indexBefore);
-        if (prevNode?.type.name === TABLE) {
-          node = prevNode;
-          pos = posBefore - prevNode.nodeSize;
-        }
-      }
-    }
-    if (node?.type?.name === TABLE_FIGURE_CAPCO) {
-      pos = getBlockControlCapco(this.props.editorView.state, pos);
-    }
+    ({ node, pos } = this.correctNodeTarget(node, pos));
     let newAttrs = this.getCapcoAttrs(node, capco);
     const event = new KeyboardEvent('keydown', {
       keyCode: 0,
@@ -310,6 +292,29 @@ export class CapcoContextMenu extends React.Component<
     this.props.editorView.dispatch(tr);
     this.props.close();
   }
+  private correctNodeTarget(node: ProseMirrorNode, pos: number) {
+    if (!node) {
+      const $from = this.props.editorView.state.selection.$from;
+
+      // Position before the current block for identifying the table node.
+      const posBefore = $from.before($from.depth);
+      const $before = this.props.editorView.state.doc.resolve(posBefore);
+
+      const indexBefore = $before.index() - 1;
+      if (indexBefore > 0) {
+        const prevNode = $before.node().child(indexBefore);
+        if (prevNode?.type.name === TABLE) {
+          node = prevNode;
+          pos = posBefore - prevNode.nodeSize;
+        }
+      }
+    }
+    if (node?.type?.name === TABLE_FIGURE_CAPCO) {
+      pos = getBlockControlCapco(this.props.editorView.state, pos);
+    }
+    return { node, pos };
+  }
+
   closePopUP(): void {
     this.props.close();
   }

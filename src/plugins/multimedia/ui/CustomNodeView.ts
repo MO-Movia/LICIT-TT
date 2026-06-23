@@ -252,10 +252,9 @@ export class CustomNodeView implements NodeView {
     }
     // Only re-render if props actually changed
     const propsChanged =
-      !this._lastRenderedProps ||
-      this._lastRenderedProps.selected !== selected ||
-      this._lastRenderedProps.focused !== focused ||
-      this._lastRenderedProps.node !== this.props.node;
+      this._lastRenderedProps?.selected !== selected ||
+      this._lastRenderedProps?.focused !== focused ||
+      this._lastRenderedProps?.node !== this.props.node;
     if (!propsChanged) {
       return; // Skip render if nothing changed
     }
