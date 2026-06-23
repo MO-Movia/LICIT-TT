@@ -145,9 +145,13 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
     for (let depth = $pos.depth; depth >= 0; depth--) {
       const node = $pos.node(depth);
       if (
-        [TABLE, 'table_row', 'table_cell', 'table_header'].includes(
-          node.type.name
-        )
+        [
+          TABLE,
+          'table_row',
+          'table_cell',
+          'table_header',
+          'enhanced_table_figure_notes',
+        ].includes(node.type.name)
       ) {
         return true;
       }

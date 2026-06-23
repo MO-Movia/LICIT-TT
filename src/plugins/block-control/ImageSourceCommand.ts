@@ -23,7 +23,9 @@ export function insertEnhancedImageFigure(
   tr: Transaction,
   schema: Schema,
   imageUrl: string,
-  altText = ''
+  altText = '',
+  width?: number,
+  height?: number
 ): Transaction {
   const { selection } = tr;
   const { from, to } = selection;
@@ -42,12 +44,16 @@ export function insertEnhancedImageFigure(
   if (!imageNodeType) {
     return tr;
   }
-  const imageAttrs = {
+  const imageAttrs: Record<string, unknown> = {
     src: imageUrl,
     alt: altText,
     simpleImg: 'false',
     cropData: null,
   };
+  if (width && height) {
+    imageAttrs.width = width;
+    imageAttrs.height = height;
+  }
   const imageNode = imageNodeType.create(imageAttrs, null);
   const bodyNode = bodyType.create({}, imageNode);
 
@@ -74,6 +80,14 @@ export function insertEnhancedImageFigure(
   return tr;
 }
 
+function hasImageDimensions(width?: number, height?: number): width is number {
+  return (
+    Number.isFinite(width) &&
+    Number.isFinite(height) &&
+    width > 0 &&
+    height > 0
+  );
+}
 
 export class ImageSourceCommand extends UICommand {
   _popUp?: PopUpHandle;
@@ -126,8 +140,15 @@ export class ImageSourceCommand extends UICommand {
       tr = view ? (hideCursorPlaceholder(view.state) as unknown as Transaction) : tr;
       tr = tr.setSelection(selection);
       if (inputs) {
-        const { src } = inputs;
-        tr = insertEnhancedImageFigure(tr, schema, src);
+        const { src, width, height } = inputs;
+        tr = insertEnhancedImageFigure(
+          tr,
+          schema,
+          src,
+          '',
+          hasImageDimensions(width, height) ? width : undefined,
+          hasImageDimensions(width, height) ? height : undefined
+        );
       }
       dispatch(tr);
       view?.focus();
