@@ -9,6 +9,12 @@ import {Schema, Node} from 'prosemirror-model';
 import {schema} from 'prosemirror-test-builder';
 import * as applymark from './applyMark';
 import {Transform} from 'prosemirror-transform';
+import findActiveFontType from '../licit/findActiveFontType';
+
+jest.mock('../licit/findActiveFontType', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
 
 declare let beforeEach: jest.Lifecycle;
 declare let describe: jest.Describe;
@@ -278,7 +284,7 @@ describe('FontTypeCommand (group 2)', () => {
         }
       },
     } as unknown as EditorState;
-    plugin = new FontTypeCommand(null);
+    plugin = new FontTypeCommand(null as unknown as string);
     const test = plugin.execute(state, (_x) => {
       return '';
     });
@@ -317,7 +323,13 @@ describe('FontTypeCommand (group 2)', () => {
   });
 
   it('should be active', () => {
-    expect(plugin.isActive()).toBeFalsy();
+    (findActiveFontType as jest.Mock).mockReturnValue('Arielle');
+    expect(plugin.isActive({} as unknown as EditorState)).toBeTruthy();
+  });
+  it('should handle isActive return value cases', () => {
+    expect(plugin.isActive(undefined)).toBeFalsy();
+    plugin._name = '';
+    expect(plugin.isActive({} as unknown as EditorState)).toBeFalsy();
   });
   it('should handle cancel',()=>{
     expect(plugin.cancel()).toBeNull();
