@@ -4,52 +4,16 @@
  */
 
 import {findParentNodeClosestToPos} from '@tiptap/core';
-import  { Table,
-  createTable,
-  TableView as TiptapTableView,
-} from '@tiptap/extension-table';
-import {Node as ProseMirrorNode} from 'prosemirror-model';
+import {Table, createTable} from '@tiptap/extension-table';
 import {TextSelection} from 'prosemirror-state';
 import {normalizeCssSize, normalizeValue} from '../table.utils';
-
-class TableViewEx extends TiptapTableView {
-  constructor(node: ProseMirrorNode, cellMinWidth: number) {
-    super(node, cellMinWidth);
-    this.applyTableAttributes(node);
-  }
-
-  update(node: ProseMirrorNode): boolean {
-    const updated = super.update(node);
-    if (updated) {
-      this.applyTableAttributes(node);
-    }
-    return updated;
-  }
-
-  applyTableAttributes(node: ProseMirrorNode): void {
-    const tableHeight = normalizeCssSize(node.attrs.tableHeight);
-    if (tableHeight) {
-      this.table.style.height = tableHeight;
-      this.table.dataset.tableHeight = tableHeight;
-    } else {
-      this.table.style.removeProperty('height');
-      delete this.table.dataset.tableHeight;
-    }
-
-    const noOfColumns = normalizeValue(node.attrs.noOfColumns);
-    if (noOfColumns) {
-      this.table.dataset.noOfColumns = noOfColumns;
-    } else {
-      delete this.table.dataset.noOfColumns;
-    }
-  }
-}
+import {LicitTableNodeView} from '../../ui/tableNodeView';
 
 export const TableEx = Table.extend({
   addOptions() {
     return {
       ...this.parent?.(),
-      View: TableViewEx,
+      View: LicitTableNodeView,
     };
   },
 

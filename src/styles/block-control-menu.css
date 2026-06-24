@@ -1,0 +1,152 @@
+.has-hover-handle {
+  position: relative;
+}
+
+.has-hover-handle .handle-hidden-on-hover {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+}
+
+.prosemirror-editor-wrapper:not(.readOnly)
+  .has-hover-handle:hover
+  .handle-hidden-on-hover,
+.has-hover-handle:hover .handle-hidden-on-hover,
+.has-hover-handle:focus-within .handle-hidden-on-hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ProseMirror[contenteditable="false"] .licit-block-control-handle {
+  display: none;
+}
+
+.licit-block-control-trigger {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+  color: #333333;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  height: 24px;
+  justify-content: center;
+  line-height: 1;
+  min-width: 24px;
+  padding: 0 5px;
+  user-select: none;
+  z-index: 10;
+}
+
+.licit-block-control-handle {
+  position: absolute;
+  right: -26px;
+  top: 2px;
+}
+
+.enhanced-table-figure > .licit-block-control-handle,
+.molm-czi-image-view-body .licit-block-control-handle,
+.czi-table-control > .licit-block-control-handle {
+  right: -26px;
+  top: 0;
+}
+
+.enhanced-table-figure-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+}
+
+.licit-block-control-trigger:hover,
+.licit-block-control-trigger:focus-visible {
+  background: #f4f6f8;
+  border-color: rgba(24, 95, 165, 0.45);
+  outline: none;
+}
+
+.licit-block-control-menu {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  min-width: 210px;
+  overflow: hidden;
+}
+
+.licit-block-control-menu-item {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: #333333;
+  cursor: pointer;
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+  line-height: 18px;
+  padding: 7px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.licit-block-control-menu-item:hover:not(:disabled),
+.licit-block-control-menu-item:focus-visible:not(:disabled),
+.licit-block-control-menu-item.active {
+  background-color: #f3f6f8;
+  outline: none;
+}
+
+.licit-block-control-menu-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.licit-block-control-menu-item + .licit-block-control-menu-item {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.licit-block-control-menu-icon {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 20px;
+  font-size: 15px;
+  justify-content: center;
+}
+
+.licit-block-control-menu-icon .fa {
+  line-height: 1;
+  text-align: center;
+  width: 16px;
+}
+
+.licit-block-control-menu-label {
+  flex: 1 1 auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .licit-block-control-trigger,
+  .licit-block-control-menu {
+    background-color: #242424;
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #eeeeee;
+  }
+
+  .licit-block-control-trigger:hover,
+  .licit-block-control-trigger:focus-visible,
+  .licit-block-control-menu-item:hover:not(:disabled),
+  .licit-block-control-menu-item:focus-visible:not(:disabled),
+  .licit-block-control-menu-item.active {
+    background-color: #303030;
+  }
+
+  .licit-block-control-menu-item {
+    color: #eeeeee;
+  }
+
+  .licit-block-control-menu-item + .licit-block-control-menu-item {
+    border-top-color: rgba(255, 255, 255, 0.09);
+  }
+}

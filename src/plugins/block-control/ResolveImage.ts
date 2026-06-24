@@ -82,9 +82,8 @@ function processPromise(
 
   resolveRes(srcStr, result, resolve);
 
-  // Removed the port validation from here
   const protocol = getProtocol(srcStr);
-  if (!/(http:|https:|data:)/.test(protocol)) {
+  if (!/^(http:|https:|data:|blob:)$/.test(protocol)) {
     resolve(result);
     return;
   }

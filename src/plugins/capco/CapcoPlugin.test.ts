@@ -2042,6 +2042,15 @@ describe('CapcoPlugin – branch-flipping coverage', () => {
           attrs: { vignette: { default: false } },
           toDOM: () => ['table', ['tbody', 0]],
         },
+        enhanced_table_figure_notes: {
+          group: 'block',
+          content: 'paragraph+',
+          toDOM: () => [
+            'div',
+            {'data-type': 'enhanced-table-figure-notes'},
+            0,
+          ],
+        },
         text: {},
       },
       marks: {},
@@ -2065,6 +2074,26 @@ describe('CapcoPlugin – branch-flipping coverage', () => {
     });
 
     const state = EditorState.create({ doc, schema });
+    expect(plugin.isNodeInsideTable(state, 2)).toBe(true);
+  });
+
+  it('isNodeInsideTable returns true when nested in EIC notes', () => {
+    const doc = schema.nodeFromJSON({
+      type: 'doc',
+      content: [
+        {
+          type: 'enhanced_table_figure_notes',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{type: 'text', text: 'x'}],
+            },
+          ],
+        },
+      ],
+    });
+
+    const state = EditorState.create({doc, schema});
     expect(plugin.isNodeInsideTable(state, 2)).toBe(true);
   });
 

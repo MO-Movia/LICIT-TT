@@ -9,11 +9,71 @@ import React from 'react';
 import { CustomButton, preventEventDefault, uuid } from '../../../commands';
 import { LoadingIndicator } from './LoadingIndicator';
 
-import type { EditorRuntime } from '../Types';
+import type { EditorRuntime, ImageLike } from '../Types';
 export type ImageUploadProps = {
   runtime: EditorRuntime;
-  close: (val?: { src: string }) => void;
+  close: (val?: ImageLike) => void;
 };
+
+function hasDimensions(image?: Partial<ImageLike>): boolean {
+  return (
+    !!image?.width &&
+    !!image?.height &&
+    image.width > 0 &&
+    image.height > 0
+  );
+}
+
+function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (typeof FileReader === 'undefined') {
+      reject(new Error('FileReader is not available'));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error('Unable to read image as a data URL'));
+    };
+    reader.onerror = () =>
+      reject(reader.error || new Error('Unable to read image'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Unable to load image'));
+    image.src = src;
+  });
+}
+
+async function resolveFileDimensions(
+  file: File
+): Promise<Partial<ImageLike>> {
+  try {
+    const dataURL = await readFileAsDataURL(file);
+    const image = await loadImage(dataURL);
+    const width = image.naturalWidth || image.width;
+    const height = image.naturalHeight || image.height;
+    if (!width || !height) {
+      return {};
+    }
+    return {
+      height,
+      width,
+    };
+  } catch {
+    return {};
+  }
+}
+
 export class ImageUploadEditor extends React.PureComponent {
   _unmounted = false;
 
@@ -73,7 +133,7 @@ export class ImageUploadEditor extends React.PureComponent {
     }
   };
 
-  _onSuccess = (image: { src: string }): void => {
+  _onSuccess = (image: ImageLike): void => {
     if (this._unmounted) {
       return;
     }
@@ -100,7 +160,14 @@ export class ImageUploadEditor extends React.PureComponent {
       }
       this.setState({ pending: true, error: null });
       const image = await uploadImage(file);
-      this._onSuccess(image);
+      const fileDimensions = hasDimensions(image)
+        ? {}
+        : await resolveFileDimensions(file);
+      this._onSuccess({
+        ...image,
+        height: image.height || fileDimensions.height,
+        width: image.width || fileDimensions.width,
+      });
     } catch (ex) {
       this._onError(ex);
     }
