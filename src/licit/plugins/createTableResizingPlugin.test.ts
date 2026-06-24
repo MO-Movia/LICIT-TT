@@ -31,8 +31,8 @@ describe('createTableResizingPlugin', () => {
       dispatch: jest.fn(), // Mock dispatch
     } as unknown as EditorView;
 
-    jest.spyOn(window, 'addEventListener');
-    jest.spyOn(window, 'removeEventListener');
+    jest.spyOn(globalThis, 'addEventListener');
+    jest.spyOn(globalThis, 'removeEventListener');
     jest.useFakeTimers();
   });
 
@@ -46,7 +46,7 @@ describe('createTableResizingPlugin', () => {
       editorViewMock,
       new MouseEvent('mousedown', {clientX: 200}),
     ]);
-    window.dispatchEvent(new MouseEvent('mouseup'));
+    globalThis.dispatchEvent(new MouseEvent('mouseup'));
 
     expect(window.removeEventListener).toHaveBeenCalledWith(
       'mousemove',
@@ -153,7 +153,7 @@ describe('dispatchMouseEvent', () => {
   });
 
   it('should dispatch a mouse event with correct properties', () => {
-    const spy = jest.spyOn(window, 'dispatchEvent');
+    const spy = jest.spyOn(globalThis, 'dispatchEvent');
 
     dispatchMouseEvent('mousemove', 300);
 

@@ -101,7 +101,7 @@ describe('Capco Plugin', () => {
             tag: 'enhanced-table-figure',
             getAttrs(dom) {
               return {
-                isValidate: dom.getAttribute('data-validate') === 'true',
+                isValidate: dom.dataset.validate === 'true',
               };
             },
           },

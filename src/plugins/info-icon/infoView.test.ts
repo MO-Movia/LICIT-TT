@@ -952,7 +952,7 @@ describe('Info Plugin Extended', () => {
     };
     runtimeView.runtime = { openLinkDialog };
     view.editable = true;
-    const windowOpenSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+    const windowOpenSpy = jest.spyOn(globalThis, 'open').mockImplementation(() => null);
 
     cView.addClickListenerToLinks(tooltipContent);
     firstLink.dispatchEvent(new MouseEvent('click', { bubbles: true }));

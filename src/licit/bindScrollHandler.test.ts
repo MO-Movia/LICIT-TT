@@ -24,8 +24,8 @@ describe('bindScrollHandler', () => {
       return 5; // mock handle ID
     });
     mockCancelAnimationFrame = jest.fn();
-    global.requestAnimationFrame = mockRequestAnimationFrame;
-    global.cancelAnimationFrame = mockCancelAnimationFrame;
+    globalThis.requestAnimationFrame = mockRequestAnimationFrame;
+    globalThis.cancelAnimationFrame = mockCancelAnimationFrame;
 
     // Create a target element and mock its parent elements
     target = document.createElement('div');
@@ -43,7 +43,7 @@ describe('bindScrollHandler', () => {
     // Mocking the scrollable element style
     const styleMock = { overflow: 'auto' };
     jest
-      .spyOn(window, 'getComputedStyle')
+      .spyOn(globalThis, 'getComputedStyle')
       .mockReturnValue(styleMock as CSSStyleDeclaration);
 
     // Create a callback mock function

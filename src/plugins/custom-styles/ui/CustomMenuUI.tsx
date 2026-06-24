@@ -40,9 +40,9 @@ let HEADING_COMMANDS = {
   [RESERVED_STYLE_NONE]: new HeadingCommand(0),
 };
 
-type CustomMenuCommandGroup = Record<string, unknown>;
+export type CustomMenuCommandGroup = Record<string, CustomStyleCommand>;
 
-type CustomMenuUIProps = {
+export type CustomMenuUIProps = {
   dispatch: (tr: Transform) => void;
   editorState: EditorState;
   editorView: Partial<EditorView> & { disabled?: boolean };
@@ -53,6 +53,7 @@ type CustomMenuUIProps = {
 
 type CustomMenuUIState = {
   expanded: boolean;
+  selectedIndex: number;
   style: {
     display: string;
     top: string;
@@ -70,7 +71,7 @@ export class CustomMenuUI extends React.PureComponent<
   _menuItemHeight = 24;
 
   _id = uuid();
-  _menuRef = React.createRef<HTMLDivElement>();
+  _menuRef = React.createRef<HTMLButtonElement>();
   _navItems: Array<{ command: UICommand; label: string }> = [];
   _staticItems: Array<{ command: UICommand; label: string }> = [];
   _appliedIndex = 0;
@@ -243,7 +244,7 @@ export class CustomMenuUI extends React.PureComponent<
     };
     const className = 'molsp-dropbtn ' + theme;
     return (
-      <div onKeyDown={this._onMenuKeyDown} ref={this._menuRef} tabIndex={-1}>
+      <button onKeyDown={this._onMenuKeyDown} ref={this._menuRef} tabIndex={-1}>
         <span data-cy="cyStyleDropdown">
           <div className={className} id={this._id}>
             <div className="molsp-stylenames">{children}</div>
@@ -252,7 +253,7 @@ export class CustomMenuUI extends React.PureComponent<
             <div className="molsp-stylenames">{children1}</div>
           </div>
         </span>
-      </div>
+      </button>
     );
   }
 
@@ -283,7 +284,7 @@ export class CustomMenuUI extends React.PureComponent<
   // keyboard share one highlight.
   _onMenuMouseOver = (e: MouseEvent) => {
     const target = e.target as HTMLElement | null;
-    const row = target?.closest?.('[data-index]') as HTMLElement | null;
+    const row = target?.closest?.('[data-index]');
     if (!row) {
       return;
     }
@@ -296,7 +297,7 @@ export class CustomMenuUI extends React.PureComponent<
     }
     this._lastPointerX = e.clientX;
     this._lastPointerY = e.clientY;
-    const index = Number(row.getAttribute('data-index'));
+    const index = Number((row as HTMLElement).dataset.index);
     if (!Number.isNaN(index)) {
       this._onItemMouseEnter(index);
     }
@@ -362,17 +363,13 @@ export class CustomMenuUI extends React.PureComponent<
           const onStyleRow =
             prev.selectedIndex >= 0 && prev.selectedIndex <= last;
           let next: number;
-          if (!onStyleRow) {
-            next = e.key === 'ArrowDown' ? 0 : last;
-          } else {
+          if (onStyleRow) {
             next =
               e.key === 'ArrowDown'
-                ? prev.selectedIndex < last
-                  ? prev.selectedIndex + 1
-                  : 0
-                : prev.selectedIndex > 0
-                  ? prev.selectedIndex - 1
-                  : last;
+                ? (prev.selectedIndex + 1) % (last + 1)
+                : (prev.selectedIndex - 1 + (last + 1)) % (last + 1);
+          } else {
+            next = e.key === 'ArrowDown' ? 0 : last;
           }
           return { selectedIndex: next };
         },

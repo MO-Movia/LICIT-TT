@@ -106,7 +106,7 @@ describe('atViewportCenter', () => {
   });
 
   it('should return the correct rect when bodyRect is not provided', () => {
-    const result = atViewportCenter(undefined, undefined);
+    const result = atViewportCenter();
     expect(result).toEqual({x: -10000, y: 0, w: 0, h: 0});
   });
 });

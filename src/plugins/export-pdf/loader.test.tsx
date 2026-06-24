@@ -20,13 +20,13 @@ describe('Loader component (no react-test-renderer)', () => {
         loader.setState = jest.fn();
 
         setIntervalSpy = jest
-            .spyOn(global, 'setInterval')
+            .spyOn(globalThis, 'setInterval')
             .mockImplementation(
                 (..._args: Parameters<typeof setInterval>): ReturnType<typeof setInterval> =>
                     123 as unknown as ReturnType<typeof setInterval>
             );
         clearIntervalSpy = jest
-            .spyOn(global, 'clearInterval')
+            .spyOn(globalThis, 'clearInterval')
             .mockImplementation(
                 (..._args: Parameters<typeof clearInterval>): ReturnType<typeof clearInterval> =>
                     undefined
@@ -55,7 +55,7 @@ describe('Loader component (no react-test-renderer)', () => {
     test('componentWillUnmount clears interval', () => {
         loader.componentDidMount();
         loader.componentWillUnmount();
-        expect(global.clearInterval).toHaveBeenCalledWith(loader['interval']);
+        expect(globalThis.clearInterval).toHaveBeenCalledWith(loader['interval']);
     });
 
     test('increments passCounter when isOnLoad is true', () => {

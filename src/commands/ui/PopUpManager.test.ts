@@ -95,7 +95,7 @@ describe('PopUpManager', () => {
     const clickEvent = new MouseEvent('click', {
       bubbles: true,
       cancelable: true,
-      view: window,
+      view: globalThis.window,
     });
     targetElement.dispatchEvent(clickEvent);
     popUpManager._bridges.set(mockBridge, Date.now() - 1000);
@@ -104,28 +104,28 @@ describe('PopUpManager', () => {
   });
 
   it('_onScroll calls _syncPosition', () => {
-    const originalCancelAnimationFrame = window.cancelAnimationFrame;
-    const originalRequestAnimationFrame = window.requestAnimationFrame;
-    window.cancelAnimationFrame = jest.fn();
-    window.requestAnimationFrame = jest.fn();
+    const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
+    const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+    globalThis.cancelAnimationFrame = jest.fn();
+    globalThis.requestAnimationFrame = jest.fn();
 
     popUpManager._onScroll({});
-    expect(window.cancelAnimationFrame).toHaveBeenCalled();
-    expect(window.requestAnimationFrame).toHaveBeenCalled();
-    window.cancelAnimationFrame = originalCancelAnimationFrame;
-    window.requestAnimationFrame = originalRequestAnimationFrame;
+    expect(globalThis.cancelAnimationFrame).toHaveBeenCalled();
+    expect(globalThis.requestAnimationFrame).toHaveBeenCalled();
+    globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
+    globalThis.requestAnimationFrame = originalRequestAnimationFrame;
   });
 
   it('_onResize should calls _syncPosition', () => {
-    const originalCancelAnimationFrame = window.cancelAnimationFrame;
-    const originalRequestAnimationFrame = window.requestAnimationFrame;
-    window.cancelAnimationFrame = jest.fn();
-    window.requestAnimationFrame = jest.fn();
+    const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
+    const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+    globalThis.cancelAnimationFrame = jest.fn();
+    globalThis.requestAnimationFrame = jest.fn();
     popUpManager._onResize({});
 
-    expect(window.requestAnimationFrame).toHaveBeenCalled();
-    window.cancelAnimationFrame = originalCancelAnimationFrame;
-    window.requestAnimationFrame = originalRequestAnimationFrame;
+    expect(globalThis.requestAnimationFrame).toHaveBeenCalled();
+    globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
+    globalThis.requestAnimationFrame = originalRequestAnimationFrame;
   });
 
   it('should set IsCustom value to true', () => {
@@ -138,7 +138,7 @@ describe('PopUpManager', () => {
     const clickEvent = new MouseEvent('click', {
       bubbles: true,
       cancelable: true,
-      view: window,
+      view: globalThis.window,
     });
     targetElement.dispatchEvent(clickEvent);
 
@@ -148,10 +148,10 @@ describe('PopUpManager', () => {
   });
 
   it('should call _onMouseChange', () => {
-    const originalCancelAnimationFrame = window.cancelAnimationFrame;
-    const originalRequestAnimationFrame = window.requestAnimationFrame;
-    window.cancelAnimationFrame = jest.fn();
-    window.requestAnimationFrame = jest.fn();
+    const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
+    const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+    globalThis.cancelAnimationFrame = jest.fn();
+    globalThis.requestAnimationFrame = jest.fn();
     const mockMouseEvent = new MouseEvent('mousemove', {
       clientX: 100,
       clientY: 200,
@@ -160,9 +160,9 @@ describe('PopUpManager', () => {
 
     expect(popUpManager._mx).toBe(100);
     expect(popUpManager._my).toBe(200);
-    expect(window.requestAnimationFrame).toHaveBeenCalled();
-    window.cancelAnimationFrame = originalCancelAnimationFrame;
-    window.requestAnimationFrame = originalRequestAnimationFrame;
+    expect(globalThis.requestAnimationFrame).toHaveBeenCalled();
+    globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
+    globalThis.requestAnimationFrame = originalRequestAnimationFrame;
   });
   it('should handle _onResize', () => {
     instance._rafID = 1;

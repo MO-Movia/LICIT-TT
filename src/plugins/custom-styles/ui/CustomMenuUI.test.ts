@@ -21,7 +21,7 @@ jest.mock('../../../commands', () => {
 
 import { createEditor, doc, p } from 'jest-prosemirror';
 import { CustomstylePlugin } from '../index';
-import { CustomMenuUI } from './CustomMenuUI';
+import { CustomMenuCommandGroup, CustomMenuUI, CustomMenuUIProps } from './CustomMenuUI';
 import { Schema, Node } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
@@ -468,7 +468,7 @@ describe('Custom Menu UI', () => {
   const CustomMenuTestProps = {
     className: 'molcs-menu-button',
     commandGroups: [cmdGrp1, cmdGrp2, { Normal: true }],
-    staticCommand: [{ Normal: true, _customStyleName: 'customstylename' }],
+    staticCommand: [{ Normal: true, _customStyleName: 'customstylename' } as unknown as CustomMenuCommandGroup],
     disabled: false,
     dispatch: () => {},
     editorState: state,
@@ -480,7 +480,7 @@ describe('Custom Menu UI', () => {
     onCommand: () => {
       return {};
     },
-  };
+  } as CustomMenuUIProps;
   class MockElement {
     tagName: '';
     constructor(tagName) {
@@ -512,7 +512,7 @@ describe('Custom Menu UI', () => {
       label: 'Normal',
       title: 'styles',
       _style: '',
-    };
+    } as unknown as CustomMenuUIProps;
     const custommenuui = new CustomMenuUI(CustomMenuTestProps);
     jest.spyOn(custommenuui, 'isAllowedNode').mockReturnValue(false);
     const custommenuuipro = new CustomMenuUI(CustomMenuTestProps);
@@ -532,7 +532,7 @@ describe('Custom Menu UI', () => {
       label: 'Normal',
       title: 'styles',
       _style: '',
-    };
+    } as unknown as CustomMenuUIProps;
     const custommenuui = new CustomMenuUI(CustomMenuTestProps);
     expect(custommenuui.render()).toBeDefined();
   });
@@ -550,12 +550,12 @@ describe('Custom Menu UI', () => {
       .spyOn(custommenuui, 'setState')
       .mockImplementation((update, cb?: () => void) => {
         const partial =
-          typeof update === 'function' ? update(custommenuui.state) : update;
+          typeof update === 'function' ? update(custommenuui.state, undefined) : update;
         custommenuui.state = { ...custommenuui.state, ...partial };
         cb?.();
       });
     const rafSpy = jest
-      .spyOn(window, 'requestAnimationFrame')
+      .spyOn(globalThis, 'requestAnimationFrame')
       .mockImplementation(() => 0);
     custommenuui._appliedIndex = 29;
     custommenuui.componentDidMount();
@@ -619,7 +619,7 @@ describe('Custom Menu UI', () => {
       .spyOn(custommenuui, 'setState')
       .mockImplementation((update) => {
         const partial =
-          typeof update === 'function' ? update(custommenuui.state) : update;
+          typeof update === 'function' ? update(custommenuui.state, undefined) : update;
         custommenuui.state = { ...custommenuui.state, ...partial };
       });
     custommenuui._onItemMouseEnter(4);
@@ -630,7 +630,7 @@ describe('Custom Menu UI', () => {
   const mockSyncSetState = () =>
     jest.spyOn(custommenuui, 'setState').mockImplementation((update) => {
       const partial =
-        typeof update === 'function' ? update(custommenuui.state) : update;
+        typeof update === 'function' ? update(custommenuui.state, undefined) : update;
       custommenuui.state = { ...custommenuui.state, ...partial };
     });
 
@@ -645,7 +645,7 @@ describe('Custom Menu UI', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
       { command: cmdGrp2, label: 'b' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 0 };
     const setStateSpy = mockSyncSetState();
     const e = navKeyEvent('ArrowDown');
@@ -660,7 +660,7 @@ describe('Custom Menu UI', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
       { command: cmdGrp2, label: 'b' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 1 };
     const setStateSpy = mockSyncSetState();
     custommenuui._onMenuKeyDown(navKeyEvent('ArrowDown'));
@@ -672,7 +672,7 @@ describe('Custom Menu UI', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
       { command: cmdGrp2, label: 'b' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 0 };
     const setStateSpy = mockSyncSetState();
     custommenuui._onMenuKeyDown(navKeyEvent('ArrowUp'));
@@ -685,7 +685,7 @@ describe('Custom Menu UI', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
       { command: cmdGrp2, label: 'b' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui._staticItems = [];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 1 };
     const execSpy = jest
@@ -699,10 +699,10 @@ describe('Custom Menu UI', () => {
   it('should activate a static row on Enter when selected below the hr', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui._staticItems = [
       { command: cmdGrp2, label: 'static' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 1 };
     const execSpy = jest
       .spyOn(custommenuui, '_execute')
@@ -721,7 +721,7 @@ describe('Custom Menu UI', () => {
 
   it('should select the hovered row from a real pointer move in _onMenuMouseOver', () => {
     const row = document.createElement('div');
-    row.setAttribute('data-index', '3');
+    row.dataset.index = '3';
     custommenuui._lastPointerX = null;
     custommenuui._lastPointerY = null;
     const enterSpy = jest
@@ -738,7 +738,7 @@ describe('Custom Menu UI', () => {
 
   it('should ignore a mouseover from a stationary pointer in _onMenuMouseOver', () => {
     const row = document.createElement('div');
-    row.setAttribute('data-index', '3');
+    row.dataset.index = '3';
     custommenuui._lastPointerX = 10;
     custommenuui._lastPointerY = 20;
     const enterSpy = jest
@@ -1324,7 +1324,7 @@ describe('Custom Menu UI', () => {
       label: 'Normal',
       title: 'styles',
       _style: '',
-    };
+    } as unknown as CustomMenuUIProps;
     const custommenuui = new CustomMenuUI(CustomMenuTestProps);
     const statemock = {
       schema: schema,
@@ -1384,7 +1384,7 @@ describe('Custom Menu UI', () => {
       label: 'Normal',
       title: 'styles',
       _style: '',
-    };
+    } as unknown as CustomMenuUIProps;
     const custommenuui = new CustomMenuUI(CustomMenuTestProps);
     const event = new Event('click');
     const uicommands = {
@@ -1422,7 +1422,7 @@ describe('Custom Menu UI', () => {
       label: 'Normal',
       title: 'styles',
       _style: '',
-    };
+    } as unknown as CustomMenuUIProps;
     const custommenuui = new CustomMenuUI(CustomMenuTestProps);
     const event = new Event('click');
     const uicommands = {
@@ -1468,7 +1468,7 @@ describe('Custom Menu UI', () => {
       title: 'styles',
       _style: '',
       onCommand: mockOnCommand,
-    };
+    } as unknown as CustomMenuUIProps;
 
     const custommenuui = new CustomMenuUI(testProps);
     custommenuui._execute(command, event);
@@ -1495,7 +1495,7 @@ describe('Custom Menu UI', () => {
       label: 'Normal',
       title: 'styles',
       _style: '',
-    };
+    } as unknown as CustomMenuUIProps;
 
     const custommenuui = new CustomMenuUI(testProps);
 

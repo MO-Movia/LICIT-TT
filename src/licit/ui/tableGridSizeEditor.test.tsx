@@ -27,11 +27,11 @@ describe('TableGridSizeEditor', () => {
 
   // Polyfill for requestAnimationFrame
   beforeAll(() => {
-  global.requestAnimationFrame = (cb: FrameRequestCallback) => {
+  globalThis.requestAnimationFrame = (cb: FrameRequestCallback) => {
     cb(0);
     return 1;
   };
-  global.cancelAnimationFrame = jest.fn();
+  globalThis.cancelAnimationFrame = jest.fn();
 });
 
   beforeEach(() => {
@@ -40,7 +40,7 @@ describe('TableGridSizeEditor', () => {
   });
 
   afterEach(() => {
-    document.body.removeChild(container);
+    container.remove();
     container.innerHTML = '';
     jest.clearAllMocks();
   });
@@ -138,8 +138,8 @@ it('should handle _onMouseMove and update grid size correctly', () => {
   instance._rafID = 1;
 
   // Mock cancelAnimationFrame and requestAnimationFrame
-  const cancelSpy = jest.spyOn(global, 'cancelAnimationFrame');
-  const rafSpy = jest.spyOn(global, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+  const cancelSpy = jest.spyOn(globalThis, 'cancelAnimationFrame');
+  const rafSpy = jest.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
     cb(0);
     return 2;
   });
@@ -183,7 +183,7 @@ it('should ignore mouse enter when currentTarget is not an HTMLElement', () => {
 it('should not request a frame when mouse position does not change', () => {
   const closeMock = jest.fn();
   const instance = new TableGridSizeEditor({ close: closeMock });
-  const rafSpy = jest.spyOn(global, 'requestAnimationFrame');
+  const rafSpy = jest.spyOn(globalThis, 'requestAnimationFrame');
 
   instance._bodyEl = null;
   instance._mx = 25;
@@ -216,7 +216,7 @@ it('should not update state when the grid size does not change', () => {
 it('should cancel animation frame on unmount even when mouse never entered', () => {
   const closeMock = jest.fn();
   const instance = new TableGridSizeEditor({ close: closeMock });
-  const cancelSpy = jest.spyOn(global, 'cancelAnimationFrame');
+  const cancelSpy = jest.spyOn(globalThis, 'cancelAnimationFrame');
 
   instance._entered = false;
   instance._rafID = 9;

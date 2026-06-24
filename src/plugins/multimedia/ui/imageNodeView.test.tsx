@@ -115,8 +115,7 @@ function hasImageOptionsButton(node): boolean {
     return false;
   }
 
-  return []
-    .concat(children)
+  return [children].flat()
     .some((child) => hasImageOptionsButton(child));
 }
 describe('Image view body', () => {
@@ -369,7 +368,7 @@ describe('Image view body', () => {
 
   it('should refresh open image menu while the image is active', () => {
     const elem = document.createElement('div');
-    elem.setAttribute('data-active', 'true');
+    elem.dataset.active = 'true';
     const getElementByIdSpy = jest
       .spyOn(document, 'getElementById')
       .mockReturnValue(elem);

@@ -21,7 +21,7 @@ describe('processDocumentTables', () => {
   });
 
   afterEach(() => {
-    document.body.removeChild(container);
+    container.remove();
   });
 
   it('should add pdf-width and pdf-height attributes to all tables', () => {

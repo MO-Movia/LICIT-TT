@@ -234,8 +234,7 @@ describe('TextColorCommand', () => {
     const result = plugin.waitForUserInput(
       state,
       _dispatch,
-      editorview,
-      undefined
+      editorview,      
     );
 
     expect(result).toBeDefined();
@@ -460,7 +459,6 @@ describe('TextColorCommand', () => {
         return 'red';
       },
       editorview,
-      undefined
     );
 
     expect(test).toBeFalsy();

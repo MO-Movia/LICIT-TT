@@ -28,7 +28,7 @@ describe('ReferenceView', () => {
         disconnect: () => null,
       };
     });
-    window.IntersectionObserver = mockIntersectionObserver;
+    globalThis.IntersectionObserver = mockIntersectionObserver;
 
     const plugin = new ReferencingPlugin();
     const effectiveSchema = plugin.getEffectiveSchema(schema);

@@ -145,12 +145,12 @@ describe('UICommand', () => {
 
   describe('dryRun', () => {
     it('should fall back to the original state when Proxy is unavailable', () => {
-      const originalProxy = window.Proxy;
+      const originalProxy = globalThis.Proxy;
       const executeSpy = jest
         .spyOn(uiCmd, 'execute')
         .mockReturnValue(true);
 
-      Object.defineProperty(window, 'Proxy', {
+      Object.defineProperty(globalThis, 'Proxy', {
         configurable: true,
         value: undefined,
       });
@@ -163,7 +163,7 @@ describe('UICommand', () => {
         null
       );
 
-      Object.defineProperty(window, 'Proxy', {
+      Object.defineProperty(globalThis, 'Proxy', {
         configurable: true,
         value: originalProxy,
       });

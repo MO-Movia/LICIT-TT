@@ -384,7 +384,7 @@ describe('image resizebox control', () => {
 
   it('should cancel the animation frame when ending an active resize', () => {
     const mockElement = document.createElement('div');
-    const cancelSpy = jest.spyOn(global, 'cancelAnimationFrame');
+    const cancelSpy = jest.spyOn(globalThis, 'cancelAnimationFrame');
     imageresizeboxcontrol._active = true;
     imageresizeboxcontrol._el = mockElement;
     imageresizeboxcontrol._rafID = 7;
