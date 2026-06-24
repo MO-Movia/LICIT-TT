@@ -387,7 +387,7 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
     if (cPos >= start && cPos < end) {
       this.pendingItems.push({
         pos: cPos - 1,
-        attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
+        attrs: this.resetCapco(node, node.attrs.capco),
       });
     }
 
