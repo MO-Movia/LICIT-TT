@@ -28,10 +28,13 @@ export class CustomStyleItem extends React.PureComponent<
     hasText?: boolean;
     onCommand?: () => void; //Function changed to ()=>void
     selectionClassName?: string;
+    // [Keyboard navigation] Position of this row in the menu's single index
+    // space; exposed on the DOM as data-index so hover can map back to it.
+    index?: number;
   }
   > {
   render(): React.ReactElement {
-    const { label, hasText, ...pointerProps } = this.props;
+    const { label, hasText, index, ...pointerProps } = this.props;
     let text = '';
     let customStyle;
     // [FS] IRAD-1410 2021-06-28
@@ -59,6 +62,7 @@ export class CustomStyleItem extends React.PureComponent<
     return (
       <div
         className={this.props.selectionClassName}
+        data-index={index}
         id="container1"
         title={label}
       >

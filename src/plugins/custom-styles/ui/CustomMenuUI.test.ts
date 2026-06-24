@@ -27,6 +27,7 @@ import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { CustomStyleCommand } from '../CustomStyleCommand';
 import { UICommand } from '../../../core';
+import type * as React from 'react';
 import { SyntheticEvent } from 'react';
 import { Transform } from 'prosemirror-transform';
 import * as customStyle from '../customStyle';
@@ -543,8 +544,225 @@ describe('Custom Menu UI', () => {
     jest
       .spyOn(document, 'getElementsByClassName')
       .mockReturnValue([dom] as unknown as HTMLCollectionOf<Element>);
+    // Make setState apply synchronously and run its callback so the scroll
+    // math (driven by state.selectedIndex) can be asserted.
+    const setStateSpy = jest
+      .spyOn(custommenuui, 'setState')
+      .mockImplementation((update, cb?: () => void) => {
+        const partial =
+          typeof update === 'function' ? update(custommenuui.state) : update;
+        custommenuui.state = { ...custommenuui.state, ...partial };
+        cb?.();
+      });
+    const rafSpy = jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation(() => 0);
+    custommenuui._appliedIndex = 29;
     custommenuui.componentDidMount();
-    expect(dom.scrollTop).toBe(-29);
+    expect(custommenuui.state.selectedIndex).toBe(29);
+    // _menuItemHeight (24) * 29 - 24 * 2 - 5 = 643
+    expect(dom.scrollTop).toBe(643);
+    expect(rafSpy).toHaveBeenCalled();
+    setStateSpy.mockRestore();
+    rafSpy.mockRestore();
+  });
+
+  const makeStyleDiv = (scrollTop: number, clientHeight: number) => {
+    const dom = document.createElement('div');
+    dom.className = 'molsp-stylenames';
+    dom.scrollTop = scrollTop;
+    Object.defineProperty(dom, 'clientHeight', {
+      value: clientHeight,
+      configurable: true,
+    });
+    jest
+      .spyOn(document, 'getElementsByClassName')
+      .mockReturnValue([dom] as unknown as HTMLCollectionOf<Element>);
+    return dom;
+  };
+
+  it('should scroll down when the selected row is below the viewport', () => {
+    // 5 rows visible (clientHeight 120), currently showing rows 0..4.
+    const dom = makeStyleDiv(0, 120);
+    custommenuui.state = { ...custommenuui.state, selectedIndex: 6 };
+    custommenuui.scrollSelectedIntoView();
+    // rowBottom (7 * 24 = 168) - clientHeight (120) = 48
+    expect(dom.scrollTop).toBe(48);
+  });
+
+  it('should scroll up when the selected row is above the viewport', () => {
+    // Showing rows 6..10 (scrollTop 144, clientHeight 120).
+    const dom = makeStyleDiv(144, 120);
+    custommenuui.state = { ...custommenuui.state, selectedIndex: 2 };
+    custommenuui.scrollSelectedIntoView();
+    // rowTop = 2 * 24 = 48
+    expect(dom.scrollTop).toBe(48);
+  });
+
+  it('should not scroll when the selected row is already visible', () => {
+    // Showing rows 2..6 (scrollTop 48, clientHeight 120); row 3 is in view.
+    const dom = makeStyleDiv(48, 120);
+    custommenuui.state = { ...custommenuui.state, selectedIndex: 3 };
+    custommenuui.scrollSelectedIntoView();
+    expect(dom.scrollTop).toBe(48);
+  });
+
+  it('should not throw in scrollSelectedIntoView when container missing', () => {
+    jest
+      .spyOn(document, 'getElementsByClassName')
+      .mockReturnValue([] as unknown as HTMLCollectionOf<Element>);
+    expect(() => custommenuui.scrollSelectedIntoView()).not.toThrow();
+  });
+
+  it('should set selectedIndex on hover via _onItemMouseEnter', () => {
+    const setStateSpy = jest
+      .spyOn(custommenuui, 'setState')
+      .mockImplementation((update) => {
+        const partial =
+          typeof update === 'function' ? update(custommenuui.state) : update;
+        custommenuui.state = { ...custommenuui.state, ...partial };
+      });
+    custommenuui._onItemMouseEnter(4);
+    expect(custommenuui.state.selectedIndex).toBe(4);
+    setStateSpy.mockRestore();
+  });
+
+  const mockSyncSetState = () =>
+    jest.spyOn(custommenuui, 'setState').mockImplementation((update) => {
+      const partial =
+        typeof update === 'function' ? update(custommenuui.state) : update;
+      custommenuui.state = { ...custommenuui.state, ...partial };
+    });
+
+  const navKeyEvent = (key: string) =>
+    ({
+      key,
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    }) as unknown as React.KeyboardEvent;
+
+  it('should move highlight down with ArrowDown', () => {
+    custommenuui._navItems = [
+      { command: cmdGrp1, label: 'a' },
+      { command: cmdGrp2, label: 'b' },
+    ] as unknown as Array<{ command: UICommand; label: string }>;
+    custommenuui.state = { ...custommenuui.state, selectedIndex: 0 };
+    const setStateSpy = mockSyncSetState();
+    const e = navKeyEvent('ArrowDown');
+    custommenuui._onMenuKeyDown(e);
+    expect(e.preventDefault).toHaveBeenCalled();
+    expect(e.stopPropagation).toHaveBeenCalled();
+    expect(custommenuui.state.selectedIndex).toBe(1);
+    setStateSpy.mockRestore();
+  });
+
+  it('should wrap to the first row when ArrowDown past the end', () => {
+    custommenuui._navItems = [
+      { command: cmdGrp1, label: 'a' },
+      { command: cmdGrp2, label: 'b' },
+    ] as unknown as Array<{ command: UICommand; label: string }>;
+    custommenuui.state = { ...custommenuui.state, selectedIndex: 1 };
+    const setStateSpy = mockSyncSetState();
+    custommenuui._onMenuKeyDown(navKeyEvent('ArrowDown'));
+    expect(custommenuui.state.selectedIndex).toBe(0);
+    setStateSpy.mockRestore();
+  });
+
+  it('should move highlight up and wrap with ArrowUp', () => {
+    custommenuui._navItems = [
+      { command: cmdGrp1, label: 'a' },
+      { command: cmdGrp2, label: 'b' },
+    ] as unknown as Array<{ command: UICommand; label: string }>;
+    custommenuui.state = { ...custommenuui.state, selectedIndex: 0 };
+    const setStateSpy = mockSyncSetState();
+    custommenuui._onMenuKeyDown(navKeyEvent('ArrowUp'));
+    // wraps from the first row to the last
+    expect(custommenuui.state.selectedIndex).toBe(1);
+    setStateSpy.mockRestore();
+  });
+
+  it('should activate the highlighted row on Enter', () => {
+    custommenuui._navItems = [
+      { command: cmdGrp1, label: 'a' },
+      { command: cmdGrp2, label: 'b' },
+    ] as unknown as Array<{ command: UICommand; label: string }>;
+    custommenuui._staticItems = [];
+    custommenuui.state = { ...custommenuui.state, selectedIndex: 1 };
+    const execSpy = jest
+      .spyOn(custommenuui, '_execute')
+      .mockImplementation(() => undefined);
+    custommenuui._onMenuKeyDown(navKeyEvent('Enter'));
+    expect(execSpy).toHaveBeenCalledWith(cmdGrp2, expect.anything());
+    execSpy.mockRestore();
+  });
+
+  it('should activate a static row on Enter when selected below the hr', () => {
+    custommenuui._navItems = [
+      { command: cmdGrp1, label: 'a' },
+    ] as unknown as Array<{ command: UICommand; label: string }>;
+    custommenuui._staticItems = [
+      { command: cmdGrp2, label: 'static' },
+    ] as unknown as Array<{ command: UICommand; label: string }>;
+    custommenuui.state = { ...custommenuui.state, selectedIndex: 1 };
+    const execSpy = jest
+      .spyOn(custommenuui, '_execute')
+      .mockImplementation(() => undefined);
+    custommenuui._onMenuKeyDown(navKeyEvent('Enter'));
+    expect(execSpy).toHaveBeenCalledWith(cmdGrp2, expect.anything());
+    execSpy.mockRestore();
+  });
+
+  it('should do nothing in _onMenuKeyDown when there are no nav items', () => {
+    custommenuui._navItems = [];
+    expect(() =>
+      custommenuui._onMenuKeyDown(navKeyEvent('ArrowDown'))
+    ).not.toThrow();
+  });
+
+  it('should select the hovered row from a real pointer move in _onMenuMouseOver', () => {
+    const row = document.createElement('div');
+    row.setAttribute('data-index', '3');
+    custommenuui._lastPointerX = null;
+    custommenuui._lastPointerY = null;
+    const enterSpy = jest
+      .spyOn(custommenuui, '_onItemMouseEnter')
+      .mockImplementation(() => undefined);
+    custommenuui._onMenuMouseOver({
+      target: row,
+      clientX: 10,
+      clientY: 20,
+    } as unknown as MouseEvent);
+    expect(enterSpy).toHaveBeenCalledWith(3);
+    enterSpy.mockRestore();
+  });
+
+  it('should ignore a mouseover from a stationary pointer in _onMenuMouseOver', () => {
+    const row = document.createElement('div');
+    row.setAttribute('data-index', '3');
+    custommenuui._lastPointerX = 10;
+    custommenuui._lastPointerY = 20;
+    const enterSpy = jest
+      .spyOn(custommenuui, '_onItemMouseEnter')
+      .mockImplementation(() => undefined);
+    custommenuui._onMenuMouseOver({
+      target: row,
+      clientX: 10,
+      clientY: 20,
+    } as unknown as MouseEvent);
+    expect(enterSpy).not.toHaveBeenCalled();
+    enterSpy.mockRestore();
+  });
+
+  it('should remove the mouseover listener on unmount', () => {
+    const removeEventListener = jest.fn();
+    custommenuui._menuRef = {
+      current: { removeEventListener },
+    } as unknown as typeof custommenuui._menuRef;
+    custommenuui.componentWillUnmount();
+    expect(removeEventListener).toHaveBeenCalledWith(
+      'mouseover',
+      custommenuui._onMenuMouseOver
+    );
   });
 
   it('should handle isAllowedNode', () => {
@@ -1311,7 +1529,7 @@ describe('Custom Menu UI', () => {
     const result = custommenuui.render();
 
     expect(result).toBeDefined();
-    expect(custommenuui._selectedIndex).toBeGreaterThan(0);
+    expect(custommenuui._appliedIndex).toBeGreaterThan(0);
   });
 
   it('should normalize saved styles when input is an array', () => {
