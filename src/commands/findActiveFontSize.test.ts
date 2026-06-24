@@ -5,14 +5,14 @@
 
 import {EditorState, TextSelection} from 'prosemirror-state';
 import {schema} from 'prosemirror-schema-basic';
-import { MARK_FONT_SIZE } from '../commands/MarkNames';
-import { HEADING } from '../commands/NodeNames';
+import { MARK_FONT_SIZE } from "./MarkNames";
+import { HEADING } from "./NodeNames";
 import findActiveFontSize from './findActiveFontSize';
-import findActiveMark from './findActiveMark';
 import {findParentNodeOfType} from 'prosemirror-utils';
-import StrongMarkSpec from './specs/strongMarkSpec';
+import StrongMarkSpec from '../licit/specs/strongMarkSpec';
+import findActiveMark from '../licit/findActiveMark';
 
-jest.mock('./findActiveMark', () => jest.fn());
+jest.mock('../licit/findActiveMark', () => jest.fn());
 // Mock the module and findParentNodeOfType
 jest.mock('prosemirror-utils', (): typeof import('prosemirror-utils') => ({
   ...jest.requireActual('prosemirror-utils'),

@@ -285,7 +285,7 @@ describe('FontTypeCommand (group 2)', () => {
         }
       },
     } as unknown as EditorState;
-    plugin = new FontTypeCommand(null as unknown as string);
+    plugin = new FontTypeCommand(null);
     const test = plugin.execute(state, (_x) => {
       return '';
     });

@@ -123,7 +123,7 @@ describe('FontSizeCommand', () => {
   });
 
   it('should handle when pt is undefined', () => {
-    plugin._pt = undefined as unknown as number;
+    plugin._pt = undefined;
     jest
       .spyOn(TextSelection, 'create')
       .mockReturnValue({} as unknown as TextSelection);
@@ -226,7 +226,7 @@ describe('FontSizeCommand (group 2)', () => {
     expect(command.isActive(EditorState.create({schema: schema1}))).toBeTruthy();
   });
   it('should handle isActive return value cases', () => {
-    expect(command.isActive(undefined)).toBeFalsy();
+    expect(command.isActive()).toBeFalsy();
     command._pt = 0;
     expect(command.isActive(EditorState.create({schema: schema1}))).toBeFalsy();
   });

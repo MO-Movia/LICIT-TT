@@ -5,8 +5,8 @@
 
 import { EditorState, TextSelection } from 'prosemirror-state';
 
-import { MARK_FONT_TYPE } from '../commands';
 import findActiveMark from './findActiveMark';
+import { MARK_FONT_TYPE } from '../commands/MarkNames';
 
 // This should map to `--czi-content-font-size` at `czi-editor.css`.
 export const FONT_TYPE_NAME_DEFAULT = 'Arial';
