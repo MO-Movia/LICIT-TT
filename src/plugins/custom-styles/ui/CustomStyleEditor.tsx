@@ -186,12 +186,8 @@ export class CustomStyleEditor extends React.PureComponent<
     if (!this.state.styles.fontSize) {
       this.state.styles.fontSize = '11';
     }
-    if (this.state.styles.hideCapco === undefined) {
-      this.state.styles.hideCapco = false;
-    }
-    if (this.state.styles.contNumber === undefined) {
-      this.state.styles.contNumber = false;
-    }
+    this.state.styles.hideCapco ??= false;
+    this.state.styles.contNumber ??= false;
     this.getCustomStyles();
   }
 
