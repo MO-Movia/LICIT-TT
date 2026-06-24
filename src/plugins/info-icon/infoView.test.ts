@@ -600,7 +600,7 @@ describe('Info Plugin Extended', () => {
     const cView = new InfoIconView(view.state.doc.nodeAt(6), view, undefined);
 
     const result = cView.parentNodeType(null);
-    expect(result).toBe(null);
+    expect(result).toBeFalsy();
   });
 
   it('onCancel closes popup and focuses view', () => {

@@ -70,7 +70,7 @@ describe('CommentHighlightMarkSpec', () => {
     dom.style.zIndex = '1';
     dom.style.opacity = '0.25';
 
-    expect(getMarkAttrs(mockGetAttrs, dom)).not.toBe({
+    expect(getMarkAttrs(mockGetAttrs, dom)).not.toEqual({
       highlightColor: '',
       hasComment: true,
       markFrom: 1,
@@ -91,7 +91,7 @@ describe('CommentHighlightMarkSpec', () => {
     dom.style.zIndex = '2';
     dom.style.opacity = '0.25';
 
-    expect(getMarkAttrs(mockGetAttrs, dom)).not.toBe({
+    expect(getMarkAttrs(mockGetAttrs, dom)).not.toEqual({
       highlightColor: '',
       hasComment: true,
       markFrom: 1,

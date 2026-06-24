@@ -205,11 +205,13 @@ describe('Capco Plugin', () => {
   });
 
   it('should return capcomode', () => {
-    expect(new CapcoPlugin(2 as unknown as CAPCOMODE)).toBeDefined();
+    const plugin = new CapcoPlugin(2 as unknown as CAPCOMODE);
+    expect(plugin).toBeDefined();
   });
 
   it('should create plugin with default capco', () => {
-    expect(new CapcoPlugin(CAPCOMODE.FORCED, 'U')).toBeDefined();
+    const plugin = new CapcoPlugin(CAPCOMODE.FORCED, 'U');
+    expect(plugin).toBeDefined();
   });
 
   it('should handle handlePaste 2', () => {
@@ -531,7 +533,7 @@ describe('Capco Plugin', () => {
     dom.setAttribute('capco', '{"ism": {"classification": "U"}}');
     dom.style.zIndex = '1';
     dom.style.opacity = '0.25';
-    expect(getParagraphNodeAttrs(mockGetAttrs, dom)).not.toBe({
+    expect(getParagraphNodeAttrs(mockGetAttrs, dom)).not.toEqual({
       capco: '',
     });
   });
@@ -1893,12 +1895,12 @@ describe('getPosition', () => {
       toJSON: () => { },
     });
 
-    Object.defineProperty(window, 'innerWidth', {
+    Object.defineProperty(globalThis, 'innerWidth', {
       writable: true,
       configurable: true,
       value: 1024,
     });
-    Object.defineProperty(window, 'innerHeight', {
+    Object.defineProperty(globalThis, 'innerHeight', {
       writable: true,
       configurable: true,
       value: 768,

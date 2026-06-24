@@ -37,7 +37,7 @@
 }
 
 .czi-math-view-body-content .katex {
-  font-display: block;
+  font-display: block; /* NOSONAR font part from KaTeX library */
 }
 
 .czi-math-view.align-left {

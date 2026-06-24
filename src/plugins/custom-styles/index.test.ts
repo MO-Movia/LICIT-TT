@@ -1099,8 +1099,9 @@ describe('Style Plugin Execute', () => {
       view.dispatch,
       view as unknown as EditorView
     );
+    const non = val === 'none' ? res : false;
     const expected =
-      val === 'clearstyle' ? true : val === 'none' ? res : false;
+      val === 'clearstyle' ? true : non;
     expect(res).toStrictEqual(expected);
   });
 });
@@ -1155,7 +1156,8 @@ describe('Custom Style Plugin pass', () => {
       editorState: state,
       editorView: editor.view,
     };
-    expect(new CustomstyleDropDownCommand(props)).toBeDefined();
+    const command = new CustomstyleDropDownCommand(props);
+    expect(command).toBeDefined();
   });
   it('should call uuid', () => {
     const id = uuid();
@@ -1740,11 +1742,11 @@ describe('Cus Style Plugin-Pass', () => {
     },
   };
   for (const nodeType in mockSchema.nodes) {
-    if (Object.prototype.hasOwnProperty.call(mockSchema.nodes, nodeType)) {
+    if (Object.hasOwn(mockSchema.nodes, nodeType)) {
       const nodeSpec = mockSchema.nodes[nodeType];
       const validContent: string[] = [];
-      for (let i = 0; i < nodeSpec.content.length; i++) {
-        const type = nodeSpec.content[i];
+      for (const element of nodeSpec.content) {
+        const type = element;
         if (typeof type === 'string') {
           validContent.push(type);
         } else {
@@ -2282,7 +2284,7 @@ describe('Cus Style Plugin-Pass', () => {
             {
               style: 'font-size',
               getAttrs(value) {
-                return { pt: parseInt(value as string), overridden: false };
+                return { pt: Number.parseInt(value as string), overridden: false };
               },
             },
           ],
@@ -2936,7 +2938,7 @@ describe('Cus Style Plugin-Pass', () => {
             {
               style: 'font-size',
               getAttrs(value) {
-                return { pt: parseInt(value as string), overridden: false };
+                return { pt: Number.parseInt(value as string), overridden: false };
               },
             },
           ],
@@ -3604,7 +3606,7 @@ describe('Cus Style Plugin-Pass', () => {
             {
               style: 'font-size',
               getAttrs(value) {
-                return { pt: parseInt(value as string), overridden: false };
+                return { pt: Number.parseInt(value as string), overridden: false };
               },
             },
           ],

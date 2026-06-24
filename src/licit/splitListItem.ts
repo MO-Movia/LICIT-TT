@@ -122,7 +122,7 @@ function splitEmptyListItem(tr: Transform, schema: Schema): Transform {
   const listItemFound = findParentNodeOfType(listItemType)(
     (tr as Transaction).selection
   );
-  if (!listItemFound || listItemFound.node.textContent !== '') {
+  if (listItemFound?.node.textContent !== '') {
     // Cursor is not inside an empty list item.
     return tr;
   }

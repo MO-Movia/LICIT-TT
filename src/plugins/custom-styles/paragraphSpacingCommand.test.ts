@@ -82,7 +82,8 @@ describe('paragraphspacingcommand', () => {
 });
 describe('ParagraphSpacingCommand', () => {
   it('should handle ParagraphSpacingCommand', () => {
-    expect(new ParagraphSpacingCommand('', true)).toBeDefined();
+    const command = new ParagraphSpacingCommand('', true);
+    expect(command).toBeDefined();
   });
   it('should handle execute', () => {
     jest.spyOn(paragraphspacingcommand, 'setParagraphSpacing').mockReturnValue({

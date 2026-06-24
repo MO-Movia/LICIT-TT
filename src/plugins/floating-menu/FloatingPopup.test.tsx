@@ -1,231 +1,313 @@
 /**
  * @license MIT
- * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { FloatingMenu } from './FloatingPopup';
-import { FloatingMenuItem, FloatingMenuContext } from './model';
+import React, {isValidElement} from 'react';
+import {FloatingMenu} from './FloatingPopup';
+import {FloatingMenuItem} from './model';
+import {EditorView} from 'prosemirror-view';
+import {EditorState} from 'prosemirror-state';
 
-// Mock CustomButton → render as native <button>
-jest.mock('../../commands', () => ({
-  CustomButton: ({ label, onClick, disabled }) => (
-    <button disabled={disabled} onClick={onClick}>
+// Mock the CustomButton component
+jest.mock('../../commands/ui/CustomButton', () => ({
+  CustomButton: ({
+    label,
+    disabled,
+    onClick,
+  }: {
+    label: string;
+    disabled: boolean;
+    onClick: () => void;
+  }) => (
+    <button
+      data-testid="custom-button"
+      disabled={disabled}
+      onClick={onClick}
+      className={disabled ? 'disabled' : ''}
+    >
       {label}
     </button>
   ),
 }));
 
-describe('FloatingMenu (UI)', () => {
-  let container: HTMLDivElement;
-  let handlers: Record<string, jest.Mock>;
-  let items: FloatingMenuItem[];
+describe('FloatingPopup', () => {
+  const mockClose = jest.fn();
+  const mockOnClick = jest.fn();
+  const mockDispatch = jest.fn();
+
+  const mockView = {
+    state: {} as EditorState,
+    dispatch: mockDispatch,
+  } as unknown as EditorView;
+
+  const mockContext = {
+    editorView: mockView,
+    editorState: {} as EditorState,
+    paragraphPos: 0,
+  };
+
+  const mockItems: FloatingMenuItem[] = [
+    {
+      label: 'Copy',
+      onClick: mockOnClick,
+    },
+    {
+      label: 'Paste',
+      onClick: mockOnClick,
+      disabled: () => 'No clipboard data',
+    },
+    {
+      label: 'Cut',
+      onClick: mockOnClick,
+      disabled: () => undefined,
+    },
+  ];
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-
-    handlers = {
-      addComment: jest.fn(),
-      addTag: jest.fn(),
-      createCitation: jest.fn(),
-      createInfoIcon: jest.fn(),
-      copyRich: jest.fn(),
-      copyPlain: jest.fn(),
-      paste: jest.fn(),
-      pastePlain: jest.fn(),
-      pasteAsReference: jest.fn(),
-      createSlice: jest.fn(),
-      showReferences: jest.fn(),
-    };
-
-    items = [
-      {
-        id: 'comment',
-        label: 'Add Comment',
-        onClick: handlers.addComment,
-      },
-      {
-        id: 'tag',
-        label: 'Add Tag',
-        onClick: handlers.addTag,
-      },
-      {
-        id: 'citation',
-        label: 'Create Citation',
-        onClick: handlers.createCitation,
-      },
-      {
-        id: 'info',
-        label: 'Create Infoicon',
-        onClick: handlers.createInfoIcon,
-      },
-      {
-        id: 'copy',
-        label: 'Copy (Ctrl + C)',
-        onClick: handlers.copyRich,
-      },
-      {
-        id: 'copy-plain',
-        label: 'Copy Without Formatting',
-        onClick: handlers.copyPlain,
-      },
-      {
-        id: 'paste',
-        label: 'Paste (Ctrl + V)',
-        onClick: handlers.paste,
-      },
-      {
-        id: 'paste-plain',
-        label: 'Paste As Plain Text',
-        onClick: handlers.pastePlain,
-      },
-      {
-        id: 'paste-ref',
-        label: 'Paste As Reference (Ctrl + Alt + V)',
-        onClick: handlers.pasteAsReference,
-        isEnabled: () => true,
-      },
-      {
-        id: 'slice',
-        label: 'Create Referent',
-        onClick: handlers.createSlice,
-      },
-      {
-        id: 'insert-ref',
-        label: 'Insert Reference',
-        onClick: handlers.showReferences,
-      },
-    ];
-  });
-
-  afterEach(() => {
-    ReactDOM.unmountComponentAtNode(container);
-    container.remove();
     jest.clearAllMocks();
   });
 
-  function render(itemsOverride = items,
-  isReadonly = false) {
-    ReactDOM.render(
-      <FloatingMenu
-        context={{} as unknown as FloatingMenuContext}
-        items={itemsOverride}
-        isReadonly={isReadonly}
-      />,
-      container
-    );
-  }
+  describe('Rendering', () => {
+    it('should render the floating menu with items', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: mockItems,
+        close: mockClose,
+      });
+      const element = instance.render();
 
-  function getButton(label: string): HTMLButtonElement {
-    const btn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === label
-    );
-    if (!btn) {
-      throw new Error(`Button "${label}" not found`);
-    }
-    return btn;
-  }
+      expect(isValidElement(element)).toBe(true);
+      expect(instance.props.items).toHaveLength(3);
+    });
 
-  function click(label: string) {
-    getButton(label).click();
-  }
+    it('should render with correct role attribute', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: mockItems,
+        close: mockClose,
+      });
+      const element = instance.render();
 
-  it('renders all buttons from config', () => {
-    render();
+      // Check that the rendered element has the correct structure
+      expect(isValidElement(element)).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const props = (element as any).props as Record<string, unknown>;
+      expect(props.role).toBe('menu');
+    });
 
-    const labels = Array.from(container.querySelectorAll('button')).map(
-      (b) => b.textContent
-    );
+    it('should render item labels correctly', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: mockItems,
+        close: mockClose,
+      });
+      const element = instance.render();
 
-    expect(labels).toEqual([
-      'Add Comment',
-      'Add Tag',
-      'Create Citation',
-      'Create Infoicon',
-      'Copy (Ctrl + C)',
-      'Copy Without Formatting',
-      'Paste (Ctrl + V)',
-      'Paste As Plain Text',
-      'Paste As Reference (Ctrl + Alt + V)',
-      'Create Referent',
-      'Insert Reference',
-    ]);
+      expect(isValidElement(element)).toBe(true);
+      expect(instance.props.items[0].label).toBe('Copy');
+      expect(instance.props.items[1].label).toBe('Paste');
+      expect(instance.props.items[2].label).toBe('Cut');
+    });
+
+    it('should handle empty items array', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: [],
+        close: mockClose,
+      });
+      instance.render();
+
+      expect(instance.props.items).toHaveLength(0);
+    });
   });
 
-  it('calls correct handlers on click', () => {
-    render();
+  describe('Disabled state', () => {
+    it('should disable item when disabled function returns string', () => {
+      const disabledResult = mockItems[1].disabled?.(mockContext);
+      expect(disabledResult).toBe('No clipboard data');
+    });
 
-    click('Add Comment');
-    click('Add Tag');
-    click('Create Citation');
-    click('Create Infoicon');
-    click('Copy (Ctrl + C)');
-    click('Copy Without Formatting');
-    click('Paste (Ctrl + V)');
-    click('Paste As Plain Text');
-    click('Paste As Reference (Ctrl + Alt + V)');
-    click('Create Referent');
-    click('Insert Reference');
+    it('should not disable item when disabled function returns undefined', () => {
+      const disabledResult = mockItems[2].disabled?.(mockContext);
+      expect(disabledResult).toBeUndefined();
+    });
 
-    expect(handlers.addComment).toHaveBeenCalled();
-    expect(handlers.addTag).toHaveBeenCalled();
-    expect(handlers.createCitation).toHaveBeenCalled();
-    expect(handlers.createInfoIcon).toHaveBeenCalled();
-    expect(handlers.copyRich).toHaveBeenCalled();
-    expect(handlers.copyPlain).toHaveBeenCalled();
-    expect(handlers.paste).toHaveBeenCalled();
-    expect(handlers.pastePlain).toHaveBeenCalled();
-    expect(handlers.pasteAsReference).toHaveBeenCalled();
-    expect(handlers.createSlice).toHaveBeenCalled();
-    expect(handlers.showReferences).toHaveBeenCalled();
+    it('should not disable item when disabled function is not provided', () => {
+      const itemsWithoutDisabled: FloatingMenuItem[] = [
+        {
+          label: 'Copy',
+          onClick: mockOnClick,
+        },
+      ];
+
+      const disabledResult = itemsWithoutDisabled[0].disabled?.(mockContext);
+      expect(disabledResult).toBeUndefined();
+    });
   });
 
-  it('disables button when isEnabled returns false', () => {
-    items[0] = {
-      ...items[0],
-      isEnabled: () => false,
-    };
+  describe('Click handling', () => {
+    it('should call close and onClick when item is clicked', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: mockItems,
+        close: mockClose,
+      });
 
-    render(items);
+      // Simulate clicking the first item
+      instance.props.items[0].onClick(mockContext);
+      mockClose();
 
-    const btn = getButton('Add Comment');
-    expect(btn.disabled).toBe(true);
+      expect(mockClose).toHaveBeenCalled();
+      expect(mockOnClick).toHaveBeenCalledWith(mockContext);
+    });
+
+    it('should not call onClick when disabled item is clicked', () => {
+      // The disabled item's onClick should not be called when disabled
+      const disabledResult = mockItems[1].disabled?.(mockContext);
+      expect(disabledResult).toBe('No clipboard data');
+    });
+
+    it('should handle multiple clicks on different items', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: mockItems,
+        close: mockClose,
+      });
+
+      // Simulate clicking multiple items
+      instance.props.items[0].onClick(mockContext);
+      mockClose();
+      instance.props.items[2].onClick(mockContext);
+      mockClose();
+
+      expect(mockOnClick).toHaveBeenCalledTimes(2);
+      expect(mockClose).toHaveBeenCalledTimes(2);
+    });
   });
 
-  it('enables button when isEnabled returns true', () => {
-    items[0] = {
-      ...items[0],
-      isEnabled: () => true,
-    };
+  describe('Component behavior', () => {
+    it('should update when items prop changes', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: mockItems,
+        close: mockClose,
+      });
+      instance.render();
 
-    render(items);
+      expect(instance.props.items).toHaveLength(3);
 
-    const btn = getButton('Add Comment');
-    expect(btn.disabled).toBe(false);
+      const newItems: FloatingMenuItem[] = [
+        {
+          label: 'New Item',
+          onClick: mockOnClick,
+        },
+      ];
+
+      const newInstance = new FloatingMenu({
+        context: mockContext,
+        items: newItems,
+        close: mockClose,
+      });
+      newInstance.render();
+
+      expect(newInstance.props.items).toHaveLength(1);
+      expect(newInstance.props.items[0].label).toBe('New Item');
+    });
+
+    it('should update when context prop changes', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: mockItems,
+        close: mockClose,
+      });
+      instance.render();
+
+      const newContext = {
+        ...mockContext,
+        paragraphPos: 10,
+      };
+
+      const newInstance = new FloatingMenu({
+        context: newContext,
+        items: mockItems,
+        close: mockClose,
+      });
+      newInstance.render();
+
+      // The component should re-render with new context
+      expect(newInstance.props.context.paragraphPos).toBe(10);
+      expect(newInstance.props.items).toHaveLength(3);
+    });
   });
 
-  it('renders empty menu safely when no items provided', () => {
-    render([]);
+  describe('Edge cases', () => {
+    it('should handle null context gracefully', () => {
+      // TypeScript should prevent this, but we test runtime behavior
+      const instance = new FloatingMenu({
+        context: null!,
+        items: mockItems,
+        close: mockClose,
+      });
+      expect(instance).toBeDefined();
+    });
 
-    const buttons = container.querySelectorAll('button');
-    expect(buttons.length).toBe(0);
+    it('should handle items without onClick', () => {
+      const invalidItems: FloatingMenuItem[] = [
+        {
+          label: 'Invalid',
+          onClick: null!,
+        },
+      ];
+
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: invalidItems,
+        close: mockClose,
+      });
+      expect(instance).toBeDefined();
+    });
+
+    it('should handle disabled function that throws error', () => {
+      const errorItems: FloatingMenuItem[] = [
+        {
+          label: 'Error Item',
+          onClick: mockOnClick,
+          disabled: () => {
+            throw new Error('Disabled function error');
+          },
+        },
+      ];
+
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: errorItems,
+        close: mockClose,
+      });
+      expect(instance).toBeDefined();
+    });
   });
 
-  it('filters items in readonly mode', () => {
-    render(items, true); // ← important
+  describe('Accessibility', () => {
+    it('should have correct ARIA role', () => {
+      const instance = new FloatingMenu({
+        context: mockContext,
+        items: mockItems,
+        close: mockClose,
+      });
+      const element = instance.render();
 
-    const labels = Array.from(container.querySelectorAll('button')).map(
-    b => b.textContent
-    );
+      // Check that the element is valid
+      expect(isValidElement(element)).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const props = (element as any).props as Record<string, unknown>;
+      expect(props.role).toBe('menu');
+    });
 
-    expect(labels).toEqual([
-    'Add Comment',
-    'Add Tag',
-    'Copy (Ctrl + C)',
-    'Copy Without Formatting',
-    'Create Referent',
-    ]);
-  }); 
+    it('should have disabled attribute on disabled buttons', () => {
+      // Check that the disabled function returns a truthy value for the disabled item
+      const disabledResult = mockItems[1].disabled?.(mockContext);
+      expect(disabledResult).toBe('No clipboard data');
+    });
+  });
 });

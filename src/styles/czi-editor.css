@@ -26,7 +26,7 @@
   -moz-osx-font-smoothing: grayscale;
   outline: none;
   position: relative;
-  user-zoom: fixed;
+  zoom: fixed;
 
   /* [FS] IRAD-1011 2020-07-10
     White space issue in FF

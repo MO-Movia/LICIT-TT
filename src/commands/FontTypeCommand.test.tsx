@@ -44,7 +44,7 @@ describe('FontTypeCommand', () => {
 
   it('should apply the font size mark to the current selection (case 2)', () => {
     const state = EditorState.create({schema: schema1});
-    command.execute(state, undefined);
+    command.execute(state);
     const transform = new Transform(schema as unknown as Node);
     expect(dispatch).not.toHaveBeenCalledWith(expect.any(transform));
   });
@@ -56,7 +56,8 @@ describe('FontTypeCommand (group 2)', () => {
     plugin = new FontTypeCommand('Arielle');
   });
   it('should create when name is null', () => {
-    expect(new FontTypeCommand(null)).toBeTruthy();
+    plugin = new FontTypeCommand(null);
+    expect(plugin).toBeTruthy();
   });
   it('should create', () => {
     expect(plugin).toBeTruthy();

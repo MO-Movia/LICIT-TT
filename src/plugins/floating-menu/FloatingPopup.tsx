@@ -1,43 +1,44 @@
 /**
  * @license MIT
- * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
 import React from 'react';
-import { CustomButton } from '../../commands';
 import { FloatingMenuItem, FloatingMenuContext } from './model';
-import { UICommand } from '../../core';
+import { CustomButton } from '../../commands/ui/CustomButton';
 
 interface FloatingMenuProps {
   context: FloatingMenuContext;
   items: FloatingMenuItem[];
-  isReadonly: boolean;
+  close: () => unknown;
 }
 
 export class FloatingMenu extends React.PureComponent<FloatingMenuProps> {
   render(): React.ReactNode {
-    const { context, items, isReadonly } = this.props;
-    const readOnlySet = new Set(['comment','tag','copy','copy-plain','slice']);
-
-    const visibleItems = isReadonly
-      ? items.filter(item => readOnlySet.has(item.id))
-      : items;
+    const {context, items, close} = this.props;
 
     return (
-      <div className={"context-menu " + UICommand.theme }role="menu" tabIndex={-1}>
+      <div className="context-menu" role="menu">
         <div className="context-menu__items">
-          {visibleItems.map((item) => {
-            const enabled = item.isEnabled
-              ? item.isEnabled(context)
-              : true;
+          {items.map((item, index) => {
+            let disabled: boolean | string | undefined = false;
+            try {
+              disabled = item.disabled?.(context);
+            } catch (error) {
+              disabled = String(error);
+            }
 
             return (
               <CustomButton
-                key={item.id}
-                label={item.label}
-                theme={UICommand.theme}
-                disabled={!enabled}
-                onClick={item.onClick}
+                key={'FloatingMenuItem_' + index}
+                label={
+                  item.label + (disabled ? ' (' + String(disabled) + ')' : '')
+                }
+                disabled={!!disabled}
+                onClick={() => {
+                  close();
+                  item.onClick(context);
+                }}
               />
             );
           })}

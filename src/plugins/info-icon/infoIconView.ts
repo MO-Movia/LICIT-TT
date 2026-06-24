@@ -128,7 +128,7 @@ export class InfoIconView {
   }
 
   parentNodeType(pNode) {
-    return pNode && pNode.type.name === INFO_ICON;
+    return pNode?.type.name === INFO_ICON;
   }
 
   getNodePosition(e: MouseEvent) {

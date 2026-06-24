@@ -17,7 +17,7 @@ export function updateDocument(
   const { state, dispatch } = view;
   let tr = state.tr;
   state.doc.descendants((node, pos) => {
-    if (node.attrs && node.attrs[CAPCOKEY] === capco) {
+    if (node.attrs?.[CAPCOKEY] === capco) {
       const newAttrs = {};
       Object.assign(newAttrs, node.attrs);
       newAttrs[CAPCOKEY] = updatedCapco;

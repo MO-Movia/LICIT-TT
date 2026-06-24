@@ -1460,7 +1460,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     if (printWindow) {
       const divContainer = document.getElementById('holder');
       printWindow.document.open();
-      printWindow.document.writeln('<!DOCTYPE html><html><body></body></html>');
+      printWindow.document.writeln('<!DOCTYPE html><html><body></body></html>'); // NOSONAR no equivalent
 
     const docElement = printWindow.document.documentElement;
       while (docElement.firstChild) {

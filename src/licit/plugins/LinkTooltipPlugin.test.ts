@@ -106,7 +106,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
     pluginView.update(editorView, null);
     pluginView._onCancel?.(editorView);
     pluginView._onClose?.();
-    expect(true).toBe(true);
+    expect(pluginView).toBeDefined();
   });
 
   it('insert link at pos=5, calls _onEditEnd with selection=5..9 => no warning', () => {
@@ -120,12 +120,12 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
       TextSelection.create(editorView.state.doc, 5, 9),
       'https://newhref.com'
     );
-    expect(true).toBe(true); // No console.warn or crash
+    expect(pluginView).toBeDefined();
   });
 
   it('calls _onRemove => no warnings, no crashes', () => {
     pluginView._onRemove?.(editorView);
-    expect(true).toBe(true);
+    expect(pluginView).toBeDefined();
   });
 
   it('calls _onEdit => simulating user typed new href in LinkURLEditor', () => {
@@ -135,7 +135,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
       return {update: jest.fn(), close: jest.fn()};
     });
     pluginView._onEdit?.(editorView);
-    expect(true).toBe(true);
+    expect(mockCreatePopUp).not.toHaveBeenCalled();
   });
 
   it('handles view.readOnly mode by calling destroy()', () => {

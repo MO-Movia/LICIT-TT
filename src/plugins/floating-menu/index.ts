@@ -1,7 +1,8 @@
 /**
  * @license MIT
- * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-export * from './FloatingMenuPlugin';
+export { FloatingMenuPlugin } from './FloatingMenuPlugin';
+export * from './FloatingMenuDefaults';
 export * from './model';

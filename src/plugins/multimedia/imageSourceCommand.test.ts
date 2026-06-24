@@ -188,7 +188,7 @@ it('should set default alt and title when not provided', () => {
 });
 
 describe('getImageSize', () => {
-  const originalImage = global.Image;
+  const originalImage = globalThis.Image;
 
   interface MockImage {
     width: number;
@@ -199,14 +199,14 @@ describe('getImageSize', () => {
   }
 
   afterEach(() => {
-    global.Image = originalImage;
+    globalThis.Image = originalImage;
   });
 
   it('should resolve with width and height on successful load', async () => {
     const mockWidth = 1920;
     const mockHeight = 1080;
 
-    global.Image = class implements MockImage {
+    globalThis.Image = class implements MockImage {
       width = mockWidth;
       height = mockHeight;
       onload: (() => void) | null = null;
@@ -217,7 +217,7 @@ describe('getImageSize', () => {
       }
       set src(value: string) {
         this._src = value;
-        setTimeout(() => this.onload && this.onload(), 0);
+        setTimeout(() => this.onload?.(), 0);
       }
     } as unknown as typeof Image;
 
@@ -227,7 +227,7 @@ describe('getImageSize', () => {
   });
 
   it('should reject on image load error', async () => {
-    global.Image = class implements MockImage {
+    globalThis.Image = class implements MockImage {
       width = 0;
       height = 0;
       onload: (() => void) | null = null;
@@ -238,7 +238,7 @@ describe('getImageSize', () => {
       }
       set src(value: string) {
         this._src = value;
-        setTimeout(() => this.onerror && this.onerror(new Event('Failed to load')), 0);
+        setTimeout(() => this.onerror?.(new Event('Failed to load')), 0);
       }
     } as unknown as typeof Image;
 
@@ -246,7 +246,7 @@ describe('getImageSize', () => {
   });
 
   it('should handle different image dimensions', async () => {
-    global.Image = class implements MockImage {
+    globalThis.Image = class implements MockImage {
       width = 300;
       height = 600;
       onload: (() => void) | null = null;
@@ -257,7 +257,7 @@ describe('getImageSize', () => {
       }
       set src(value: string) {
         this._src = value;
-        setTimeout(() => this.onload && this.onload(), 0);
+        setTimeout(() => this.onload?.(), 0);
       }
     } as unknown as typeof Image;
 
@@ -357,7 +357,7 @@ describe('ImageSourceCommand', () => {
 
   describe('executeWithUserInput', () => {
     beforeEach(() => {
-      global.Image = class {
+      globalThis.Image = class {
         width = 800;
         height = 600;
         onload: (() => void) | null = null;
@@ -368,7 +368,7 @@ describe('ImageSourceCommand', () => {
         }
         set src(value: string) {
           this._src = value;
-          setTimeout(() => this.onload && this.onload(), 0);
+          setTimeout(() => this.onload?.(), 0);
         }
       } as unknown as typeof Image;
     });
@@ -405,10 +405,10 @@ describe('ImageSourceCommand', () => {
     it('should not dispatch when dispatch is null', () => {
       const mockInputs:ImageLike = {src: 'test.jpg',height: 400, width: 300, id: '1'};
 
-      command.executeWithUserInput(mockState, null, mockView, mockInputs);
+      const result = command.executeWithUserInput(mockState, null, mockView, mockInputs);
 
       // Should not throw and should not call dispatch
-      expect(true).toBe(true);
+      expect(result).toBe(false);
     });
 
     it('should call hideCursorPlaceholder when view exists', async () => {
@@ -448,7 +448,7 @@ describe('ImageSourceCommand', () => {
       const mockWidth = 1024;
       const mockHeight = 768;
 
-      global.Image = class {
+      globalThis.Image = class {
         width = mockWidth;
         height = mockHeight;
         onload: (() => void) | null = null;
@@ -459,7 +459,7 @@ describe('ImageSourceCommand', () => {
         }
         set src(value: string) {
           this._src = value;
-          setTimeout(() => this.onload && this.onload(), 0);
+          setTimeout(() => this.onload?.(), 0);
         }
       } as unknown as typeof Image;
 

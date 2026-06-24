@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import Color, {ColorInstance} from 'color';
+import Color, { ColorInstance } from 'color';
 import * as React from 'react';
 
 import {CustomButton} from './CustomButton';
@@ -60,16 +60,16 @@ export class ColorEditor extends React.PureComponent<{
           />
         </div>
         <div className="czi-color-editor-section">
-          {generateGreyColors(10).map(renderColor)}
+          {generateGreyColors(10).map((element, index) => renderColor(element, index))}
         </div>
         <div className="czi-color-editor-section">
-          {generateRainbowColors(10, 90, 50).map(renderColor)}
+          {generateRainbowColors(10, 90, 50).map((element, index) => renderColor(element, index))}
         </div>
         <div className="czi-color-editor-section">
-          {generateRainbowColors(30, 70, 70).map(renderColor)}
+          {generateRainbowColors(30, 70, 70).map((element, index) => renderColor(element, index))}
         </div>
         <div className="czi-color-editor-section">
-          {generateRainbowColors(30, 90, 30).map(renderColor)}
+          {generateRainbowColors(30, 90, 30).map((element, index) => renderColor(element, index))}
         </div>
       </div>
     );
