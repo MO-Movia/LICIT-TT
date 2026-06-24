@@ -17,7 +17,6 @@ export class BlockControlMenu extends React.PureComponent<BlockControlMenuProps>
       <div className="licit-block-control-menu" role="menu">
         {items.map((item) => (
           <button
-            aria-checked={item.active || undefined}
             className={
               'licit-block-control-menu-item' +
               (item.active ? ' active' : '')

@@ -58,7 +58,7 @@ export class LicitTableNodeView extends TableView {
   ignoreMutation(record: MutationRecord): boolean {
     const target = record.target;
     if (
-      target instanceof window.Node &&
+      target instanceof globalThis.Node &&
       this._menuButton.contains(target)
     ) {
       return true;
@@ -68,7 +68,7 @@ export class LicitTableNodeView extends TableView {
 
   stopEvent(event: Event): boolean {
     const target = event.target;
-    return target instanceof window.Node && this._menuButton.contains(target);
+    return target instanceof globalThis.Node && this._menuButton.contains(target);
   }
 
   destroy(): void {
@@ -163,7 +163,7 @@ export class LicitTableNodeView extends TableView {
     }
   }
 
-  private _onMenuClick = (event: Event): void => {
+  private readonly _onMenuClick = (event: Event): void => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -195,7 +195,7 @@ export class LicitTableNodeView extends TableView {
     );
   };
 
-  private _closeMenu = (): void => {
+  private readonly _closeMenu = (): void => {
     const menu = this._menu;
     this._menu = undefined;
     menu?.close?.(undefined);

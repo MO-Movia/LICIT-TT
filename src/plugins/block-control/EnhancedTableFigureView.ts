@@ -47,9 +47,9 @@ export class EnhancedTableFigureView implements NodeView {
     this.dom = document.createElement('div');
     this.dom.setAttribute('id', this._id);
     this.dom.className = 'enhanced-table-figure has-hover-handle';
-    this.dom.setAttribute('data-type', 'enhanced-table-figure');
-    this.dom.setAttribute('data-id', node.attrs.id);
-    this.dom.setAttribute('data-figure-type', node.attrs.figureType);
+    this.dom.dataset.type = 'enhanced-table-figure';
+    this.dom.dataset.id = String(node.attrs.id);
+    this.dom.dataset.figureType = String(node.attrs.figureType);
     this.dom.style.position = 'relative';
     this.dom.style.overflow = 'visible';
     this.dom.style.width = `${PORTRAIT_WIDTH_PX}px`;
@@ -106,13 +106,10 @@ export class EnhancedTableFigureView implements NodeView {
         ? `${LANDSCAPE_WIDTH_PX}px`
         : '100%';
 
-    this.dom.setAttribute('data-id', node.attrs.id);
-    this.dom.setAttribute('data-figure-type', node.attrs.figureType);
-    this.dom.setAttribute('data-orientation', node.attrs.orientation);
-    this.dom.setAttribute(
-      'data-maximized',
-      node.attrs.maximized ? 'true' : 'false'
-    );
+    this.dom.dataset.id = String(node.attrs.id);
+    this.dom.dataset.figureType = String(node.attrs.figureType);
+    this.dom.dataset.orientation = String(node.attrs.orientation);
+    this.dom.dataset.maximized = node.attrs.maximized ? 'true' : 'false';
 
     const baseClasses = ['enhanced-table-figure', 'has-hover-handle'];
     if (node.attrs.orientation === 'landscape') {
@@ -130,13 +127,13 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   hasNotes(): boolean {
-    let notesExists = false;
-    this.node.forEach((child) => {
+    for (let index = 0; index < this.node.childCount; index++) {
+      const child = this.node.child(index);
       if (child.type.name === 'enhanced_table_figure_notes') {
-        notesExists = true;
+        return true;
       }
-    });
-    return notesExists;
+    }
+    return false;
   }
 
   updateNotesTrigger(): void {
@@ -145,11 +142,11 @@ export class EnhancedTableFigureView implements NodeView {
 
   selectNode(): void {
     this.dom.classList.add('ProseMirror-selectednode');
-    this.dom.setAttribute('data-active', 'true');
+    this.dom.dataset.active = 'true';
   }
 
   deselectNode(): void {
-    this.dom.setAttribute('data-active', 'false');
+    this.dom.dataset.active = 'false';
     this.closeMenu();
     this.dom.classList.remove('ProseMirror-selectednode');
   }
@@ -162,10 +159,10 @@ export class EnhancedTableFigureView implements NodeView {
 
   stopEvent(event: Event): boolean {
     const target = event.target;
-    return target instanceof window.Node && this.selectHandle.contains(target);
+    return target instanceof globalThis.Node && this.selectHandle.contains(target);
   }
 
-  private handleMenuClick = (event: Event): void => {
+  private readonly handleMenuClick = (event: Event): void => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -260,7 +257,7 @@ export class EnhancedTableFigureView implements NodeView {
     ];
   }
 
-  private closeMenu = (): void => {
+  private readonly closeMenu = (): void => {
     const menu = this._menu;
     this._menu = undefined;
     menu?.close?.(undefined);
@@ -411,16 +408,17 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   private findImagePath(figurePos: number): number | null {
-    let imagePath: number | null = null;
-
-    this.node.forEach((child, offset) => {
+    let offset = 0;
+    for (let index = 0; index < this.node.childCount; index++) {
+      const child = this.node.child(index);
+      const imagePath = this.findNestedImageInNode(child, figurePos + 1 + offset);
       if (imagePath !== null) {
-        return;
+        return imagePath;
       }
-      imagePath = this.findNestedImageInNode(child, figurePos + 1 + offset);
-    });
+      offset += child.nodeSize;
+    }
 
-    return imagePath;
+    return null;
   }
 
   private findNestedImageInNode(
@@ -431,13 +429,15 @@ export class EnhancedTableFigureView implements NodeView {
       return nodePos;
     }
 
-    let imagePath: number | null = null;
-    node.forEach((child, offset) => {
+    let offset = 0;
+    for (let index = 0; index < node.childCount; index++) {
+      const child = node.child(index);
+      const imagePath = this.findNestedImageInNode(child, nodePos + 1 + offset);
       if (imagePath !== null) {
-        return;
+        return imagePath;
       }
-      imagePath = this.findNestedImageInNode(child, nodePos + 1 + offset);
-    });
-    return imagePath;
+      offset += child.nodeSize;
+    }
+    return null;
   }
 }

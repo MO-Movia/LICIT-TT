@@ -69,6 +69,13 @@ type ImageState = {
   originalSize: OriginalSize;
 };
 
+type ImageRenderStyles = {
+  clipStyle: React.CSSProperties;
+  imageStyle: React.CSSProperties;
+  pStyle: React.CSSProperties;
+  renderWidth: number | string;
+};
+
 // Get the maxWidth that the image could be resized to.
 function getMaxResizeWidth(el): number {
   // Ideally, the image should bot be wider then its containing element.
@@ -240,9 +247,10 @@ export class ImageViewBody extends React.PureComponent<
       selected,
     });
 
+    const fitToParent = this.props.node.attrs['fitToParent'];
     const resizeBox = this.isUnaltered(active, attrs.cropData, rotate) ? (
       <ImageResizeBox
-        fitToParent={this.props.node.attrs['fitToParent']}
+        fitToParent={fitToParent}
         height={height}
         onResizeEnd={this._onResizeEnd}
         src={src}
@@ -250,64 +258,23 @@ export class ImageViewBody extends React.PureComponent<
       />
     ) : null;
 
-    const imageStyle: React.CSSProperties = {
-      backgroundImage: loading ? EMPTY_SRC : undefined,
-      backgroundSize: 'cover',
-      display: 'inline-block',
-      height: height + 'px',
-      left: '0',
-      top: '0',
-      width: width + 'px',
-      position: 'relative',
-    };
-
-    const clipStyle: React.CSSProperties = {};
-    if (attrs.cropData) {
-      clipStyle.width = `${attrs.cropData.width}px`;
-      clipStyle.height = `${attrs.cropData.height}px`;
-      clipStyle.overflow = 'hidden';
-      clipStyle.position = 'relative';
-      clipStyle.display = 'inline-block';
-    } else if (crop) {
-      const cropped = {...crop};
-      if (scale !== 1) {
-        scale = maxSize.width / cropped.width;
-        cropped.width *= scale;
-        cropped.height *= scale;
-        cropped.left *= scale;
-        cropped.top *= scale;
-      }
-      clipStyle.width = cropped.width + 'px';
-      clipStyle.height = cropped.height + 'px';
-      imageStyle.left = cropped.left + 'px';
-      imageStyle.top = cropped.top + 'px';
-    }
-
-    if (rotate) {
-      clipStyle.transform = `rotate(${rotate}rad)`;
-    }
+    const {clipStyle, imageStyle, pStyle, renderWidth} =
+      this.getImageRenderStyles({
+        crop,
+        cropData: attrs.cropData,
+        fitToParent,
+        height,
+        loading,
+        maxSize,
+        rotate,
+        scale,
+        width,
+      });
 
     const errorView = error ? Icon.get('error') : null;
     const errorTitle = error
       ? `Unable to load image from ${attrs.src || ''}`
       : undefined;
-
-    const pStyle: React.CSSProperties = {};
-    if (this.props.node.attrs['fitToParent']) {
-      width = FP_WIDTH;
-      clipStyle.width = FP_WIDTH;
-      imageStyle.width = FP_WIDTH;
-      pStyle.width = FP_WIDTH;
-
-      pStyle.height = height;
-
-      clipStyle.padding = '0';
-      clipStyle.margin = '0';
-      imageStyle.padding = '0';
-      imageStyle.margin = '0';
-      pStyle.padding = '0';
-      pStyle.margin = '0';
-    }
 
     return (
       <span
@@ -336,7 +303,7 @@ export class ImageViewBody extends React.PureComponent<
                     }
                   : undefined
               }
-              width={width}
+              width={renderWidth}
             />
             {errorView}
           </span>
@@ -412,9 +379,86 @@ export class ImageViewBody extends React.PureComponent<
     return {width, height};
   }
 
+  getImageRenderStyles({
+    crop,
+    cropData,
+    fitToParent,
+    height,
+    loading,
+    maxSize,
+    rotate,
+    scale,
+    width,
+  }: {
+    crop: CropDataPropValue | null | undefined;
+    cropData: CropDataPropValue | null | undefined;
+    fitToParent: boolean;
+    height: number;
+    loading: boolean;
+    maxSize: MaxSize;
+    rotate: number | null | undefined;
+    scale: number;
+    width: number;
+  }): ImageRenderStyles {
+    const imageStyle: React.CSSProperties = {
+      backgroundImage: loading ? EMPTY_SRC : undefined,
+      backgroundSize: 'cover',
+      display: 'inline-block',
+      height: height + 'px',
+      left: '0',
+      top: '0',
+      width: width + 'px',
+      position: 'relative',
+    };
+    const clipStyle: React.CSSProperties = {};
+    const pStyle: React.CSSProperties = {};
+    let renderWidth: number | string = width;
+
+    if (cropData) {
+      clipStyle.width = `${cropData.width}px`;
+      clipStyle.height = `${cropData.height}px`;
+      clipStyle.overflow = 'hidden';
+      clipStyle.position = 'relative';
+      clipStyle.display = 'inline-block';
+    } else if (crop) {
+      const cropped = {...crop};
+      if (scale !== 1) {
+        scale = maxSize.width / cropped.width;
+        cropped.width *= scale;
+        cropped.height *= scale;
+        cropped.left *= scale;
+        cropped.top *= scale;
+      }
+      clipStyle.width = cropped.width + 'px';
+      clipStyle.height = cropped.height + 'px';
+      imageStyle.left = cropped.left + 'px';
+      imageStyle.top = cropped.top + 'px';
+    }
+
+    if (rotate) {
+      clipStyle.transform = `rotate(${rotate}rad)`;
+    }
+
+    if (fitToParent) {
+      renderWidth = FP_WIDTH;
+      clipStyle.width = FP_WIDTH;
+      imageStyle.width = FP_WIDTH;
+      pStyle.width = FP_WIDTH;
+      pStyle.height = height;
+      clipStyle.padding = '0';
+      clipStyle.margin = '0';
+      imageStyle.padding = '0';
+      imageStyle.margin = '0';
+      pStyle.padding = '0';
+      pStyle.margin = '0';
+    }
+
+    return {clipStyle, imageStyle, pStyle, renderWidth};
+  }
+
   _renderInlineEditor(): void {
     const el = document.getElementById(this._id);
-    if (!el || el.getAttribute('data-active') !== 'true') {
+    if (!el || el.dataset.active !== 'true') {
       this._closeMenu();
       return;
     }
