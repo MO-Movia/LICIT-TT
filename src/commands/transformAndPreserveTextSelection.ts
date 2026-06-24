@@ -33,13 +33,13 @@ function getCollapsedSelectionOffsets(
   prevNode: Node | null,
   nextNode: Node | null
 ): { fromOffset: number; toOffset: number } | null {
-  if (!currentNode && prevNode && prevNode.type.name === TEXT) {
+  if (!currentNode && prevNode?.type.name === TEXT) {
     return { fromOffset: -1, toOffset: 0 };
   }
-  if (prevNode && currentNode && currentNode.type === prevNode.type) {
+  if (!!prevNode && !!currentNode && currentNode.type === prevNode.type) {
     return { fromOffset: -1, toOffset: 0 };
   }
-  if (nextNode && currentNode && currentNode.type === nextNode.type) {
+  if (!!nextNode && !!currentNode && currentNode.type === nextNode.type) {
     return { fromOffset: 0, toOffset: 1 };
   }
   if (nextNode) {
@@ -68,7 +68,7 @@ function prepareCollapsedSelection(
   const prevNode = tr.doc.nodeAt(from - 1);
   const nextNode = tr.doc.nodeAt(from + 1);
 
-  if (!currentNode && prevNode && prevNode.type.name === PARAGRAPH && !prevNode.firstChild) {
+  if (!currentNode && prevNode?.type.name === PARAGRAPH && !prevNode.firstChild) {
     placeholderTextNode = schema.text(PLACEHOLDER_TEXT);
     tr = tr.insert(from, Fragment.from(placeholderTextNode));
     toOffset = 1;
