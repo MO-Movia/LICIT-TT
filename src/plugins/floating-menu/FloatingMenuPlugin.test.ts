@@ -18,6 +18,7 @@ import {
   createPointerDownHandler,
   createContextMenuHandler,
   createOutsideClickHandler,
+  isFloatingMenuParagraphParent,
 } from './FloatingMenuPlugin';
 import {Plugin, EditorState, Transaction} from 'prosemirror-state';
 import {Node, NodeType, Schema} from 'prosemirror-model';
@@ -520,7 +521,7 @@ describe('FloatingMenuPlugin', () => {
 
     it('should rescan when document changed and shouldRescanDecorations returns true', () => {
       const mockDoc = {
-        forEach: jest.fn(),
+        descendants: jest.fn(),
       } as unknown as Node;
       const mockTr = {
         getMeta: jest.fn(() => undefined),
@@ -592,7 +593,7 @@ describe('FloatingMenuPlugin', () => {
       };
 
       mockDoc = {
-        forEach: jest.fn(),
+        descendants: jest.fn(),
         type: {name: 'doc'} as unknown as NodeType,
       };
     });
@@ -603,15 +604,15 @@ describe('FloatingMenuPlugin', () => {
         attrs: {objectId: 'head1'},
       } as unknown as Node;
 
-      mockDoc.forEach = jest.fn((callback: (node: Node, pos: number) => unknown) => {
-        callback(mockHeading, 0);
+      mockDoc.descendants = jest.fn((callback: (node: Node, pos: number, parent: Node | null, index: number) => unknown) => {
+        callback(mockHeading, 0, mockDoc as Node, 0);
       });
 
       // Mock DecorationSet.create to return empty set
       jest.spyOn(DecorationSet, 'create').mockReturnValue(DecorationSet.empty);
       
       getDecorations(mockDoc as Node, mockState as EditorState);
-      expect(mockDoc.forEach).toHaveBeenCalled();
+      expect(mockDoc.descendants).toHaveBeenCalled();
       
       jest.restoreAllMocks();
     });
@@ -626,14 +627,132 @@ describe('FloatingMenuPlugin', () => {
     });
 
     it('should iterate over document nodes', () => {
-      mockDoc.forEach = jest.fn();
+      mockDoc.descendants = jest.fn();
       
       jest.spyOn(DecorationSet, 'create').mockReturnValue(DecorationSet.empty);
       
       getDecorations(mockDoc as Node, mockState as EditorState);
-      expect(mockDoc.forEach).toHaveBeenCalled();
+      expect(mockDoc.descendants).toHaveBeenCalled();
       
       jest.restoreAllMocks();
+    });
+
+    it('should skip paragraphs without valid parent', () => {
+      const mockParagraph = {
+        type: {name: 'paragraph'},
+        attrs: {objectId: 'para1'},
+      } as unknown as Node;
+
+      const mockInvalidParent = {
+        type: {name: 'invalid_parent'},
+      } as unknown as Node;
+
+      mockDoc.descendants = jest.fn((callback: (node: Node, pos: number, parent: Node | null, index: number) => unknown) => {
+        callback(mockParagraph, 0, mockInvalidParent, 0);
+      });
+
+      jest.spyOn(DecorationSet, 'create').mockReturnValue(DecorationSet.empty);
+      
+      getDecorations(mockDoc as Node, mockState as EditorState);
+      expect(mockDoc.descendants).toHaveBeenCalled();
+      
+      jest.restoreAllMocks();
+    });
+
+    it('should process paragraphs with doc parent', () => {
+      const mockParagraph = {
+        type: {name: 'paragraph'},
+        attrs: {objectId: 'para1'},
+      } as unknown as Node;
+
+      const mockDocParent = {
+        type: {name: 'doc'},
+      } as unknown as Node;
+
+      mockDoc.descendants = jest.fn((callback: (node: Node, pos: number, parent: Node | null, index: number) => unknown) => {
+        callback(mockParagraph, 0, mockDocParent, 0);
+      });
+
+      jest.spyOn(DecorationSet, 'create').mockReturnValue(DecorationSet.empty);
+      
+      getDecorations(mockDoc as Node, mockState as EditorState);
+      expect(mockDoc.descendants).toHaveBeenCalled();
+      
+      jest.restoreAllMocks();
+    });
+
+    it('should process paragraphs with landscape_section parent', () => {
+      const mockParagraph = {
+        type: {name: 'paragraph'},
+        attrs: {objectId: 'para1'},
+      } as unknown as Node;
+
+      const mockLandscapeParent = {
+        type: {name: 'landscape_section'},
+      } as unknown as Node;
+
+      mockDoc.descendants = jest.fn((callback: (node: Node, pos: number, parent: Node | null, index: number) => unknown) => {
+        callback(mockParagraph, 0, mockLandscapeParent, 0);
+      });
+
+      jest.spyOn(DecorationSet, 'create').mockReturnValue(DecorationSet.empty);
+      
+      getDecorations(mockDoc as Node, mockState as EditorState);
+      expect(mockDoc.descendants).toHaveBeenCalled();
+      
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('isFloatingMenuParagraphParent', () => {
+    it('should return true for doc parent', () => {
+      const mockParent = {
+        type: {name: 'doc'},
+      } as unknown as Node;
+      
+      expect(isFloatingMenuParagraphParent(mockParent)).toBe(true);
+    });
+
+    it('should return true for landscape_section parent', () => {
+      const mockParent = {
+        type: {name: 'landscape_section'},
+      } as unknown as Node;
+      
+      expect(isFloatingMenuParagraphParent(mockParent)).toBe(true);
+    });
+
+    it('should return false for other parent types', () => {
+      const mockParent = {
+        type: {name: 'other_type'},
+      } as unknown as Node;
+      
+      expect(isFloatingMenuParagraphParent(mockParent)).toBe(false);
+    });
+
+    it('should return false for null parent', () => {
+      expect(isFloatingMenuParagraphParent(null)).toBe(false);
+    });
+
+    it('should return false for parent without type', () => {
+      const mockParent = {} as unknown as Node;
+      
+      expect(isFloatingMenuParagraphParent(mockParent)).toBe(false);
+    });
+
+    it('should return false for parent with null type', () => {
+      const mockParent = {
+        type: null,
+      } as unknown as Node;
+      
+      expect(isFloatingMenuParagraphParent(mockParent)).toBe(false);
+    });
+
+    it('should return false for parent with type without name', () => {
+      const mockParent = {
+        type: {},
+      } as unknown as Node;
+      
+      expect(isFloatingMenuParagraphParent(mockParent)).toBe(false);
     });
   });
 
@@ -819,7 +938,7 @@ describe('FloatingMenuPlugin', () => {
     });
 
     it('should initialize state with decorations', () => {
-      const mockDoc = {forEach: jest.fn()} as unknown as Node;
+      const mockDoc = {descendants: jest.fn()} as unknown as Node;
       const mockState = {doc: mockDoc} as EditorState;
       
       jest.spyOn(DecorationSet, 'create').mockReturnValue(DecorationSet.empty);

@@ -267,8 +267,8 @@ export function createDecorationMarksWidget(pos: number, node: Node, decoFlags: 
 export function getDecorations(doc: Node, state: EditorState, decorationMarks?: ((node: Node, pos: number, state: EditorState) => Element | undefined)[]): DecorationSet {
   const decorations: Decoration[] = [];
 
-  doc?.forEach((node: Node, pos: number) => {
-    if (node.type.name !== 'paragraph') return;
+  doc?.descendants((node: Node, pos: number, parent: Node | null) => {
+    if (node.type.name !== 'paragraph' || !isFloatingMenuParagraphParent(parent)) return;
     decorations.push(createHamburgerWidget(pos, node));
     
     const decoFlags = decorationMarks?.map(fn => fn(node, pos, state)).filter(x => !!x);
@@ -276,6 +276,11 @@ export function getDecorations(doc: Node, state: EditorState, decorationMarks?: 
     decorations.push(createDecorationMarksWidget(pos, node, decoFlags));
   });
   return DecorationSet.create(state.doc, decorations);
+}
+
+export function isFloatingMenuParagraphParent(parent: Node | null): boolean {
+  const parentName = parent?.type?.name;
+  return parentName === 'doc' || parentName === 'landscape_section';
 }
 
 export function positionAboveOrBelow(anchorRect?: Rect, bodyRect?: Rect): Rect {
