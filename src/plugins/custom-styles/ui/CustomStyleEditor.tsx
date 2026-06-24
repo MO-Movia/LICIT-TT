@@ -186,6 +186,12 @@ export class CustomStyleEditor extends React.PureComponent<
     if (!this.state.styles.fontSize) {
       this.state.styles.fontSize = '11';
     }
+    if (this.state.styles.hideCapco === undefined) {
+      this.state.styles.hideCapco = false;
+    }
+    if (this.state.styles.contNumber === undefined) {
+      this.state.styles.contNumber = false;
+    }
     this.getCustomStyles();
   }
 
@@ -543,6 +549,11 @@ export class CustomStyleEditor extends React.PureComponent<
       styles: {
         ...prevState.styles,
         styleLevel: level,
+        hideCapco: isCheckboxDisabled ? false : prevState.styles.hideCapco,
+        contNumber:
+          isCheckboxDisabled || level !== 2
+            ? false
+            : prevState.styles.contNumber,
         hasNumbering: isCheckboxDisabled
           ? false
           : prevState.styles?.hasNumbering,
@@ -576,6 +587,9 @@ export class CustomStyleEditor extends React.PureComponent<
         boldNumbering: val.target.checked
           ? false
           : prevState.styles.boldNumbering,
+        contNumber: val.target.checked
+          ? false
+          : prevState.styles.contNumber,
         hideNumbering: val.target.checked
           ? false
           : prevState.styles.hideNumbering,
@@ -755,6 +769,10 @@ export class CustomStyleEditor extends React.PureComponent<
         ...prevState.styles,
         hasNumbering: val.target.checked,
         hasBullet: val.target.checked ? false : prevState.styles?.hasBullet,
+        contNumber:
+          val.target.checked && prevState.styles.styleLevel === 2
+            ? prevState.styles.contNumber
+            : false,
         nextLineStyleName: val.target.checked
           ? prevState.styleName
           : RESERVED_STYLE_NONE,
@@ -776,6 +794,82 @@ export class CustomStyleEditor extends React.PureComponent<
     }));
   }
 
+  handleNone() {
+    this.setState((prevState) => ({
+      styles: {
+        ...prevState.styles,
+        selectedStyleMode: 'none',
+        toc: false,
+        tot: false,
+        tof: false,
+        prefixValue: '',
+        hideCapco: false,
+        contNumber: false,
+        hasNumbering: false,
+        nextLineStyleName: RESERVED_STYLE_NONE,
+        styleLevel: 0,
+      },
+    }));
+  }
+
+  handleTOC(val) {
+    this.setState((prevState) => ({
+      styles: {
+        ...prevState.styles,
+        selectedStyleMode: 'toc',
+        toc: val.target.checked,
+        tot: false,
+        tof: false,
+        prefixValue: '',
+        hideCapco: false,
+        contNumber: false,
+        hasNumbering: false,
+        styleLevel: 0,
+        nextLineStyleName: RESERVED_STYLE_NONE,
+      },
+    }));
+  }
+
+  handleTOT(val) {
+    this.setState((prevState) => ({
+      styles: {
+        ...prevState.styles,
+        selectedStyleMode: 'tot',
+        toc: false,
+        tot: val.target.checked,
+        tof: false,
+        prefixValue: val.target.checked ? 'TABLE ' : '',
+        hideCapco: false,
+        contNumber: false,
+        hasNumbering: val.target.checked,
+        nextLineStyleName: val.target.checked
+          ? RESERVED_STYLE_NONE
+          : prevState.styles.nextLineStyleName,
+        styleLevel: val.target.checked ? 2 : 0,
+      },
+    }));
+  }
+
+  handleTOF(val) {
+    this.setState((prevState) => ({
+      styles: {
+        ...prevState.styles,
+        selectedStyleMode: 'tof',
+        toc: false,
+        tot: false,
+        tof: val.target.checked,
+        prefixValue: val.target.checked ? 'FIGURE ' : '',
+        hideCapco: false,
+        contNumber: false,
+        hasNumbering: val.target.checked,
+        nextLineStyleName: val.target.checked
+          ? RESERVED_STYLE_NONE
+          : prevState.styles.nextLineStyleName,
+        styleLevel: val.target.checked ? 2 : 0,
+      },
+    }));
+  }
+
   handleList(val) {
     const selectedStyle = val.target.value;
     const isList = selectedStyle === 'listStyle';
@@ -790,6 +884,8 @@ export class CustomStyleEditor extends React.PureComponent<
           ...prevState.styles,
           styleLevel,
           isList,
+          hideCapco: isList ? false : prevState.styles.hideCapco,
+          contNumber: isList ? false : prevState.styles.contNumber,
         },
         isRadioDisabled: styleLevel === 0,
       }));
@@ -809,6 +905,21 @@ export class CustomStyleEditor extends React.PureComponent<
   handleHideNumbering(val) {
     this.setState((prevState) => ({
       styles: { ...prevState.styles, hideNumbering: val.target.checked },
+    }));
+  }
+
+  handleHideCapco(val) {
+    this.setState((prevState) => ({
+      styles: { ...prevState.styles, hideCapco: val.target.checked },
+    }));
+  }
+
+  handleContNumber(val) {
+    this.setState((prevState) => ({
+      styles: {
+        ...prevState.styles,
+        contNumber: this.isContNumberDisabled() ? false : val.target.checked,
+      },
     }));
   }
 
@@ -1028,6 +1139,7 @@ export class CustomStyleEditor extends React.PureComponent<
       >
         <p className="molsp-formp">Style Attributes:</p>
         <div
+          className="molsp-attributes-scroll"
           style={{
             height: '329px',
             overflow: 'hidden auto',
@@ -1140,10 +1252,72 @@ export class CustomStyleEditor extends React.PureComponent<
           <span>
             <input checked={this.state.styles.boldSentence} disabled={!this.state.styles.boldPartial} name="boldscentence" onChange={this.onScentenceRadioChanged.bind(this)} style={{ marginLeft: '21px' }} type="radio" value="0" />
             <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>First Sentence</span>
-            <input checked={!this.state.styles.boldSentence} disabled={!this.state.styles.boldPartial} name="boldscentence" onChange={this.onScentenceRadioChanged.bind(this)} style={{ marginLeft: '21px' }} type="radio" value="1" />
+            <input checked={!this.state.styles.boldSentence} disabled={!this.state.styles.boldPartial} name="boldscentence" onChange={this.onScentenceRadioChanged.bind(this)} style={{ marginLeft: '88px' }} type="radio" value="1" />
             <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>First Word</span>
           </span>
         </div>
+        {this.renderSpecialStyleOptions()}
+        </div>
+      </>
+    );
+  }
+
+  renderSpecialStyleOptions() {
+    const capcoOptionsDisabled = this.isCapcoOptionDisabled();
+    const options = [
+      {
+        label: 'None',
+        value: 'none',
+        handler: this.handleNone.bind(this),
+        cy: 'cyStyleNone',
+      },
+      {
+        label: 'TOC',
+        value: 'toc',
+        handler: this.handleTOC.bind(this),
+        cy: 'cyStyleTOC',
+      },
+      {
+        label: 'Table',
+        value: 'tot',
+        handler: this.handleTOT.bind(this),
+        cy: 'cyStyleTOT',
+      },
+      {
+        label: 'Figure',
+        value: 'tof',
+        handler: this.handleTOF.bind(this),
+        cy: 'cyStyleTOF',
+      },
+    ];
+
+    return (
+      <>
+        <div className="molsp-special-style-options">
+          {options.map((item) => (
+            <label className="molsp-special-style-option" key={item.value}>
+              <input
+                checked={this.state.styles.selectedStyleMode === item.value}
+                data-cy={item.cy}
+                name="styleOption"
+                onChange={item.handler}
+                type="radio"
+              />
+              <span>{item.label}</span>
+            </label>
+          ))}
+        </div>
+        <div className="molsp-capco-option">
+          <label>
+            <input
+              checked={!!this.state.styles.hideCapco}
+              disabled={capcoOptionsDisabled}
+              onChange={this.handleHideCapco.bind(this)}
+              style={{ marginLeft: '1px' }}
+              type="checkbox"
+            />
+            <span  style={{ marginLeft: '1px' }}>Hide Capco</span>
+          </label>
         </div>
       </>
     );
@@ -1189,7 +1363,7 @@ export class CustomStyleEditor extends React.PureComponent<
             </span>
             <span style={{ fontSize: '12px', marginLeft: '3px' }}> pts</span>
 
-            <span style={{ fontSize: '12px', marginLeft: '23px' }}>After: </span>
+            <span style={{ fontSize: '12px', marginLeft: '21px' }}>After: </span>
             <span>
               <input className="molsp-spacinginput molsp-fontstyle" data-cy="cyStyleAfterSpace" key="after" onChange={this.onStyleClick.bind(this, 'after')} type="text" value={this.state.styles.paragraphSpacingAfter || ''} />
             </span>
@@ -1212,30 +1386,30 @@ export class CustomStyleEditor extends React.PureComponent<
         </button>
         <div className="molsp-panel2 molsp-formp" style={{ maxHeight: '100%' }}>
           {hasNumberingOrList ? (
-            <div className="molsp-hierarchydiv" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginLeft: '-1px' }}>
-              <div className="molsp-hierarchydiv">
+            <div className="molsp-hierarchydiv molsp-hierarchy-mode-box">
+              <div className="molsp-hierarchydiv molsp-hierarchy-mode-options">
                 <label>
                   <input checked={!this.state.styles.isList} disabled={this.state.styleName === RESERVED_STYLE_NONE} onChange={(e) => this.handleList(e)} type="radio" value="userDefined" />
-                  <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>User-defined Numbering/Bullets</span>
+                  <span>User-defined Numbering/Bullets</span>
                 </label>
                 <br />
                 <label>
                   <input checked={this.state.styles.isList} disabled={this.state.disableControl || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} onChange={this.handleList.bind(this)} type="radio" value="listStyle" />
-                  <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>List-style (Auto Numbering)</span>
+                  <span>List-style (Auto Numbering)</span>
                 </label>
               </div>
             </div>
           ) : (
-            <div className="molsp-hierarchydiv" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginLeft: '-1px' }}>
-              <div className="molsp-hierarchydiv">
+            <div className="molsp-hierarchydiv molsp-hierarchy-mode-box">
+              <div className="molsp-hierarchydiv molsp-hierarchy-mode-options">
                 <label>
                   <input checked={this.state.selectedStyle === 'userDefined'} disabled={this.state.styleName === RESERVED_STYLE_NONE} onChange={(e) => this.handleList(e)} type="radio" value="userDefined" />
-                  <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>User-defined Numbering/Bullets</span>
+                  <span>User-defined Numbering/Bullets</span>
                 </label>
                 <br />
                 <label>
                   <input checked={this.state.selectedStyle === 'listStyle'} disabled={this.state.styleName === RESERVED_STYLE_NONE} onChange={this.handleList.bind(this)} type="radio" value="listStyle" />
-                  <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>List-style (Auto Numbering)</span>
+                  <span>List-style (Auto Numbering)</span>
                 </label>
               </div>
             </div>
@@ -1255,13 +1429,16 @@ export class CustomStyleEditor extends React.PureComponent<
   }
 
   renderFormattingFieldset() {
+    const numberingOptionsDisabled = this.isNumberingOptionDisabled();
+    const contNumberDisabled = this.isContNumberDisabled();
+
     return (
-      <div className="molsp-hierarchydiv" style={{ display: 'flex' }}>
+      <div className="molsp-hierarchydiv" style={{ display: 'flex', flexDirection: 'column' }}>
         <fieldset className="formatting-fieldset">
           <legend className="formatting-legend">Formatting</legend>
           <div>
             <label>
-              <input checked={!this.state.styles.hasNumbering && !this.state.styles.hasBullet} className="molsp-chknumbering" disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} name="formatting" onChange={() => { this.setState((prevState) => ({ styles: { ...prevState.styles, hasNumbering: false, boldNumbering: false, hasBullet: false, hideNumbering: false } })); }} type="radio" value="none" />
+              <input checked={!this.state.styles.hasNumbering && !this.state.styles.hasBullet} className="molsp-chknumbering" disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} name="formatting" onChange={() => { this.setState((prevState) => ({ styles: { ...prevState.styles, hasNumbering: false, boldNumbering: false, contNumber: false, hasBullet: false, hideNumbering: false } })); }} type="radio" value="none" />
               <span style={{ marginLeft: '2px', position: 'relative', top: '-2px' }}>None</span>
             </label>
             <br />
@@ -1272,11 +1449,11 @@ export class CustomStyleEditor extends React.PureComponent<
 
             <div style={{ marginLeft: '20px', marginTop: '5px' }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
-                <input checked={!!this.state.styles.hideNumbering} className="molsp-chkboldnumbering" disabled={this.checkCondition(this.state.styles.hasNumbering) || this.state.styleName === RESERVED_STYLE_NONE || this.state.styles.tot || this.state.styles.tof} onChange={this.handleHideNumbering.bind(this)} type="checkbox" value="HideNumbering" />
+                <input checked={!!this.state.styles.hideNumbering} className="molsp-chkboldnumbering" disabled={numberingOptionsDisabled} onChange={this.handleHideNumbering.bind(this)} type="checkbox" value="HideNumbering" />
                 <span style={{ marginLeft: '5px' }}>Hide Numbering</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
-                <input checked={this.state.styles.boldNumbering} className="molsp-chkboldnumbering" disabled={this.checkCondition(this.state.styles.hasNumbering) || this.state.styleName === RESERVED_STYLE_NONE} onChange={this.handleBoldNumbering.bind(this)} type="checkbox" />
+                <input checked={this.state.styles.boldNumbering} className="molsp-chkboldnumbering" disabled={numberingOptionsDisabled} onChange={this.handleBoldNumbering.bind(this)} type="checkbox" />
                 <span style={{ marginLeft: '5px' }}>Bold</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px', marginLeft: '-6px' }}>
@@ -1296,38 +1473,52 @@ export class CustomStyleEditor extends React.PureComponent<
             </label>
           </div>
         </fieldset>
+        <fieldset className="formatting-fieldset molsp-figure-table-fieldset">
+          <legend className="formatting-legend">Figure / Table Numbering</legend>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <input
+              checked={!!this.state.styles.contNumber}
+              className="molsp-chkboldnumbering"
+              data-cy="cyStyleContNumb"
+              disabled={contNumberDisabled}
+              onChange={this.handleContNumber.bind(this)}
+              type="checkbox"
+            />
+            <span style={{ marginLeft: '5px' }}>Continue Numbering</span>
+          </div>
+        </fieldset>
       </div>
     );
   }
 
   renderIndentAccordion() {
     return (
-      <div>
+      <div style={{ marginLeft: '5px', width:'95%' }}>
         <p className="molsp-formp">Indenting:</p>
-        <div className="molsp-hierarchydiv">
-          <div className="molsp-indentdiv">
+        <div className="molsp-hierarchydiv molsp-indent-panel">
+          <div className="molsp-indent-row">
             <input checked={this.state.styles.isLevelbased} disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE} name="indenting" onChange={this.onIndentRadioChanged.bind(this)} type="radio" value="0" />
-            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>Based On Level</span>
+            <span>Based On Level</span>
           </div>
-          <div className="molsp-indentdiv">
+          <div className="molsp-indent-row">
             <input checked={!this.state.styles.isLevelbased} disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE} name="indenting" onChange={this.onIndentRadioChanged.bind(this)} type="radio" value="1" />
-            <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>Specified</span>
-            <span>
-              <select className="molsp-leveltype molsp-specifiedindent molsp-fontstyle" data-cy="cyStyleIndent" disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE} onChange={this.onIndentChange.bind(this)} style={{ width: '99px !important' }} value={typeof this.state.styles.indent === 'string' || typeof this.state.styles.indent === 'number' ? this.state.styles.indent : ''}>
+            <span className="molsp-indent-label">Specified</span>
+            <span className="molsp-indent-control">
+              <select className="molsp-leveltype molsp-specifiedindent molsp-fontstyle" data-cy="cyStyleIndent" disabled={this.state.styles.isList === true || this.state.styleName === RESERVED_STYLE_NONE} onChange={this.onIndentChange.bind(this)} value={typeof this.state.styles.indent === 'string' || typeof this.state.styles.indent === 'number' ? this.state.styles.indent : ''}>
                 {LEVEL_VALUES.map((value) => (<option key={value} value={value}>{value}</option>))}
               </select>
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="molsp-indent-row">
             <input checked={!!this.state.styles.isHangingIndent} id='hanging-indent-checkbox' onChange={this.onHangingIndentChange.bind(this)} type="checkbox" />
-            <label htmlFor='hanging-indent-checkbox' style={{ marginLeft: '4px' }}>Hanging Indent</label>
+            <label htmlFor='hanging-indent-checkbox'>Hanging Indent</label>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', marginLeft: '34px' }}>
-            <label htmlFor='indent-position-input' style={{ marginRight: '8px' }}>Indent position: </label>
-            <input disabled={!this.state.styles.isHangingIndent} id='indent-position-input' onChange={this.onIndentPositionChange.bind(this)} style={{ width: '34px', marginRight: '6px' }} type="text" value={typeof this.state.styles.indentPosition === 'string' || typeof this.state.styles.indentPosition === 'number' ? this.state.styles.indentPosition : ''} />
-            <span>inches</span>
+          <div className="molsp-indent-row molsp-indent-position-row">
+            <label htmlFor='indent-position-input'>Indent position:</label>
+            <input disabled={!this.state.styles.isHangingIndent} id='indent-position-input' onChange={this.onIndentPositionChange.bind(this)} type="text" value={typeof this.state.styles.indentPosition === 'string' || typeof this.state.styles.indentPosition === 'number' ? this.state.styles.indentPosition : ''} />
+            <span style={{ marginLeft: '-4px'}}>inches</span>
           </div>
         </div>
       </div>
@@ -1348,7 +1539,7 @@ export class CustomStyleEditor extends React.PureComponent<
             <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>None</span>
           </div>
           <div className="molsp-indentdiv">
-            <input checked={!!this.state.otherStyleSelected} disabled={this.state.styles.tot || this.state.styles.tof} name="nextlinestyle" onChange={this.onNextLineStyleSelected.bind(this, 2)} type="radio" value="0" />
+            <input checked={!!this.state.otherStyleSelected} disabled={this.state.styles.tot || this.state.styles.tof} name="nextlinestyle" onChange={this.onNextLineStyleSelected.bind(this, 2)} type="radio" style={{  marginLeft: '0.5px' }} value="0" />
             <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0', width: '62px' }}>Select style</span>
             <span id="nextStyle" style={{ display: 'none' }}>
               <select className="molsp-fontstyle molsp-stylenameinput" id="nextStyleValue" onChange={this.onOtherStyleSelectionChanged.bind(this)} style={{ height: '20px', marginLeft: '7px', width: '97px' }} value={typeof this.state.styles.nextLineStyleName === 'string' ? this.state.styles.nextLineStyleName : ''}>
@@ -1509,6 +1700,29 @@ export class CustomStyleEditor extends React.PureComponent<
       this.state.styles.styleLevel === 0 ||
       this.state.styles.styleLevel === undefined ||
       (this.state.styles.styleLevel === 1 && this.state.styles.isList === true)
+    );
+  }
+
+  isCapcoOptionDisabled() {
+    return (
+      this.state.styles.isList === true ||
+      this.state.styleName === RESERVED_STYLE_NONE
+    );
+  }
+
+  isNumberingOptionDisabled() {
+    return (
+      this.checkCondition(this.state.styles.hasNumbering) ||
+      this.state.styleName === RESERVED_STYLE_NONE ||
+      this.state.styles.tot ||
+      this.state.styles.tof
+    );
+  }
+
+  isContNumberDisabled() {
+    return (
+      this.state.styleName === RESERVED_STYLE_NONE ||
+      !(this.state.styles.tot || this.state.styles.tof)
     );
   }
 }
