@@ -108,10 +108,10 @@
     "build:declarations": "tsc -p tsconfig.prod.json --emitDeclarationOnly",
     "build:ts": "npm run build:esbuild && npm run build:declarations",
     "ci:build": "npm run build:clean && npm run build:ts && npm run build:css && npm run build:fonts && npm run build:assets && npx copyfiles package.json README.md LICENSE dist",
-    "lint": "eslint src --max-warnings=2",
-    "test": "jest --clearCache && jest --runInBand --detectOpenHandles --forceExit --coverage",
-    "test:new": "npm run test -- --silent",
-    "test:coverage": "npm run test -- --silent",
+    "lint": "eslint src",
+    "test": "jest --clearCache && jest --runInBand --detectOpenHandles --forceExit",
+    "test:new": "npm run test -- --changedSince develop",
+    "test:coverage": "npm run test -- --silent --coverage",
     "verify": "npm run lint -- --fix && npm run ci:build && npm run test:coverage && echo 'All Tests Passed!'"
   },
   "peerDependencies": {
