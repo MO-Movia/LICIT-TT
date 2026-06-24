@@ -12,6 +12,7 @@ import { Schema } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
 import * as React from 'react';
+import findActiveFontSize from '../licit/findActiveFontSize';
 
 function setFontSize(tr: Transform, state: EditorState, schema: Schema, pt: number, isCustomStyleApplied?: boolean): Transform {
   const markType = schema.marks[MARK_FONT_SIZE];
@@ -118,8 +119,10 @@ export class FontSizeCommand extends UICommand {
     return tr;
   };
 
-  isActive(): boolean {
-    return false;
+  isActive(state?: EditorState): boolean {
+    if (!state || this._pt === 0) return false;
+    const activeSize = findActiveFontSize(state);
+    return String(this._pt) === activeSize;
   }
 
   renderLabel() {

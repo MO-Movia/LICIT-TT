@@ -34,6 +34,8 @@ export type HTMLStyles = {
   prefixValue?: string;
   selectedStyleMode?: string;
   hideNumbering?: boolean;
+  hideCapco?: boolean;
+  contNumber?: boolean;
   resetValue?: boolean;
   indentPosition?: string;
   isHangingIndentapplied?: boolean;

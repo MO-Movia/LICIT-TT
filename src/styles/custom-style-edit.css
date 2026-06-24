@@ -10,6 +10,34 @@
   overflow: hidden;
   position: relative;
   width: 510px;
+  font-size: 12px;
+}
+
+.czi-editor-frameset .molsp-customedit-div,
+.czi-editor-frameset .molsp-customedit-div * {
+  letter-spacing: normal;
+}
+
+.czi-editor-frameset .molsp-customedit-div input,
+.czi-editor-frameset .molsp-customedit-div select,
+.czi-editor-frameset .molsp-customedit-div button,
+.czi-editor-frameset .molsp-customedit-div label {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+}
+
+.czi-editor-frameset .molsp-customedit-div span:not(.czi-icon) {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+}
+
+.czi-editor-frameset .molsp-customedit-div .czi-icon {
+  font-family: 'Material Icons', sans-serif !important;
+  font-size: 20px;
+  line-height: 1;
+  overflow-wrap: normal;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .czi-editor-frameset .molsp-spacingdiv {
@@ -254,22 +282,42 @@
 }
 
 .czi-editor-frameset .molsp-chknumbering {
-  margin-left: 11px;
+  margin-left: -7px;
   margin-top: 2px;
   padding-top: 2px;
 }
 
 .czi-editor-frameset .molsp-chkboldnumbering {
-  margin-left: 11px;
+  margin-left: 0;
   margin-top: 2px;
   padding-top: 2px;
 }
 
 .czi-editor-frameset .molsp-czi-custom-buttons {
+  display: flex;
+  flex-wrap: nowrap;
   margin-left: -8px;
   margin-right: 2px;
   padding-left: 4px;
   padding-right: 2px;
+  width: 198px;
+}
+
+.czi-editor-frameset .molsp-czi-custom-buttons .czi-custom-button.molsp-alignbuttons,
+.czi-editor-frameset .molsp-czi-custom-buttons .czi-custom-button.molsp-activealignbuttons {
+  align-items: center;
+  border-radius: 0;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 47px;
+  height: 25px;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+  min-height: 25px;
+  min-width: 47px;
+  padding: 0;
+  width: 47px;
 }
 
 .czi-editor-frameset .molsp-font-buttons {
@@ -280,27 +328,33 @@
 }
 
 .czi-editor-frameset .molsp-specifiedindent {
-  margin-left: 10px;
-  margin-top: -1px;
+  margin: 0;
+  width: 94px;
 }
 
 .czi-editor-frameset .czi-custom-button.molsp-alignbuttons.light {
   background-color: #f0f0f0;
   border-color: #555;
+  height: 25px;
   outline: none;
   padding: 0;
   text-align: center;
-  width: 50px;
+  width: 47px;
+  min-width: 47px;
+  flex: 0 0 47px;
   border-radius: 0px;
   color:#666
 }
 .czi-editor-frameset .czi-custom-button.molsp-alignbuttons.dark {
   background-color: transparent;
   border-color: #555;
+  height: 25px;
   outline: none;
   padding: 0;
   text-align: center;
-  width: 50px;
+  width: 47px;
+  min-width: 47px;
+  flex: 0 0 47px;
   border-radius: 0px;
 }
 .czi-editor-frameset .czi-custom-button.molsp-alignbuttons:focus,
@@ -312,11 +366,18 @@
 
 .czi-editor-frameset .molsp-activealignbuttons {
   border-color: #338eec !important;
+  height: 25px;
   outline: none;
   padding: 0;
   text-align: center;
-  width: 50px;
+  width: 47px;
+  min-width: 47px;
+  flex: 0 0 47px;
   border-radius: 0px;
+}
+
+.czi-editor-frameset .molsp-czi-custom-buttons .czi-icon {
+  margin: 0;
 }
 
 .czi-editor-frameset .czi-custom-button.molsp-activealignbuttons:focus,
@@ -354,32 +415,166 @@
   border-width: 1px;
   box-sizing: border-box;
   margin-left: -1px;
-  padding: 5px;
+  padding: 4px;
   width: 100%;
 }
 
 .czi-editor-frameset .molsp-fw-label {
-font-size: 12px;
-color: var(--czi-text-color);
+  color: var(--czi-text-color);
+  font-size: 12px;
 }
 
 .czi-editor-frameset .molsp-hierarchydiv label {
   box-sizing: content-box !important;
   color: var(--czi-text-color);
-  font-size: 11px;
-  margin-bottom: 4px;
+  font-size: 12px;
+  margin-bottom: 0;
   margin-left: 0;
   margin-right: 0;
   margin-top: 4px;
+}
+
+.czi-editor-frameset .molsp-customedit-div input[type='checkbox'],
+.czi-editor-frameset .molsp-customedit-div input[type='radio'] {
+  margin-bottom: 0;
+  margin-top: 0;
+  vertical-align: middle;
+}
+
+.czi-editor-frameset .molsp-hierarchy-mode-box {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-left: -1px;
+  padding: 3px;
+}
+
+.czi-editor-frameset .molsp-hierarchy-mode-options {
+  padding: 4px;
+}
+
+.czi-editor-frameset .molsp-hierarchy-mode-options label {
+  align-items: center;
+  display: inline-flex;
+  font-size: 12px;
+  line-height: 17px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.czi-editor-frameset .molsp-hierarchy-mode-options input[type='radio'] {
+  flex: 0 0 auto;
+  margin: 0 4px 0 0;
+}
+
+.czi-editor-frameset .molsp-hierarchy-mode-options span {
+  line-height: 17px;
 }
 
 .czi-editor-frameset .molsp-indentdiv {
   display: inline-flex;
 }
 
+.czi-editor-frameset .molsp-indent-section {
+  width: 100%;
+}
+
+.czi-editor-frameset .molsp-indent-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.czi-editor-frameset .molsp-indent-row {
+  align-items: center;
+  display: flex;
+  min-height: 18px;
+  white-space: nowrap;
+}
+
+.czi-editor-frameset .molsp-indent-row input[type='checkbox'],
+.czi-editor-frameset .molsp-indent-row input[type='radio'] {
+  flex: 0 0 auto;
+  margin: 0 6px 0 0;
+}
+
+.czi-editor-frameset .molsp-indent-row label,
+.czi-editor-frameset .molsp-indent-row span {
+  color: var(--czi-text-color);
+  line-height: 18px;
+  margin: 0;
+}
+
+.czi-editor-frameset .molsp-indent-label {
+  min-width: 80px;
+}
+
+.czi-editor-frameset .molsp-indent-control {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.czi-editor-frameset .molsp-indent-position-row {
+  padding-left: 22px;
+}
+
+.czi-editor-frameset .molsp-indent-position-row label {
+  flex: 0 0 86px;
+}
+
+.czi-editor-frameset .molsp-indent-position-row input {
+  height: 21px;
+  margin: 0 6px 0 0;
+  width: 44px;
+}
+
+.czi-editor-frameset .molsp-formatting-nested-options {
+  margin-left: 20px;
+  margin-top: 5px;
+}
+
+.czi-editor-frameset .molsp-formatting-option-row,
+.czi-editor-frameset .molsp-formatting-prefix-row {
+  align-items: center;
+  display: flex;
+  min-height: 20px;
+}
+
+.czi-editor-frameset .molsp-formatting-option-row {
+  margin-bottom: 5px;
+}
+
+.czi-editor-frameset .molsp-formatting-option-row input[type='checkbox'],
+.czi-editor-frameset .molsp-figure-table-fieldset input[type='checkbox'] {
+  flex: 0 0 auto;
+  margin: 0 6px 0 0;
+}
+
+.czi-editor-frameset .molsp-formatting-option-row span,
+.czi-editor-frameset .molsp-figure-table-fieldset span {
+  line-height: 18px;
+}
+
+.czi-editor-frameset .molsp-formatting-prefix-row {
+  gap: 5px;
+  margin-top: 5px;
+}
+
 .czi-editor-frameset .molsp-settingsdiv {
+  align-items: center;
   display: inline-flex;
   margin-left: -1px;
+}
+
+.czi-editor-frameset .molsp-style-settings-options {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 5px;
+}
+
+.czi-editor-frameset .molsp-style-settings-select {
+  flex-basis: 100%;
 }
 
 .czi-editor-frameset .molsp-markbutton-container {
@@ -400,7 +595,7 @@ div[disabled='disabled'] {
 }
 
 .czi-editor-frameset .molsp-hierarchydiv .formatting-fieldset {
-  width: 100%;
+  width: 89%;
   min-width: 0;
   padding-left: 10px;
   margin: 0;
@@ -409,4 +604,72 @@ div[disabled='disabled'] {
 
 .czi-editor-frameset .molsp-hierarchydiv .formatting-legend {
   all: unset;
+}
+
+.czi-editor-frameset .molsp-attributes-scroll {
+  scrollbar-color: #9a9a9a transparent;
+  scrollbar-width: thin;
+}
+
+.czi-editor-frameset .molsp-attributes-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.czi-editor-frameset .molsp-attributes-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.czi-editor-frameset .molsp-attributes-scroll::-webkit-scrollbar-thumb {
+  background-color: #9a9a9a;
+  border-radius: 8px;
+}
+
+.czi-editor-frameset .molsp-special-style-options {
+  align-items: center;
+  display: flex;
+  gap: 0;
+  justify-content: flex-start;
+  padding: 8px 0;
+}
+
+.czi-editor-frameset .molsp-special-style-option {
+  align-items: center;
+  color: var(--czi-text-color);
+  cursor: pointer;
+  display: flex;
+  flex: 0 0 52px;
+  font-size: 12px;
+  line-height: 17px;
+  white-space: nowrap;
+}
+
+.czi-editor-frameset .molsp-special-style-option input {
+  flex: 0 0 auto;
+  margin: 0 4px 0 0;
+}
+
+.czi-editor-frameset .molsp-special-style-option span {
+  line-height: 17px;
+}
+
+.czi-editor-frameset .molsp-capco-option {
+  align-items: center;
+  display: flex;
+  padding-bottom: 8px;
+}
+
+.czi-editor-frameset .molsp-capco-option label {
+  align-items: center;
+  color: var(--czi-text-color);
+  display: flex;
+  font-size: 12px;
+}
+
+.czi-editor-frameset .molsp-capco-option span {
+  margin-left: 5px;
+}
+
+.czi-editor-frameset .molsp-figure-table-fieldset {
+  margin-top: 8px !important;
+  padding: 6px 10px 8px !important;
 }

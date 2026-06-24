@@ -11,6 +11,12 @@ import {schema} from 'prosemirror-test-builder';
 import {Transform} from 'prosemirror-transform';
 import * as applymark from './applyMark';
 import * as ismarkcommandenabled from './isTextStyleMarkCommandEnabled';
+import findActiveFontSize from '../licit/findActiveFontSize';
+
+jest.mock('../licit/findActiveFontSize', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
 
 describe('FontSizeCommand', () => {
   let plugin!: FontSizeCommand;
@@ -117,7 +123,7 @@ describe('FontSizeCommand', () => {
   });
 
   it('should handle when pt is undefined', () => {
-    plugin._pt = undefined;
+    plugin._pt = undefined as unknown as number;
     jest
       .spyOn(TextSelection, 'create')
       .mockReturnValue({} as unknown as TextSelection);
@@ -216,7 +222,13 @@ describe('FontSizeCommand (group 2)', () => {
     expect(test).toBeDefined();
   });
   it('should be active', () => {
-    expect(command.isActive()).toBeFalsy();
+    (findActiveFontSize as jest.Mock).mockReturnValue('14');
+    expect(command.isActive(EditorState.create({schema: schema1}))).toBeTruthy();
+  });
+  it('should handle isActive return value cases', () => {
+    expect(command.isActive(undefined)).toBeFalsy();
+    command._pt = 0;
+    expect(command.isActive(EditorState.create({schema: schema1}))).toBeFalsy();
   });
   it('should not render label', () => {
     expect(command.renderLabel()).toBeNull();
