@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import CommandMenuButton from './commandMenuButton';
+import CommandMenuButton, { CommandMenu } from './commandMenuButton';
 import { EditorState } from 'prosemirror-state';
 import { CustomButton, createPopUp } from '../../commands';
 import { EditorView } from 'prosemirror-view';
@@ -163,6 +163,64 @@ describe('CommandMenuButton', () => {
 
     expect(rendered.props.disabled).toBe(false);
     expect(consoleSpy).toHaveBeenCalled();
+  });
+
+  test('should pass editor view and label when rendering command menu items', () => {
+    const command = {
+      cancel: jest.fn(),
+      execute: jest.fn(),
+      isActive: jest.fn(() => false),
+      isEnabled: jest.fn(() => true),
+      renderLabel: jest.fn(() => null),
+      shouldRespondToUIEvent: jest.fn(() => true),
+    };
+    const instance = new CommandMenu({
+      commandGroups: [{ 'Border Color....': command as never }],
+      dispatch: mockProps.dispatch,
+      editorState: mockProps.editorState,
+      editorView: mockProps.editorView,
+      theme: 'light',
+    });
+
+    const rendered = instance._renderCustomMenuItem(
+      'Border Color....',
+      command as never,
+      mockProps.editorState,
+      mockProps.editorView,
+      '',
+      'light'
+    ) as unknown as React.ReactElement<{ disabled: boolean }>;
+
+    expect(command.isEnabled).toHaveBeenCalledWith(
+      mockProps.editorState,
+      mockProps.editorView,
+      'Border Color....'
+    );
+    expect(rendered.props.disabled).toBe(false);
+  });
+
+  test('should not cancel the active command when the same menu item is re-entered', () => {
+    const command = {
+      cancel: jest.fn(),
+      execute: jest.fn(),
+      shouldRespondToUIEvent: jest.fn(() => true),
+    };
+    const event = {
+      type: 'mouseenter',
+    } as unknown as React.SyntheticEvent;
+    const instance = new CommandMenu({
+      commandGroups: [],
+      dispatch: mockProps.dispatch,
+      editorState: mockProps.editorState,
+      editorView: mockProps.editorView,
+      theme: 'light',
+    });
+
+    instance._onUIEnter(command as never, event);
+    instance._onUIEnter(command as never, event);
+
+    expect(command.cancel).not.toHaveBeenCalled();
+    expect(command.execute).toHaveBeenCalledTimes(2);
   });
 
   test('should set child popup positioning props for submenu content', () => {

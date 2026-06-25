@@ -12,6 +12,7 @@ import {EditorView} from 'prosemirror-view';
 import {
   atAnchorRight,
   createPopUp,
+  PopUpHandle,
   RuntimeService,
   // ColorEditor
 } from '../../commands';
@@ -31,7 +32,7 @@ class TableColorCommand extends UICommand {
   executeCustomStyleForTable(_state: EditorState, tr: Transform): Transform {
     return tr;
   }
-  _popUp = null;
+  _popUp?: PopUpHandle = null;
   attribute = null;
 
   constructor(attribute: string) {
@@ -61,9 +62,7 @@ class TableColorCommand extends UICommand {
     event?: React.SyntheticEvent
   ): Promise<PromiseConstructor> => {
     // replaced any with PromiseConstructor seems to not cause any errors
-    if (this._popUp) {
-      return Promise.resolve(undefined);
-    }
+    this.cancel();
     const target = nullthrows(event).currentTarget;
 
     if (!(target instanceof HTMLElement)) {
@@ -87,10 +86,8 @@ class TableColorCommand extends UICommand {
           position: atAnchorRight,
           autoDismiss: false,
           onClose: (val) => {
-            if (this._popUp) {
-              this._popUp = null;
-              resolve(val);
-            }
+            this._popUp = null;
+            resolve(val);
           },
         }
       );
@@ -118,7 +115,9 @@ class TableColorCommand extends UICommand {
   };
 
   cancel(): void {
-    this._popUp?.close(undefined);
+    const popUp = this._popUp;
+    this._popUp = null;
+    popUp?.close(undefined);
   }
 
   setCellBorders(editor: Editor, selectedPosition: string[], color: string) {

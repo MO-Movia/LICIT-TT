@@ -84,7 +84,7 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
   declare props: CommandMenuProps;
 
   render(): React.ReactElement {
-    const {commandGroups, editorState, title, theme} = this.props;
+    const {commandGroups, editorState, editorView, title, theme} = this.props;
     const children = [];
     const jj = commandGroups.length - 1;
     for (const [ii, group] of commandGroups.entries()) {
@@ -93,7 +93,14 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
         if (isUICommandLike(command)) {
           const {icon} = parseLabel(label, theme.toString());
           children.push(
-            this._renderCustomMenuItem(label, command, editorState, icon, theme)
+            this._renderCustomMenuItem(
+              label,
+              command,
+              editorState,
+              editorView,
+              icon,
+              theme
+            )
           );
         } else if (Array.isArray(command)) {
           children.push(this._renderMenuButton(label, command, theme));
@@ -114,14 +121,23 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
     label: string,
     command: UICommand,
     editorState: EditorState,
+    editorView: EditorView | undefined,
     icon: string | React.ReactElement,
     theme: string
   ): React.ReactElement<CustomMenuItem> => {
     const {title} = parseLabel(label, theme);
+    let disabled = true;
+    try {
+      disabled =
+        !editorView || !command.isEnabled(editorState, editorView, label);
+    } catch (_error) {
+      console.error('Error checking if command is enabled:', _error);
+      disabled = false;
+    }
     return (
       <CustomMenuItem
         active={command.isActive(editorState)}
-        disabled={!command.isEnabled(editorState)}
+        disabled={disabled}
         icon={icon}
         key={label}
         label={
@@ -170,7 +186,9 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
 
   _onUIEnter = (command: UICommand, event: React.SyntheticEvent): void => {
     if (command.shouldRespondToUIEvent(event)) {
-      this._activeCommand?.cancel();
+      if (this._activeCommand && this._activeCommand !== command) {
+        this._activeCommand.cancel();
+      }
       this._activeCommand = command;
       this._execute(command, event);
     }

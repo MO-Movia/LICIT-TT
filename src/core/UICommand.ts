@@ -47,7 +47,11 @@ export abstract class UICommand {
     return true;
   }
 
-  isEnabled = (state: EditorState, view?: EditorView): boolean | Transform => {
+  isEnabled = (
+    state: EditorState,
+    view?: EditorView,
+    _label?: string
+  ): boolean | Transform => {
     return this.dryRun(state, view);
   };
 

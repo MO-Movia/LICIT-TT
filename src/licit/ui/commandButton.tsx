@@ -4,14 +4,14 @@
  */
 
 import cx from 'classnames';
-import {EditorState} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import { EditorState } from 'prosemirror-state';
+import { Transform } from 'prosemirror-transform';
+import { EditorView } from 'prosemirror-view';
 import * as React from 'react';
 
 import { CustomButton, ThemeContext } from '../../commands';
 import { UICommand } from '../../core';
-import {EditorRuntime} from '../types';
+import { EditorRuntime } from '../types';
 export type CommandButtonProps = {
   className?: string;
   command: UICommand;
@@ -27,6 +27,7 @@ export type CommandButtonProps = {
 class CommandButton extends React.PureComponent<CommandButtonProps> {
   public static readonly contextType = ThemeContext;
   declare context: React.ContextType<typeof ThemeContext>;
+  _activeCommand: UICommand = null;
   declare props: CommandButtonProps;
 
   render(): React.ReactElement<CustomButton> {
@@ -43,13 +44,13 @@ class CommandButton extends React.PureComponent<CommandButtonProps> {
     let disabled = this.props.disabled;
     const theme: string = this.context;
     if (!!disabled === false) {
-      disabled = !editorView || !command.isEnabled(editorState, editorView);
+      disabled = !editorView || !command.isEnabled(editorState, editorView, '');
     }
     UICommand.theme = theme.toString();
     const buttonClassName = sub
       ? cx(className, {
-          'czi-custom-submenu-button': true,
-        })
+        'czi-custom-submenu-button': true,
+      })
       : className;
     return (
       <CustomButton
@@ -67,11 +68,20 @@ class CommandButton extends React.PureComponent<CommandButtonProps> {
     );
   }
 
+  componentWillUnmount(): void {
+    this._activeCommand?.cancel();
+    this._activeCommand = null;
+  }
+
   _onUIEnter = (
     command: UICommand,
     event: React.SyntheticEvent<HTMLButtonElement>
   ): void => {
     if (command.shouldRespondToUIEvent(event)) {
+      if (this._activeCommand && this._activeCommand !== command) {
+        this._activeCommand.cancel();
+      }
+      this._activeCommand = command;
       this._execute(command, event);
     }
   };
@@ -80,7 +90,7 @@ class CommandButton extends React.PureComponent<CommandButtonProps> {
     _value: UICommand,
     event: React.SyntheticEvent<HTMLButtonElement>
   ): void => {
-    const {command, editorState, dispatch, editorView} = this.props;
+    const { command, editorState, dispatch, editorView } = this.props;
     command.execute(editorState, dispatch, editorView, event);
   };
 }

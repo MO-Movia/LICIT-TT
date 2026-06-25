@@ -170,23 +170,29 @@ describe('TableColorCommand (typed)', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should not create popup when already open', async () => {
-    command._popUp = {close: jest.fn()};
+  it('should replace existing popup when opening again', async () => {
+    const close = jest.fn();
+    command._popUp = {close, update: jest.fn()};
 
     const evt: FakeReactEvent = {
       type: 'mouseenter',
       currentTarget: document.createElement('div'),
     } as unknown as FakeReactEvent;
 
-    const result = await command.waitForUserInput(
+    const promise = command.waitForUserInput(
       mockState,
       dispatchMock,
       viewMock,
       evt
     );
+    const call = (createPopUp as jest.Mock).mock.calls[0];
+    const options = call[2];
+    options.onClose('mocked value');
 
-    expect(createPopUpMock).not.toHaveBeenCalled();
-    expect(result).toBeUndefined();
+    expect(close).toHaveBeenCalledWith(undefined);
+    expect(createPopUp).toHaveBeenCalled();
+    expect(command._popUp).toBeNull();
+    await expect(promise).resolves.toBe('mocked value');
   });
 
   it('returns false when hex undefined', () => {
@@ -227,10 +233,11 @@ it('calls setCellBorders when success is true', () => {
 
   it('cancel closes popup if exists', () => {
     const close = jest.fn();
-    command._popUp = {close};
+    command._popUp = {close, update: jest.fn()};
 
     command.cancel();
     expect(close).toHaveBeenCalledWith(undefined);
+    expect(command._popUp).toBeNull();
   });
 
   it('cancel does nothing when no popup', () => {
