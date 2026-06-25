@@ -51,7 +51,7 @@ export class InfoIconCommand extends UICommand {
         {
           modal: true,
           IsChildDialog: false,
-          autoDismiss: false,
+          autoDismiss: true,
           onClose: (val) => {
             if (this._popUp) {
               this._popUp = null;

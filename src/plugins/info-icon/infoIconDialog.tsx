@@ -83,6 +83,15 @@ export class InfoIconDialog extends React.PureComponent<
     });
   }
 
+  componentWillUnmount(): void {
+    // Ensure the child "Add" search popup closes whenever the dialog goes away
+    // (outside-click dismiss, close button, or cancel).
+    if (this._popUp) {
+      this._popUp.close();
+      this._popUp = null;
+    }
+  }
+
   render(): React.ReactNode {
     return (
       <div className="molinfo-infoContainer" id="infoPopup">
