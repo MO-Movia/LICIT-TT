@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { CustomButton } from '../../commands';
 import { FloatingMenuItem, FloatingMenuContext } from './model';
 import { UICommand } from '../../core';
+import CustomMenu from '../../licit/ui/customMenu';
+import CustomMenuItem from '../../licit/ui/customMenuItem';
 
 interface FloatingMenuProps {
   context: FloatingMenuContext;
@@ -24,24 +25,25 @@ export class FloatingMenu extends React.PureComponent<FloatingMenuProps> {
       : items;
 
     return (
-      <div className={"context-menu " + UICommand.theme }role="menu" tabIndex={-1}>
-        <div className="context-menu__items">
+      <div className="context-menu floating-menu" role="menu" tabIndex={-1}>
+        <CustomMenu theme={UICommand.theme}>
           {visibleItems.map((item) => {
             const enabled = item.isEnabled
               ? item.isEnabled(context)
               : true;
 
             return (
-              <CustomButton
+              <CustomMenuItem
                 key={item.id}
                 label={item.label}
                 theme={UICommand.theme}
                 disabled={!enabled}
                 onClick={item.onClick}
+                value={item.id}
               />
             );
           })}
-        </div>
+        </CustomMenu>
       </div>
     );
   }
