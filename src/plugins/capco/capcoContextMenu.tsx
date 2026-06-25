@@ -9,11 +9,13 @@ import {
   CAPCOKEY,
   CAPCO_PLUGIN_KEY,
   METADATAKEY,
+  PARAGRAPH,
   TABLE,
   TABLE_FIGURE_CAPCO,
 } from './constants';
 import { SYSTEMCAPCO } from './editorSchema';
 import { EditorView } from 'prosemirror-view';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { CapcoRuntime, CapcoState } from './types';
 import { getBlockControlCapco, safeCapcoParse } from './utils';
 
@@ -194,13 +196,103 @@ export class CapcoContextMenu extends React.Component<
     // This is a user action.
     this.setCapco(value);
   }
-  setCapco(capco: string): void {
+
+  private getSelectedParagraphPositions(): number[] {
+    const { doc, selection } = this.props.editorView.state;
+    const positions: number[] = [];
+
+    if (
+      selection.empty !== false ||
+      typeof doc.nodesBetween !== 'function' ||
+      typeof selection.from !== 'number' ||
+      typeof selection.to !== 'number'
+    ) {
+      return positions;
+    }
+
+    doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+      if (node.type?.name === PARAGRAPH && node.attrs?.[CAPCOKEY] !== undefined) {
+        positions.push(pos);
+        return false;
+      }
+      return true;
+    });
+
+    return positions;
+  }
+
+  private getCapcoAttrs(
+    node: ProseMirrorNode | null | undefined,
+    capco: string | null
+  ): Record<string, unknown> {
+    return {
+      ...node?.attrs,
+      [CAPCOKEY]: capco,
+      [METADATAKEY]: {
+        ...(node?.attrs?.[METADATAKEY]),
+        capco: safeCapcoParse(capco)?.ism,
+      },
+      isValidate: false,
+    };
+  }
+
+  setCapco(capco: string | null): void {
     if (this.props.isCitation) {
       return;
     }
     let pos = this.props.pos - 1; // nodeAt and setNodeMarkup resolve to the node AFTER the given position, so -1 to correct for that.
     let enhanced_capco_pos = pos;
     let node = this.props.editorView.state.doc.nodeAt(pos);
+    ({ node, pos } = this.correctNodeTarget(node, pos));
+    let newAttrs = this.getCapcoAttrs(node, capco);
+    const event = new KeyboardEvent('keydown', {
+      keyCode: 0,
+      bubbles: true,
+    });
+    this.props.editorView.dom?.dispatchEvent(event);
+    const ParentNodeType = this.props.editorView.state.doc.nodeAt(pos);
+    if (ParentNodeType?.type?.name === 'image') {
+      newAttrs = this.getCapcoAttrs(ParentNodeType, capco);
+    }
+    const selectedParagraphPositions =
+      node?.type?.name === PARAGRAPH ? this.getSelectedParagraphPositions() : [];
+    const capcoChangedPositions =
+      selectedParagraphPositions.length > 0 ? selectedParagraphPositions : [pos];
+    let tr = this.props.editorView.state.tr;
+    if (selectedParagraphPositions.length > 0) {
+      selectedParagraphPositions.forEach((paragraphPos) => {
+        const paragraphNode = tr.doc.nodeAt(paragraphPos);
+        tr = tr.setNodeMarkup(
+          paragraphPos,
+          null,
+          this.getCapcoAttrs(paragraphNode, capco)
+        );
+      });
+    } else {
+      tr = tr.setNodeMarkup(pos, null, newAttrs);
+    }
+    if (node?.type?.name === TABLE_FIGURE_CAPCO) {
+      const newAttrs = {
+        ...ParentNodeType?.attrs,
+        [CAPCOKEY]: safeCapcoParse(capco).portionMarking,
+        ['isValidate']: false,
+      };
+      const enhanced_capco_node = tr.doc?.nodeAt(enhanced_capco_pos);
+      if (
+        ParentNodeType?.type?.name !== TABLE &&
+        enhanced_capco_node?.type.name !== TABLE_FIGURE_CAPCO
+      ) {
+        enhanced_capco_pos = enhanced_capco_pos + 2;
+      }
+      tr.setNodeMarkup(enhanced_capco_pos, null, newAttrs);
+    }
+    if (typeof tr.setMeta === 'function') {
+      tr.setMeta('capcoChangedPos', capcoChangedPositions);
+    }
+    this.props.editorView.dispatch(tr);
+    this.props.close();
+  }
+  private correctNodeTarget(node: ProseMirrorNode, pos: number) {
     if (!node) {
       const $from = this.props.editorView.state.selection.$from;
 
@@ -220,58 +312,9 @@ export class CapcoContextMenu extends React.Component<
     if (node?.type?.name === TABLE_FIGURE_CAPCO) {
       pos = getBlockControlCapco(this.props.editorView.state, pos);
     }
-    let newAttrs = {
-      ...node?.attrs,
-      [CAPCOKEY]: capco,
-      [METADATAKEY]: {
-        ...(node?.attrs?.[METADATAKEY]),
-        capco: safeCapcoParse(capco)?.ism,
-      },
-      ['isValidate']: false,
-    };
-    const event = new KeyboardEvent('keydown', {
-      keyCode: 0,
-      bubbles: true,
-    });
-    this.props.editorView.dom?.dispatchEvent(event);
-    const ParentNodeType = this.props.editorView.state.doc.nodeAt(pos);
-    if (ParentNodeType?.type?.name === 'image') {
-    newAttrs = {
-      ...ParentNodeType.attrs,
-      [CAPCOKEY]: capco,
-      [METADATAKEY]: {
-        ...(ParentNodeType.attrs?.[METADATAKEY]),
-        capco: safeCapcoParse(capco)?.ism,
-      },
-      isValidate: false,
-    };
-    }
-    const tr = this.props.editorView.state.tr.setNodeMarkup(
-      pos,
-      null,
-      newAttrs
-    );
-    if (node?.type?.name === TABLE_FIGURE_CAPCO) {
-      const newAttrs = {
-        ...ParentNodeType?.attrs,
-        [CAPCOKEY]: safeCapcoParse(capco).portionMarking,
-        ['isValidate']: false,
-      };
-      const enhanced_capco_node = tr.doc?.nodeAt(enhanced_capco_pos);
-      if (
-        ParentNodeType?.type?.name !== TABLE &&
-        enhanced_capco_node?.type.name !== TABLE_FIGURE_CAPCO
-      ) {
-        enhanced_capco_pos = enhanced_capco_pos + 2;
-      }
-      tr.setNodeMarkup(enhanced_capco_pos, null, newAttrs);
-    }
-    if (typeof tr.setMeta === 'function') {
-      tr.setMeta('capcoChangedPos', pos);
-    }
-    this.props.editorView.dispatch(tr);
-    this.props.close();
+    return { node, pos };
   }
+
   closePopUP(): void {
     this.props.close();
   }

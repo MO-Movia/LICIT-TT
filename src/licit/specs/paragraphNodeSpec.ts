@@ -69,7 +69,7 @@ function getInlineStyleProperty(
     /[.*+?^${}()|[\]\\]/g,
     String.raw`\$&`
   );
-  const regexp = new RegExp(`(?:^|;)\\s*${escapedProperty}\\s*:\\s*([^;]+)`, 'i');
+  const regexp = new RegExp(String.raw`(?:^|;)\s*${escapedProperty}\s*:\s*([^;]+)`, 'i');
   const match = regexp.exec(inlineStyle);
   if (!match?.[1]) {
     return null;
