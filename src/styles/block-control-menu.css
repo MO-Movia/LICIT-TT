@@ -53,6 +53,40 @@
   top: 0;
 }
 
+.enhanced-table-figure > .licit-block-control-handle,
+.molm-czi-image-view-body .licit-block-control-handle {
+  background:
+    linear-gradient(
+      to right,
+      #ffffff 0,
+      #ffffff 24px,
+      transparent 24px,
+      transparent 100%
+    );
+  border-color: transparent;
+  box-sizing: border-box;
+  min-width: 32px;
+  padding: 0;
+  right: -32px;
+  text-indent: -8px;
+  width: 32px;
+}
+
+.enhanced-table-figure > .licit-block-control-handle:hover,
+.enhanced-table-figure > .licit-block-control-handle:focus-visible,
+.molm-czi-image-view-body .licit-block-control-handle:hover,
+.molm-czi-image-view-body .licit-block-control-handle:focus-visible {
+  background:
+    linear-gradient(
+      to right,
+      #f4f6f8 0,
+      #f4f6f8 24px,
+      transparent 24px,
+      transparent 100%
+    );
+  border-color: rgba(24, 95, 165, 0.45);
+}
+
 .enhanced-table-figure-scroll {
   overflow-x: auto;
   overflow-y: visible;
@@ -148,5 +182,32 @@
 
   .licit-block-control-menu-item + .licit-block-control-menu-item {
     border-top-color: rgba(255, 255, 255, 0.09);
+  }
+
+  .enhanced-table-figure > .licit-block-control-handle,
+  .molm-czi-image-view-body .licit-block-control-handle {
+    background:
+      linear-gradient(
+        to right,
+        #242424 0,
+        #242424 24px,
+        transparent 24px,
+        transparent 100%
+      );
+    border-color: transparent;
+  }
+
+  .enhanced-table-figure > .licit-block-control-handle:hover,
+  .enhanced-table-figure > .licit-block-control-handle:focus-visible,
+  .molm-czi-image-view-body .licit-block-control-handle:hover,
+  .molm-czi-image-view-body .licit-block-control-handle:focus-visible {
+    background:
+      linear-gradient(
+        to right,
+        #303030 0,
+        #303030 24px,
+        transparent 24px,
+        transparent 100%
+      );
   }
 }
