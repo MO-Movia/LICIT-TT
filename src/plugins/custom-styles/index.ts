@@ -270,10 +270,6 @@ function handleUpdateKeyStyling(
   if (tr.selection.$from.start() === tr.selection.$from.end()) {
     return applyStyleForNextParagraph(prevState, nextState, tr, csview);
   }
-  if (getSelectionCursor(tr.selection)?.pos === tr.selection.$from.start()) {
-    return handlePreviousEmptyParagraphStyle(prevState, nextState, tr);
-  }
-
   return tr;
 }
 
@@ -336,23 +332,6 @@ function reapplyParagraphStyle(
   return tr.setSelection(
     TextSelection.create(tr.doc, nextState.selection.from)
   );
-}
-
-function handlePreviousEmptyParagraphStyle(
-  prevState: LooseState,
-  nextState: LooseState,
-  tr: LooseTr
-): LooseTr {
-  tr = applyStyleForPreviousEmptyParagraph(nextState, tr);
-  const cursourPosition = getSelectionCursor(prevState.selection)?.pos;
-  if (
-    cursourPosition !== undefined &&
-    cursourPosition >= 0 &&
-    cursourPosition <= prevState.doc.content.size
-  ) {
-    tr = tr.setSelection(TextSelection.create(tr.doc, cursourPosition));
-  }
-  return tr;
 }
 
 function handlePasteUpdateStyling(
@@ -826,8 +805,6 @@ export function applyStyleForNextParagraph(
   if (!context) {
     return null;
   }
-
-  // [FS] IRAD-1217 2021-02-24
   // Select style for next line not working continuously for more that 2 paragraphs
   tr = tr.setNodeMarkup(context.nextNodePos, undefined, context.attrs);
 
@@ -850,7 +827,7 @@ function getNextParagraphStyleContext(
     return null;
   }
 
-  const nextNodePos = $from.start();
+  const nextNodePos = nextState.selection.from - 1;
   const nextNode = nextState.doc.nodeAt(nextNodePos);
   if (!isActiveNextParagraph(nextNode, nextNodePos, prevState, nextState)) {
     return null;
