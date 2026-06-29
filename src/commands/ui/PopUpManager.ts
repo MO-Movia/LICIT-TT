@@ -27,6 +27,7 @@ export type PopUpBridge = {
 
 const CLICK_INTERVAL = 350;
 const DUMMY_RECT = { x: -10000, y: -10000, w: 0, h: 0 };
+const HOVER_PADDING = 8;
 
 export class PopUpManager {
   _bridges = new Map<PopUpBridge, number>();
@@ -231,8 +232,8 @@ export class PopUpManager {
 
       const { anchor, bodyRect, anchorRect } = details;
       if (
-        isIntersected(pointer, bodyRect || DUMMY_RECT, 0) ||
-        isIntersected(pointer, anchorRect || DUMMY_RECT, 0)
+        isIntersected(pointer, bodyRect || DUMMY_RECT, HOVER_PADDING) ||
+        isIntersected(pointer, anchorRect || DUMMY_RECT, HOVER_PADDING)
       ) {
         if (anchor) {
           hoveredAnchors.add(anchor);

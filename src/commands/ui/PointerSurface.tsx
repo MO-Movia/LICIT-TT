@@ -52,7 +52,7 @@ export class PointerSurface extends React.PureComponent {
         id={id}
         onKeyDown={disabled ? preventEventDefault : this._onMouseUp}
         onMouseDown={disabled ? preventEventDefault : this._onMouseDown}
-        onMouseEnter={this._onMouseEnter}
+        onMouseEnter={disabled ? preventEventDefault : this._onMouseEnter}
         onMouseLeave={this._onMouseLeave}
         onMouseUp={disabled ? preventEventDefault : this._onMouseUp}
         role="button"
@@ -75,7 +75,10 @@ export class PointerSurface extends React.PureComponent {
   _onMouseEnter = (e: React.SyntheticEvent): void => {
     this._pressedTarget = null;
     e.preventDefault();
-    const { onMouseEnter, value } = this.props;
+    const { disabled, onMouseEnter, value } = this.props;
+    if (disabled) {
+      return;
+    }
     onMouseEnter?.(value, e);
   };
 

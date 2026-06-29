@@ -244,7 +244,7 @@ describe('CommandMenuButton', () => {
     );
   });
 
-  test('should clear popup id for insert table menus', () => {
+  test('should keep insert table menus auto-dismissable', () => {
     const instance = new (CommandMenuButton)({
       ...mockProps,
       commandGroups: [{ 'Insert Table...': mockCommand }],
@@ -256,6 +256,7 @@ describe('CommandMenuButton', () => {
       expect.any(Function),
       expect.any(Object),
       expect.objectContaining({
+        autoDismiss: true,
         popUpId: null,
       })
     );

@@ -89,6 +89,7 @@ describe('PointerSurface', () => {
     const p = (instance.render()).props as Record<string, unknown>;
     expect(typeof p.onMouseDown).toBe('function');
     expect(p.onMouseDown).not.toBe(instance._onMouseDown);
+    expect(p.onMouseEnter).not.toBe(instance._onMouseEnter);
     expect(p.onMouseLeave).toBeDefined();
   });
 
@@ -114,6 +115,17 @@ describe('PointerSurface', () => {
   it('_onMouseEnter does not throw when onMouseEnter prop is absent', () => {
     const instance = new PointerSurface({});
     expect(() => instance._onMouseEnter({ preventDefault: () => {} } as SyntheticEvent)).not.toThrow();
+  });
+
+  it('_onMouseEnter does not fire prop callback when disabled', () => {
+    const onMouseEnter = jest.fn();
+    const instance = new PointerSurface({ disabled: true, onMouseEnter, value: 'v' });
+    const e = { preventDefault: jest.fn() } as unknown as SyntheticEvent;
+
+    instance._onMouseEnter(e);
+
+    expect(e.preventDefault).toHaveBeenCalled();
+    expect(onMouseEnter).not.toHaveBeenCalled();
   });
 
   it('_onMouseDown ignores right-click', () => {

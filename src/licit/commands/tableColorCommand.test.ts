@@ -266,6 +266,7 @@ it('calls setCellBorders when success is true', () => {
     const options = call[2];
 
     expect(options).toHaveProperty('onClose');
+    expect(options.autoDismiss).toBe(true);
     const onClose = options.onClose!;
     expect(command._popUp).not.toBeNull();
     onClose('close-value');

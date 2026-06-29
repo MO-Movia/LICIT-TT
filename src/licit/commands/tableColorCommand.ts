@@ -84,7 +84,7 @@ class TableColorCommand extends UICommand {
           anchor,
           popUpId: 'mo-menuList-child',
           position: atAnchorRight,
-          autoDismiss: false,
+          autoDismiss: true,
           onClose: (val) => {
             this._popUp = null;
             resolve(val);
