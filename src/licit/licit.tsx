@@ -675,7 +675,7 @@ const LicitComponent = (
       isNodeHasAttribute,
     ]
   );
-  const [, setEditorState] = useState(editor?.state); //NOSONAR
+  const [editorState, setEditorState] = useState(editor?.state);
   // Register event handlers only once when editor is available
   useEffect(() => {
     if (!editor) return;
@@ -766,7 +766,7 @@ const LicitComponent = (
           <RichTextEditor
             disabled={finalDisabled}
             editor={editor}
-            editorState={editor.state}
+            editorState={editorState ?? editor.state}
             editorView={eView}
             embedded={finalEmbedded}
             height={finalHeight}

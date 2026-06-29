@@ -58,6 +58,25 @@
   width: 100%;
 }
 
+.licit-change-bar-range {
+  background: transparent;
+}
+
+.licit-change-bar-layer {
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  position: fixed;
+  z-index: 5;
+}
+
+.licit-change-bar {
+  background: #9f9f9f;
+  border-radius: 1px;
+  position: absolute;
+  width: 2px;
+}
+
 .czi-editor-content-placeholder {
   box-sizing: border-box;
   color: var(--czi-placeholder-text-color);
@@ -127,6 +146,10 @@
 }
 
 @media only print {
+  .licit-change-bar-layer {
+    display: none;
+  }
+
   .ProseMirror.ProseMirror[class] {
     border-radius: unset;
     box-shadow: unset;

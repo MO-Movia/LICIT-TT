@@ -16,6 +16,9 @@ import { setPluginKey } from '../core';
 import TableCellMenuPlugin from './plugins/tableCellMenuPlugin';
 import createEditorKeyMap from './createEditorKeyMap';
 import { LandscapePlugin } from './plugins/LandscapePlugin';
+import ChangeBarPlugin, {
+  DEFAULT_CHANGE_BAR_TEST_RANGES,
+} from './plugins/changeBarPlugin';
 
 // Creates the default plugin for the editor.
 export default class DefaultEditorPlugins {
@@ -32,6 +35,10 @@ export default class DefaultEditorPlugins {
       setPluginKey(keymap(createEditorKeyMap()), 'EditorKeyMap'),
       new TableCellMenuPlugin(),
       new LandscapePlugin(),
+      new ChangeBarPlugin({
+        exposeTestApi: true,
+        testRanges: DEFAULT_CHANGE_BAR_TEST_RANGES,
+      }),
     ];
   }
 

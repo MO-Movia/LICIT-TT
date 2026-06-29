@@ -62,6 +62,33 @@ describe('index branch coverage', () => {
     expect(ref.loaded).toBe(true);
   });
 
+  it('does not tag init style application for change bars', () => {
+    const ref = { loaded: false };
+    const setMeta = jest.fn();
+    const tr = {
+      doc: {
+        content: { size: 10 },
+        descendants(cb) {
+          cb(
+            {
+              attrs: { styleName: 'Normal' },
+              content: { size: 3 },
+              type: { name: 'paragraph' },
+            },
+            1
+          );
+        },
+      },
+      setMeta,
+    } as unknown as import('prosemirror-state').Transaction;
+    const state = { tr };
+
+    jest.spyOn(customStyle, 'isStylesLoaded').mockReturnValue(true);
+
+    expect(onInitAppendTransaction(ref, null, state as never)).toBe(tr);
+    expect(setMeta).not.toHaveBeenCalled();
+  });
+
   it('applyStyleForEmptyParagraph applies latest style for eligible node', () => {
     const tr = {} as unknown as import('prosemirror-state').Transaction;
     const node = {
