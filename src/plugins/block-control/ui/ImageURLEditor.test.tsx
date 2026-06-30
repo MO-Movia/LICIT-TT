@@ -49,7 +49,7 @@ describe('Image URL Editor', () => {
     imageurleditor._unmounted = false;
     imageurleditor.state = { src: '', validValue: { src: '' } };
     expect(imageurleditor._didSrcChange()).toBeUndefined();
-    expect(spy).toBeCalled();
+    expect(spy).toHaveBeenCalled();
   });
   it('should handle _didSrcChange when result.complete = false', () => {
     const spy = jest.spyOn(resolveimage, 'resolveImage').mockResolvedValue({
@@ -63,7 +63,7 @@ describe('Image URL Editor', () => {
     imageurleditor._unmounted = false;
     imageurleditor.state = { src: '', validValue: { src: '' } };
     expect(imageurleditor._didSrcChange()).toBeUndefined();
-    expect(spy).toBeCalled();
+    expect(spy).toHaveBeenCalled();
   });
 
   it('should handle _didSrcChange when result.complete = false (case 2)', () => {

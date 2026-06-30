@@ -1,7 +1,10 @@
-/* eslint-disable */
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
 
-import {InfoIconNodeSpec} from './infoIconNodeSpec';
-
+import type { Node } from 'prosemirror-model';
+import { InfoIconNodeSpec } from './infoIconNodeSpec';
 
 const node = {
   attrs: {
@@ -10,58 +13,53 @@ const node = {
     description: 'Test description',
     // "{"name":"fa fa-adn","unicode":"&#xf170;","selected":false}"
     infoIcon: {
-      'name'
-        :
-        "fa fa-adn",
-      'selected': false,
-      'unicode'
-        :
-        "&#xf170"
-    }
+      name: 'fa fa-adn',
+      selected: false,
+      unicode: '&#xf170',
+    },
   },
-};
+} as unknown as Node;
 
 describe('InfoIconNodeSpec', () => {
   it('dom should have matching node attributes', () => {
-    const outputspec = InfoIconNodeSpec.toDOM(node as any);
+    const outputspec = InfoIconNodeSpec.toDOM(node);
     const infoDom = [];
     const { from, to, description, infoIcon } = node.attrs;
 
-    const attrs: any = {
+    const attrs: Record<string, unknown> = {
       from,
       to,
-      description, infoIcon
+      description,
+      infoIcon,
     };
     attrs.from = from;
     attrs.to = to;
     attrs.description = description;
     attrs.infoIcon = JSON.stringify(infoIcon);
 
-    infoDom.push('infoicon');
-    infoDom.push(attrs);
-    infoDom.push(0);
+    infoDom.push('infoicon', attrs, 0);
     expect(outputspec).toEqual(infoDom);
   });
   it('parse dom attributes', () => {
     const dom = document.createElement('span');
-    dom.setAttribute('from', '0' as any);
-    dom.setAttribute('to', '9' as any);
+    dom.setAttribute('from', '0');
+    dom.setAttribute('to', '9');
     dom.setAttribute('description', node.attrs.description);
     dom.setAttribute('infoIcon', JSON.stringify(node.attrs.infoIcon));
 
     const { from, to, description, infoIcon } = node.attrs;
 
-    const attsOutput: any = {
+    const attsOutput: Record<string, unknown> = {
       from,
       to,
       description,
-      infoIcon
+      infoIcon,
     };
-    const attrs: any = {
+    const attrs: Record<string, unknown> = {
       from,
       to,
       description,
-      infoIcon
+      infoIcon,
     };
     attrs.from = dom.getAttribute('from');
     attrs.to = dom.getAttribute('to');
@@ -71,7 +69,8 @@ describe('InfoIconNodeSpec', () => {
     attsOutput.from = dom.getAttribute('from');
     attsOutput.to = dom.getAttribute('to');
     attsOutput.description = dom.getAttribute('description');
-    attsOutput.infoIcon = JSON.parse(JSON.stringify(node.attrs.infoIcon));
+    const jsonStr = JSON.stringify(node.attrs.infoIcon);
+    attsOutput.infoIcon = JSON.parse(jsonStr);
 
     const getAttrs = InfoIconNodeSpec.parseDOM[0].getAttrs(dom);
     expect(getAttrs).toEqual(attsOutput);
@@ -81,11 +80,11 @@ describe('InfoIconNodeSpec', () => {
     const dom = document.createElement('span');
     const { from, to, description, infoIcon } = node.attrs;
 
-    const attrs: any = {
+    const attrs: Record<string, unknown> = {
       from,
       to,
       description,
-      infoIcon
+      infoIcon,
     };
     attrs.from = dom.getAttribute('from');
     attrs.to = dom.getAttribute('to');
@@ -95,5 +94,4 @@ describe('InfoIconNodeSpec', () => {
     const getAttrs = InfoIconNodeSpec.parseDOM[0].getAttrs(dom);
     expect(getAttrs).toStrictEqual(attrs);
   });
-
 });

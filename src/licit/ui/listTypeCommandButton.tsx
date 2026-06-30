@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import * as React from 'react';
@@ -45,10 +45,10 @@ const LIST_TYPE_NAMES = [
 const LIST_TYPE_COMMANDS = {
   ['decimal']: new ListToggleCommand(true, 'decimal'),
 };
-LIST_TYPE_NAMES.forEach((obj) => {
+for (const obj of LIST_TYPE_NAMES) {
   LIST_TYPE_COMMANDS[obj.name] = new ListToggleCommand(true, obj.name);
   LIST_TYPE_COMMANDS[obj.name].label = obj.label;
-});
+};
 
 const COMMAND_GROUPS = [LIST_TYPE_COMMANDS] as unknown as Array<UICommand>;
 
@@ -70,7 +70,7 @@ class ListTypeCommandButton extends React.PureComponent {
       // [FS] IRAD-1317 2021-05-06
       // To disable the list menu when select an image
       disabled = hasImageNode(editorState);
-      disabled = editorView.disabled || disabled ? true : false;
+      disabled = !!(editorView.disabled || disabled);
     }
     return (
       <ListTypeButton

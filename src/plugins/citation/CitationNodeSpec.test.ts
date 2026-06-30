@@ -82,4 +82,14 @@ describe('CitationNodeSpec', () => {
     const result = getAttrs(inputString);
     expect(result).toBe(false);
   });
+
+  it('should default missing attributes to null', () => {
+    const dom = document.createElement('citationnote');
+    dom.setAttribute('author', 'Jerry Rodgers');
+
+    const result = getAttrs(dom) as Record<string, string | null>;
+
+    expect(result.author).toBe('Jerry Rodgers');
+    expect(result.documentTitle).toBeNull();
+  });
 });

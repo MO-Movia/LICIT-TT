@@ -601,12 +601,12 @@ it('clearMarks: should return early when selection is empty', () => {
 });
 
 it('clearMarks: should reset indent and align attrs to style defaults', () => {
-  setCustomStyles([
-    {
-      styleName: 'Normal',
-      styles: { indent: '0', align: 'left' },
-    } as Style,
-  ]);
+setCustomStyles([
+  {
+    styleName: 'Normal',
+    styles: { indent: '0', align: 'left' },
+  },
+]);
 
   const nodeWithOverrides = {
     attrs: {

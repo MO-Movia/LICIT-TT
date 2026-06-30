@@ -8,7 +8,6 @@ import { Node, Mark } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 import { Selection } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
-import { Citation } from './Types';
 import { CapcoService } from './Constants';
 
 describe('CitationView', () => {
@@ -61,7 +60,7 @@ describe('CitationView', () => {
     expect(result).toBe(true);
   });
   it('should return false when pNode is null', () => {
-    const result = citationView.parentNodeType(null as unknown as Node);
+    const result = citationView.parentNodeType(null);
 
     expect(result).toBe(null);
   });
@@ -377,7 +376,7 @@ describe('CitationView', () => {
       runtime: { styleProps: [{ styleName: 'test' }] },
     } as unknown as EditorView;
     expect(
-      citationView.getAppliedCustomStyle(null as unknown as number)
+      citationView.getAppliedCustomStyle(null)
     ).toStrictEqual(null);
   });
   it('should handle getAppliedHighlightCustomStyle and rfeturn test_colour', () => {
@@ -758,7 +757,7 @@ describe('CitationView', () => {
       },
     } as unknown as EditorView;
     const spy1 = jest.spyOn(view, 'dispatch');
-    citationView.updateCitation(view, null as unknown as Citation);
+    citationView.updateCitation(view, null);
     expect(spy1).not.toHaveBeenCalled();
   });
   it('should handle setContentRight', () => {

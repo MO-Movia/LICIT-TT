@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { EditorState } from 'prosemirror-state';
@@ -70,5 +70,5 @@ export type EditorRuntime = {
 
   // Image Upload
   canUploadImage?: () => boolean;
-  uploadImage?: (obj: Blob) => Promise<ImageLike>;
+  uploadImage?: (obj: Blob) => Promise<{ src: string }>;
 };

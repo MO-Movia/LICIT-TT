@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import React from 'react';
@@ -11,7 +11,9 @@ jest.mock('../styles/czi-icon.css', () => ({}));
 jest.mock('../styles/icon-font.css', () => ({}));
 
 // Mock external dependencies
-jest.mock('../canUseCSSFont', () => jest.fn(() => Promise.resolve(true)));
+jest.mock('../../utils/utils/canUseCSSFont', () =>
+  jest.fn(() => Promise.resolve(true))
+);
 
 //  FIX  wrap React import inside factory to avoid hoisting error
 jest.mock('../../commands', () => {

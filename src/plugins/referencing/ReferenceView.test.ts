@@ -8,7 +8,7 @@ import { schema } from 'jest-prosemirror';
 import { EditorView } from 'prosemirror-view';
 import { ReferenceView } from './ReferenceView';
 import { ReferencingPlugin } from './ReferencingPlugin';
-import { Fragment, Node } from 'prosemirror-model';
+import { Node } from 'prosemirror-model';
 import { REFERENCE } from './ReferenceNodeSpec';
 
 describe('ReferenceView', () => {
@@ -47,7 +47,7 @@ describe('ReferenceView', () => {
       }
     );
     pos = 0;
-    deref = undefined as unknown as Promise<string>;
+    deref = undefined;
     view = new ReferenceView(
       eview.state.schema.nodes[REFERENCE].create(),
       eview,
@@ -88,7 +88,7 @@ describe('ReferenceView', () => {
     view.openTooltip({
       state: { doc: { attrs: { objectId: 'test' } } },
     } as unknown as EditorView);
-    view.hideSourceText(null as unknown as Event);
+    view.hideSourceText(null);
     view.hideSourceText(e);
     view.menu(e);
     view.destroyPopup();
@@ -97,7 +97,7 @@ describe('ReferenceView', () => {
   });
 
   it('Should not create state and view from nothing', () => {
-    const result = view.menu(undefined as unknown as MouseEvent);
+    const result = view.menu(undefined);
     expect(result).toBe(undefined);
   });
 
@@ -128,7 +128,7 @@ describe('ReferenceView', () => {
   });
 
   it('ReferenceView update false', () => {
-    const result = view.update(null as unknown as Node);
+    const result = view.update(null);
     expect(result).toBeFalsy();
   });
 
@@ -153,7 +153,7 @@ describe('ReferenceView', () => {
   });
 
   it('ReferenceView loadContent Fragment', () => {
-    expect(view.loadContent(null as unknown as Fragment)).toBeDefined();
+    expect(view.loadContent(null)).toBeDefined();
   });
 
   it('ReferenceView loadContent String', () => {
@@ -161,7 +161,7 @@ describe('ReferenceView', () => {
   });
 
   it('ReferenceView showIcon null', () => {
-    expect(view.showIcon(null as unknown as Event)).toBeFalsy();
+    expect(view.showIcon(null)).toBeFalsy();
   });
 
   it('ReferenceView showIcon new with div', () => {
@@ -173,7 +173,7 @@ describe('ReferenceView', () => {
   });
 
   it('ReferenceView hideIcon null', () => {
-    expect(view.hideIcon(null as unknown as Event)).toBeFalsy();
+    expect(view.hideIcon(null)).toBeFalsy();
   });
 
   it('ReferenceView showIcon new with input', () => {

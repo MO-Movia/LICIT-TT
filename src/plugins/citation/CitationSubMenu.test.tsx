@@ -1,4 +1,7 @@
-/* eslint-disable */
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
 
 import { schema, builders } from 'prosemirror-test-builder';
 import { EditorState } from 'prosemirror-state';
@@ -6,7 +9,6 @@ import { DOMOutputSpec, Mark, MarkSpec, Schema } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 import { CitationView } from './CitationView';
 import { CitationSubMenu } from './CitationSubMenu';
-import React from 'react';
 import { CapcoService } from './Constants';
 import { CitationNodeSpec } from './CitationNodeSpec';
 
@@ -113,12 +115,12 @@ describe('Citation Plugin', () => {
       }
     );
     const cView = new CitationView(
-      view.state.doc.nodeAt(0)!.child(1),
+      view.state.doc.nodeAt(0).child(1),
       view,
       () => undefined,
       {} as CapcoService<unknown>
     );
-    let citIconProps = {
+    const citIconProps = {
       editorView: view,
       href: '',
       onCancel: cView.onCancel,
@@ -129,8 +131,8 @@ describe('Citation Plugin', () => {
 
     expect(new CitationSubMenu({ ...citIconProps }).render()).toBeDefined();
   });
-  it('should handle _openLink ', () => {
-    jest.spyOn(window, 'open').mockImplementation(() => {
+  it('should handle _openLink', () => {
+    jest.spyOn(globalThis, 'open').mockImplementation(() => {
       return {} as unknown as Window;
     });
     const props = {
@@ -178,7 +180,7 @@ describe('Citation Plugin', () => {
     };
     expect(csubmenu._openLink('#t')).toBeUndefined();
   });
-  it('should handle _openLink when href is null ', () => {
+  it('should handle _openLink when href is null', () => {
     const props = {
       editorView: {} as unknown as EditorView,
       href: '',
@@ -188,6 +190,6 @@ describe('Citation Plugin', () => {
       onMouseOut: () => undefined,
     };
     const csubmenu = new CitationSubMenu(props);
-    expect(csubmenu._openLink(null as unknown as string)).toBeUndefined();
+    expect(csubmenu._openLink(null!)).toBeUndefined();
   });
 });

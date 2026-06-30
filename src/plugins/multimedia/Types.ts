@@ -13,6 +13,7 @@ export type VideoLike = {
 export type EditorVideoRuntime = {
   // Video Proxy
   canProxyVideoSrc?: (src: string) => boolean;
+  getProxyVideoSrc?: (src: string) => string;
   getVideoSrc?: (id: string) => Promise<string>;
 
   // Video Upload
@@ -34,5 +35,5 @@ export type EditorRuntime = {
 
   // Image Upload
   canUploadImage?: () => boolean;
-  uploadImage?: (obj: Blob) => Promise<ImageLike>;
+  uploadImage?: (obj: Blob) => Promise<{ src: string }>;
 };

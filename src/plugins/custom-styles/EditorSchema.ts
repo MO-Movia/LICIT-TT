@@ -41,6 +41,13 @@ const CONTENT = 'content';
 const GETATTRS = 'getAttrs';
 const PARSEDOM = 'parseDOM';
 const TODOM = 'toDOM';
+type MarkAttributeSpec = {
+  default?: boolean;
+  hasDefault?: boolean;
+};
+type MarkSpecWithAttrs = {
+  attrs?: Record<string, MarkAttributeSpec>;
+};
 
 export function effectiveSchema(schema: Schema) {
   if (schema?.[SPEC]) {
@@ -104,9 +111,9 @@ function createStyleNodeAttributes(schema: Schema) {
 
   const contentArr = [paragraphContent, schema.nodes.paragraph];
 
-  contentArr.forEach((content) => {
+  for (const content of contentArr) {
     createAttribute(content, STYLEKEY, null);
-  });
+  };
 }
 
 function getAnExistingAttribute(schema: Schema): unknown {
@@ -155,43 +162,46 @@ function getMarkContent(type, schema, nodeAttrs, toDOM) {
 function getRequiredMarks(marks, markName, schema) {
   const mark = getMarkContent(markName, schema, getMarkAttrs, toMarkDOM);
   if (mark) {
-    marks.push(mark);
-    marks.push(schema[SPEC]['marks'][markName]);
+    marks.push(mark, schema[SPEC]['marks'][markName]);
   }
 }
 export function createMarkAttributes(mark, existingAttr) {
-  if (mark) {
-    const requiredAttrs = [...NEWATTRS];
-    requiredAttrs.forEach((key) => {
-      if (!mark.attrs) {
-        mark['attrs'] = {};
-      }
-      if (mark.attrs) {
-        let newAttr = mark.attrs[key];
-        if (!newAttr) {
-          if (existingAttr) {
-            newAttr = Object.assign(
-              Object.create(Object.getPrototypeOf(existingAttr)),
-              existingAttr
-            );
-            newAttr.default = false;
-          } else {
-            newAttr = {};
-            newAttr.hasDefault = true;
-            newAttr.default = false;
-          }
-          mark.attrs[key] = newAttr;
-        }
-      }
-    });
+  if (!mark) {
+    return;
   }
+
+  const attrs = ensureMarkAttrs(mark);
+  for (const key of NEWATTRS) {
+    attrs[key] ??= createMarkAttribute(existingAttr);
+  }
+}
+
+function ensureMarkAttrs(mark: MarkSpecWithAttrs): Record<string, MarkAttributeSpec> {
+  mark.attrs ??= {};
+  return mark.attrs;
+}
+
+function createMarkAttribute(existingAttr): MarkAttributeSpec {
+  if (existingAttr) {
+    const attr: Record<string, unknown> = Object.assign(
+      Object.create(Object.getPrototypeOf(existingAttr)),
+      existingAttr
+    );
+    attr.default = false;
+    return attr;
+  }
+
+  return {
+    hasDefault: true,
+    default: false,
+  };
 }
 function createNewAttributes(schema: Schema): Schema {
   const marks = [];
   const existingAttr = getAnExistingAttribute(schema);
-  ALLOWED_MARKS.forEach((name) => {
+  for (const name of ALLOWED_MARKS) {
     getRequiredMarks(marks, name, schema);
-  });
+  };
   for (const mark of marks) {
     createMarkAttributes(mark, existingAttr);
   }

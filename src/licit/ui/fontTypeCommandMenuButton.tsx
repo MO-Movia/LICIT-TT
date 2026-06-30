@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import CommandMenuButton from './commandMenuButton';
@@ -22,9 +22,9 @@ const FONT_TYPE_COMMANDS: Record<string, unknown> = {
   [FONT_TYPE_NAME_DEFAULT]: new FontTypeCommand(''),
 };
 
-FONT_TYPE_NAMES.forEach((name) => {
+for (const name of FONT_TYPE_NAMES) {
   FONT_TYPE_COMMANDS[name] = new FontTypeCommand(name);
-});
+};
 
 const COMMAND_GROUPS = [FONT_TYPE_COMMANDS];
 
@@ -41,7 +41,7 @@ class FontTypeCommandMenuButton extends React.PureComponent<PropsType> {
         // [FS] IRAD-1008 2020-07-16
         // Disable font type menu on editor disable state
         commandGroups={COMMAND_GROUPS}
-        disabled={editorView && editorView.disabled ? true : false}
+        disabled={!!(editorView && editorView.disabled)}
         dispatch={dispatch}
         editorState={editorState}
         editorView={editorView}

@@ -4,19 +4,39 @@
  */
 
 import {Editor} from '@tiptap/core';
-import type {Node as PMNode} from 'prosemirror-model';
 import {StarterKit} from '@tiptap/starter-kit';
-import {TableRowEx} from '../tableRowEx';
 import {Table} from '@tiptap/extension-table';
+import {TableRow} from '@tiptap/extension-table-row';
 import {TableHeader} from '@tiptap/extension-table-header';
 import {TableCellEx} from './tableCellEx';
+import type {Node as PMNode} from 'prosemirror-model';
+
+type AttributeConfig = {
+  renderHTML?: (attributes: Record<string, unknown>) => Record<string, unknown>;
+};
+
+function getTableCellExtensionAttributes(): Record<string, AttributeConfig> {
+  const extension = TableCellEx as unknown as {
+    config: {
+      addAttributes: (this: {
+        parent?: () => Record<string, AttributeConfig>;
+      }) => Record<string, AttributeConfig>;
+    };
+  };
+
+  const context = {
+    parent: () => ({}),
+    addAttributes: extension.config.addAttributes,
+  };
+  return context.addAttributes();
+}
 
 describe('TableCellEx Extension', () => {
   let editor: Editor;
 
   beforeEach(() => {
     editor = new Editor({
-      extensions: [StarterKit, Table, TableRowEx, TableHeader, TableCellEx],
+      extensions: [StarterKit, Table, TableRow, TableHeader, TableCellEx],
       content: '<table><tr><td>Cell</td></tr></table>',
     });
   });
@@ -24,6 +44,7 @@ describe('TableCellEx Extension', () => {
   afterEach(() => {
     editor.destroy();
   });
+
 
   test('should have backgroundColor attribute', () => {
     const schema = editor.schema;
@@ -44,7 +65,7 @@ describe('TableCellEx Extension', () => {
     expect(node.spec.attrs).toHaveProperty('borderBottom');
   });
 
-  test('should have cell layout and typography attributes', () => {
+  test('should have the additional table cell attributes', () => {
     const schema = editor.schema;
     const node = schema.nodes.tableCell;
 
@@ -53,32 +74,30 @@ describe('TableCellEx Extension', () => {
     expect(node.spec.attrs).toHaveProperty('fontSize');
     expect(node.spec.attrs).toHaveProperty('letterSpacing');
     expect(node.spec.attrs).toHaveProperty('marginTop');
-    expect(node.spec.attrs).toHaveProperty('MarginBottom');
+    expect(node.spec.attrs).toHaveProperty('marginBottom');
     expect(node.spec.attrs?.cellWidth.default).toBe(null);
-    expect(node.spec.attrs?.cellStyle.default).toBe('');
-    expect(node.spec.attrs?.fontSize.default).toBe('16px');
-    expect(node.spec.attrs?.letterSpacing.default).toBe('0px');
-    expect(node.spec.attrs?.marginTop.default).toBe('0px');
-    expect(node.spec.attrs?.MarginBottom.default).toBe('0px');
+    expect(node.spec.attrs?.cellStyle.default).toBe(null);
+    expect(node.spec.attrs?.fontSize.default).toBe(null);
+    expect(node.spec.attrs?.letterSpacing.default).toBe(null);
+    expect(node.spec.attrs?.marginTop.default).toBe(null);
+    expect(node.spec.attrs?.marginBottom.default).toBe(null);
   });
 
-  test('should render backgroundColor as string when vignette is true', () => {
-    editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
-
+  test('should render width font size and margins on cell attributes', () => {
     editor
       .chain()
-      .setCellAttribute('backgroundColor', 'red')
-      .setCellAttribute('vignette', true)
+      .setCellAttribute('cellWidth', '120')
+      .setCellAttribute('fontSize', '14')
+      .setCellAttribute('marginTop', '6')
+      .setCellAttribute('marginBottom', '8')
       .run();
 
     const html = editor.getHTML();
 
-    expect(html).toContain('background-color: red');
-    expect(html).toContain('width: 25px');
-    expect(html).toContain('font-size: 16px');
-    expect(html).toContain('letter-spacing: 0px');
-    expect(html).toContain('margin-top: 0px');
-    expect(html).toContain('margin-bottom: 0px');
+    expect(html).toContain('width: 120px');
+    expect(html).toContain('font-size: 14px');
+    expect(html).toContain('margin-top: 6px');
+    expect(html).toContain('margin-bottom: 8px');
   });
 
   test('should parse cellWidth, font and margin attributes from HTML', () => {
@@ -97,19 +116,36 @@ describe('TableCellEx Extension', () => {
     expect(cellAttrs?.fontSize).toBe('18px');
     expect(cellAttrs?.letterSpacing).toBe('1.5px');
     expect(cellAttrs?.marginTop).toBe('6px');
-    expect(cellAttrs?.MarginBottom).toBe('9px');
+    expect(cellAttrs?.marginBottom).toBe('9px');
   });
 
   test('should render cellStyle inline CSS when provided', () => {
     editor
       .chain()
-      .setCellAttribute('cellStyle', 'line-height: 20px; text-align: center;')
+      .setCellAttribute('fontSize', '45')
+      .setCellAttribute('cellStyle', 'vertical-align: top;')
       .run();
 
     const html = editor.getHTML();
-    expect(html).toContain('line-height: 20px');
-    expect(html).toContain('text-align: center');
+    expect(html).toContain('--czi-cell-font-size: 45px');
+    expect(html).toContain('vertical-align: top');
+    expect(html).not.toContain('45pxvertical-align');
   });
+
+test('should render backgroundColor as string when vignette is true', () => {
+  editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
+
+  editor
+    .chain()
+    .setCellAttribute('backgroundColor', 'red')   
+    .setCellAttribute('vignette', true)          
+    .run();
+
+  const html = editor.getHTML();
+
+  expect(html).toContain('background-color: red');
+});
+
 
   test('should render nested color value when vignette is false', () => {
     // Add backgroundColor as object
@@ -222,5 +258,76 @@ describe('TableCellEx Extension', () => {
     );
     const html = editor.getHTML();
     expect(html).toContain('border-color: green');
+  });
+
+  test('should parse and render vertical-align for tableCell', () => {
+    editor.commands.setContent(
+      '<table><tr><td style="vertical-align: bottom">Cell</td></tr></table>'
+    );
+
+    let parsedVerticalAlign: string | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
+      if (node.type.name === 'tableCell') {
+        parsedVerticalAlign = node.attrs.verticalAlign;
+      }
+    });
+
+    expect(parsedVerticalAlign).toBe('bottom');
+
+    const html = editor.getHTML();
+    expect(html).toContain('vertical-align: bottom');
+    expect(html).toContain('valign="bottom"');
+  });
+
+  test('should skip optional inline styles when table cell attributes are empty', () => {
+    const attrs = getTableCellExtensionAttributes();
+
+    expect(attrs.fontName.renderHTML?.({fontName: null})).toStrictEqual({});
+    expect(attrs.paddingLeft.renderHTML?.({paddingLeft: null})).toStrictEqual({});
+    expect(attrs.backgroundColor.renderHTML?.({backgroundColor: null})).toStrictEqual({});
+    expect(attrs.borderLeft.renderHTML?.({borderLeft: null})).toStrictEqual({});
+    expect(attrs.borderRight.renderHTML?.({borderRight: null})).toStrictEqual({});
+    expect(attrs.borderTop.renderHTML?.({borderTop: null})).toStrictEqual({});
+    expect(attrs.borderBottom.renderHTML?.({borderBottom: null})).toStrictEqual({});
+    expect(attrs.borderColor.renderHTML?.({borderColor: null})).toStrictEqual({});
+    expect(attrs.cellStyle.renderHTML?.({cellStyle: null})).toStrictEqual({});
+    expect(attrs.cellWidth.renderHTML?.({cellWidth: null})).toStrictEqual({});
+    expect(attrs.fontSize.renderHTML?.({fontSize: null})).toStrictEqual({});
+    expect(attrs.letterSpacing.renderHTML?.({letterSpacing: null})).toStrictEqual({});
+    expect(attrs.marginTop.renderHTML?.({marginTop: null})).toStrictEqual({});
+    expect(attrs.marginBottom.renderHTML?.({marginBottom: null})).toStrictEqual({});
+    expect(attrs.verticalAlign.renderHTML?.({verticalAlign: null})).toStrictEqual({});
+  });
+
+  test('should render optional inline styles from table cell attributes', () => {
+    const attrs = getTableCellExtensionAttributes();
+
+    expect(attrs.fontName.renderHTML?.({fontName: 'Arial'})).toStrictEqual({
+      fontName: 'Arial',
+      style: 'font-family: Arial;',
+    });
+    expect(attrs.paddingLeft.renderHTML?.({paddingLeft: '4px'})).toStrictEqual({
+      style: 'padding-left: 4px',
+    });
+    expect(attrs.borderLeft.renderHTML?.({borderLeft: '1px solid red'})).toStrictEqual({
+      style: 'border-left: 1px solid red',
+    });
+    expect(attrs.borderRight.renderHTML?.({borderRight: '2px solid blue'})).toStrictEqual({
+      style: 'border-right: 2px solid blue',
+    });
+    expect(attrs.borderTop.renderHTML?.({borderTop: '3px solid green'})).toStrictEqual({
+      style: 'border-top: 3px solid green',
+    });
+    expect(attrs.borderBottom.renderHTML?.({borderBottom: '4px solid black'})).toStrictEqual({
+      style: 'border-bottom: 4px solid black',
+    });
+    expect(attrs.borderColor.renderHTML?.({borderColor: 'purple'})).toStrictEqual({
+      style: 'border-color: purple',
+    });
+    expect(attrs.verticalAlign.renderHTML?.({verticalAlign: 'middle'})).toStrictEqual({
+      verticalAlign: 'middle',
+      valign: 'middle',
+      style: 'vertical-align: middle',
+    });
   });
 });

@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {
@@ -95,9 +95,10 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
             const { state } = view;
             const { selection } = state;
             const { from, to } = selection;
-            const frompos = from - 1 < 0 ? 0 : from - 1;
+            const frompos = Math.max(from - 1, 0);
             const selectedPara = state.doc.slice(frompos, to);
-            selectedPara.content.forEach((node) => {
+            for (let i = 0; i < selectedPara.content.childCount; i++) {
+              const node = selectedPara.content.child(i);
               if (this.isTargetNodeAllowed(node) && node.attrs[ATTR_OBJID]) {
                 this.getState(view.state)?.cutObjectIds.push({
                   objectId: node.attrs[ATTR_OBJID],
@@ -105,7 +106,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
                   selectionId: node.attrs[ATTR_SELECTIONID],
                 });
               }
-            });
+            };
           },
         },
 
@@ -122,12 +123,12 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
               (obj) => obj.objectId === node.attrs?.objectId
             );
             newattrs.objectMetaData = cutObjectIds[0].objectMetaData;
-            if (index !== -1) {
-              newattrs.objectId = node.attrs.objectId;
-              this.getState(view.state).cutObjectIds.splice(index, 1);
-            } else {
+            if (index === -1) {
               newattrs.objectId = cutObjectIds[0].objectId;
               this.getState(view.state).cutObjectIds.shift();
+            } else {
+              newattrs.objectId = node.attrs.objectId;
+              this.getState(view.state).cutObjectIds.splice(index, 1);
             }
             const pos = from - 1;
             tr = tr.setNodeMarkup(pos, undefined, newattrs);
@@ -261,11 +262,11 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
   getChangedRanges(transactions): Ranges[] {
     const ranges: Ranges[] = [];
     for (const tr of transactions) {
-      tr.mapping.maps.forEach(map => {
-        map.forEach((newStart, newEnd) => {
+      for (const map of tr.mapping.maps) {
+        map.forEach((newStart, newEnd) => { //NOSONAR
           ranges.push({ from: newStart, to: newEnd });
         });
-      });
+      };
     }
     return ranges;
   }
@@ -351,7 +352,7 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     const merged = [ranges[0]];
 
     for (let i = 1; i < ranges.length; i++) {
-      const last = merged[merged.length - 1];
+      const last = merged.at(-1);
       const current = ranges[i];
       if (current.from <= last.to + 1) {
         last.to = Math.max(last.to, current.to);
@@ -466,16 +467,18 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
       const deletedIds = new Set();
       const prevNodesById = this.nodeAssignment(prevState);
       const nextNodesById = this.nodeAssignment(nextState);
-      Object.keys(prevNodesById)
-        .filter((id) => nextNodesById[id] === undefined)
-        .forEach((id) => deletedIds.add(id));
+      for (const id of Object.keys(prevNodesById).filter((id) => nextNodesById[id] === undefined)) {
+        deletedIds.add(id);
+      }
 
       if (0 < deletedIds.size) {
         // New deleted items have been found.
         // Add any previously deleted items to the set to prevent the same id from
         // appearing in the list multiple times.
         const existingIds = nextState.doc.attrs[ATTR_DELETEDOBJIDS] ?? [];
-        existingIds.forEach((id: string) => deletedIds.add(id));
+        for (const id of existingIds) {
+          deletedIds.add(id);
+        }
 
         // Build step to change document.
         const step = new SetDocAttrStep(
@@ -493,19 +496,18 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
   createNewAttributes(schema: Schema): void {
     const contentArr = [];
 
-    ALLOWED_NODES.forEach((name) => {
+    for (const name of ALLOWED_NODES) {
       const content = this.getContent(name, schema);
       if (content) {
-        contentArr.push(content);
-        contentArr.push(schema.nodes[name]);
+        contentArr.push(content, schema.nodes[name]);
       }
-    });
+    };
 
-    contentArr.forEach((content) => {
-      NEWATTRS.forEach((attr) => {
+    for (const content of contentArr) {
+      for (const attr of NEWATTRS) {
         this.createAttribute(content, attr, null);
-      });
-    });
+      };
+    };
   }
 
   applyEffectiveSchema(schema: Schema): Schema {
@@ -568,106 +570,191 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     );
   }
 
-  // set the dirty flag on each changes on editor and also for undo operations.
-  setDirtyFlagOnChange(
+  private hasTextSelection(
+    prevState: EditorState,
+    nextState: EditorState
+  ): boolean {
+    return (
+      nextState.selection instanceof TextSelection &&
+      prevState.selection instanceof TextSelection
+    );
+  }
+
+  private setDirtyFlagByCapcoPosition(
     prevState: EditorState,
     nextState: EditorState,
     tr: Transaction,
     docChanged: boolean,
     capcoPos: number
   ): Transaction {
-    let isDirty = false;
-    let isOnLoad = false;
-    const { selection, schema } = nextState;
-    if (
-      !(
-        selection instanceof TextSelection &&
-        prevState.selection instanceof TextSelection
-      )
-    ) {
+    const para = nextState.doc.nodeAt(capcoPos);
+    if (!para) {
       return tr;
     }
-    let para = null;
-    let para1 = null;
-    if (null != capcoPos) {
-      para = nextState.doc.nodeAt(capcoPos);
-      para1 = prevState.doc.nodeAt(capcoPos);
-      if (para) {
-        if (!isDirty) {
-          isDirty = !!para1?.attrs.dirty;
-        }
-        if (para && docChanged && (!isDirty && !para.attrs.dirty)) {
-          tr ??= nextState.tr;
-          tr = tr.setNodeMarkup(capcoPos, null, {
-            ...para.attrs,
-            dirty: true,
-          });
-        }
-      }
 
+    const prevPara = prevState.doc.nodeAt(capcoPos);
+    const isDirty = !!prevPara?.attrs.dirty;
+    if (!docChanged || isDirty || para.attrs.dirty) {
+      return tr;
     }
-    else {
-      para = this.getParentBySelection(
-        nextState.doc,
-        selection,
-        schema.nodes.paragraph
-      );
-      para1 = this.getParentBySelection(
-        prevState.doc,
-        prevState.selection,
-        schema.nodes.paragraph
 
-      );
+    tr ??= nextState.tr;
+    return tr.setNodeMarkup(capcoPos, null, {
+      ...para.attrs,
+      dirty: true,
+    });
+  }
 
-      if (tr) {
-        let para2 = null;
-        if (capcoPos) {
-          para2 = tr.doc.nodeAt(capcoPos);
-        }
-        else {
-          const curSelection = tr['curSelection'];
-          if (curSelection) {
-            para2 = this.getParentBySelection(
-              tr.doc,
-              curSelection,
-              schema.nodes.paragraph
+  private setDirtyFlagByCapcoPositions(
+    prevState: EditorState,
+    nextState: EditorState,
+    tr: Transaction,
+    docChanged: boolean,
+    capcoPos: number | number[]
+  ): Transaction {
+    const capcoPositions = Array.isArray(capcoPos) ? capcoPos : [capcoPos];
 
-            );
-          }
-          isDirty = !!para2?.node.attrs.dirty;
-        }
-      }
+    return capcoPositions.reduce(
+      (updatedTr, pos) =>
+        this.setDirtyFlagByCapcoPosition(
+          prevState,
+          nextState,
+          updatedTr,
+          docChanged,
+          pos
+        ),
+      tr
+    );
+  }
 
-      if (!isDirty) {
-        isDirty = !!para1?.node.attrs.dirty;
-      }
-      if (para && para1) {
-        // on document load the last paragraph becomes dirty, to avoid that we check the position between the two paragraphs
-        isOnLoad = para.pos - para1.pos > 3;
-      }
-      if (para && docChanged && !isOnLoad && (!isDirty && !para.node.attrs.dirty)) {
-        tr ??= nextState.tr;
-        tr = tr.setNodeMarkup(para.pos, null, {
-          ...para.node.attrs,
-          dirty: true,
-        });
-      }
-      if (para) {
-        const parentTable = this.getParentByPosition(
-          nextState.doc,
-          para.pos,
-          schema.nodes.table
-        );
-        if (parentTable && !parentTable.node.attrs.dirty) {
-          tr ??= nextState.tr;
-          tr = tr.setNodeMarkup(parentTable.pos, null, {
-            ...parentTable.node.attrs,
-            dirty: true,
-          });
-        }
-      }
+  private setDirtyFlagBySelection(
+    prevState: EditorState,
+    nextState: EditorState,
+    tr: Transaction,
+    docChanged: boolean
+  ): Transaction {
+    const { selection, schema } = nextState;
+    const para = this.getParentBySelection(
+      nextState.doc,
+      selection as TextSelection,
+      schema.nodes.paragraph
+    );
+    const prevPara = this.getParentBySelection(
+      prevState.doc,
+      prevState.selection as TextSelection,
+      schema.nodes.paragraph
+    );
+
+    const isDirty = this.isCurrentOrPreviousParagraphDirty(
+      tr,
+      schema.nodes.paragraph,
+      prevPara
+    );
+    const isOnLoad = this.isOnLoadParagraphChange(para, prevPara);
+    tr = this.markParagraphDirty(tr, nextState, para, docChanged, isOnLoad, isDirty);
+    return this.markParentTableDirty(tr, nextState, para, schema.nodes.table);
+  }
+
+  private isCurrentOrPreviousParagraphDirty(
+    tr: Transaction,
+    paragraphType: NodeType,
+    prevPara
+  ): boolean {
+    const currentPara = this.getParagraphFromTransactionSelection(
+      tr,
+      paragraphType
+    );
+    return !!currentPara?.node.attrs.dirty || !!prevPara?.node.attrs.dirty;
+  }
+
+  private getParagraphFromTransactionSelection(
+    tr: Transaction,
+    paragraphType: NodeType
+  ) {
+    const curSelection = tr?.['curSelection'];
+    return curSelection
+      ? this.getParentBySelection(tr.doc, curSelection, paragraphType)
+      : null;
+  }
+
+  private isOnLoadParagraphChange(para, prevPara): boolean {
+    // On document load the last paragraph becomes dirty; compare positions to avoid that.
+    return !!para && !!prevPara && para.pos - prevPara.pos > 3;
+  }
+
+  private markParagraphDirty(
+    tr: Transaction,
+    nextState: EditorState,
+    para,
+    docChanged: boolean,
+    isOnLoad: boolean,
+    isDirty: boolean
+  ): Transaction {
+    if (!para || !docChanged || isOnLoad || isDirty || para.node.attrs.dirty) {
+      return tr;
     }
-    return tr;
+
+    tr ??= nextState.tr;
+    return tr.setNodeMarkup(para.pos, null, {
+      ...para.node.attrs,
+      dirty: true,
+    });
+  }
+
+  private markParentTableDirty(
+    tr: Transaction,
+    nextState: EditorState,
+    para,
+    tableType: NodeType
+  ): Transaction {
+    if (!para) {
+      return tr;
+    }
+
+    const parentTable = this.getParentByPosition(
+      nextState.doc,
+      para.pos,
+      tableType
+    );
+    if (!parentTable || parentTable.node.attrs.dirty) {
+      return tr;
+    }
+
+    tr ??= nextState.tr;
+    return tr.setNodeMarkup(parentTable.pos, null, {
+      ...parentTable.node.attrs,
+      dirty: true,
+    });
+  }
+
+  // set the dirty flag on each changes on editor and also for undo operations.
+  setDirtyFlagOnChange(
+    prevState: EditorState,
+    nextState: EditorState,
+    tr: Transaction,
+    docChanged: boolean,
+    capcoPos: number | number[]
+  ): Transaction {
+    if (!this.hasTextSelection(prevState, nextState)) {
+      return tr;
+    }
+
+    if (capcoPos == null) {
+      return this.setDirtyFlagBySelection(
+        prevState,
+        nextState,
+        tr,
+        docChanged
+      );
+    }
+
+    return this.setDirtyFlagByCapcoPositions(
+      prevState,
+      nextState,
+      tr,
+      docChanged,
+      capcoPos
+    );
   }
 }
 

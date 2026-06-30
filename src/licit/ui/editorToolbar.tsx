@@ -1,17 +1,14 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import cx from 'classnames';
 import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
 import * as React from 'react';
-import ReactDOM from 'react-dom';
-
 import CommandButton from './commandButton';
-import CommandMenuButton from './commandMenuButton';
+import CommandMenuButton, {isUICommandLike} from './commandMenuButton';
 import { CustomButton, ThemeContext } from '../../commands';
 import {COMMAND_GROUPS, CommandGroup, parseLabel} from './editorToolbarConfig';
 import Icon from './icon';
@@ -30,15 +27,12 @@ class EditorToolbar extends React.PureComponent {
   public static readonly contextType = ThemeContext;
   declare context: React.ContextType<typeof ThemeContext>;
 
-  _body = null;
-
   declare props: {
     disabled?: boolean;
     dispatchTransaction?: (tr: Transform) => void;
     editorState: EditorState;
     editorView: EditorViewEx;
-    onReady?: (view: EditorView) => void;
-    readOnly?: boolean;
+    readOnly?: boolean; //NOSONAR
     toolbarConfig?: ToolbarMenuConfig[];
   };
 
@@ -171,12 +165,6 @@ class EditorToolbar extends React.PureComponent {
             menuCommand: (matchingPlugin as LicitPlugin).initButtonCommands(
               theme
             ),
-          } as {
-            menuCommand: UICommand;
-            menuPosition: number;
-            key: string;
-            isPlugin?: boolean;
-            group: string;
           };
         }
 
@@ -280,20 +268,19 @@ class EditorToolbar extends React.PureComponent {
   groupMenuItems = (items) => {
     const groups: CommandGroup[] = [];
     let prefix = 1;
-
-    items.forEach((item) => {
+    for (const item of items) {
       const groupName = item.group || 'Ungrouped'; // Use 'Ungrouped' for missing groups
       // if (!groups[prefix]) {
       //   groups[prefix] = [];
       // }
-      if (groups.findIndex((item) => item.group === groupName) < 0) {
+      if (!groups.some((item) => item.group === groupName)) {
         const x = items.filter((a) => {
           return a.group === groupName;
         });
-        groups.push({[prefix]: {...x}, group: groupName});
+        groups.push({ [prefix]: { ...x }, group: groupName });
       }
       prefix++;
-    });
+    };
 
     return groups;
   };
@@ -326,7 +313,7 @@ class EditorToolbar extends React.PureComponent {
               editorView={editorView}
             />
           );
-        } else if (obj instanceof UICommand) {
+        } else if (isUICommandLike(obj)) {
           return this._renderButton(label, obj, String(theme));
         } else if (Array.isArray(obj)) {
           return this._renderMenuButton(label, obj);
@@ -369,7 +356,7 @@ class EditorToolbar extends React.PureComponent {
             editorView={editorView}
           />
         );
-      } else if (obj instanceof UICommand) {
+      } else if (isUICommandLike(obj)) {
         buttons.push(this._renderButton(label, obj, String(theme)));
       } else if (Array.isArray(obj)) {
         buttons.push(this._renderMenuButton(label, obj));
@@ -386,6 +373,7 @@ class EditorToolbar extends React.PureComponent {
     const {editorState, editorView, disabled, dispatchTransaction} = this.props;
     const theme = this.context;
     const {icon, title} = parseLabel(label, theme ? theme.toString() : 'dark');
+    const dropdownIndicator = icon ? '?' : title;
     return (
       <CommandMenuButton
         commandGroups={commandGroups}
@@ -395,7 +383,7 @@ class EditorToolbar extends React.PureComponent {
         editorView={editorView}
         icon={icon}
         key={label}
-        label={icon ? null : title}
+        label={icon ? dropdownIndicator : title}
         title={title}
       />
     );
@@ -424,39 +412,33 @@ class EditorToolbar extends React.PureComponent {
     );
   };
 
-  _onBodyRef = (ref: React.ReactInstance): void => {
+  _bodyEl: HTMLElement | null = null;
+  _onBodyRef = (ref: HTMLElement): void => {
     if (ref) {
-      this._body = ref;
-      // Mounting
-      const el = ReactDOM.findDOMNode(ref);
-      if (el instanceof HTMLElement) {
-        observe(el, this._checkIfContentIsWrapped);
-      }
+      this._bodyEl = ref;
+      observe(ref, this._checkIfContentIsWrapped);
     } else {
-      // Unmounting.
-      const el = this._body && ReactDOM.findDOMNode(this._body);
-      if (el instanceof HTMLElement) {
-        unobserve(el);
+      if (this._bodyEl) {
+        unobserve(this._bodyEl);
       }
-      this._body = null;
+      this._bodyEl = null;
     }
   };
 
   _checkIfContentIsWrapped = (): void => {
-    const ref = this._body;
-    const el = ref && ReactDOM.findDOMNode(ref);
-    const startAnchor = el && el.firstChild;
-    const endAnchor = el && el.lastChild;
+    const el = this._bodyEl;
+    const startAnchor = el?.firstChild;
+    const endAnchor = el?.lastChild;
     if (startAnchor && endAnchor) {
       const wrapped =
         (startAnchor as HTMLElement).offsetTop <
         (endAnchor as HTMLElement).offsetTop;
-      this.setState({wrapped});
+      this.setState({ wrapped });
     }
   };
 
   _toggleExpansion = (expanded: boolean): void => {
-    this.setState({expanded: !expanded});
+    this.setState({ expanded: !expanded });
   };
 }
 

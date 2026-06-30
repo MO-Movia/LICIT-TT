@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { EditorView } from 'prosemirror-view';
@@ -11,7 +11,7 @@ import sanitizeURL from '../sanitizeURL';
 import { CustomButton } from '../../commands';
 
 function isBookMarkHref(href: string): boolean {
-  return !!href && href.indexOf('#') === 0 && href.length >= 2;
+  return !!href && href.startsWith('#') && href.length >= 2;
 }
 
 class LinkTooltip extends React.PureComponent {
@@ -24,8 +24,6 @@ class LinkTooltip extends React.PureComponent {
     onRemove: (view: EditorView) => void;
     selectionId?: string;
   };
-
-  _unmounted = false;
 
   state = {
     hidden: false,
@@ -61,7 +59,7 @@ class LinkTooltip extends React.PureComponent {
 
   _openLink = (href: string): void => {
     if (isBookMarkHref(href)) {
-      const id = href.substr(1);
+      const id = href.slice(1);
       const el = document.getElementById(id);
       if (el) {
         const { onCancel, editorView } = this.props;

@@ -1,13 +1,15 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Attrs, AttributeSpec, DOMOutputSpec, Node, NodeSpec } from 'prosemirror-model';
 import { citationFields } from './Types';
 
 const defaultAttrs: {[attr: string]: AttributeSpec} = {};
-citationFields.forEach(field => defaultAttrs[field] = { default: null });
+for (const field of citationFields) {
+  defaultAttrs[field] = { default: null };
+}
 export const CitationNodeSpec: NodeSpec = {
   group: 'inline',
   content: 'text*',
@@ -27,8 +29,10 @@ export function getAttrs(dom: HTMLElement | string): Attrs | false {
   if (typeof dom === 'string') {
     return false;
   }
-  const attrs = {} as {[attr: string]: string | null};
-  citationFields.forEach(field => attrs[field] = dom.getAttribute(field) ?? null);
+  const attrs = {} as { [attr: string]: string | null };
+  for (const field of citationFields) {
+    attrs[field] = dom.getAttribute(field) ?? null;
+  }
   return attrs;
 }
 

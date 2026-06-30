@@ -6,9 +6,9 @@
 import {VideoUploadEditor} from './VideoUploadEditor';
 
 const VideoUploadEditorProps = {
-  runtime: {
-    // Video Proxy
+  runtime: { // Video Proxy
     canProxyVideoSrc: (_src: string) => true,
+    getProxyVideoSrc: (_src: string) => 'http://video.mp4',
     getVideoSrc: jest.fn().mockReturnValue(Promise.resolve('http://video.mp4')),
 
     // Video Upload
@@ -20,21 +20,24 @@ const VideoUploadEditorProps = {
       width: 150,
     }),
   },
-  close: () => undefined,
+  close: () => undefined
 };
 const VideoUploadEdrProps = {
-  runtime: {
-    // Video Proxy
+  runtime: { // Video Proxy
     canProxyVideoSrc: (_src: string) => false,
+    getProxyVideoSrc: (_src: string) => 'http://video.mp4',
     getVideoSrc: jest.fn().mockReturnValue(Promise.resolve('http://video.mp4')),
 
     // Video Upload
     canUploadVideo: () => false,
-    uploadVideo: jest.fn().mockResolvedValue({}),
+    uploadVideo: jest.fn().mockResolvedValue({
+
+    }),
   },
-  close: () => undefined,
+  close: () => undefined
 };
 const testCases=[VideoUploadEditorProps,VideoUploadEdrProps];
+const TEST_UUID = '00000000-0000-4000-8000-000000000000';
 describe('Video Upload Editor', () => {
 
 
@@ -50,12 +53,10 @@ describe('Video Upload Editor', () => {
 });
 describe('Video Upload Editor (group 2)', () => {
   const VideoUploadEditorProps = {
-    runtime: {
-      // Video Proxy
+    runtime: { // Video Proxy
       canProxyVideoSrc: (_src: string) => true,
-      getVideoSrc: jest
-        .fn()
-        .mockReturnValue(Promise.resolve('http://video.mp4')),
+      getProxyVideoSrc: (_src: string) => 'http://video.mp4',
+      getVideoSrc: jest.fn().mockReturnValue(Promise.resolve('http://video.mp4')),
 
       // Video Upload
       canUploadVideo: () => true,
@@ -66,7 +67,7 @@ describe('Video Upload Editor (group 2)', () => {
         width: 150,
       }),
     },
-    close: () => undefined,
+    close: () => undefined
   };
 
  const videouploadeditor = new VideoUploadEditor(VideoUploadEditorProps);
@@ -115,25 +116,21 @@ describe('Video Upload Editor (group 2)', () => {
 
      });
      it('should handle _upload (case 2)', async() => {
-      videouploadeditor.props = {
-        runtime: {
-          // Video Proxy
-          canProxyVideoSrc: (_src: string) => true,
-          getVideoSrc: jest
-            .fn()
-            .mockReturnValue(Promise.resolve('http://video.mp4')),
+      videouploadeditor.props = {  runtime: { // Video Proxy
+        canProxyVideoSrc: (_src: string) => true,
+        getProxyVideoSrc: (_src: string) => 'http://video.mp4',
+        getVideoSrc: jest.fn().mockReturnValue(Promise.resolve('http://video.mp4')),
 
-          // Video Upload
-          canUploadVideo: () => true,
-          uploadVideo: jest.fn().mockResolvedValue({
-            height: 0,
-            id: 'Test-1',
-            src: '',
-            width: 0,
-          }),
-        },
-        close: () => undefined,
-      };
+        // Video Upload
+        canUploadVideo: () => true,
+        uploadVideo: jest.fn().mockResolvedValue({
+          height: 0,
+          id: 'Test-1',
+          src: '',
+          width: 0,
+        }),
+      },
+      close: () => undefined};
 
       const file = new File([], 'test.mp4');
       const instance = await videouploadeditor._upload(file);
@@ -144,18 +141,17 @@ describe('Video Upload Editor (group 2)', () => {
      });
      it('should handle render',()=>{
       const vue = new VideoUploadEditor({});
-      vue.state = {error:null,id:'id',pending:true};
+      vue.state = {error:null,id: TEST_UUID,pending:true};
       expect(vue.render()).toBeDefined();
      });
      it('should handle render when there is error',()=>{
       const vue = new VideoUploadEditor({});
-      vue.state = {error:true as unknown as null,id:'id',pending:false};
+      vue.state = {error:true,id: TEST_UUID,pending:false};
       expect(vue.render()).toBeDefined();
      });
      it('should handle _onSelectFile',()=>{
       const vue = new VideoUploadEditor({});
-      vue.state = {error:true as unknown as null,id:'id',pending:false};
+      vue.state = {error:true,id: TEST_UUID,pending:false};
       expect(vue._onSelectFile({target:{files:[{}]}} as unknown as React.SyntheticEvent<HTMLInputElement>)).toBeUndefined();
      });
 });
-

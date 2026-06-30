@@ -301,7 +301,7 @@ describe('MarkToggleCommand', () => {
     plugin.doUpdate = true;
     const test = plugin.execute(
       state,
-      null as unknown as ((tr: Transform) => void) | undefined,
+      null,
       {dispatch: () => {}} as unknown as EditorView
     );
     expect(test).toBe(true);

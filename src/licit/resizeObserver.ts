@@ -1,10 +1,10 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import ResizeObserver from 'resize-observer-polyfill';
-import nullthrows from 'nullthrows';
+import nullthrows from './nullthrows';
 
 // flow type copied from
 // https://github.com/que-etc/resize-observer-polyfill/blob/master/src/index.js.flow
@@ -41,14 +41,18 @@ let instance: ResizeObserver | null = null;
 const nodesObserving: Map<Element, Array<ResizeCallback>> = new Map();
 
 function onResizeObserve(entries: Entries): void {
-  entries.forEach(handleResizeObserverEntry);
+  for (const entry of entries) {
+    handleResizeObserverEntry(entry);
+  }
 }
 
 function handleResizeObserverEntry(entry: ResizeObserverEntry): void {
   const node = entry.target;
   const callbacks = nodesObserving.get(node);
-  const executeCallback = (cb:ResizeCallback) => cb(entry);
-  callbacks?.forEach(executeCallback);
+  const executeCallback = (cb: ResizeCallback) => cb(entry);
+  for (const callback of callbacks ?? []) {
+    executeCallback(callback);
+  }
 }
 
 export function observe(
@@ -82,7 +86,7 @@ export function unobserve(node: HTMLElement, callback?: ResizeCallback): void {
     const callbacks = nodesObserving.has(el)
       ? nullthrows(nodesObserving.get(el)).filter((cb) => cb !== callback)
       : null;
-    if (callbacks && callbacks.length) {
+    if (callbacks?.length) {
       nodesObserving.set(el, callbacks);
     } else {
       nodesObserving.delete(el);

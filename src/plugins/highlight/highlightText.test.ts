@@ -4,7 +4,7 @@
  */
 
 import { Schema } from 'prosemirror-model';
-import { EditorState, EditorStateConfig, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction } from 'prosemirror-state';
 import { DecorationSet, EditorView } from 'prosemirror-view';
 import { LicitHighlightTextPlugin, PluginState } from '.';
 const writeText = jest.fn().mockReturnValue('copy');
@@ -98,7 +98,7 @@ describe('LicitHighlightTextPlugin', () => {
   it('should handle init', () => {
     expect(
       plugin.spec.state?.init(
-        null as unknown as EditorStateConfig,
+        null,
         { docNode } as unknown as EditorState
       )
     ).toBeDefined();
@@ -316,7 +316,7 @@ describe('LicitHighlightTextPlugin', () => {
       const decorations = LicitHighlightTextPlugin.findHighlightsInRange(
         docNode,
         state.searchTerm,
-        state as PluginState,
+        state,
         { from: 0, to: docNode.content.size }
       );
 
@@ -332,7 +332,7 @@ describe('LicitHighlightTextPlugin', () => {
       const decorations = LicitHighlightTextPlugin.findHighlightsInRange(
         docNode,
         state.searchTerm,
-        state as PluginState,
+        state,
         { from: 0, to: docNode.content.size }
       );
 
@@ -390,7 +390,7 @@ describe('LicitHighlightTextPlugin', () => {
     it('should handle init (case 2)', () => {
       expect(
         plugin.spec.state?.init(
-          null as unknown as EditorStateConfig,
+          null,
           { docNode } as unknown as EditorState
         )
       ).toBeDefined();
@@ -398,7 +398,7 @@ describe('LicitHighlightTextPlugin', () => {
 
     it('should initialize with empty decorations', () => {
       const initState = plugin.spec.state?.init(
-        null as unknown as EditorStateConfig,
+        null,
         { docNode } as unknown as EditorState
       );
       expect(initState?.decorations).toBeDefined();
@@ -425,7 +425,7 @@ describe('LicitHighlightTextPlugin', () => {
             individualHighlightClass: 'individual-highlight',
           }),
         } as unknown as Transaction,
-        { decorations: DecorationSet.empty } as unknown as PluginState,
+        { decorations: DecorationSet.empty },
         mockEditorState,
         mockEditorState
       );
@@ -444,7 +444,7 @@ describe('LicitHighlightTextPlugin', () => {
         {
           decorations: DecorationSet.empty,
           searchTerm: 'dummy',
-        } as unknown as PluginState,
+        },
         mockEditorState,
         mockEditorState
       );
@@ -461,7 +461,7 @@ describe('LicitHighlightTextPlugin', () => {
             highlightClass: 'match-highlight',
           }),
         } as unknown as Transaction,
-        { decorations: DecorationSet.empty } as unknown as PluginState,
+        { decorations: DecorationSet.empty },
         mockEditorState,
         mockEditorState
       );
@@ -551,7 +551,7 @@ describe('LicitHighlightTextPlugin', () => {
         searchTerm: 'test',
         highlightClass: 'highlight-class',
         decorations: DecorationSet.empty,
-      } as PluginState);
+      });
       const updateSearchTermSpy = jest
         .spyOn(LicitHighlightTextPlugin, 'updateSearchTerm')
         .mockImplementation(() => undefined);
@@ -599,7 +599,7 @@ describe('LicitHighlightTextPlugin', () => {
         searchTerm: '',
         highlightClass: 'highlight-class',
         decorations: DecorationSet.empty,
-      } as PluginState);
+      });
 
       const updateSearchTermSpy = jest
         .spyOn(LicitHighlightTextPlugin, 'updateSearchTerm')
@@ -674,7 +674,7 @@ describe('LicitHighlightTextPlugin', () => {
         searchTerm: '',
         highlightClass: 'highlight-class',
         decorations: DecorationSet.empty,
-      } as PluginState);
+      });
 
       const updateSearchTermSpy = jest
         .spyOn(LicitHighlightTextPlugin, 'updateSearchTerm')

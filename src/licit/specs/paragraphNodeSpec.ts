@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {Node, mergeAttributes} from '@tiptap/core';
@@ -23,6 +23,10 @@ export const EMPTY_CSS_VALUE = cssVal;
 export type AttrType = {
   align?;
   lineSpacing?;
+  marginTop?;
+  marginBottom?;
+  marginLeft?;
+  marginRight?;
   paddingTop?;
   paddingBottom?;
   pageBreak?: boolean;
@@ -40,9 +44,78 @@ export type AttrType = {
 };
 
 const ALIGN_PATTERN = /(left|right|center|justify)/;
+type ParagraphStyleAttrs = Pick<
+  AttrType,
+  | 'align'
+  | 'lineSpacing'
+  | 'marginTop'
+  | 'marginBottom'
+  | 'marginLeft'
+  | 'marginRight'
+  | 'paddingTop'
+  | 'paddingBottom'
+>;
+
+function getInlineStyleProperty(
+  dom: HTMLElement,
+  propertyName: string
+): string | null {
+  const inlineStyle = dom.getAttribute('style') || '';
+  if (!inlineStyle) {
+    return null;
+  }
+
+  const escapedProperty = propertyName.replaceAll(
+    /[.*+?^${}()|[\]\\]/g,
+    String.raw`\$&`
+  );
+  const regexp = new RegExp(String.raw`(?:^|;)\s*${escapedProperty}\s*:\s*([^;]+)`, 'i');
+  const match = regexp.exec(inlineStyle);
+  if (!match?.[1]) {
+    return null;
+  }
+
+  const value = match[1].trim();
+  return value || null;
+}
+
+function resolveMarginValue(dom: HTMLElement, cssProperty: string): string | null {
+  const fromStyleMap: Record<string, string> = {
+    'margin-top': dom.style.marginTop,
+    'margin-bottom': dom.style.marginBottom,
+    'margin-left': dom.style.marginLeft,
+    'margin-right': dom.style.marginRight,
+  };
+  const fromStyle = fromStyleMap[cssProperty] ?? '';
+
+  const attrNameMap: Record<string, string> = {
+    'margin-top': 'marginTop',
+    'margin-bottom': 'marginBottom',
+    'margin-left': 'marginLeft',
+    'margin-right': 'marginRight',
+  };
+  const attrName = attrNameMap[cssProperty] ?? cssProperty;
+
+  if (fromStyle) {
+    return fromStyle;
+  }
+
+  return (
+    getInlineStyleProperty(dom, cssProperty) ??
+    dom.getAttribute(cssProperty) ??
+    dom.getAttribute(attrName) ??
+    null
+  );
+}
 
 function getAttrs(dom: HTMLElement): Record<string, unknown> {
-  const {lineHeight, textAlign, marginLeft, paddingTop, paddingBottom} =
+  const {
+    lineHeight,
+    textAlign,
+    marginLeft,
+    paddingTop,
+    paddingBottom,
+  } =
     dom.style;
 
   let align = dom.getAttribute('align') || textAlign || 'left';
@@ -69,10 +142,18 @@ function getAttrs(dom: HTMLElement): Record<string, unknown> {
   const overriddenIndentValue = dom.getAttribute('overriddenIndentValue') || '';
   const selectionId = dom.getAttribute('selectionId') || '';
   const objectId = dom.getAttribute('objectId') || '';
+  const marginTop = resolveMarginValue(dom, 'margin-top');
+  const marginBottom = resolveMarginValue(dom, 'margin-bottom');
+  const marginLeftValue = resolveMarginValue(dom, 'margin-left');
+  const marginRight = resolveMarginValue(dom, 'margin-right');
   return {
     align,
     indent,
     lineSpacing,
+    marginTop,
+    marginBottom,
+    marginLeft: marginLeftValue,
+    marginRight,
     paddingTop,
     paddingBottom,
     reset,
@@ -89,15 +170,19 @@ function getAttrs(dom: HTMLElement): Record<string, unknown> {
 }
 
 function getStyle(attrs: {[key: string]: unknown}): string {
-  return getStyleEx(
-    attrs.align,
-    attrs.lineSpacing,
-    attrs.paddingTop,
-    attrs.paddingBottom
-  );
+  return getStyleEx(attrs);
 }
 
-function getStyleEx(align, lineSpacing, paddingTop, paddingBottom): string {
+function getStyleEx({
+  align,
+  lineSpacing,
+  marginTop,
+  marginBottom,
+  marginLeft,
+  marginRight,
+  paddingTop,
+  paddingBottom,
+}: ParagraphStyleAttrs): string {
   let style = '';
   if (align && align !== 'left') {
     style += `text-align: ${align};`;
@@ -110,6 +195,24 @@ function getStyleEx(align, lineSpacing, paddingTop, paddingBottom): string {
       // This creates the local css variable `--czi-content-line-height`
       // that its children may apply.
       `--czi-content-line-height: ${cssLineSpacing};`;
+  }
+
+  if (marginTop !== null && marginTop !== undefined && marginTop !== '') {
+    style += `margin-top: ${marginTop};`;
+  }
+
+  if (
+    marginBottom !== null &&
+    marginBottom !== undefined &&
+    marginBottom !== ''
+  ) {
+    style += `margin-bottom: ${marginBottom};`;
+  }
+  if (marginLeft !== null && marginLeft !== undefined && marginLeft !== '') {
+    style += `margin-left: ${marginLeft};`;
+  }
+  if (marginRight !== null && marginRight !== undefined && marginRight !== '') {
+    style += `margin-right: ${marginRight};`;
   }
 
   if (paddingTop && !EMPTY_CSS_VALUE.has(paddingTop)) {
@@ -227,6 +330,51 @@ const ParagraphNode = Node.create({
         parseHTML: (element) => getAttrs(element).lineSpacing,
         renderHTML: (attributes) => {
           if (!attributes.lineSpacing) return {};
+          return {};
+        },
+      },
+      marginTop: {
+        default: null,
+        parseHTML: (element) => getAttrs(element).marginTop,
+        renderHTML: (attributes) => {
+          if (attributes.marginTop === null || attributes.marginTop === undefined)
+            return {};
+          return {};
+        },
+      },
+      marginBottom: {
+        default: null,
+        parseHTML: (element) => getAttrs(element).marginBottom,
+        renderHTML: (attributes) => {
+          if (
+            attributes.marginBottom === null ||
+            attributes.marginBottom === undefined
+          )
+            return {};
+          return {};
+        },
+      },
+      marginLeft: {
+        default: null,
+        parseHTML: (element) => getAttrs(element).marginLeft,
+        renderHTML: (attributes) => {
+          if (
+            attributes.marginLeft === null ||
+            attributes.marginLeft === undefined
+          )
+            return {};
+          return {};
+        },
+      },
+      marginRight: {
+        default: null,
+        parseHTML: (element) => getAttrs(element).marginRight,
+        renderHTML: (attributes) => {
+          if (
+            attributes.marginRight === null ||
+            attributes.marginRight === undefined
+          )
+            return {};
           return {};
         },
       },

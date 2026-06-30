@@ -56,3 +56,5 @@
 @import url('prosemirror-menu/style/menu.css');
 @import url('font-awesome/css/font-awesome.min.css');
 @import url('./menu.css');
+@import url('./capco.css');
+@import url('./builder.css');

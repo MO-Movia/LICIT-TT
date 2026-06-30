@@ -1,0 +1,161 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
+type GeneratedListConfig = {
+  content: HTMLElement;
+  containerSelector: string;
+  titleElements: string[];
+  cssClass: string;
+  idPrefix: string;
+  dataAttr: string;
+  generatedListId: string;
+  elementClass: string;
+  headerText: string;
+};
+
+type CreateTableConfig = {
+  content: HTMLElement | { querySelector?: (selector: string) => Element | null };
+  tocElement: string;
+  tofElement?: string;
+  totElement?: string;
+  titleElements: string[];
+  titleElementsTOF?: string[];
+  titleElementsTOT?: string[];
+};
+
+export function createTable(config: CreateTableConfig): void {
+  const {
+    content,
+    tocElement,
+    tofElement,
+    totElement,
+    titleElements,
+    titleElementsTOF,
+    titleElementsTOT,
+  } = config;
+
+  if (!content || typeof content.querySelector !== 'function') {
+    return;
+  }
+
+  generateList({
+    content: content as HTMLElement,
+    containerSelector: tocElement,
+    titleElements,
+    cssClass: 'title-element',
+    idPrefix: 'title-element',
+    dataAttr: 'data-title-level',
+    generatedListId: 'list-toc-generated',
+    elementClass: 'toc-element',
+    headerText: 'TABLE OF CONTENTS',
+  });
+
+  if (tofElement) {
+    generateList({
+      content: content as HTMLElement,
+      containerSelector: tofElement,
+      titleElements: titleElementsTOF ?? [],
+      cssClass: 'title-element-tof',
+      idPrefix: 'title-element-tof',
+      dataAttr: 'data-title-level-tof',
+      generatedListId: 'list-tof-generated',
+      elementClass: 'tof-element',
+      headerText: 'LIST OF FIGURES',
+    });
+  }
+
+  if (totElement) {
+    generateList({
+      content: content as HTMLElement,
+      containerSelector: totElement,
+      titleElements: titleElementsTOT ?? [],
+      cssClass: 'title-element-tot',
+      idPrefix: 'title-element-tot',
+      dataAttr: 'data-title-level-tot',
+      generatedListId: 'list-tot-generated',
+      elementClass: 'tot-element',
+      headerText: 'LIST OF TABLES',
+    });
+  }
+}
+
+function escapeCSSId(id: string): string {
+  if (CSS?.escape) return CSS.escape(id);
+  return id
+    .replaceAll(/^\d/, '_$&')
+    .replaceAll(/[^a-zA-Z0-9\-_:.]/g, '_');
+}
+
+function generateList({
+  content,
+  containerSelector,
+  titleElements,
+  cssClass,
+  idPrefix,
+  dataAttr,
+  generatedListId,
+  elementClass,
+  headerText,
+}: GeneratedListConfig): void {
+  const container = content.querySelector(containerSelector);
+  if (!container || content.querySelector(`#${generatedListId}`)) return;
+
+  const listDiv = document.createElement('div');
+  listDiv.id = generatedListId;
+  container.appendChild(listDiv);
+  container.classList.add('prepages');
+  let elementCount = 0;
+
+  for (const [i, styleName] of titleElements.entries()) {
+    const titleHierarchy = i + 1;
+    const elements = content.querySelectorAll(
+      `p[stylename="${styleName}"], h4[stylename="${styleName}"]`
+    );
+
+    for (const [, el] of elements.entries()) {
+      if (!(el instanceof HTMLElement)) {
+        continue;
+      }
+
+      el.classList.remove(cssClass);
+      el.classList.add(cssClass);
+      el.setAttribute(dataAttr, titleHierarchy.toString());
+
+      elementCount++;
+      const newId = `${idPrefix}-${elementCount}`;
+      el.id = newId;
+      el.dataset.ref = String(newId);
+    }
+  }
+
+  const allElements = content.querySelectorAll(`.${cssClass}`);
+
+  for (const [index, el] of allElements.entries()) {
+    if (!(el instanceof HTMLElement)) {
+      continue;
+    }
+
+    const safeId = escapeCSSId(el.id);
+
+    let text = (el.textContent ?? '').trim();
+    if (text.length > 70) {
+      text = text.substring(0, 70);
+      text = text.substring(0, text.lastIndexOf(' '));
+    }
+
+    if (index === 0 && headerText) {
+      const headerEl = document.createElement('h4');
+      headerEl.textContent = headerText;
+      headerEl.style.marginBottom = '40px';
+      headerEl.style.color = '#000000';
+      listDiv.appendChild(headerEl);
+    }
+
+    const linkPara = document.createElement('p');
+    linkPara.classList.add(elementClass);
+    linkPara.innerHTML = `<a href="#${safeId}">${text}</a>`;
+    listDiv.appendChild(linkPara);
+  }
+}

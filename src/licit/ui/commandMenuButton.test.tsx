@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import * as React from 'react';
@@ -63,36 +63,149 @@ describe('CommandMenuButton', () => {
   });
 
   test('initial state should not be expanded', () => {
-    const instance = new (CommandMenuButton as  unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     expect(instance.state.expanded).toBe(false);
   });
 
   test('should toggle expanded state on click', () => {
-  const instance = new (CommandMenuButton as  unknown as typeof CommandMenuButton)(mockProps);
+  const instance = new (CommandMenuButton)(mockProps);
   const setStateSpy = jest.spyOn(instance, 'setState');
 
   // Simulate first click (expands)
   instance._onClick();
-  expect(setStateSpy).toHaveBeenNthCalledWith(1, { expanded: true });
+  const firstCall = setStateSpy.mock.calls[0][0] as (
+    prevState: Readonly<unknown>
+  ) => unknown;
+  expect(firstCall({ expanded: false })).toEqual({ expanded: true });
 
   // Manually reflect the state change (React would normally do this)
   instance.state.expanded = true;
 
   // Simulate second click (collapses)
   instance._onClick();
-  expect(setStateSpy).toHaveBeenNthCalledWith(2, { expanded: false });
-});
+  const secondCall = setStateSpy.mock.calls[1][0] as (
+    prevState: Readonly<unknown>
+  ) => unknown;
+  expect(secondCall({ expanded: true })).toEqual({ expanded: false });
+  });
 
   test('should call createPopUp when _showMenu is triggered', () => {
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     instance._showMenu();
 
     expect(createPopUp).toHaveBeenCalled();
   });
 
+  test('should update an existing popup instead of recreating it', () => {
+    const update = jest.fn();
+    const instance = new (CommandMenuButton)(mockProps);
+    instance._menu = { update };
+
+    instance._showMenu();
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...mockProps,
+        onCommand: expect.any(Function),
+        theme: 'light',
+      })
+    );
+  });
+
+  test('should render a fallback label and child indicator when nested commands exist', () => {
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      label: undefined,
+    });
+    const rendered = instance.render() as unknown as React.ReactElement<{
+      hasChild: boolean;
+      label: string | null;
+    }>;
+
+    expect(rendered.props.hasChild).toBe(true);
+    expect(rendered.props.label).toBe('?');
+  });
+
+  test('should suppress the child indicator for expand buttons', () => {
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      title: 'Expand',
+      label: undefined,
+    });
+    const rendered = instance.render() as unknown as React.ReactElement<{
+      hasChild: boolean;
+      className: string;
+      label: string | null;
+    }>;
+
+    expect(rendered.props.hasChild).toBe(false);
+    expect(rendered.props.className).toContain('menu-expand-btn');
+    expect(rendered.props.label).toBeNull();
+  });
+
+  test('should recover when a command throws in isEnabled', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      commandGroups: [
+        {
+          Broken: {
+            isEnabled: jest.fn(() => {
+              throw new Error('broken');
+            }),
+          },
+        },
+      ],
+    });
+    const rendered = instance.render() as unknown as React.ReactElement<{
+      disabled: boolean;
+    }>;
+
+    expect(rendered.props.disabled).toBe(false);
+    expect(consoleSpy).toHaveBeenCalled();
+  });
+
+  test('should set child popup positioning props for submenu content', () => {
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      sub: true,
+      commandGroups: [{ Single: mockCommand }],
+    });
+
+    instance._showMenu();
+
+    expect(createPopUp).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Object),
+      expect.objectContaining({
+        IsChildDialog: true,
+        autoDismiss: true,
+        popUpId: 'mo-menuList-1',
+        position: expect.any(Function),
+      })
+    );
+  });
+
+  test('should clear popup id for insert table menus', () => {
+    const instance = new (CommandMenuButton)({
+      ...mockProps,
+      commandGroups: [{ 'Insert Table...': mockCommand }],
+    });
+
+    instance._showMenu();
+
+    expect(createPopUp).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Object),
+      expect.objectContaining({
+        popUpId: null,
+      })
+    );
+  });
+
   test('should close popup on _hideMenu', () => {
     const closeMock = jest.fn();
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     instance._menu = { close: closeMock };
     instance._hideMenu();
 
@@ -101,14 +214,14 @@ describe('CommandMenuButton', () => {
   });
 
   test('should set expanded to false on _onCommand', () => {
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     instance.setState({ expanded: true });
     instance._onCommand();
     expect(instance.state.expanded).toBe(false);
   });
 
   test('should nullify menu on _onClose', () => {
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     instance._menu = { dummy: true };
     instance._onClose();
     expect(instance._menu).toBeNull();
@@ -116,14 +229,14 @@ describe('CommandMenuButton', () => {
   });
 
   test('should set _menu to null on unmount', () => {
-    const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+    const instance = new (CommandMenuButton)(mockProps);
     const hideMenuSpy = jest.spyOn(instance, '_hideMenu');
     instance.componentWillUnmount();
     expect(hideMenuSpy).toHaveBeenCalled();
   });
 
 test('should pass correct theme to CustomButton', () => {
-  const instance = new (CommandMenuButton as unknown as typeof CommandMenuButton)(mockProps);
+  const instance = new (CommandMenuButton)(mockProps);
   const rendered = instance.render() as unknown as React.ReactElement<{
     theme: string;
     className: string;

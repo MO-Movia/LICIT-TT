@@ -380,7 +380,7 @@ describe('toggleList', () => {
       } as SelectionMemo;
       const listNodeType = localSchema.nodes.paragraph;
       const result = wrapNodesWithListInternal(state, listNodeType, 'disc');
-      expect(result).toBe(state.tr as unknown as Transform);
+      expect(result).toBe(state.tr);
     });
 
     it('handles list nodes and paragraphs when wrapping', () => {
@@ -504,7 +504,7 @@ describe('wrapNodesWithListInternal', () => {
       }
     } as unknown as Transform;
     const memo = { tr: tr, schema: mySchema };
-    expect(wrapNodesWithListInternal(memo, null as unknown as NodeType, 'test')).toBeDefined();
+    expect(wrapNodesWithListInternal(memo, null, 'test')).toBeDefined();
   });
 });
 describe('unwrapNodesFromListInternal', () => {
@@ -671,7 +671,7 @@ describe('wrapNodesWithList', () => {
         } as unknown as Transform;
       }
     } as unknown as Transform;
-    expect(wrapNodesWithList(tr, mySchema, null as unknown as NodeType, 'test')).toBeDefined();
+    expect(wrapNodesWithList(tr, mySchema, null, 'test')).toBeDefined();
   });
 });
 

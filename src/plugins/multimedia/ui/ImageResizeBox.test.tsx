@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {createEditor, doc, p} from 'jest-prosemirror';
 import {ImageResizeBox, ImageResizeBoxControl} from './ImageResizeBox';
 import React from 'react';
@@ -275,20 +282,6 @@ describe('image resizebox control', () => {
     );
     expect(spy1).toHaveBeenCalled();
   });
-  it('should no-op when ending without active resize', () => {
-    const control = new ImageResizeBoxControl({
-      boxID: 'boxid',
-      config: 'any',
-      direction: 'bottom',
-      height: 10,
-      onResizeEnd: () => undefined,
-      width: 10,
-      fitToParent: true,
-    });
-    control._active = false;
-    expect(() => control._end()).not.toThrow();
-  });
-
   it('should handle render (case 2)',()=>{
     const irb = new ImageResizeBox({
       height: 150,
@@ -305,5 +298,99 @@ describe('image resizebox control', () => {
       fitToParent: true,
     };
     expect(irb.render()).toBeDefined();
+  });
+
+  it('should throw when _syncSize runs without an element', () => {
+    imageresizeboxcontrol.props = {
+      boxID: 'boxid',
+      config: 'any',
+      direction: 'right',
+      height: 10,
+      onResizeEnd: () => undefined,
+      width: 10,
+      fitToParent: false,
+    };
+    imageresizeboxcontrol._active = true;
+    imageresizeboxcontrol._el = null;
+
+    expect(() => imageresizeboxcontrol._syncSize()).toThrow(
+      'Element is not initialized.'
+    );
+  });
+
+  it('should throw when _syncSize receives an invalid direction', () => {
+    const mockElement = document.createElement('div');
+    imageresizeboxcontrol.props = {
+      boxID: 'boxid',
+      config: 'any',
+      direction: 'diagonal',
+      height: 10,
+      onResizeEnd: () => undefined,
+      width: 10,
+      fitToParent: false,
+    };
+    imageresizeboxcontrol._active = true;
+    imageresizeboxcontrol._el = mockElement;
+
+    expect(() => imageresizeboxcontrol._syncSize()).toThrow(
+      'Invalid resize direction: diagonal'
+    );
+  });
+
+  it('should throw when _start cannot find the resize element', () => {
+    jest.spyOn(document, 'getElementById').mockReturnValue(null);
+    imageresizeboxcontrol._active = false;
+
+    expect(() =>
+      imageresizeboxcontrol._start(
+        new MouseEvent('click', {
+          clientX: 10,
+          clientY: 10,
+        }) as unknown as React.MouseEvent
+      )
+    ).toThrow("Element with ID 'boxid' not found.");
+  });
+
+  it('should throw when _end is active but element is missing', () => {
+    imageresizeboxcontrol._active = true;
+    imageresizeboxcontrol._el = null;
+
+    expect(() => imageresizeboxcontrol._end()).toThrow(
+      'Resizable element not initialized.'
+    );
+  });
+
+  it('should throw when _onMouseUp is called without an active element', () => {
+    imageresizeboxcontrol.props = {
+      boxID: 'boxid',
+      config: 'any',
+      direction: 'top_right',
+      height: 10,
+      onResizeEnd: () => undefined,
+      width: 10,
+      fitToParent: true,
+    };
+    imageresizeboxcontrol._el = null;
+
+    expect(() =>
+      imageresizeboxcontrol._onMouseUp(
+        new MouseEvent('mouseup', {
+          clientX: 20,
+          clientY: 20,
+        })
+      )
+    ).toThrow('Resizable element not initialized.');
+  });
+
+  it('should cancel the animation frame when ending an active resize', () => {
+    const mockElement = document.createElement('div');
+    const cancelSpy = jest.spyOn(global, 'cancelAnimationFrame');
+    imageresizeboxcontrol._active = true;
+    imageresizeboxcontrol._el = mockElement;
+    imageresizeboxcontrol._rafID = 7;
+
+    imageresizeboxcontrol._end();
+
+    expect(cancelSpy).toHaveBeenCalledWith(7);
   });
 });

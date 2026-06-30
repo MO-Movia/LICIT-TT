@@ -7,12 +7,11 @@ import cx from 'classnames';
 import React from 'react';
 
 import { clamp } from '../../../commands';
-import {v1 as uuid} from 'uuid';
 
 export type VideoResizeProps = {
   height: number;
   onResizeEnd: (w: number, height: number) => void;
-  src: string;
+  src: string; //NOSONAR
   width: number;
 };
 
@@ -86,7 +85,18 @@ export class VideoResizeBoxControl extends React.PureComponent {
       [direction]: true,
     });
 
-    return <span className={className} onMouseDown={this._onMouseDown} />;
+    return (
+      <button
+        className={className}
+        onMouseDown={this._onMouseDown}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            this._onMouseDown(e as unknown as React.MouseEvent);
+          }
+        }}
+      />
+    );
   }
 
   _syncSize = (): void => {
@@ -211,7 +221,7 @@ export class VideoResizeBoxControl extends React.PureComponent {
 export class VideoResizeBox extends React.PureComponent {
   declare props: VideoResizeProps;
 
-  _id = uuid();
+  _id = crypto.randomUUID();
 
   render(): React.ReactElement<VideoResizeBoxControl> {
     const {onResizeEnd, width, height} = this.props;

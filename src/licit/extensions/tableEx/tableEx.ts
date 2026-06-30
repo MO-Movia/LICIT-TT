@@ -1,157 +1,100 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {findParentNodeClosestToPos, mergeAttributes} from '@tiptap/core';
-import {DOMOutputSpec, Node as ProseMirrorNode} from 'prosemirror-model';
-import {Table,createColGroup, createTable} from '@tiptap/extension-table';
+import {findParentNodeClosestToPos} from '@tiptap/core';
+import  { Table,
+  createTable,
+  TableView as TiptapTableView,
+} from '@tiptap/extension-table';
+import {Node as ProseMirrorNode} from 'prosemirror-model';
 import {TextSelection} from 'prosemirror-state';
+import {normalizeCssSize, normalizeValue} from '../table.utils';
 
-const DEFAULT_TABLE_COLUMNS = 3;
-const DEFAULT_TABLE_HEIGHT = 'auto';
-
-const normalizePositiveInteger = (value: unknown, fallback: number): number => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    const rounded = Math.floor(value);
-    return rounded > 0 ? rounded : fallback;
+class TableViewEx extends TiptapTableView {
+  constructor(node: ProseMirrorNode, cellMinWidth: number) {
+    super(node, cellMinWidth);
+    this.applyTableAttributes(node);
   }
 
-  if (typeof value === 'string') {
-    const parsedValue = Number.parseInt(value, 10);
-    if (!Number.isNaN(parsedValue) && parsedValue > 0) {
-      return parsedValue;
+  update(node: ProseMirrorNode): boolean {
+    const updated = super.update(node);
+    if (updated) {
+      this.applyTableAttributes(node);
+    }
+    return updated;
+  }
+
+  applyTableAttributes(node: ProseMirrorNode): void {
+    const tableHeight = normalizeCssSize(node.attrs.tableHeight);
+    if (tableHeight) {
+      this.table.style.height = tableHeight;
+      this.table.dataset.tableHeight = tableHeight;
+    } else {
+      this.table.style.removeProperty('height');
+      delete this.table.dataset.tableHeight;
+    }
+
+    const noOfColumns = normalizeValue(node.attrs.noOfColumns);
+    if (noOfColumns) {
+      this.table.dataset.noOfColumns = noOfColumns;
+    } else {
+      delete this.table.dataset.noOfColumns;
     }
   }
-
-  return fallback;
-};
-
-const normalizeCssSize = (value: unknown, fallback: string): string => {
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
-    return `${value}px`;
-  }
-
-  if (typeof value !== 'string') {
-    return fallback;
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return fallback;
-  }
-
-  if (/^\d{1,10000}(\.\d{1,10000})?$/.test(trimmed)) {
-    return `${trimmed}px`;
-  }
-
-  return trimmed;
-};
-
-const getColumnsFromDOM = (element: HTMLElement): number => {
-  const firstRow = element.querySelector('tr');
-  if (!firstRow) {
-    return DEFAULT_TABLE_COLUMNS;
-  }
-
-  let colCount = 0;
-  Array.from(firstRow.children).forEach((cell) => {
-    const colspan = normalizePositiveInteger(
-      (cell as HTMLElement).getAttribute('colspan'),
-      1
-    );
-    colCount += colspan;
-  });
-
-  return colCount > 0 ? colCount : DEFAULT_TABLE_COLUMNS;
-};
-
-const getColumnsFromNode = (node: ProseMirrorNode): number => {
-  const firstRow = node.firstChild;
-  if (!firstRow) {
-    return DEFAULT_TABLE_COLUMNS;
-  }
-
-  let colCount = 0;
-  for (let i = 0; i < firstRow.childCount; i += 1) {
-    colCount += normalizePositiveInteger(firstRow.child(i).attrs.colspan, 1);
-  }
-
-  return colCount > 0 ? colCount : DEFAULT_TABLE_COLUMNS;
-};
+}
 
 export const TableEx = Table.extend({
+  addOptions() {
+    return {
+      ...this.parent?.(),
+      View: TableViewEx,
+    };
+  },
+
   addAttributes() {
     return {
       ...this.parent?.(),
       noOfColumns: {
-        default: DEFAULT_TABLE_COLUMNS,
-        parseHTML: (element) => {
-          const attr = element.getAttribute('noOfColumns') ??
-            element.dataset.noOfColumns ??
-            element.getAttribute('no.of.columns');
-
-          if (attr) {
-            return normalizePositiveInteger(attr, DEFAULT_TABLE_COLUMNS);
+        default: null,
+        renderHTML: (attributes) => {
+          const noOfColumns = normalizeValue(attributes.noOfColumns);
+          if (!noOfColumns) {
+            return {};
           }
 
-          return getColumnsFromDOM(element);
-        },
-        renderHTML: (attributes) => {
-          const noOfColumns = normalizePositiveInteger(
-            attributes.noOfColumns,
-            DEFAULT_TABLE_COLUMNS
-          );
           return {
-            noOfColumns,
             'data-no-of-columns': noOfColumns,
           };
         },
+        parseHTML: (element) => {
+          const noOfColumns = element.dataset.noOfColumns;
+          if (!noOfColumns) {
+            return null;
+          }
+
+          const parsed = Number.parseInt(noOfColumns, 10);
+          return Number.isNaN(parsed) ? null : parsed;
+        },
       },
       tableHeight: {
-        default: DEFAULT_TABLE_HEIGHT,
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('tableHeight') ?? element.style.height,
-            DEFAULT_TABLE_HEIGHT
-          );
-        },
+        default: null,
         renderHTML: (attributes) => {
-          const tableHeight = normalizeCssSize(
-            attributes.tableHeight,
-            DEFAULT_TABLE_HEIGHT
-          );
+          const tableHeight = normalizeCssSize(attributes.tableHeight);
+          if (!tableHeight) {
+            return {};
+          }
+
           return {
-            tableHeight,
+            style: `height: ${tableHeight}`,
           };
+        },
+        parseHTML: (element) => {
+          return normalizeValue(element.style.height);
         },
       },
     };
-  },
-
-  renderHTML({node, HTMLAttributes}) {
-    const {colgroup, tableWidth} = createColGroup(node, this.options.cellMinWidth);
-    const noOfColumns = normalizePositiveInteger(
-      node.attrs.noOfColumns,
-      getColumnsFromNode(node)
-    );
-    const tableHeight = normalizeCssSize(
-      node.attrs.tableHeight,
-      DEFAULT_TABLE_HEIGHT
-    );
-
-    const style = tableWidth
-      ? `width: ${tableWidth}; height: ${tableHeight};`
-      : `min-width: ${noOfColumns * this.options.cellMinWidth}px; height: ${tableHeight};`;
-
-    const table: DOMOutputSpec = [
-      'table',
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {style}),
-      colgroup,
-      ['tbody', 0],
-    ];
-
-    return this.options.renderWrapper ? ['div', {class: 'tableWrapper'}, table] : table;
   },
 
   addKeyboardShortcuts() {
@@ -187,27 +130,20 @@ export const TableEx = Table.extend({
         ({rows = 3, cols = 3} = {}) =>
         ({tr, dispatch, editor}) => {
           const withHeaderRow = false;
-
-          const rowCount = normalizePositiveInteger(rows, 3);
-          const colCount = normalizePositiveInteger(cols, 3);
-          const node = createTable(editor.schema, rowCount, colCount, withHeaderRow);
-          const nodeWithAttributes = node.type.createChecked(
+          const tableNode = createTable(editor.schema, rows, cols, withHeaderRow);
+          const node = tableNode.type.createChecked(
             {
-              ...node.attrs,
-              noOfColumns: colCount,
-              tableHeight: normalizeCssSize(
-                node.attrs.tableHeight,
-                DEFAULT_TABLE_HEIGHT
-              ),
+              ...tableNode.attrs,
+              noOfColumns: cols,
             },
-            node.content,
-            node.marks
+            tableNode.content,
+            tableNode.marks
           );
 
           if (dispatch) {
             const offset = tr.selection.from + 1;
 
-            tr.replaceSelectionWith(nodeWithAttributes)
+            tr.replaceSelectionWith(node)
               .scrollIntoView()
               .setSelection(TextSelection.near(tr.doc.resolve(offset)));
           }

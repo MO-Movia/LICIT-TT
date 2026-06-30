@@ -4,8 +4,9 @@
  */
 
 import { Handler } from 'pagedjs';
-import { createTable } from './exportPdf';
-import { PreviewForm } from './preview';
+import { createTable } from './generatedLists';
+import { pdfPreviewProgress } from './pdfPreviewProgress';
+import { previewState } from './previewState';
 
 interface PagedPage {
   element: HTMLElement;
@@ -20,10 +21,7 @@ export class PDFHandler extends Handler {
   private lastPrePageIndex: number | null = null;
   private currentAttachmentIndex = 0;
   private readonly attachmentPageCounters = new Map<number, number>();
-  public static readonly state = {
-    currentPage: 0,
-    isOnLoad: false,
-  };
+  public static readonly state = pdfPreviewProgress;
 
   public done = false;
   public countTOC = 0;
@@ -55,21 +53,21 @@ export class PDFHandler extends Handler {
   public beforeParsed(content): void {
     this.pageFooters = [];
     this.prepagesCount = 0;
-    PDFHandler.state.currentPage = 0;
+    pdfPreviewProgress.currentPage = 0;
     this.done = false;
     document.documentElement.style.removeProperty(
       '--pagedjs-string-last-chapTitled'
     );
 
-    if (PreviewForm.showToc() || PreviewForm.showTof() || PreviewForm.showTot()) {
+    if (previewState.isToc || previewState.isTof || previewState.isTot) {
       createTable({
         content: content,
         tocElement: '.tocHead',
         tofElement: '.tofHead',
         totElement: '.totHead',
-        titleElements: PreviewForm.getHeadersTOC(),
-        titleElementsTOF: PreviewForm.getHeadersTOF(),
-        titleElementsTOT: PreviewForm.getHeadersTOT(),
+        titleElements: [...previewState.tocHeader],
+        titleElementsTOF: [...previewState.tofHeader],
+        titleElementsTOT: [...previewState.totHeader],
       });
     }
 
@@ -194,7 +192,7 @@ export class PDFHandler extends Handler {
     pageFragment: HTMLElement,
     processTocAndFooter: () => void
   ): void {
-    const markingData = PreviewForm['pageBanner'];
+    const markingData = previewState.pageBanner;
     const hasBannerMarking = !!markingData;
 
     if (hasBannerMarking) {
@@ -317,7 +315,7 @@ export class PDFHandler extends Handler {
   }
 
   private applyPageNumbers(pages: PagedPage[]): void {
-    const isAfttp = !!PreviewForm['pageBanner'];
+    const isAfttp = !!previewState.pageBanner;
 
     let normalCounter = 0;
     let activeAttachmentIndex = 0;
@@ -568,7 +566,7 @@ export class PDFHandler extends Handler {
     pages: PagedPage[],
     refToPage: Map<string, number>
   ): void {
-    const isAfttp = !!PreviewForm['pageBanner'];
+    const isAfttp = !!previewState.pageBanner;
 
     const attachments = isAfttp
       ? this.buildAttachmentRanges(pages)
@@ -736,13 +734,13 @@ export class PDFHandler extends Handler {
   }
 
   public async doIT(): Promise<void> {
-    const markingData = PreviewForm['pageBanner'];
+    const markingData = previewState.pageBanner;
     const hasBannerMarking = !!markingData;
-    const rawTitle = PreviewForm['documentTitle'] ?? '';
+    const rawTitle = previewState.documentTitle ?? '';
     const truncatedTitle = this.truncateTitle(rawTitle);
 
-    const formattedDate = PreviewForm['formattedDate']
-      ? this.formatLongDate(PreviewForm['formattedDate'])
+    const formattedDate = previewState.formattedDate
+      ? this.formatLongDate(previewState.formattedDate)
       : '';
 
     const titleData = formattedDate
@@ -1153,6 +1151,8 @@ color: #2A6EBB;
   }
 
   finalizePage() {
-    if (!PDFHandler.state.isOnLoad) PDFHandler.state.currentPage++;
+    if (!pdfPreviewProgress.isOnLoad) {
+      pdfPreviewProgress.currentPage++;
+    }
   }
 }

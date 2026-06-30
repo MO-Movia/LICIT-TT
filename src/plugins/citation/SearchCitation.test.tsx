@@ -1,5 +1,9 @@
-/* eslint-disable */
-import {SearchCitation, SearchCitationProps} from './SearchCitation';
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
+import { SearchCitation, SearchCitationProps } from './SearchCitation';
 
 const citation = {
   overallDocumentCapco: 'TBD',
@@ -40,25 +44,21 @@ const SearchProps = {
   },
 };
 
-describe('Search Citation   ', () => {
+describe('Search Citation', () => {
   it('should render the component', () => {
-    expect(new SearchCitation({...SearchProps}).render()).toBeDefined();
+    expect(new SearchCitation({ ...SearchProps }).render()).toBeDefined();
   });
 
-  it('should call onSearch Citations ', () => {
-    const SearchCitationIns = new SearchCitation(SearchProps);
-    expect(SearchCitationIns.onSearchCitations()).toHaveBeenCalled;
-  });
-  it('should call onSearch Citations  (case 2)', () => {
+  it('should call onSearch Citations', () => {
     const dom = document.createElement('input');
     jest.spyOn(document, 'getElementById').mockReturnValue(dom);
     const SearchCitationIns = new SearchCitation(SearchProps);
     const spyfetchedCit = jest.spyOn(SearchCitationIns, 'fetchedCit');
     spyfetchedCit.mockReturnValue(Promise.resolve([citation, citation]));
     expect(SearchCitationIns.getCitations()).toBeUndefined();
-    expect(SearchCitationIns.onSearchCitations()).toHaveBeenCalled;
+    expect(spyfetchedCit).toHaveBeenCalled();
   });
-  it('should call onRowClick  ', () => {
+  it('should call onRowClick', () => {
     const SearchCitationIns = new SearchCitation(SearchProps);
     const spy = jest.spyOn(SearchCitationIns, 'setState');
     SearchCitationIns.onRowClick('8900098');
@@ -67,31 +67,29 @@ describe('Search Citation   ', () => {
   it('should call onRowClick when selectedRowRefID == undefined', () => {
     const SearchCitationIns = new SearchCitation(SearchProps);
     const spy = jest.spyOn(SearchCitationIns, 'setState');
-    SearchCitationIns.onRowClick(undefined as unknown as string);
+    SearchCitationIns.onRowClick(undefined!);
     expect(spy).not.toHaveBeenCalled();
   });
-  it('should call cancel  ', () => {
-    const SearchCitationIns = new SearchCitation(SearchProps);
-    expect(SearchCitationIns._cancel()).toHaveBeenCalled;
-  });
-  it('should call save  ', () => {
-    const SearchCitationIns = new SearchCitation(SearchProps);
-    expect(SearchCitationIns._save()).toHaveBeenCalled;
-  });
-  it('should callfetchedCit ', async () => {
+  it('should callfetchedCit', async () => {
     const SearchCitationIns = new SearchCitation(SearchProps);
 
     const spyfetchedCit = jest.spyOn(SearchCitationIns, 'fetchedCit');
     spyfetchedCit.mockReturnValue(Promise.resolve([citation, citation]));
-    expect(SearchCitationIns.getCitations()).toBeUndefined();
+    // await as promise to resolve micro tasks
+    expect(
+      await Promise.resolve(SearchCitationIns.getCitations())
+    ).toBeUndefined();
   });
-  it('should call fetchedCit when result is null ', async () => {
+  it('should call fetchedCit when result is null', async () => {
     const SearchCitationIns = new SearchCitation(SearchProps);
     const spyfetchedCit = jest.spyOn(SearchCitationIns, 'fetchedCit');
     spyfetchedCit.mockReturnValue(Promise.resolve(null));
-    expect(SearchCitationIns.getCitations()).toBeUndefined();
+    // await as promise to resolve micro tasks
+    expect(
+      await Promise.resolve(SearchCitationIns.getCitations())
+    ).toBeUndefined();
   });
-  it('should call fetchedCit when  publishedDateTitle: null ', async () => {
+  it('should call fetchedCit when  publishedDateTitle: null', async () => {
     const citation = {
       overallDocumentCapco: 'TBD',
       author: 'Jerry Rodgers',
@@ -123,7 +121,10 @@ describe('Search Citation   ', () => {
     const SearchCitationIns = new SearchCitation(SearchProps);
     const spyfetchedCit = jest.spyOn(SearchCitationIns, 'fetchedCit');
     spyfetchedCit.mockReturnValue(Promise.resolve([citation, citation]));
-    expect(SearchCitationIns.getCitations()).toBeUndefined();
+    // await as promise to resolve micro tasks
+    expect(
+      await Promise.resolve(SearchCitationIns.getCitations())
+    ).toBeUndefined();
   });
 
   it('should handle filteredCitations', () => {
@@ -140,10 +141,10 @@ describe('Search Citation   ', () => {
   });
 });
 
-describe('Search Citation - Get Custom Capco    ', () => {
+describe('Search Citation - Get Custom Capco', () => {
   it('should not filter citations when there are no filter criteria', () => {
     const searchCitation = new SearchCitation(SearchProps);
-    searchCitation.setState({citations: [citation, citation]});
+    searchCitation.setState({ citations: [citation, citation] });
     searchCitation.onSearchCitations();
 
     expect(searchCitation.state.citations.length).toBe(2);

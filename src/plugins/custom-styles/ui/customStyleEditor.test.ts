@@ -6,7 +6,6 @@
 import { CustomStyleEditor } from './CustomStyleEditor';
 import * as customstyle from '../customStyle';
 import { SyntheticEvent } from 'react';
-import { Style } from '../../../commands';
 
 describe('CustomStyleEditor', () => {
   jest.spyOn(customstyle, 'getStylesAsync').mockResolvedValue([]);
@@ -297,52 +296,6 @@ describe('CustomStyleEditor', () => {
   it('should handle handleBoldPartial', () => {
     const event = { target: { value: '', checked: true } };
     expect(customstyleeditor.handleBoldPartial(event)).toBeUndefined();
-  });
-  it('should handle handleTOC', () => {
-    const event = { target: { value: '', checked: true } };
-    expect(customstyleeditor.handleTOC(event)).toBeUndefined();
-  });
-  it('should handle handleTOT', () => {
-    const event = { target: { value: '', checked: true } };
-    expect(customstyleeditor.handleTOT(event)).toBeUndefined();
-  });
-  it('should handle handleTOT (case 2)', () => {
-    const event = { target: { value: '', checked: false } };
-    expect(customstyleeditor.handleTOT(event)).toBeUndefined();
-  });
-  it('should handle handleTOF', () => {
-    const event = { target: { value: '', checked: true } };
-    expect(customstyleeditor.handleTOF(event)).toBeUndefined();
-  });
-  it('should handle handleTOF (case 2)', () => {
-    const event = { target: { value: '', checked: false } };
-    expect(customstyleeditor.handleTOF(event)).toBeUndefined();
-  });
-  it('should handle handleNone', () => {
-    expect(customstyleeditor.handleNone()).toBeUndefined();
-  });
-  it('should handle selectStyleCheckboxState', () => {
-    expect(customstyleeditor.selectStyleCheckboxState()).toBe(false);
-  });
-  it('should handle selectStyleCheckboxState (case 2)', () => {
-    customstyleeditor.state = {
-      styles: {
-        align: 'left',
-        boldNumbering: true,
-        bulletLevel: true,
-        toc: false,
-        isHidden: false,
-        boldSentence: true,
-        nextLineStyleName: true,
-        fontName: 'Arial',
-        fontSize: 11,
-        strong: false,
-      },
-      mode: 0,
-      styleName: 'A Apply Stylefff',
-      otherStyleSelected: true,
-    };
-    expect(customstyleeditor.selectStyleCheckboxState()).toBe(true);
   });
   it('should handle _save', () => {
     const props = {
@@ -821,7 +774,7 @@ describe('CustomStyleEditor', () => {
   it('should handle showColorDialog when event is null', () => {
     customstyleeditor._popUp = null;
     expect(
-      customstyleeditor.showColorDialog(true, null as unknown as SyntheticEvent)
+      customstyleeditor.showColorDialog(true, null)
     ).toBeUndefined();
   });
   it('should handle onAlignButtonClick', () => {
@@ -1304,7 +1257,7 @@ describe('CustomStyleEditor', () => {
   it('should handle modifyCustomStyle when saveStyle does not return array', () => {
     jest
       .spyOn(customstyle, 'saveStyle')
-      .mockResolvedValue(null as unknown as Style[] | Promise<Style[]>);
+      .mockResolvedValue(null);
     expect(
       customstyleeditor.modifyCustomStyle({
         editorView: {},

@@ -8,24 +8,22 @@ import {Node} from 'prosemirror-model';
 import {Decoration} from 'prosemirror-view';
 import {NodeSelection} from 'prosemirror-state';
 import React from 'react';
-import ReactDOM from 'react-dom';
-
 import {CustomNodeView} from './CustomNodeView';
 import {Icon} from './Icon';
 import {ImageResizeBox, MIN_SIZE} from './ImageResizeBox';
-
 import {
   createPopUp,
   atAnchorBottomCenter,
   PopUpHandle,
 } from '../../../commands';
-import {observe, unobserve} from './ResizeObserver';
 import {resolveImage} from './resolveImage';
 import {uuid} from './uuid';
 
 import type {EditorRuntime} from '../Types';
 import type {NodeViewProps} from './CustomNodeView';
+
 import type {ResizeObserverEntry} from './ResizeObserver';
+import {observe, unobserve} from './ResizeObserver';
 import {ImageInlineEditor} from './ImageInlineEditor';
 import {FP_WIDTH} from '../Constants';
 
@@ -140,7 +138,8 @@ export class ImageViewBody extends React.PureComponent<
   _id = uuid();
   _inlineEditor?: PopUpHandle;
   _mounted = false;
-
+  _resizeLoopCount = 0;
+  _lastResizeTime = 0;
   state = {
     maxSize: {
       width: MAX_SIZE,
@@ -162,7 +161,7 @@ export class ImageViewBody extends React.PureComponent<
     this._inlineEditor = undefined;
   }
 
-  componentDidUpdate(prevProps: NodeViewProps): void {
+  componentDidUpdate(prevProps: NodeViewProps, prevState): void {
     const prevSrc = prevProps.node.attrs.src;
     const {node} = this.props;
     const {src} = node.attrs;
@@ -170,7 +169,25 @@ export class ImageViewBody extends React.PureComponent<
       // A new image is provided, resolve it.
       void this._resolveOriginalSize().catch(console.warn);
     }
-    this._renderInlineEditor();
+    // Only render inline editor when selection/focus state changes
+    const prevActive =
+      prevProps.selected && prevProps.focused && !prevProps.editorView.readOnly;
+    const currentActive =
+      this.props.selected &&
+      this.props.focused &&
+      !this.props.editorView.readOnly;
+    // Also re-render the inline editor when the image finishes loading
+    // (originalSize.complete flips to true) while the node is already selected.
+    // Without this, clicking a large image while it's still resolving would
+    // never show the menu � _renderInlineEditor was only triggered by prop
+    // changes, not by the setState that follows _resolveOriginalSize().
+    const prevComplete = prevState?.originalSize?.complete;
+    const currentComplete = this.state.originalSize?.complete;
+    const completionChanged = prevComplete !== currentComplete;
+
+    if (prevActive !== currentActive || (completionChanged && currentActive)) {
+      this._renderInlineEditor();
+    }
   }
 
   render(): React.ReactElement {
@@ -180,7 +197,7 @@ export class ImageViewBody extends React.PureComponent<
     const {attrs} = node;
     const {align, crop, rotate} = attrs;
 
-    const retVal = this.assignVal(originalSize, focused, readOnly);
+    const retVal = this.assignVal(focused, readOnly, attrs.src);
     const loading = retVal.loading;
     const active = retVal.active;
     const src = retVal.src;
@@ -319,14 +336,14 @@ export class ImageViewBody extends React.PureComponent<
     );
   }
 
-  assignVal(originalSize: OriginalSize, focused: boolean, readOnly: boolean) {
+  assignVal(focused: boolean, readOnly: boolean, src = '') {
     // It's only active when the image's fully loaded.
-    const loading = originalSize === DEFAULT_ORIGINAL_SIZE;
-    const active = !loading && focused && !readOnly && originalSize.complete;
-    const src = originalSize.src;
-    const aspectRatio = loading ? 1 : originalSize.width / originalSize.height;
-    const error = !loading && !originalSize.complete;
-    return {loading, active, src, aspectRatio, error};
+    const loading = false;
+    const active = focused && !readOnly;
+    // Keep displaying current src while original size resolves.
+    const aspectRatio = 1;
+    const error = false;
+    return { loading, active, src, aspectRatio, error };
   }
   isUnaltered(active: boolean, crop: null, rotate: null) {
     return active && !crop && !rotate;
@@ -351,7 +368,7 @@ export class ImageViewBody extends React.PureComponent<
 
   _renderInlineEditor(): void {
     const el = document.getElementById(this._id);
-    if (!el || el.getAttribute('data-active') !== 'true') {
+    if (el?.dataset.active !== 'true') {
       this._inlineEditor?.close?.(undefined);
       return;
     }
@@ -389,7 +406,7 @@ export class ImageViewBody extends React.PureComponent<
       return; // already resolved
     }
     const url = await resolveURL(
-      this.props.editorView.runtime as EditorRuntime,
+      this.props.editorView.runtime,
       src,
       this.props.dom
     );
@@ -457,32 +474,52 @@ export class ImageViewBody extends React.PureComponent<
     editorView.dispatch(tr);
   };
 
-  _onBodyRef = (ref?: React.ReactInstance): void => {
+  _bodyEl: HTMLElement | null = null;
+  _onBodyRef = (ref?: HTMLElement): void => {
     if (ref) {
       this._body = ref;
-      // Mounting
-      const el = ReactDOM.findDOMNode(ref);
-      if (el instanceof HTMLElement) {
-        observe(el, this._onBodyResize);
-      }
+      this._bodyEl = ref;
+      observe(ref, this._onBodyResize);
     } else {
-      // Unmounting.
-      const el = this._body && ReactDOM.findDOMNode(this._body);
-      if (el instanceof HTMLElement) {
-        unobserve(el);
+      if (this._bodyEl) {
+        unobserve(this._bodyEl);
       }
       this._body = null;
+      this._bodyEl = null;
     }
   };
 
   _onBodyResize = (_info: ResizeObserverEntry): void => {
+    const now = Date.now();
+    // Increase window to 2000ms because layout thrashing can be slow
+    if (now - this._lastResizeTime < 2000) {
+      this._resizeLoopCount++;
+    } else {
+      this._resizeLoopCount = 0;
+    }
+    this._lastResizeTime = now;
+
+    if (this._resizeLoopCount > 5) {
+      if (this._resizeLoopCount === 6)
+        console.warn(
+          '[MultmediaPlugin] Resize loop detected (>5), skipping update'
+        );
+      return;
+    }
+
     let mActualWidth = 0;
     if (_info.contentRect) {
       mActualWidth = _info.contentRect.width;
     }
-    const width = this._body
-      ? getMaxResizeWidth(ReactDOM.findDOMNode(this._body))
+    const width = this._bodyEl
+      ? getMaxResizeWidth(this._bodyEl)
       : MAX_SIZE;
+
+    const oldWidth = this.state.maxSize.width;
+    const diff = Math.abs(width - oldWidth);
+    const stable = diff < 2 && this.state.maxSize.complete === !!this._body;
+
+    if (stable) return;
 
     this.setState({
       maxSize: {

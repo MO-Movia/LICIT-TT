@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Schema } from 'prosemirror-model';
@@ -28,7 +28,7 @@ export function effectiveSchema(schema: Schema): Schema {
 function createAttribute(content: NodeSpec, newAttrs: string[], value: null) {
   const requiredAttrs = [...newAttrs];
   const attr = content.attrs && Object.keys(content.attrs)[0];
-  requiredAttrs.forEach((key) => {
+  for (const key of requiredAttrs) {
     if (content) {
       let citationAttrSpec = content.attrs?.[key];
       if (attr && content.attrs && !citationAttrSpec) {
@@ -43,7 +43,7 @@ function createAttribute(content: NodeSpec, newAttrs: string[], value: null) {
         }
       }
     }
-  });
+  };
 }
 
 function getContent(
@@ -81,11 +81,11 @@ function createCitationMarkAttributes(schema: Schema) {
   const contentArr = [textHighlightContent, schema.marks[MARK_TEXT_HIGHLIGHT]];
   const NEWATTRS = [HASCITATION, MARKFROM];
 
-  contentArr.forEach((content) => {
+  for (const content of contentArr) {
     if (content) {
       createAttribute(content, NEWATTRS, null);
     }
-  });
+  };
 }
 
 export const applyEffectiveSchema = effectiveSchema;

@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { EditorState } from 'prosemirror-state';
@@ -57,6 +57,16 @@ describe('ListTypeButton (pure Jest test)', () => {
     expect(result.props.theme).toBe('dark');
   });
 
+  it('should disable the button when the component is disabled', () => {
+    const instance = new ListTypeButton({
+      ...mockProps,
+      disabled: true,
+    });
+    const result = instance.render() as React.ReactElement;
+
+    expect(result.props.disabled).toBe(true);
+  });
+
   it('should toggle expanded state on click', () => {
     const instance = new ListTypeButton(mockProps);
     expect(instance.state.expanded).toBe(false);
@@ -83,10 +93,26 @@ describe('ListTypeButton (pure Jest test)', () => {
     );
   });
 
+  it('should update an existing popup instead of recreating it', () => {
+    const update = jest.fn();
+    const instance = new ListTypeButton(mockProps);
+    instance._menu = { update };
+
+    instance._showMenu();
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...mockProps,
+        onCommand: expect.any(Function),
+      })
+    );
+    expect(createPopUp).not.toHaveBeenCalled();
+  });
+
   it('should close menu on componentWillUnmount', () => {
     const closeMock = jest.fn();
     const instance = new ListTypeButton(mockProps);
-    (instance as unknown as ListTypeButton)._menu = { close: closeMock };
+    (instance)._menu = { close: closeMock };
     instance.componentWillUnmount();
     expect(closeMock).toHaveBeenCalled();
   });
@@ -108,7 +134,7 @@ describe('ListTypeButton (pure Jest test)', () => {
   it('should handle _onClose when menu exists', () => {
     const instance = new ListTypeButton(mockProps);
     instance.setState({ expanded: true });
-    (instance as unknown as ListTypeButton)._menu = { 
+    (instance)._menu = { 
       close: jest.fn(),
       update: jest.fn() 
     };
@@ -116,13 +142,13 @@ describe('ListTypeButton (pure Jest test)', () => {
     instance._onClose();
     
     expect(instance.state.expanded).toBe(false);
-    expect((instance as unknown as ListTypeButton)._menu).toBeNull();
+    expect((instance)._menu).toBeNull();
   });
 
   it('should handle _onClose when menu does not exist', () => {
     const instance = new ListTypeButton(mockProps);
     instance.setState({ expanded: true });
-    (instance as unknown as ListTypeButton)._menu = null;
+    (instance)._menu = null;
     
     // Should not throw error
     instance._onClose();

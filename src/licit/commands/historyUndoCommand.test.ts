@@ -18,14 +18,14 @@ describe('HistoryRedoCommand', () => {
     expect(
       hisrdcommand.isEnabled({
         history$: { done: { eventCount: 0 } },
-      } as unknown as EditorState)
+      })
     ).toBeFalsy();
   });
   it('should handle isEnabled with eventcount', () => {
     expect(
       hisrdcommand.isEnabled({
         history$: { done: { eventCount: 1 } },
-      } as unknown as EditorState)
+      })
     ).toBeTruthy();
   });
   it('should call the getEditor method', () => {

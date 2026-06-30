@@ -3,9 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import url from 'url';
-
-import {isOffline} from './isOffline';
+import { isOffline } from './isOffline';
 
 export type ImageResult = {
   complete: boolean;
@@ -16,114 +14,115 @@ export type ImageResult = {
   width: number;
 };
 
-const cache: {[src: string]: ImageResult} = {};
-const queue: {
-  src: string;
-  resolve: (value: ImageResult | PromiseLike<ImageResult>) => void;
-  reject: (reason?: {value: ImageResult | PromiseLike<ImageResult>}) => void;
-}[] = [];
+const cache: { [src: string]: ImageResult } = {};
+// Track in-flight requests to deduplicate concurrent calls for the same src
+const inFlight: Record<string, Promise<ImageResult>> = {};
+
+function getProtocol(src: string): string {
+  try {
+    return new URL(src, globalThis.location?.href || 'http://localhost/')
+      .protocol;
+  } catch {
+    return globalThis.location?.protocol || '';
+  }
+}
 
 export function resolveImage(src: string): Promise<ImageResult> {
-  return new Promise((resolve, reject) => {
-    const bag = {src, resolve, reject};
-    queue.push(bag);
-    processQueue();
+  const srcStr = src || '';
+  // return from cache immediately (no img element, no download)
+  if (cache[srcStr]) {
+    return Promise.resolve({ ...cache[srcStr] });
+  }
+  //  Deduplicate concurrent requests for the same src
+  if (inFlight[srcStr]?.then) {
+    return inFlight[srcStr];
+  }
+  // Start resolution in parallel (no blocking queue)
+  const promise = processPromise(src);
+  inFlight[srcStr] = promise;
+  return promise.finally(() => {
+    delete inFlight[srcStr];
   });
 }
 
-function processQueue() {
-  const bag = queue.shift();
-  if (bag) {
-    processPromise(bag.src, bag.resolve, bag.reject);
-  }
-}
 export function isImgInstance(img: unknown): boolean {
   return img instanceof HTMLElement;
 }
 
-function resolveRes(
-  srcStr: string,
-  result: ImageResult,
-  resolve: (value: ImageResult | PromiseLike<ImageResult>) => void
-) {
-  if (!srcStr) {
-    resolve(result);
-  } else if (cache[srcStr]) {
-    const cachedResult = {...cache[srcStr]};
-    resolve(cachedResult);
-  }
-}
-
-function processPromise(
-  src: string,
-  resolve: (value: ImageResult | PromiseLike<ImageResult>) => void,
-  _reject: (reason?: {value: ImageResult | PromiseLike<ImageResult>}) => void
-): void {
-  const result: ImageResult = {
-    complete: false,
-    height: 0,
-    naturalHeight: 0,
-    naturalWidth: 0,
-    src: src || '',
-    width: 0,
-  };
-
-  if (isOffline()) {
-    resolve(result);
-    return;
-  }
-
-  const srcStr = src || '';
-
-  resolveRes(srcStr, result, resolve);
-
-  const parsedURL = url.parse(srcStr);
-  // Removed the port validation from here
-  const {protocol} = parsedURL;
-  if (!/(http:|https:|data:)/.test(protocol || globalThis.location.protocol)) {
-    resolve(result);
-    return;
-  }
-
-  let img: HTMLImageElement | null;
-
-  const dispose = () => {
-    if (img) {
-      if (isImgInstance(img)) {
-        img?.remove();
+function processPromise(src: string): Promise<ImageResult> {
+  return new Promise((resolve) => {
+    const srcStr = src || '';
+    const result = {
+      complete: false,
+      height: 0,
+      naturalHeight: 0,
+      naturalWidth: 0,
+      src: srcStr,
+      width: 0,
+    };
+    if (isOffline()) {
+      resolve(result);
+      return;
+    }
+    // Removed the port validation from here
+    const protocol = getProtocol(srcStr);
+    if (!/(http:|https:|data:|blob:)/.test(protocol)) {
+      resolve(result);
+      return;
+    }
+    let img = document.createElement('img');
+    img.style.cssText =
+      'position:fixed;left:-10000000000px;width:auto;height:auto;';
+    const dispose = () => {
+      if (img) {
+        if (isImgInstance(img)) {
+          img?.remove();
+        }
+        img = null;
       }
-      img.onload = null;
-      img.onerror = null;
-      img = null;
-    }
-    processQueue();
-  };
+    };
+    const onDecoded = () => {
+      if (img) {
+        result.width = img.naturalWidth || img.width;
+        result.height = img.naturalHeight || img.height;
+        result.naturalWidth = img.naturalWidth || img.width;
+        result.naturalHeight = img.naturalHeight || img.height;
+        result.complete = true;
+        cache[srcStr] = { ...result };
+      }
+      resolve(result);
+      dispose();
+    };
 
-  const onLoad = () => {
-    if (img) {
-      result.width = img.width;
-      result.height = img.height;
-      result.naturalWidth = img.width;
-      result.naturalHeight = img.height;
-      result.complete = true;
-    }
-    resolve(result);
-    dispose();
-    // Fix: Inconsistent behavior on image load
-    // Avoid image caching remove the below line
-    cache[srcStr] = {...result};
-  };
+    const onError = () => {
+      resolve(result);
+      dispose();
+    };
 
-  const onError = () => {
-    resolve(result);
-    dispose();
-  };
+    // Yield to main thread to prevent freezing when assigning large base64 strings
+    setTimeout(() => {
+      if (!img) return; // disposed
+      img.src = srcStr;
+      document.body.appendChild(img);
 
-  img = document.createElement('img');
-  img.style.cssText =
-    'position:fixed;left:-10000000000px;width:auto;height:auto;';
-  img.onload = onLoad;
-  img.onerror = onError;
-  img.src = srcStr;
-  document.body.appendChild(img);
+      const onFinish = (method) => {
+        if (method === 'decode') onDecoded();
+        else if (method === 'onload') onDecoded();
+        else onError();
+      };
+
+      // Use img.decode() when available � it decodes the image off the main
+      // thread, preventing UI hangs for large images. Falls back to load/error
+      // events for environments that don't support decode().
+      if (typeof img.decode === 'function') {
+        img
+          .decode()
+          .then(() => onFinish('decode'))
+          .catch(() => onFinish('error'));
+      } else {
+        img.onload = () => onFinish('onload');
+        img.onerror = () => onFinish('error');
+      }
+    }, 0);
+  });
 }
