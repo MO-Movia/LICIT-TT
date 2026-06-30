@@ -35,11 +35,29 @@ type NumType = {
   value: number;
 };
 
-type PendingItem = { pos: number; attrs: Attrs; node?: Node };
+type PendingItem = { pos: number; attrs: Attrs; node?: Node; assoc?: number };
 
 type CapcoPluginState = {
   decorations: DecorationSet;
 };
+
+//  Register once at top of file for getting capco element in the DOM and set the hanging indent width for the paragraph.
+if (!customElements.get('capco-mark')) {
+  customElements.define('capco-mark', class extends HTMLElement {
+    connectedCallback() {
+      const width = this.dataset.capcoWidth;
+      if (!width) return;
+
+      const para: HTMLElement = this.closest('p[hangingindent="true"]');
+      if (!para) return;
+      const current = para.style.getPropertyValue('--capcoWidth');
+      if (current !== `${width}px`) {
+        para.style.setProperty('--capcoWidth', `${width}px`);
+      }
+    }
+  });
+}
+
 
 // Plugin which is used in editor
 export class CapcoPlugin extends Plugin<CapcoPluginState> {
@@ -48,7 +66,8 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
   pendingItems: Array<PendingItem> = [];
   mode: CAPCOMODE;
   defaultCapco: string;
-
+  // Single element instance reused for all measurements
+  _rElement: HTMLElement = null;
   constructor(mode?: CAPCOMODE, defaultCapco?: string, runtime?: CapcoRuntime) {
     super({
       key: CAPCO_PLUGIN_KEY,
@@ -145,7 +164,7 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
     for (let depth = $pos.depth; depth >= 0; depth--) {
       const node = $pos.node(depth);
       if (
-        [TABLE, 'table_row', 'table_cell', 'table_header'].includes(
+        [TABLE, 'table_row', 'table_cell', 'table_header', 'enhanced_table_figure_notes'].includes(
           node.type.name
         )
       ) {
@@ -232,7 +251,7 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
     const len = this.pendingItems.length;
 
     for (const [i, element] of this.pendingItems.entries()) {
-      let pos = selTrx.mapping.map(element.pos);
+      let pos = selTrx.mapping.map(element.pos, element.assoc ?? 1);
 
       if (!drop || (drop && len > 1 && i !== 0)) {
         pos = this.getPendingItemPos(pos, i, drop, len, doc, element, schema);
@@ -320,12 +339,20 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
   ) {
     const capco = node.attrs[CAPCOKEY];
     // CAPCO mark.
-    const capcoMark = document.createElement('span');
+    const capcoMark = document.createElement('capco-mark');
     if (capcoMark) {
       this.setCapcoContent(state, capco, capcoMark, node.type.name, pos);
       capcoMark.style.display = this.showHideCapco(state, node.textContent);
       if ([TABLE_FIGURE_CAPCO, TABLE_FIGURE].includes(node.type.name)) {
         capcoMark.style.display = '';
+      }
+      // Measure and store on the same capcoMark element
+      if (node.attrs.hangingIndent === true ||
+        node.attrs.hangingIndent === 'true') {
+        const width = this.measureCapcoWidth(capcoMark);
+        if (width > 0) {
+          capcoMark.dataset.capcoWidth = String(width + 5); // connectedCallback reads this
+        }
       }
     }
     const needValidate = document.createElement('span');
@@ -352,6 +379,41 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
       );
     }
   }
+  measureCapcoWidth(capcoMark) {
+    const text = capcoMark.textContent;
+    if (!text) return 0;
+
+    const rulerElement = this.getOrCreateTempCapcoElement();
+
+    // Copy font styles from capcoMark to rulerElement
+    const computedStyle = window.getComputedStyle(
+      document.querySelector('.ProseMirror') || document.body
+    );
+    rulerElement.style.fontSize = computedStyle.fontSize;
+    rulerElement.style.fontFamily = computedStyle.fontFamily;
+    rulerElement.style.fontWeight = computedStyle.fontWeight;
+
+    rulerElement.textContent = text;
+    return Math.ceil(rulerElement.getBoundingClientRect().width);
+  }
+
+  getOrCreateTempCapcoElement(): HTMLElement {
+    if (this._rElement && document.body.contains(this._rElement)) {
+      return this._rElement;
+    }
+    const ruler = document.createElement('span');
+    ruler.style.cssText = `
+            visibility: hidden;
+            position: absolute;
+            white-space: nowrap;
+            pointer-events: none;
+            top: -9999px;
+            left: -9999px;
+        `;
+    document.body.appendChild(ruler);
+    this._rElement = ruler;
+    return ruler;
+  }
 
   enhancedTableFigureCapco(capco: string, isFigureBlock: boolean): string {
     const capcoString: Record<string, string> = {
@@ -375,27 +437,28 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
     const pos = this.getPos(view);
     const node = view.state.doc.nodeAt(pos);
 
-    // Default CAPCO value based on CAPCO mode
-    let capco: string = SYSTEMCAPCO.TBD;
-    if (
-      this.mode === CAPCOMODE.FORCED
-    ) {
-      capco = node.attrs.capco;
-    }
-
-    // Always push for `cPos - 1` when within selection but not at the end
-    if (cPos >= start && cPos < end) {
-      this.pendingItems.push({
-        pos: cPos - 1,
-        attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
-      });
-    }
-
-    // Always push for `cPos` when at the selection end or not at the start
-    if (cPos !== start || cPos === end) {
+    if (cPos === start && cPos < end) {
       this.pendingItems.push({
         pos: cPos,
-        attrs: this.resetCapco(node, capco),
+        assoc: -1,
+        attrs: this.resetCapco(node, node.attrs.capco),
+      });
+    } else if (cPos > start && cPos < end) {
+      this.pendingItems.push({
+        pos: cPos,
+        assoc: -1,
+        attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
+      });
+      this.pendingItems.push({
+        pos: cPos,
+        assoc: 1,
+        attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
+      });
+    } else if (cPos === end) {
+      this.pendingItems.push({
+        pos: cPos,
+        assoc: 1,
+        attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
       });
     }
 

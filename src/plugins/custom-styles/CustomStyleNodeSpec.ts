@@ -443,6 +443,12 @@ function applyBulletStyleData(styleData, styles) {
 
   styleData.bulletDetails = getBulletDetails(styles.bulletLevel);
   styleData.styleLevel = styles.styleLevel;
+  //handle hanging indent position for each paragraph
+  if (styles.indentPosition) {
+    const indentPosition = styles.indentPosition;
+    const hIndentpx = Number(indentPosition) * 96;
+    styleData.style += `--hangingIndentMargin: ${hIndentpx}px;`;
+  }
 }
 
 function applyCounterStyleData(styleData, styles) {
