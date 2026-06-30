@@ -144,11 +144,11 @@ class LandscapeScrollProxyView {
     };
 
     private readonly onProxyScroll = (): void => {
-        if (!this.activeLandscape || !this.proxyScrollbar || this.syncingFromLandscape) {
+        if (!this.proxyScrollbar || this.syncingFromLandscape) {
             return;
         }
         this.syncingFromProxy = true;
-        this.activeLandscape.scrollLeft = this.proxyScrollbar.scrollLeft;
+        this.syncLandscapeNodesScrollLeft(this.proxyScrollbar.scrollLeft);
         this.syncingFromProxy = false;
     };
 
@@ -157,6 +157,7 @@ class LandscapeScrollProxyView {
             return;
         }
         this.syncingFromLandscape = true;
+        this.syncLandscapeNodesScrollLeft(this.activeLandscape.scrollLeft);
         this.proxyScrollbar.scrollLeft = this.activeLandscape.scrollLeft;
         this.syncingFromLandscape = false;
     };
@@ -254,9 +255,7 @@ class LandscapeScrollProxyView {
             return;
         }
 
-        const totalWidth = this.activeLandscape.scrollWidth;
-        const visibleWidth = this.activeLandscape.clientWidth;
-        const maxScroll = totalWidth - visibleWidth;
+        const maxScroll = this.getMaxLandscapeScroll();
 
         if (maxScroll <= 1) {
             this.hideProxyScrollbar();
@@ -273,6 +272,21 @@ class LandscapeScrollProxyView {
 
         if (!this.syncingFromLandscape) {
             this.proxyScrollbar.scrollLeft = this.activeLandscape.scrollLeft;
+        }
+    }
+
+    private getMaxLandscapeScroll(): number {
+        return this.getLandscapeNodes().reduce((maxScroll, node) => {
+            const nodeMaxScroll = node.scrollWidth - node.clientWidth;
+            return Math.max(maxScroll, nodeMaxScroll);
+        }, 0);
+    }
+
+    private syncLandscapeNodesScrollLeft(scrollLeft: number): void {
+        for (const node of this.getLandscapeNodes()) {
+            if (node.scrollLeft !== scrollLeft) {
+                node.scrollLeft = scrollLeft;
+            }
         }
     }
 

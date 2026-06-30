@@ -87,6 +87,12 @@ describe('ImageSourceCommand', () => {
           toDOM: () => ['div', {class: 'figure-capco'}, 0],
           parseDOM: [{tag: 'div.figure-capco'}],
         },
+        landscape_section: {
+          content: 'block+',
+          group: 'block',
+          toDOM: () => ['section', {class: 'section-landscape'}, 0],
+          parseDOM: [{tag: 'section.section-landscape'}],
+        },
       },
     });
 
@@ -386,6 +392,22 @@ describe('ImageSourceCommand', () => {
 
       expect(result).toBeDefined();
       expect(result.docChanged).toBe(true);
+    });
+
+    it('should wrap enhanced image figure in landscape section when requested', () => {
+      const result = insertEnhancedImageFigure(
+        state.tr,
+        schema,
+        'https://example.com/image.jpg',
+        '',
+        true
+      );
+
+      expect(result.doc.child(0).type.name).toBe('landscape_section');
+      expect(result.doc.child(0).child(0).type.name).toBe(
+        'enhanced_table_figure'
+      );
+      expect(result.doc.child(1).type.name).toBe('paragraph');
     });
 
     it('should return original transaction when selection has range', () => {

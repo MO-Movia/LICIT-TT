@@ -67,6 +67,12 @@ const nodes = basicSchema.spec.nodes.append({
     ],
     parseDOM: [{tag: 'td'}],
   },
+  landscape_section: {
+    content: 'block+',
+    group: 'block',
+    toDOM: () => ['section', {class: 'section-landscape'}, 0],
+    parseDOM: [{tag: 'section.section-landscape'}],
+  },
 });
 
 const schema = new Schema({nodes, marks: basicSchema.spec.marks});
@@ -114,8 +120,20 @@ describe('EnhancedTableCommands', () => {
 
   test('createBlueTable creates a table node', () => {
     const tableNode = command.createBlueTable(schema, 2, 2);
-    expect(tableNode?.type.name).toBe(undefined);
-    expect(tableNode?.childCount).toBe(undefined);
+    expect(tableNode?.type.name).toBe('table');
+    expect(tableNode?.childCount).toBe(2);
+  });
+
+  test('insertEnhancedTableFigure wraps table figure in landscape section when requested', () => {
+    const emptyState = EditorState.create({
+      doc: schema.nodes.doc.create({}, [schema.nodes.paragraph.create()]),
+      schema,
+    });
+    const tr = command.insertEnhancedTableFigure(emptyState.tr, schema, true);
+
+    expect(tr.doc.child(0).type.name).toBe('landscape_section');
+    expect(tr.doc.child(0).child(0).type.name).toBe('enhanced_table_figure');
+    expect(tr.doc.child(1).type.name).toBe('paragraph');
   });
 
   test('waitForUserInput resolves to undefined', async () => {

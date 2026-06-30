@@ -69,7 +69,9 @@ export class EnhancedTableFigure extends Plugin {
       [`[${image}] Insert Enhanced Table-Figure`]: [
         {
           ' Table': new EnhancedTableCommands('table'),
+          ' Table with Landscape': new EnhancedTableCommands('table', true),
           ' Insert image from computer': new ImageUploadCommand(),
+          ' Figure with landscape': new ImageUploadCommand(true),
         },
       ],
     };

@@ -28,7 +28,7 @@ describe('insertEnhancedImageFigure', () => {
     nodes: {
       enhanced_table_figure?: { create: jest.Mock };
       enhanced_table_figure_body?: { create: jest.Mock };
-      simple_image?: { create: jest.Mock };
+      image?: { create: jest.Mock };
       enhanced_table_figure_capco?: { create: jest.Mock };
       paragraph?: { createAndFill: jest.Mock };
       text?: jest.Mock;
@@ -58,7 +58,7 @@ describe('insertEnhancedImageFigure', () => {
         enhanced_table_figure_body: {
           create: jest.fn(),
         },
-        simple_image: {
+        image: {
           create: jest.fn(),
         },
         enhanced_table_figure_capco: {
@@ -102,7 +102,7 @@ describe('insertEnhancedImageFigure', () => {
   });
 
   it('should return unchanged transaction if image node type not found', () => {
-    delete mockSchema.nodes.simple_image;
+    delete mockSchema.nodes.image;
     const result = insertEnhancedImageFigure(
       mockTr,
       mockSchema as unknown as Schema,

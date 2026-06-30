@@ -244,6 +244,8 @@ describe('EnhancedTableFigure', () => {
       expect(commandArray).toHaveLength(1);
       expect(commandArray[0][' Table']).toBeDefined();
       expect(EnhancedTableCommands).toHaveBeenCalledWith('table');
+      expect(commandArray[0][' Table with Landscape']).toBeDefined();
+      expect(EnhancedTableCommands).toHaveBeenCalledWith('table', true);
     });
 
     it('should contain ImageUploadCommand', () => {
@@ -252,7 +254,9 @@ describe('EnhancedTableFigure', () => {
       const commandArray = commands[commandKey];
 
       expect(commandArray[0][' Insert image from computer']).toBeDefined();
-      expect(ImageUploadCommand).toHaveBeenCalled();
+      expect(commandArray[0][' Figure with landscape']).toBeDefined();
+      expect(ImageUploadCommand).toHaveBeenCalledWith();
+      expect(ImageUploadCommand).toHaveBeenCalledWith(true);
     });
 
     it('should use dark theme icon for non-light theme', () => {
@@ -277,9 +281,11 @@ describe('EnhancedTableFigure', () => {
       expect(commandArray).toHaveLength(1);
       expect(typeof commandArray[0]).toBe('object');
       expect(Object.keys(commandArray[0])).toContain(' Table');
+      expect(Object.keys(commandArray[0])).toContain(' Table with Landscape');
       expect(Object.keys(commandArray[0])).toContain(
         ' Insert image from computer'
       );
+      expect(Object.keys(commandArray[0])).toContain(' Figure with landscape');
     });
 
     it('should create new command instances each time', () => {
@@ -287,8 +293,8 @@ describe('EnhancedTableFigure', () => {
       const commands2 = plugin.initButtonCommands('light');
 
       // Verify new instances are created
-      expect(EnhancedTableCommands).toHaveBeenCalledTimes(2);
-      expect(ImageUploadCommand).toHaveBeenCalledTimes(2);
+      expect(EnhancedTableCommands).toHaveBeenCalledTimes(4);
+      expect(ImageUploadCommand).toHaveBeenCalledTimes(4);
 
       // Objects should not be the same reference
       expect(commands1).not.toBe(commands2);

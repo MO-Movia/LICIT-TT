@@ -13,10 +13,12 @@ import { PARAGRAPH, TABLE, TABLE_CELL, TABLE_ROW, ENHANCED_TABLE_FIGURE_BODY, EN
 export class EnhancedTableCommands extends UICommand {
   // image,table
   _nodeType: string;
+  _withLandscape: boolean;
 
-  constructor(type: string) {
+  constructor(type: string, withLandscape = false) {
     super();
     this._nodeType = type;
+    this._withLandscape = withLandscape;
   }
   executeCustom(_state: EditorState, tr: Transform, _from: number, _to: number): Transform {
     return tr;
@@ -39,7 +41,7 @@ export class EnhancedTableCommands extends UICommand {
       const { schema } = state;
       let { tr } = state;
       if (this._nodeType === 'table') {
-        tr = this.insertEnhancedTableFigure(tr, schema);
+        tr = this.insertEnhancedTableFigure(tr, schema, this._withLandscape);
 
       }
 
@@ -77,7 +79,11 @@ export class EnhancedTableCommands extends UICommand {
   };
 
   // Command to insert the entire Enhanced Table/Figure node
-  insertEnhancedTableFigure(tr: Transaction, schema: Schema): Transaction {
+  insertEnhancedTableFigure(
+    tr: Transaction,
+    schema: Schema,
+    withLandscape = false
+  ): Transaction {
     const { selection } = tr;
     const { from, to } = selection;
     if (from !== to) {
@@ -93,25 +99,45 @@ export class EnhancedTableCommands extends UICommand {
     // Create the body with a 3×3 table.
     const bodyType = schema.nodes.enhanced_table_figure_body;
     const tableNode = this.createBlueTable(schema, 3, 3);
+    if (!bodyType || !tableNode) {
+      return tr;
+    }
     const bodyNode = bodyType.create({}, Fragment.from(tableNode));
 
     // No notes by default.
 
     // Create a blank CAPCO (footer) node.
     const capcoType = schema.nodes.enhanced_table_figure_capco;
+    if (!capcoType) {
+      return tr;
+    }
     const capcoNode = capcoType.create({}, schema.text(' '));
 
     // Assemble the composite in the order: [body, (notes optional), capco]
     const content = Fragment.fromArray([bodyNode, capcoNode]);
     const figureNode = figureNodeType.create({ figureType: 'table', orientation: 'landscape' }, content);
 
-    // Insert the figure node at the current selection.
-    tr = tr.insert(from, figureNode);
+    const insertNode =
+      withLandscape && schema.nodes.landscape_section
+        ? schema.nodes.landscape_section.create(null, figureNode)
+        : figureNode;
 
+    const $from = selection.$from;
+    const replaceEmptyParagraph =
+      $from.depth > 0 &&
+      $from.parent.type.name === PARAGRAPH &&
+      $from.parent.content.size === 0;
+    const insertFrom = replaceEmptyParagraph ? $from.before() : from;
+    const insertTo = replaceEmptyParagraph ? $from.after() : from;
+
+    // Insert the figure node, optionally wrapped in a landscape section.
+    tr = tr.replaceWith(insertFrom, insertTo, insertNode);
 
     const para = schema.nodes.paragraph.createAndFill();
     if (para) {
-      const after = from + figureNode.nodeSize;
+      const after = replaceEmptyParagraph
+        ? insertFrom + insertNode.nodeSize
+        : tr.mapping.map(from, 1);
       tr = tr.insert(after, para);
       tr = tr.setSelection(TextSelection.create(tr.doc, after + 1));
     }
@@ -122,9 +148,9 @@ export class EnhancedTableCommands extends UICommand {
 
   createBlueTable(schema: Schema, rows: number, cols: number): Node | undefined {
     const { nodes } = schema;
-    const cell = nodes[TABLE_CELL];
+    const cell = nodes[TABLE_CELL] ?? nodes.table_cell;
     const paragraph = nodes[PARAGRAPH];
-    const row = nodes[TABLE_ROW];
+    const row = nodes[TABLE_ROW] ?? nodes.table_row;
     const table = nodes[TABLE];
     if (!(cell && paragraph && row && table)) {
       return undefined;

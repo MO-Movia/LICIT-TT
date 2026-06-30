@@ -191,6 +191,72 @@ describe('LandscapePlugin', () => {
             .IntersectionObserver;
     });
 
+    test('proxy scrollbar scrolls all landscape sections together', () => {
+        const plugin = new LandscapePlugin();
+        const frame = document.createElement('div');
+        frame.className = 'czi-editor-frame-body';
+        const scroll = document.createElement('div');
+        scroll.className = 'czi-editor-frame-body-scroll';
+        Object.defineProperty(scroll, 'clientWidth', {value: 200, configurable: true});
+        frame.appendChild(scroll);
+        document.body.appendChild(frame);
+
+        const editorDom = document.createElement('div');
+        scroll.appendChild(editorDom);
+
+        const landscapeA = document.createElement('section');
+        landscapeA.className = 'section-landscape';
+        Object.defineProperty(landscapeA, 'scrollWidth', {value: 500, configurable: true});
+        Object.defineProperty(landscapeA, 'clientWidth', {value: 100, configurable: true});
+        Object.defineProperty(landscapeA, 'scrollLeft', {value: 0, writable: true});
+        landscapeA.getBoundingClientRect = () =>
+            ({top: 0, bottom: 50, left: 0, right: 100, width: 100, height: 50} as DOMRect);
+
+        const landscapeB = document.createElement('section');
+        landscapeB.className = 'section-landscape';
+        Object.defineProperty(landscapeB, 'scrollWidth', {value: 700, configurable: true});
+        Object.defineProperty(landscapeB, 'clientWidth', {value: 100, configurable: true});
+        Object.defineProperty(landscapeB, 'scrollLeft', {value: 0, writable: true});
+        landscapeB.getBoundingClientRect = () =>
+            ({top: 60, bottom: 110, left: 0, right: 100, width: 100, height: 50} as DOMRect);
+
+        scroll.getBoundingClientRect = () =>
+            ({top: 0, bottom: 100, left: 0, right: 100, width: 100, height: 100} as DOMRect);
+        editorDom.appendChild(landscapeA);
+        editorDom.appendChild(landscapeB);
+
+        class MockIntersectionObserver {
+            observe = jest.fn();
+            disconnect = jest.fn();
+            constructor(_cb: IntersectionObserverCallback) {}
+        }
+        (globalThis as unknown as {IntersectionObserver?: typeof IntersectionObserver}).IntersectionObserver =
+            MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+        const state = EditorState.create({schema});
+        const view = {state, dom: editorDom} as unknown as EditorView;
+        const proxyView = plugin.spec.view?.(view);
+        const proxy = frame.querySelector<HTMLElement>('.czi-landscape-horizontal-proxy');
+        const track =
+            frame.querySelector<HTMLElement>('.czi-landscape-horizontal-proxy-track');
+        if (!proxy || !track) {
+            throw new Error('Expected proxy scrollbar to be created');
+        }
+
+        Object.defineProperty(proxy, 'scrollLeft', {value: 0, writable: true});
+        proxy.scrollLeft = 75;
+        proxy.dispatchEvent(new Event('scroll'));
+
+        expect(landscapeA.scrollLeft).toBe(75);
+        expect(landscapeB.scrollLeft).toBe(75);
+        expect(track.style.width).toBe('800px');
+
+        proxyView?.destroy?.();
+        frame.remove();
+        delete (globalThis as unknown as {IntersectionObserver?: typeof IntersectionObserver})
+            .IntersectionObserver;
+    });
+
     test('view stays idle when scroll container is missing', () => {
         const plugin = new LandscapePlugin();
         const editorDom = document.createElement('div');

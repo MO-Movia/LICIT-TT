@@ -23,7 +23,8 @@ export function insertEnhancedImageFigure(
   tr: Transaction,
   schema: Schema,
   imageUrl: string,
-  altText = ''
+  altText = '',
+  withLandscape = false
 ): Transaction {
   const { selection } = tr;
   const { from, to } = selection;
@@ -39,7 +40,7 @@ export function insertEnhancedImageFigure(
   // Create the body that contains an image.
   const bodyType = schema.nodes.enhanced_table_figure_body;
   const imageNodeType = schema.nodes['image'];
-  if (!imageNodeType) {
+  if (!bodyType || !imageNodeType) {
     return tr;
   }
   const imageAttrs = {
@@ -54,6 +55,9 @@ export function insertEnhancedImageFigure(
   // No notes by default.
   // Create a blank CAPCO (footer) node.
   const capcoType = schema.nodes.enhanced_table_figure_capco;
+  if (!capcoType) {
+    return tr;
+  }
   const capcoNode = capcoType.create({}, schema.text(' '));
 
   // Assemble the composite in the order: [body, capco]
@@ -61,13 +65,28 @@ export function insertEnhancedImageFigure(
   // Set the figureType to 'figure'.
   const figureNode = figureNodeType.create({ figureType: 'figure', orientation: 'landscape' }, content);
 
-  // Insert the figure node.
-  tr = tr.insert(from, figureNode);
+  const insertNode =
+    withLandscape && schema.nodes.landscape_section
+      ? schema.nodes.landscape_section.create(null, figureNode)
+      : figureNode;
+
+  const $from = selection.$from;
+  const replaceEmptyParagraph =
+    $from.depth > 0 &&
+    $from.parent.type.name === 'paragraph' &&
+    $from.parent.content.size === 0;
+  const insertFrom = replaceEmptyParagraph ? $from.before() : from;
+  const insertTo = replaceEmptyParagraph ? $from.after() : from;
+
+  // Insert the figure node, optionally wrapped in a landscape section.
+  tr = tr.replaceWith(insertFrom, insertTo, insertNode);
 
   // Insert a new paragraph after the figure.
   const paragraphNode = schema.nodes.paragraph.createAndFill();
   if (paragraphNode) {
-    const after = from + figureNode.nodeSize;
+    const after = replaceEmptyParagraph
+      ? insertFrom + insertNode.nodeSize
+      : tr.mapping.map(from, 1);
     tr = tr.insert(after, paragraphNode);
     tr = tr.setSelection(TextSelection.create(tr.doc, after + 1));
   }
@@ -77,6 +96,12 @@ export function insertEnhancedImageFigure(
 
 export class ImageSourceCommand extends UICommand {
   _popUp?: PopUpHandle;
+  _withLandscape: boolean;
+
+  constructor(withLandscape = false) {
+    super();
+    this._withLandscape = withLandscape;
+  }
 
   getEditor(): typeof React.Component | undefined {
     return undefined;
@@ -127,7 +152,7 @@ export class ImageSourceCommand extends UICommand {
       tr = tr.setSelection(selection);
       if (inputs) {
         const { src } = inputs;
-        tr = insertEnhancedImageFigure(tr, schema, src);
+        tr = insertEnhancedImageFigure(tr, schema, src, '', this._withLandscape);
       }
       dispatch(tr);
       view?.focus();
