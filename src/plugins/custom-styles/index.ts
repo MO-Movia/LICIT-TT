@@ -619,19 +619,25 @@ export function applyStyleForPreviousEmptyParagraph(
   nextState: LooseState,
   tr: LooseTr
 ): LooseTr {
-  if (tr.selection.$from.parentOffset === 0) {
-    const prevNode = nextState.doc.resolve(
-      tr.selection.$anchor.pos - 1
-    ).nodeBefore;
+  const selection = tr.selection;
+  if (selection.$from.parentOffset === 0) {
+    const previousNodeEndPos = selection.$anchor.pos - 1;    
+    const prevNode = nextState.doc.resolve(previousNodeEndPos).nodeBefore;
     if (prevNode) {
+      const style = getCustomStyleByName(prevNode.attrs.styleName);
+      const emptyParaStyleName =
+        prevNode.attrs.styleName === style?.styles?.nextLineStyleName
+          ? prevNode?.attrs?.styleName
+          : RESERVED_STYLE_NONE;
+      const previousNodeStartPos = previousNodeEndPos - prevNode.nodeSize;
       tr = applyLatestStyle(
-        prevNode?.attrs?.styleName,
+        emptyParaStyleName,
         nextState as EditorState,
         tr,
         {
           node: prevNode,
-          startPos: tr.selection.$head.before(),
-          endPos: tr.selection.$from.end(),
+          startPos: previousNodeStartPos,
+          endPos: previousNodeStartPos + prevNode.content.size,
         },
         null
       ) as Transaction;
