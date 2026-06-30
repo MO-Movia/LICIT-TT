@@ -67,6 +67,19 @@ const LEVEL_VALUES = [
   '10',
 ];
 
+const NUMBERING_STYLES = [
+  { label: '1.', value: 'decimal' },
+  { label: '1)', value: 'decimal-parenthesis' },
+  { label: '(1)', value: 'decimal-bracket' },
+  { label: 'A.', value: 'upper-alpha-period' },
+  { label: 'A)', value: 'upper-alpha-parenthesis' },
+  { label: '(A)', value: 'upper-alpha-bracket' },
+  { label: 'a)', value: 'lower-alpha-parenthesis' },
+  { label: '(a)', value: 'lower-alpha-bracket' },
+  { label: 'a.', value: 'lower-alpha' },
+  { label: 'i.', value: 'lower-roman' },
+];
+
 const SAMPLE_TEXT = `Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample.
 Sample Text Sample Text Sample Text Sample Text Sample Text`;
 
@@ -191,6 +204,9 @@ export class CustomStyleEditor extends React.PureComponent<
     }
     if (this.state.styles.contNumber === undefined) {
       this.state.styles.contNumber = false;
+    }
+    if (!this.state.styles.numberingStyle) {
+      this.state.styles.numberingStyle = 'decimal';
     }
     this.getCustomStyles();
   }
@@ -418,7 +434,10 @@ export class CustomStyleEditor extends React.PureComponent<
       typeof this.state.styles.prefixValue === 'string' ||
         typeof this.state.styles.prefixValue === 'number'
         ? this.state.styles.prefixValue
-        : ''
+        : '',
+      typeof this.state.styles.numberingStyle === 'string'
+        ? this.state.styles.numberingStyle
+        : 'decimal'
     );
     const numberingNode = document.createTextNode(numberingLevel);
     if (this.state.styles.boldNumbering) {
@@ -477,16 +496,57 @@ export class CustomStyleEditor extends React.PureComponent<
   }
   // [FS] IRAD-1111 2020-12-10
   // get the numbering corresponding to the level
-  getNumberingLevel(level: string | number, prefixValue: string | number) {
-    let levelStyle = '';
-    for (let i = 0; i < Number.parseInt(`${level}`); i++) {
-      if (i === 0 && prefixValue) {
-        levelStyle = levelStyle + prefixValue + '1.';
-      } else {
-        levelStyle = levelStyle + '1.';
-      }
+  getNumberingLevel(
+    level: string | number,
+    prefixValue: string | number,
+    numberingStyle = 'decimal'
+  ) {
+    const prefix = prefixValue || '';
+    const levelCount = Number.parseInt(`${level}`, 10);
+    if (!Number.isFinite(levelCount) || levelCount <= 0) {
+      return '';
     }
-    return levelStyle + ' ';
+    const buildLevel = (value: string, trailingDot = false) => {
+      const levelStyle = Array(levelCount).fill(value).join('.');
+      return `${prefix}${levelStyle}${trailingDot && levelCount === 1 ? '.' : ''} `;
+    };
+
+    switch (numberingStyle) {
+      case 'decimal-period':
+      case 'decimal':
+        return buildLevel('1', true);
+      case 'decimal-parenthesis':
+        return buildLevel('1)');
+      case 'decimal-bracket':
+        return buildLevel('(1)');
+      case 'upper-alpha-period':
+        return buildLevel('A', true);
+      case 'upper-alpha-parenthesis':
+        return buildLevel('A)');
+      case 'upper-alpha-bracket':
+        return buildLevel('(A)');
+      case 'lower-alpha-parenthesis':
+        return buildLevel('a)');
+      case 'lower-alpha-bracket':
+        return buildLevel('(a)');
+      default:
+        break;
+    }
+
+    const sampleCounter =
+      numberingStyle === 'lower-alpha'
+        ? 'a'
+        : numberingStyle === 'lower-roman'
+          ? 'i'
+          : '1';
+    const levelStyle = Array(levelCount).fill(sampleCounter).join('.');
+    return `${prefix}${levelStyle}${levelCount === 1 ? '.' : ''} `;
+  }
+
+  onNumberingStyleChange(e) {
+    this.setState((prevState) => ({
+      styles: { ...prevState.styles, numberingStyle: e.target.value },
+    }));
   }
 
   // handles font name change
@@ -549,7 +609,7 @@ export class CustomStyleEditor extends React.PureComponent<
       styles: {
         ...prevState.styles,
         styleLevel: level,
-        hideCapco: prevState.styles.hideCapco,
+        hideCapco: isCheckboxDisabled ? false : prevState.styles.hideCapco,
         contNumber:
           isCheckboxDisabled || level !== 2
             ? false
@@ -769,6 +829,7 @@ export class CustomStyleEditor extends React.PureComponent<
         ...prevState.styles,
         hasNumbering: val.target.checked,
         hasBullet: val.target.checked ? false : prevState.styles?.hasBullet,
+        numberingStyle: prevState.styles.numberingStyle || 'decimal',
         contNumber:
           val.target.checked && prevState.styles.styleLevel === 2
             ? prevState.styles.contNumber
@@ -803,7 +864,7 @@ export class CustomStyleEditor extends React.PureComponent<
         tot: false,
         tof: false,
         prefixValue: '',
-        hideCapco: prevState.styles.hideCapco,
+        hideCapco: false,
         contNumber: false,
         hasNumbering: false,
         nextLineStyleName: RESERVED_STYLE_NONE,
@@ -821,7 +882,7 @@ export class CustomStyleEditor extends React.PureComponent<
         tot: false,
         tof: false,
         prefixValue: '',
-        hideCapco: prevState.styles.hideCapco,
+        hideCapco: false,
         contNumber: false,
         hasNumbering: false,
         styleLevel: 0,
@@ -839,7 +900,7 @@ export class CustomStyleEditor extends React.PureComponent<
         tot: val.target.checked,
         tof: false,
         prefixValue: val.target.checked ? 'TABLE ' : '',
-        hideCapco: prevState.styles.hideCapco,
+        hideCapco: false,
         contNumber: false,
         hasNumbering: val.target.checked,
         nextLineStyleName: val.target.checked
@@ -859,7 +920,7 @@ export class CustomStyleEditor extends React.PureComponent<
         tot: false,
         tof: val.target.checked,
         prefixValue: val.target.checked ? 'FIGURE ' : '',
-        hideCapco: prevState.styles.hideCapco,
+        hideCapco: false,
         contNumber: false,
         hasNumbering: val.target.checked,
         nextLineStyleName: val.target.checked
@@ -884,7 +945,7 @@ export class CustomStyleEditor extends React.PureComponent<
           ...prevState.styles,
           styleLevel,
           isList,
-          hideCapco: prevState.styles.hideCapco,
+          hideCapco: isList ? false : prevState.styles.hideCapco,
           contNumber: isList ? false : prevState.styles.contNumber,
         },
         isRadioDisabled: styleLevel === 0,
@@ -1442,7 +1503,7 @@ export class CustomStyleEditor extends React.PureComponent<
             <br />
             <label>
               <input checked={this.state.styles.hasNumbering} className="molsp-chknumbering" disabled={this.state.styles.styleLevel === undefined || this.state.isRadioDisabled || this.state.styles.styleLevel === 0 || (this.state.styles.styleLevel === 1 && this.state.styles.isList === true) || this.state.styleName === RESERVED_STYLE_NONE} name="formatting" onChange={this.handleNumbering.bind(this)} type="radio" value="numbering" />
-              <span style={{ marginLeft: '2px', position: 'relative', top: '1px' }}>Numbering (1.1)</span>
+              <span style={{ marginLeft: '2px', position: 'relative', top: '1px' }}>Numbering Styles</span>
             </label>
 
             <div className="molsp-formatting-nested-options">
@@ -1455,8 +1516,23 @@ export class CustomStyleEditor extends React.PureComponent<
                 <span>Bold</span>
               </div>
               <div className="molsp-formatting-prefix-row">
+                <span>Format:</span>
+                <select
+                  className="molsp-fontstyle"
+                  disabled={numberingOptionsDisabled}
+                  onChange={this.onNumberingStyleChange.bind(this)}
+                  value={typeof this.state.styles.numberingStyle === 'string' ? this.state.styles.numberingStyle : 'decimal'}
+                >
+                  {NUMBERING_STYLES.map((style) => (
+                    <option key={style.value} value={style.value}>
+                      {style.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="molsp-formatting-prefix-row">
                 <span>Prefix:</span>
-                <input disabled={this.checkCondition(this.state.styles.hasNumbering) || this.state.styleName === RESERVED_STYLE_NONE} onChange={(e) => this.handlePrefix(e)} style={{ width: '62px' }} type="text" value={this.state.styles.prefixValue} />
+                <input onChange={(e) => this.handlePrefix(e)} style={{ width: '62px' }} type="text" value={this.state.styles.prefixValue} />
               </div>
             </div>
 
