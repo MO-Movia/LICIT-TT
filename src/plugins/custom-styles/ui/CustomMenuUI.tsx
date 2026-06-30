@@ -35,6 +35,7 @@ import {
 } from '../../../commands';
 import { setParagraphSpacing } from '../ParagraphSpacingCommand';
 import { RESERVED_STYLE_NONE } from '../CustomStyleNodeSpec';
+import { MenuKeyboardNav } from '../../../commands/ui/menuKeyboardNav';
 
 let HEADING_COMMANDS = {
   [RESERVED_STYLE_NONE]: new HeadingCommand(0),
@@ -53,6 +54,7 @@ type CustomMenuUIProps = {
 
 type CustomMenuUIState = {
   expanded: boolean;
+  selectedIndex: number;
   style: {
     display: string;
     top: string;
@@ -70,10 +72,30 @@ export class CustomMenuUI extends React.PureComponent<
   _menuItemHeight = 24;
 
   _id = uuid();
-  _selectedIndex = 0;
+  _menuRef = React.createRef<HTMLDivElement>();
+  _navItems: Array<{ command: UICommand; label: string }> = [];
+  _staticItems: Array<{ command: UICommand; label: string }> = [];
+  _appliedIndex = 0;
+  _kbd = new MenuKeyboardNav({
+    getRoot: () => this._menuRef.current,
+    getNavCount: () => this._navItems.length,
+    getSelectedIndex: () => this.state.selectedIndex,
+    setSelectedIndex: (index, done) =>
+      this.setState({ selectedIndex: index }, done),
+    activate: (index, event) => {
+      const selected =
+        this._navItems[index] ??
+        this._staticItems[index - this._navItems.length];
+      if (selected) {
+        this._execute(selected.command, event as unknown as SyntheticEvent);
+      }
+    },
+    scrollSelectedIntoView: () => this.scrollSelectedIntoView(),
+  });
 
   state = {
     expanded: false,
+    selectedIndex: 0,
     style: {
       display: 'none',
       top: '',
@@ -163,22 +185,21 @@ export class CustomMenuUI extends React.PureComponent<
       this.props;
     const children = [];
     const children1 = [];
-    let counter = 0;
-    let selecteClassName = '';
     const theme = this.props.theme;
     this.theme =  this.props.theme;
     const selectedName = this.getTheSelectedCustomStyle(this.props.editorState);
+
+    this._navItems = [];
+    this._staticItems = [];
     const commandGroups_nw = this.getCommandGroups();
     for (const group of commandGroups_nw) {
       for (const label of Object.keys(group)) {
         const command = group[label];
-        counter++;
-        if (label === selectedName && '' === selecteClassName) {
-          selecteClassName = 'selectbackground';
-          this._selectedIndex = counter;
-        } else {
-          selecteClassName = '';
+        const index = this._navItems.length;
+        if (label === selectedName) {
+          this._appliedIndex = index;
         }
+        const isSelected = index === this.state.selectedIndex;
         children.push(
           <CustomStyleItem
             command={command}
@@ -187,20 +208,24 @@ export class CustomMenuUI extends React.PureComponent<
             editorState={editorState}
             editorView={editorView as EditorView}
             hasText={true}
+            index={index}
             key={label}
             label={label}
             onClick={this._onUIEnter}
             onCommand={onCommand}
             onMouseEnter={this._onUIEnter}
-            selectionClassName={selecteClassName}
+            selectionClassName={isSelected ? 'selectbackground' : ''}
             value={command}
           ></CustomStyleItem>
         );
+        this._navItems.push({ command: command as UICommand, label });
       };
     };
     for (const group of staticCommand) {
       for (const label of Object.keys(group)) {
         const command = group[label] as CustomStyleCommand;
+        const index = this._navItems.length + this._staticItems.length;
+        const isSelected = index === this.state.selectedIndex;
         children1.push(
           <CustomStyleItem
             command={command}
@@ -209,20 +234,22 @@ export class CustomMenuUI extends React.PureComponent<
             editorState={editorState}
             editorView={editorView as EditorView}
             hasText={false}
+            index={index}
             key={label}
             label={command._customStyleName}
             onClick={this._onUIEnter}
             onCommand={onCommand}
             onMouseEnter={this._onUIEnter}
-            selectionClassName={''}
+            selectionClassName={isSelected ? 'selectbackground' : ''}
             value={command}
           ></CustomStyleItem>
         );
+        this._staticItems.push({ command, label: command._customStyleName });
       };
     };
     const className = 'molsp-dropbtn ' + theme;
     return (
-      <div>
+      <div onKeyDown={this._kbd.onKeyDown} ref={this._menuRef} tabIndex={-1}>
         <span data-cy="cyStyleDropdown">
           <div className={className} id={this._id}>
             <div className="molsp-stylenames">{children}</div>
@@ -236,9 +263,41 @@ export class CustomMenuUI extends React.PureComponent<
   }
 
   componentDidMount() {
+
+    this.setState({ selectedIndex: this._appliedIndex }, () =>
+      this._scrollAppliedStyleIntoView()
+    );
+    this._kbd.mount();
+  }
+
+  componentWillUnmount() {
+    this._kbd.unmount();
+  }
+
+  _scrollAppliedStyleIntoView() {
     const styleDiv = document.getElementsByClassName('molsp-stylenames')[0];
-    styleDiv.scrollTop =
-      this._menuItemHeight * this._selectedIndex - this._menuItemHeight * 2 - 5;
+    if (styleDiv) {
+      styleDiv.scrollTop =
+        this._menuItemHeight * this.state.selectedIndex -
+        this._menuItemHeight * 2 -
+        5;
+    }
+  }
+
+  scrollSelectedIntoView() {
+    const styleDiv = document.getElementsByClassName('molsp-stylenames')[0];
+    if (!styleDiv) {
+      return;
+    }
+    const rowTop = this._menuItemHeight * this.state.selectedIndex;
+    const rowBottom = rowTop + this._menuItemHeight;
+    const viewTop = styleDiv.scrollTop;
+    const viewBottom = viewTop + styleDiv.clientHeight;
+    if (rowTop < viewTop) {
+      styleDiv.scrollTop = rowTop;
+    } else if (rowBottom > viewBottom) {
+      styleDiv.scrollTop = rowBottom - styleDiv.clientHeight;
+    }
   }
 
   isAllowedNode(node: Node) {

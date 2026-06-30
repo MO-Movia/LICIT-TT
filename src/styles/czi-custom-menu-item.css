@@ -13,6 +13,20 @@
   border-radius: 6px;
 }
 
+.mo-menu-keyboardnav .czi-custom-menu-item.czi-custom-button:hover {
+  background-color: var(--czi-bg);
+  border: none;
+  border-radius: 0;
+}
+
+.mo-menu-keyboardnav
+  .mo-menu-row--selected
+  .czi-custom-menu-item.czi-custom-button {
+  background-color: var(--czi-button-hover-background-color);
+  border: 1px solid;
+  border-radius: 6px;
+}
+
 .czi-custom-menu-item-button.czi-custom-button {
   border: none;
   border-radius: 0;

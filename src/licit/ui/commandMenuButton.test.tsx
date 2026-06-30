@@ -4,10 +4,11 @@
  */
 
 import * as React from 'react';
-import CommandMenuButton from './commandMenuButton';
+import CommandMenuButton, { CommandMenu } from './commandMenuButton';
 import { EditorState } from 'prosemirror-state';
 import { CustomButton, createPopUp } from '../../commands';
 import { EditorView } from 'prosemirror-view';
+import { UICommand } from '../../core';
 
 //  Mock Dependencies
 jest.mock('../../commands', () => ({
@@ -253,4 +254,145 @@ test('should pass correct theme to CustomButton', () => {
 });
 
 
+});
+
+describe('CommandMenu keyboard navigation', () => {
+  const menuProps = {
+    commandGroups: [],
+    dispatch: jest.fn(),
+    editorState: {} as EditorState,
+    editorView: {} as EditorView,
+    onCommand: jest.fn(),
+    title: 'Font Size',
+    theme: 'light',
+  };
+  const cmdA = { label: 'a' } as unknown as UICommand;
+  const cmdB = { label: 'b' } as unknown as UICommand;
+
+  const syncSetState = (instance: CommandMenu) =>
+    jest
+      .spyOn(instance, 'setState')
+      .mockImplementation((update, cb?: () => void) => {
+        const partial =
+          typeof update === 'function'
+            ? (update as (s: object) => object)(instance.state)
+            : update;
+        instance.state = { ...instance.state, ...partial };
+        cb?.();
+      });
+
+  const navKeyEvent = (key: string) =>
+    ({
+      key,
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    }) as unknown as React.KeyboardEvent;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // The arrow/Enter/hover logic itself is covered in menuKeyboardNav.test.ts;
+  // these tests verify CommandMenu wires its state/commands/scroll into that
+  // shared controller correctly (via instance._kbd).
+
+  test('ArrowDown moves the highlight down through the controller', () => {
+    const instance = new CommandMenu(menuProps);
+    instance._navCommands = [cmdA, cmdB];
+    instance.state = { selectedIndex: 0 };
+    syncSetState(instance);
+    const e = navKeyEvent('ArrowDown');
+    instance._kbd.onKeyDown(e);
+    expect(e.preventDefault).toHaveBeenCalled();
+    expect(instance.state.selectedIndex).toBe(1);
+  });
+
+  test('ArrowUp wraps to the last row from the first', () => {
+    const instance = new CommandMenu(menuProps);
+    instance._navCommands = [cmdA, cmdB];
+    instance.state = { selectedIndex: 0 };
+    syncSetState(instance);
+    instance._kbd.onKeyDown(navKeyEvent('ArrowUp'));
+    expect(instance.state.selectedIndex).toBe(1);
+  });
+
+  test('Enter activates the highlighted command via _execute', () => {
+    const instance = new CommandMenu(menuProps);
+    instance._navCommands = [cmdA, cmdB];
+    instance.state = { selectedIndex: 1 };
+    const execSpy = jest
+      .spyOn(instance, '_execute')
+      .mockImplementation(() => undefined);
+    instance._kbd.onKeyDown(navKeyEvent('Enter'));
+    expect(execSpy).toHaveBeenCalledWith(cmdB, expect.anything());
+  });
+
+  test('getNavCount reflects the rendered command rows (no rows = no-op)', () => {
+    const instance = new CommandMenu(menuProps);
+    instance._navCommands = [];
+    const e = navKeyEvent('ArrowDown');
+    instance._kbd.onKeyDown(e);
+    expect(e.preventDefault).not.toHaveBeenCalled();
+  });
+
+  test('hover through the controller selects the row', () => {
+    const instance = new CommandMenu(menuProps);
+    instance.state = { selectedIndex: 0 };
+    syncSetState(instance);
+    const row = document.createElement('div');
+    row.setAttribute('data-index', '2');
+    instance._kbd.onMouseOver({
+      target: row,
+      clientX: 5,
+      clientY: 9,
+    } as unknown as MouseEvent);
+    expect(instance.state.selectedIndex).toBe(2);
+  });
+
+  test('componentDidMount highlights the active row and mounts the controller', () => {
+    const instance = new CommandMenu(menuProps);
+    instance._activeIndex = 3;
+    syncSetState(instance);
+    const mountSpy = jest
+      .spyOn(instance._kbd, 'mount')
+      .mockImplementation(() => undefined);
+    instance._menuRef = {
+      current: { querySelector: jest.fn(() => null) },
+    } as unknown as typeof instance._menuRef;
+    instance.componentDidMount();
+    expect(instance.state.selectedIndex).toBe(3);
+    expect(mountSpy).toHaveBeenCalled();
+  });
+
+  test('componentDidMount is a no-op for horizontal/expand menus', () => {
+    // The real isExpandButton treats a title of 'Expand' as a horizontal menu.
+    const instance = new CommandMenu({ ...menuProps, title: 'Expand' });
+    const setStateSpy = jest.spyOn(instance, 'setState');
+    const mountSpy = jest.spyOn(instance._kbd, 'mount');
+    instance.componentDidMount();
+    expect(setStateSpy).not.toHaveBeenCalled();
+    expect(mountSpy).not.toHaveBeenCalled();
+  });
+
+  test('componentWillUnmount unmounts the controller', () => {
+    const instance = new CommandMenu(menuProps);
+    const unmountSpy = jest
+      .spyOn(instance._kbd, 'unmount')
+      .mockImplementation(() => undefined);
+    instance.componentWillUnmount();
+    expect(unmountSpy).toHaveBeenCalled();
+  });
+
+  test('_scrollSelectedIntoView reveals the selected row', () => {
+    const instance = new CommandMenu(menuProps);
+    instance.state = { selectedIndex: 2 };
+    const scrollIntoView = jest.fn();
+    const querySelector = jest.fn(() => ({ scrollIntoView }));
+    instance._menuRef = {
+      current: { querySelector },
+    } as unknown as typeof instance._menuRef;
+    instance._scrollSelectedIntoView();
+    expect(querySelector).toHaveBeenCalledWith('[data-index="2"]');
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+  });
 });

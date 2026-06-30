@@ -115,10 +115,16 @@ describe('CommandMenu', () => {
     });
 
     const rendered = instance.render();
-    const children = React.Children.toArray(rendered.props.children);
-    const menuItem = children[0] as React.ReactElement<{value: UICommand}>;
+    // [Keyboard navigation] Vertical menus now render as
+    // <div.mo-menu-keyboardnav><CustomMenu><div.mo-menu-row>{item}</div>...
+    const menu = rendered.props.children as React.ReactElement;
+    const rows = React.Children.toArray(menu.props.children);
+    const row = rows[0] as React.ReactElement<{children: React.ReactElement}>;
+    const menuItem = row.props.children as React.ReactElement<{
+      value: UICommand;
+    }>;
 
-    expect(children).toHaveLength(1);
+    expect(rows).toHaveLength(1);
     expect(menuItem.props.value).toBe(bundledCommand);
   });
 
