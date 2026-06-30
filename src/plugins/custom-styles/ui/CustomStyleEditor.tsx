@@ -630,6 +630,9 @@ export class CustomStyleEditor extends React.PureComponent<
         },
       }));
     } else if (1 === selectedOption) {
+      if (this.state.styles.tot || this.state.styles.tof) {
+        return;
+      }
       this.setState({
         otherStyleSelected: false,
       });
@@ -1340,7 +1343,7 @@ export class CustomStyleEditor extends React.PureComponent<
         <p className="molsp-formp">Select style for next line:</p>
         <div className="molsp-hierarchydiv">
           <div className="molsp-settingsdiv">
-            <input checked={!(this.state.styles.tot || this.state.styles.tof) && this.state.styles.nextLineStyleName === this.state.styleName && !this.state.otherStyleSelected} name="nextlinestyle" onChange={this.onNextLineStyleSelected.bind(this, 1)} style={{ marginLeft: '0.5px' }} type="radio" value="1" />
+            <input checked={!(this.state.styles.tot || this.state.styles.tof) && this.state.styles.nextLineStyleName === this.state.styleName && !this.state.otherStyleSelected} disabled={this.state.styles.tot || this.state.styles.tof} name="nextlinestyle" onChange={this.onNextLineStyleSelected.bind(this, 1)} style={{ marginLeft: '0.5px' }} type="radio" value="1" />
             <span style={{ marginLeft: '4px', marginTop: '3px', marginBottom: '0' }}>Continue this style</span>
           </div>
           <div className="molsp-settingsdiv" style={{ marginLeft: '15px' }}>
