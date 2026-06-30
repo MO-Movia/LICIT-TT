@@ -237,17 +237,18 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
       from: {node: null, pos: 5},
       to: {node: null, pos: 9},
     });
-    RuntimeService.Runtime = {
+    const runtime = {
       openLinkDialog: jest.fn((_href, _text, applyLink) => {
         applyLink?.('https://edited.com');
       }),
     };
+    RuntimeService.Runtime = runtime;
 
     pluginView._onEdit?.(editorView);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(RuntimeService.Runtime.openLinkDialog).toHaveBeenCalled();
-    expect(RuntimeService.Runtime.openLinkDialog).toHaveBeenCalledWith(
+    expect(runtime.openLinkDialog).toHaveBeenCalled();
+    expect(runtime.openLinkDialog).toHaveBeenCalledWith(
       'https://example.com',
       expect.any(String),
       expect.any(Function),
@@ -542,11 +543,25 @@ it('keeps the tooltip open when the pointer moves from the link into its actions
   pluginView._bindTooltipHoverEvents();
   pluginView._scheduleClose();
   tooltipBody.dispatchEvent(new MouseEvent('mouseenter'));
-  jest.advanceTimersByTime(500);
+  jest.advanceTimersByTime(1200);
 
   expect(close).not.toHaveBeenCalled();
   tooltipBody.remove();
   jest.useRealTimers();
+});
+
+it('does not schedule close when leaving the link for the tooltip body', () => {
+  const anchor = document.createElement('a');
+  const tooltipBody = document.createElement('div');
+  tooltipBody.className = 'czi-link-tooltip-body';
+  document.body.appendChild(tooltipBody);
+  const scheduleClose = jest.spyOn(pluginView, '_scheduleClose');
+
+  pluginView._tooltipEl = tooltipBody;
+  pluginView._handleLinkMouseOut(anchor, tooltipBody);
+
+  expect(scheduleClose).not.toHaveBeenCalled();
+  tooltipBody.remove();
 });
 
 

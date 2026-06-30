@@ -39,6 +39,16 @@ type LinkToolItem = {
 
 type LinkToolItems = Record<LinkToolCategory, LinkToolItem[]>;
 
+type LinkDialogRuntime = {
+  openLinkDialog?: (
+    link: string,
+    popupString: string,
+    applyLink?: (href?: string, linkDisplayText?: string) => void,
+    closeLinkTool?: () => void,
+    linkItems?: LinkToolItems
+  ) => void;
+};
+
 type TocStyleKey = 'toc' | 'tof' | 'tot';
 
 type TocStyle = {
@@ -278,7 +288,16 @@ class LinkSetURLCommand extends UICommand {
     }
 
     if (typeof capco === 'object' && 'portionMarking' in capco) {
-      return String((capco as { portionMarking?: unknown }).portionMarking ?? '');
+      const portionMarking = (capco as { portionMarking?: unknown })
+        .portionMarking;
+      if (
+        typeof portionMarking === 'string' ||
+        typeof portionMarking === 'number' ||
+        typeof portionMarking === 'boolean'
+      ) {
+        return String(portionMarking);
+      }
+      return '';
     }
 
     return '';
@@ -368,20 +387,10 @@ class LinkSetURLCommand extends UICommand {
 
       this._popUp = { close };
 
-      const runtime = RuntimeService.Runtime as
-        | {
-          openLinkDialog?: (
-            link: string,
-            popupString: string,
-            applyLink?: (href?: string, linkDisplayText?: string) => void,
-            closeLinkTool?: () => void,
-            linkItems?: LinkToolItems
-          ) => void;
-        }
-        | null;
+      const runtime = this.getLinkDialogRuntime(view);
 
       if (runtime?.openLinkDialog) {
-        this.showTocList(view).then((linkItems) => {
+        void this.showTocList(view).then((linkItems) => {
           runtime.openLinkDialog(
             href,
             selectedText,
@@ -389,7 +398,7 @@ class LinkSetURLCommand extends UICommand {
             () => close(),
             linkItems
           );
-        });
+        }, () => close());
       } else {
         close();
       }
@@ -460,6 +469,12 @@ class LinkSetURLCommand extends UICommand {
     href?.startsWith(INNER_LINK_PREFIX)
       ? href.slice(INNER_LINK_PREFIX.length)
       : null;
+
+  getLinkDialogRuntime = (view?: EditorView): LinkDialogRuntime | null => {
+    const viewRuntime = (view as EditorView & { runtime?: LinkDialogRuntime })
+      ?.runtime;
+    return viewRuntime ?? RuntimeService.Runtime;
+  };
 }
 
 export default LinkSetURLCommand;

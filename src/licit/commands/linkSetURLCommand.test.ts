@@ -275,6 +275,45 @@ describe('LinkSetURLCommand', () => {
     });
   });
 
+  it('opens the link dialog from editor view runtime when RuntimeService is empty', async () => {
+    const command = new LinkSetURLCommand();
+    const linkItems = {
+      toc: [],
+      figures: [],
+      tables: [],
+      paragraphs: [],
+    };
+    jest.spyOn(command, 'showTocList').mockResolvedValue(linkItems);
+    const openLinkDialog = jest.fn((_href, _text, applyLink) => {
+      applyLink?.('https://view-runtime.com', 'view runtime');
+    });
+    RuntimeService.Runtime = null;
+
+    const response = command.waitForUserInput(
+      {
+        doc: {
+          textBetween: jest.fn().mockReturnValue('selected text'),
+        },
+        schema: { marks: { link: {} } },
+        selection: { from: 0, to: 1 },
+      } as unknown as EditorState,
+      () => {},
+      { runtime: { openLinkDialog } } as unknown as EditorViewEx
+    );
+
+    await expect(response).resolves.toEqual({
+      href: 'https://view-runtime.com',
+      linkDisplayText: 'view runtime',
+    });
+    expect(openLinkDialog).toHaveBeenCalledWith(
+      'https://google.com',
+      'selected text',
+      expect.any(Function),
+      expect.any(Function),
+      linkItems
+    );
+  });
+
   describe('Marktype null', () => {
     it('should resolve immediately if no valid markType exists', async () => {
       const mockData = {

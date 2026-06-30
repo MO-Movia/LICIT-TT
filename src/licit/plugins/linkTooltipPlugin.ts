@@ -17,7 +17,6 @@ import {
   findNodesWithSameMark,
   atAnchorTopCenter,
   createPopUp,
-  RuntimeService,
 } from '../../commands';
 import { hideSelectionPlaceholder } from './selectionPlaceholderPlugin';
 import lookUpElement from '../lookUpElement';
@@ -28,6 +27,8 @@ import scrollIntoView from 'smooth-scroll-into-view-if-needed';
 import LinkSetURLCommand from '../commands/linkSetURLCommand';
 
 const linkSetURLCommand = new LinkSetURLCommand();
+const LINK_TOOLTIP_SELECTOR = '.czi-link-tooltip-body';
+const LINK_TOOLTIP_CLOSE_DELAY_MS = 1200;
 
 // https://prosemirror.net/examples/tooltip/
 const SPEC = {
@@ -59,13 +60,13 @@ const SPEC = {
           event.target instanceof Element
             ? event.target.closest('a[href]')
             : null;
-        if (
-          anchorEl &&
-          !(event.relatedTarget instanceof Node && anchorEl.contains(event.relatedTarget))
-        ) {
+        if (anchorEl) {
           (view.dom as HTMLElement & {
             _linkTooltipView?: LinkTooltipView;
-          })._linkTooltipView?._scheduleClose();
+          })._linkTooltipView?._handleLinkMouseOut(
+            anchorEl,
+            event.relatedTarget
+          );
         }
         return false;
       },
@@ -212,12 +213,31 @@ export class LinkTooltipView {
   };
 
   _bindTooltipHoverEvents = (): void => {
-    this._tooltipEl = document.querySelector('.czi-link-tooltip-body');
+    this._tooltipEl = document.querySelector(LINK_TOOLTIP_SELECTOR);
     this._tooltipEl?.addEventListener('mouseenter', this._handleTooltipMouseEnter);
     this._tooltipEl?.addEventListener('mousemove', this._handleTooltipMouseEnter);
     this._tooltipEl?.addEventListener('mousedown', this._handleTooltipMouseEnter);
     this._tooltipEl?.addEventListener('mouseleave', this._scheduleClose);
   };
+
+  _handleLinkMouseOut = (anchorEl: Element, relatedTarget: EventTarget | null): void => {
+    if (
+      relatedTarget instanceof Node &&
+      (anchorEl.contains(relatedTarget) || this._isTooltipTarget(relatedTarget))
+    ) {
+      this._handleTooltipMouseEnter();
+      return;
+    }
+
+    this._scheduleClose();
+  };
+
+  _isTooltipTarget = (target: Node): boolean =>
+    Boolean(this._tooltipEl?.contains(target)) ||
+    (
+      target instanceof Element &&
+      Boolean(target.closest(LINK_TOOLTIP_SELECTOR))
+    );
 
   _handleTooltipMouseEnter = (): void => {
     this._isTooltipHovered = true;
@@ -231,7 +251,7 @@ export class LinkTooltipView {
       if (!this._isTooltipHovered) {
         this._closePopup();
       }
-    }, 500);
+    }, LINK_TOOLTIP_CLOSE_DELAY_MS);
   };
 
   _clearCloseTimer = (): void => {
@@ -307,17 +327,7 @@ export class LinkTooltipView {
       },
     };
 
-    const runtime = RuntimeService.Runtime as
-      | {
-        openLinkDialog?: (
-          link: string,
-          popupString: string,
-          applyLink?: (href?: string, linkDisplayText?: string) => void,
-          closeLinkTool?: () => void,
-          linkItems?: Awaited<ReturnType<LinkSetURLCommand['showTocList']>>
-        ) => void;
-      }
-      | null;
+    const runtime = linkSetURLCommand.getLinkDialogRuntime(view);
 
     if (runtime?.openLinkDialog) {
       void linkSetURLCommand.showTocList(view).then((linkItems) => {
