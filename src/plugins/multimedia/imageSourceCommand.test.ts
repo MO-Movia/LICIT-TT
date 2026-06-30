@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {
   ImageSourceCommand,
   insertImage,
@@ -274,7 +281,7 @@ describe('ImageSourceCommand', () => {
     const editor = createEditor(doc(p('<cursor>')), {
       plugins: [plugin],
     });
-    mockView = editor.view as unknown as EditorView;
+    mockView = editor.view;
     mockState = mockView.state;
   });
 
@@ -398,7 +405,7 @@ describe('ImageSourceCommand', () => {
     it('should not dispatch when dispatch is null', () => {
       const mockInputs:ImageLike = {src: 'test.jpg',height: 400, width: 300, id: '1'};
 
-      command.executeWithUserInput(mockState, null as unknown as typeof jest.fn, mockView, mockInputs);
+      command.executeWithUserInput(mockState, null, mockView, mockInputs);
 
       // Should not throw and should not call dispatch
       expect(true).toBe(true);
@@ -419,7 +426,7 @@ describe('ImageSourceCommand', () => {
       const dispatch = jest.fn();
       const mockInputs:ImageLike = {src: 'test.jpg',height: 400, width: 300, id: '1'};
 
-      command.executeWithUserInput(mockState, dispatch, null as unknown as EditorView, mockInputs);
+      command.executeWithUserInput(mockState, dispatch, null, mockInputs);
 
       await new Promise((resolve) => setTimeout(resolve, 50));
       expect(dispatch).toHaveBeenCalled();

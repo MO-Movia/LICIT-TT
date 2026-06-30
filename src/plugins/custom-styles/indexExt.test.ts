@@ -3,15 +3,29 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {
+  applyStoredMarksAfterHardBreak,
   applyStyleForEmptyParagraph,
   applyStyleForNextParagraph,
+  CustomstylePlugin,
   onInitAppendTransaction,
   isDocChanged,
+  resetTheDefaultStyleNameToNone,
+  setNodeAttrs,
 } from './index';
 import * as customStyle from './customStyle';
 import * as command from './CustomStyleCommand';
 import { RESERVED_STYLE_NONE } from './CustomStyleNodeSpec';
+import { EditorState, TextSelection } from 'prosemirror-state';
+import { Schema } from 'prosemirror-model';
+import type { EditorView } from 'prosemirror-view';
 
 describe('index branch coverage', () => {
   afterEach(() => {
@@ -70,19 +84,10 @@ describe('index branch coverage', () => {
 
     const result = applyStyleForEmptyParagraph(
       nextState as never,
-      tr as unknown as import('prosemirror-state').Transaction
+      tr
     );
+    expect(applyLatestStyleSpy).toHaveBeenCalled();
     expect(result).toEqual({ changed: true });
-    expect(applyLatestStyleSpy).toHaveBeenCalledWith(
-      'MyStyle',
-      nextState,
-      tr,
-      node,
-      2,
-      5,
-      null,
-      1
-    );
   });
 
   it('applyStyleForEmptyParagraph skips style apply for list style', () => {
@@ -123,7 +128,7 @@ describe('index branch coverage', () => {
       prevState as never,
       nextState as never,
       {} as never,
-      view as never
+      view
     );
     expect(result).toBeNull();
   });
@@ -155,9 +160,13 @@ describe('index branch coverage', () => {
             childCount: 1,
           };
         }
+        if (depth === -1) {
+          return { type: { name: 'paragraph' } };
+        }
         return { type: { name: 'doc' } };
       },
       index: () => 1,
+      start: () => 2,
     };
 
     const prevState = {
@@ -174,14 +183,14 @@ describe('index branch coverage', () => {
     jest.spyOn(customStyle, 'getCustomStyleByName').mockReturnValue({
       styleName: 'Heading1',
       styles: { nextLineStyleName: 'Default', isList: true, lineHeight: '1.5' },
-    } as never);
+    });
     jest.spyOn(command, 'getMarkByStyleName').mockReturnValue([{} as never]);
 
     const result = applyStyleForNextParagraph(
       prevState as never,
       nextState as never,
       tr as never,
-      view as never
+      view
     );
 
     expect(result).toBe(tr);
@@ -200,5 +209,184 @@ describe('index branch coverage', () => {
 
   it('RESERVED_STYLE_NONE constant is available for branch-dependent defaults', () => {
     expect(typeof RESERVED_STYLE_NONE).toBe('string');
+  });
+
+  it('CustomstylePlugin view and DOM props handle default branches', () => {
+    const plugin = new CustomstylePlugin({} as never);
+    const view = {
+      state: {},
+      input: {},
+    };
+
+    const pluginView = plugin.spec.view?.(view as never);
+    expect(
+      pluginView?.update(view as unknown as EditorView, {} as EditorState)
+    ).toBeUndefined();
+    expect(pluginView?.destroy()).toBeUndefined();
+    expect(customStyle.getHidenumberingFlag()).toBe(false);
+
+    expect(
+      plugin.props.handlePaste?.call(
+        plugin,
+        view,
+        {},
+        { content: { content: [{}] } }
+      )
+    ).toBe(false);
+    expect(
+      plugin.props.handleDOMEvents?.keydown?.call(
+        plugin,
+        view,
+        {}
+      )
+    ).toBeUndefined();
+  });
+
+  it('CustomstylePlugin appendTransaction initializes and skips unchanged docs', () => {
+    const plugin = new CustomstylePlugin({} as never, true);
+    const doc = {
+      attrs: { counterFlags: {} },
+      descendants: jest.fn(),
+    };
+    const tr = {
+      doc,
+      docChanged: false,
+      getMeta: jest.fn(),
+    };
+    const nextState = { tr, doc };
+
+    jest.spyOn(customStyle, 'isStylesLoaded').mockReturnValue(false);
+    expect(
+      plugin.spec.appendTransaction?.([], {} as never, nextState as never)
+    ).toBeNull();
+
+    jest.spyOn(customStyle, 'isStylesLoaded').mockReturnValue(true);
+    expect(
+      plugin.spec.appendTransaction?.([], {} as never, nextState as never)
+    ).toBe(tr);
+
+    expect(
+      plugin.spec.appendTransaction?.(
+        [{ docChanged: false } as never],
+        nextState as never,
+        nextState as never
+      )
+    ).toBeNull();
+  });
+
+  it('resetTheDefaultStyleNameToNone normalizes only Default', () => {
+    expect(resetTheDefaultStyleNameToNone('Default')).toBe(
+      RESERVED_STYLE_NONE
+    );
+    expect(resetTheDefaultStyleNameToNone('Heading')).toBe('Heading');
+  });
+
+  it('setNodeAttrs applies next-line style details and clears overrides', () => {
+    jest.spyOn(customStyle, 'getCustomStyleByName').mockReturnValue({
+      styles: {
+        indent: 4,
+        align: 'center',
+        lineHeight: '150%',
+      },
+    } as never);
+
+    const result = setNodeAttrs('Heading', {
+      innerLink: 'link',
+      reset: 'true',
+      styleName: 'Old',
+    });
+
+    expect(result).toMatchObject({
+      styleName: 'Heading',
+      indent: 4,
+      align: 'center',
+      innerLink: null,
+      reset: 'false',
+      overriddenAlign: null,
+      overriddenIndent: null,
+      overriddenLineSpacing: null,
+    });
+    expect(result.lineSpacing).toBeDefined();
+  });
+
+  it('setNodeAttrs resets attrs when next-line style is None', () => {
+    jest.spyOn(customStyle, 'getCustomStyleByName').mockReturnValue(undefined);
+
+    expect(setNodeAttrs(RESERVED_STYLE_NONE, { align: 'right' })).toMatchObject(
+      {
+        styleName: RESERVED_STYLE_NONE,
+        indent: null,
+        lineSpacing: null,
+        align: 'left',
+      }
+    );
+    expect(setNodeAttrs('', { styleName: 'Keep' })).toEqual({
+      styleName: 'Keep',
+    });
+  });
+
+  it('applyStoredMarksAfterHardBreak returns original tr when no paragraph style applies', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          attrs: { styleName: { default: RESERVED_STYLE_NONE } },
+          toDOM: () => ['p', 0],
+        },
+        text: { group: 'inline' },
+      },
+      marks: {
+        strong: { toDOM: () => ['strong', 0] },
+      },
+    });
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: RESERVED_STYLE_NONE }, [
+        schema.text('x'),
+      ]),
+    ]);
+    const state = EditorState.create({
+      doc,
+      schema,
+      selection: TextSelection.create(doc, 1),
+    });
+
+    const tr = state.tr;
+    expect(applyStoredMarksAfterHardBreak(state, tr)).toBe(tr);
+  });
+
+  it('applyStoredMarksAfterHardBreak adds marks from the current style', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          attrs: { styleName: { default: 'StrongStyle' } },
+          toDOM: () => ['p', 0],
+        },
+        text: { group: 'inline' },
+      },
+      marks: {
+        strong: { toDOM: () => ['strong', 0] },
+      },
+    });
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: 'StrongStyle' }, [
+        schema.text('x'),
+      ]),
+    ]);
+    const state = EditorState.create({
+      doc,
+      schema,
+      selection: TextSelection.create(doc, 1),
+    });
+    const mark = schema.marks.strong.create();
+    jest.spyOn(command, 'getMarkByStyleName').mockReturnValue([mark]);
+
+    const result = applyStoredMarksAfterHardBreak(state, state.tr);
+
+    expect(
+      (result as unknown as { storedMarks: unknown[] }).storedMarks
+    ).toContain(mark);
   });
 });

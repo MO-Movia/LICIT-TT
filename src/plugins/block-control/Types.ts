@@ -41,12 +41,10 @@ export type NodeViewProps = {
 
 export type EditorRuntime = {
   // Image Proxy
-  canProxyImageSrc?: (src: string) => boolean,
-  getProxyImageSrc?: (src: string) => Promise<string>,
+  canProxyImageSrc?: (src: string) => boolean;
+  getProxyImageSrc?: (src: string) => Promise<string>;
 
   // Image Upload
-  canUploadImage?: () => boolean,
-  uploadImage?: (obj: Blob) => Promise<ImageLike>,
-
-
+  canUploadImage?: () => boolean;
+  uploadImage?: (obj: Blob) => Promise<{ src: string }>;
 };

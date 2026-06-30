@@ -9,6 +9,8 @@ import { Transform } from 'prosemirror-transform';
 import {
   AddCitationCommand,
   ShowTexteHighLightMark,
+  addTexthighlightMark,
+  removeTexthighlightMark,
 } from './AddCitationCommand';
 import { PopUpHandle } from '../../commands';
 import { Node, ResolvedPos, Schema } from 'prosemirror-model';
@@ -39,7 +41,7 @@ type CitationProps = {
   isCitationObject: boolean;
   sourceText: string;
 };
-const citation = {
+const citation: CitationProps = {
   overallDocumentCapco: 'TBD',
   author: 'Jerry Rodgers',
   authorTitle: 'Author',
@@ -211,7 +213,7 @@ describe('AddCitationCommand', () => {
       addctcomd.saveCitationUseObject(
         mockeditorstate as unknown as EditorState,
         tr as unknown as Transform,
-        { isCitationObject: false } as unknown as CitationProps
+        { isCitationObject: false }
       )
     ).toStrictEqual(tr);
   });
@@ -281,6 +283,18 @@ describe('AddCitationCommand', () => {
       } as unknown as Transaction)
     ).toBeDefined();
   });
+  it('should return false when hasCitationApplied sees no node or marks', () => {
+    expect(
+      addctcomd.hasCitationApplied({
+        selection: { from: 0, to: 2 },
+        doc: {
+          nodeAt: (pos: number) => {
+            return pos === 0 ? undefined : {};
+          },
+        },
+      } as unknown as Transaction)
+    ).toBe(false);
+  });
   it('should handle executeWithUserInput when dispatch undefined', () => {
     addctcomd._popUp = {} as unknown as PopUpHandle;
     expect(
@@ -295,7 +309,7 @@ describe('AddCitationCommand', () => {
         } as unknown as EditorState,
         undefined as unknown as () => undefined,
         {} as unknown as EditorView,
-        citation as unknown as CitationProps
+        citation
       )
     ).toBeFalsy();
   });
@@ -315,7 +329,7 @@ describe('AddCitationCommand', () => {
         {
           focus: () => undefined,
         } as unknown as EditorView,
-        null as unknown as CitationProps
+        null
       )
     ).toBeDefined();
   });
@@ -339,7 +353,7 @@ describe('AddCitationCommand', () => {
         {
           focus: () => undefined,
         } as unknown as EditorView,
-        null as unknown as CitationProps
+        null
       )
     ).toBeDefined();
   });
@@ -361,7 +375,7 @@ describe('AddCitationCommand', () => {
         } as unknown as EditorState,
         () => undefined,
         undefined as unknown as EditorView,
-        {} as unknown as CitationProps
+        {}
       )
     ).toBeDefined();
   });
@@ -411,6 +425,113 @@ describe('AddCitationCommand', () => {
         0
       )
     ).toBe(false);
+  });
+  it('should collect list attributes from the nearest list parent', () => {
+    const result = addctcomd.getListAttributes({
+      depth: 2,
+      path: [0, 0, 0, 0, 0, 7],
+      node: (depth: number) => ({
+        attrs: { indent: depth },
+        type: { name: depth === 1 ? 'bullet_list' : 'paragraph' },
+      }),
+    } as unknown as ResolvedPos);
+
+    expect(result).toEqual({ listNodeAttr: { indent: 1 }, listPos: 7 });
+  });
+  it('should return empty list attributes when no list parent exists', () => {
+    expect(
+      addctcomd.getListAttributes({
+        depth: 1,
+        node: () => ({ type: { name: 'paragraph' } }),
+      } as unknown as ResolvedPos)
+    ).toEqual({ listNodeAttr: null, listPos: 0 });
+  });
+  it('should find sentence end for selected text that already has delimiter', () => {
+    const state = {
+      selection: {
+        from: 1,
+        to: 7,
+        $to: { end: () => 10 },
+      },
+      doc: {
+        textBetween: (from: number, to: number) =>
+          from === 1 && to === 7 ? 'Hello.' : ' next?',
+      },
+    } as unknown as EditorState;
+
+    expect(
+      addctcomd.findEndOfSentence(state, {
+        pos: 3,
+        parentOffset: 2,
+        parent: { nodeSize: 20 },
+      } as unknown as ResolvedPos)
+    ).toBe(12);
+  });
+  it('should find sentence end after selection when delimiter is ahead', () => {
+    const state = {
+      selection: {
+        from: 1,
+        to: 6,
+        $to: { end: () => 15 },
+        $head: { parent: { nodeSize: 20 } },
+      },
+      doc: {
+        textBetween: (from: number, to: number) =>
+          from === 1 && to === 6 ? 'Hello' : ' world.',
+      },
+    } as unknown as EditorState;
+
+    expect(
+      addctcomd.findEndOfSentence(state, {
+        pos: 4,
+        parentOffset: 3,
+        parent: { nodeSize: 20 },
+      } as unknown as ResolvedPos)
+    ).toBe(13);
+  });
+  it('should fall back to parent end when no delimiter is found', () => {
+    const state = {
+      selection: {
+        from: 1,
+        to: 6,
+        $to: { end: () => 15 },
+        $head: { parent: { nodeSize: 12 } },
+      },
+      doc: {
+        textBetween: (from: number, to: number) =>
+          from === 1 && to === 6 ? 'Hello' : ' world',
+      },
+    } as unknown as EditorState;
+
+    expect(
+      addctcomd.findEndOfSentence(state, {
+        pos: 4,
+        parentOffset: 3,
+        parent: { nodeSize: 12 },
+      } as unknown as ResolvedPos)
+    ).toBe(11);
+  });
+  it('should return tr unchanged when creating a footnote for empty selection', () => {
+    const tr = {} as Transform;
+    expect(
+      addctcomd.createFootNoteForCitation(
+        { state: { selection: { empty: true } } } as EditorView,
+        {} as EditorState,
+        tr,
+        citation
+      )
+    ).toBe(tr);
+  });
+  it('should skip saveCitationUseObject when citation is an object citation', () => {
+    const tr = { untouched: true } as unknown as Transform;
+    const command = new AddCitationCommand();
+    expect(
+      command.saveCitationUseObject(
+        {} as EditorState,
+        tr,
+        { isCitationObject: true }
+      )
+    ).toBe(tr);
   });
   it('should handle createCitationObject 1 arg', () => {
     expect(addctcomd.createCitationObject(0)).toBeDefined();
@@ -521,7 +642,7 @@ describe('AddCitationCommand', () => {
       editorView: mockEditorView,
       isCitationObject: true,
       sourceText: 'Source Text',
-    } as unknown as CitationProps;
+    };
     addctcomd.citationBuilder = jest.fn().mockReturnValue('Mock citation text');
     addctcomd.showCitations(mockCitation);
 
@@ -541,5 +662,71 @@ describe('AddCitationCommand', () => {
         state: { selection: { empty: false } },
       } as unknown as EditorView)
     ).toBeDefined();
+  });
+  describe('exported functions', () => {
+    it('should handle addTexthighlightMark', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(addTexthighlightMark(mockTr, mockState, 0, 10)).toBeDefined();
+    });
+    it('should handle removeTexthighlightMark', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              type: 'mark',
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        removeMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(removeTexthighlightMark(mockTr, mockState, 0, 10)).toBeDefined();
+    });
+    it('should handle ShowTexteHighLightMark with hasCitation true', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(ShowTexteHighLightMark(mockTr, mockState, 0, true, '#ff0000', 10)).toBeDefined();
+    });
+    it('should handle ShowTexteHighLightMark with hasCitation false', () => {
+      const mockState = {
+        schema: {
+          marks: {
+            'mark-text-highlight': {
+              create: () => ({ type: 'mark' }),
+            },
+          },
+        },
+      } as unknown as EditorState;
+      const mockTr = {
+        addMark: jest.fn().mockReturnThis(),
+      } as unknown as Transform;
+      
+      expect(ShowTexteHighLightMark(mockTr, mockState, 0, false, '#ff0000', 10)).toBeDefined();
+    });
   });
 });

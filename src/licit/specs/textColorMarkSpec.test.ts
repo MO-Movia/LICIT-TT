@@ -5,7 +5,7 @@
 
 import TextColorMarkSpec from './textColorMarkSpec'; // Adjust the import path as needed
 import {toCSSColor} from '../toCSSColor'; // Adjust the import path as needed
-import {Attrs, Mark, MarkType} from 'prosemirror-model';
+import {Mark, MarkType} from 'prosemirror-model';
 
 // Mocking toCSSColor function for testing purposes
 jest.mock('../toCSSColor', () => ({
@@ -41,7 +41,7 @@ describe('TextColorMarkSpec', () => {
       const mockMarkType = {} as MarkType;
       return {
         type: mockMarkType,
-        attrs: {color} as Attrs,
+        attrs: {color},
         addToSet: (marks: readonly Mark[]) => [...marks],
         removeFromSet: () => [],
         isInSet: () => false,

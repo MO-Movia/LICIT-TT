@@ -92,7 +92,7 @@ const createMenuContent = (view, marks) => {
     ];
 };
 
-export default () =>
+const menuBarPlugin = () =>
     new Plugin({
         view: (view) => {
             if (!view.dom.parentNode) {
@@ -106,7 +106,7 @@ export default () =>
             const { dom, update } = renderGrouped(view, content);
 
             const menubar = document.createElement('div');
-            menubar.className = 'ProseMirror-menubar '+ UICommand.theme;
+            menubar.className = 'ProseMirror-menubar ' + UICommand.theme;
             menubar.appendChild(dom);
 
             view.dom.parentNode.insertBefore(menubar, view.dom);
@@ -116,3 +116,5 @@ export default () =>
             };
         },
     });
+
+export default menuBarPlugin;

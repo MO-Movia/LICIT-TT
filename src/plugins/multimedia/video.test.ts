@@ -3,9 +3,15 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {createEditor, doc, p} from 'jest-prosemirror';
 import {EditorState, Transaction} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
 import {MultimediaPlugin} from './index';
 import {
   VideoEditor,
@@ -34,54 +40,6 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 const srcevent = {
   target: {value: 'https://www.youtube.com/embed/ru60J99ojJw'},
 } as React.ChangeEvent<HTMLInputElement>;
-const resp = {
-  data: {
-    title: 'US Three Lethal A-10 Warthog Arrive in Ukraine',
-    author_name: 'American Fighter',
-    author_url: 'https://www.youtube.com/@americanfighter1990',
-    type: 'video',
-    height: 113,
-    width: 200,
-    version: '1.0',
-    provider_name: 'YouTube',
-    provider_url: 'https://www.youtube.com/',
-    thumbnail_height: 360,
-    thumbnail_width: 480,
-    thumbnail_url: 'https://i.ytimg.com/vi/ru60J99ojJw/hqdefault.jpg',
-    html: '<iframe width="200" height="113" src="https://www.youtube.com/embed/ru60J99ojJw?feature=oembed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="US Three Lethal A-10 Warthog Arrive in Ukraine"></iframe>',
-  },
-  status: 200,
-  statusText: '',
-  headers: {
-    'cache-control': 'private',
-    'content-encoding': 'gzip',
-    'content-length': '410',
-    'content-type': 'application/json',
-    date: 'Tue, 13 Dec 2022 08:24:08 GMT',
-    server: 'scaffolding on HTTPServer2',
-    vary: 'Origin, X-Origin, Referer',
-  },
-  config: {
-    transitional: {
-      silentJSONParsing: true,
-      forcedJSONParsing: true,
-      clarifyTimeoutError: false,
-    },
-    adapter: ['xhr', 'http'],
-    transformRequest: [null],
-    transformResponse: [null],
-    timeout: 0,
-    xsrfCookieName: 'XSRF-TOKEN',
-    xsrfHeaderName: 'X-XSRF-TOKEN',
-    maxContentLength: -1,
-    maxBodyLength: -1,
-    env: {},
-    headers: {Accept: 'application/json, text/plain, */*'},
-    method: 'get',
-    url: 'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=ru60J99ojJw&format=json',
-  },
-  request: {},
-};
 
 describe('Video Plugin - Test', () => {
   const plugin = new MultimediaPlugin();
@@ -131,7 +89,7 @@ describe('Video Plugin - Test', () => {
   it('should Init VideoSourceCommand', () => {
     const cmd = new VideoSourceCommand().executeWithUserInput(
       state,
-      view.dispatch as (tr: Transform) => void,
+      view.dispatch,
       view,
       veState
     );
@@ -180,9 +138,9 @@ describe('Video Plugin - Test', () => {
   });
 
   it('should change on src Change Event - resolved', () => {
-    mockedAxios.get.mockResolvedValue(resp);
+    const spy = jest.spyOn(VideoeditorIns, 'getsrc');
     VideoeditorIns._onSrcChange(srcevent);
-    expect(mockedAxios.get).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
   });
 
   it('should change on src Change Event - rejected', () => {
@@ -197,7 +155,7 @@ describe('Video Plugin - Test', () => {
     } as React.ChangeEvent<HTMLInputElement>;
     const spy = jest.spyOn(VideoeditorIns, 'setState');
     VideoeditorIns._onWidthChange(event);
-    expect(spy).toBeCalledWith({width, validValue: true});
+    expect(spy).toHaveBeenCalledWith({width, validValue: true});
   });
 
   it('should change on Height Change Event', () => {
@@ -207,7 +165,7 @@ describe('Video Plugin - Test', () => {
     } as React.ChangeEvent<HTMLInputElement>;
     const spy = jest.spyOn(VideoeditorIns, 'setState');
     VideoeditorIns._onHeightChange(event);
-    expect(spy).toBeCalledWith({height, validValue: true});
+    expect(spy).toHaveBeenCalledWith({height, validValue: true});
   });
 
   it('should showCursorPlaceholder', () => {

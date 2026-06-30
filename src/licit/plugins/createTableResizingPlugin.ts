@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Plugin } from 'prosemirror-state';
@@ -27,12 +27,12 @@ export function lookUpTableWrapper(event: Event): HTMLElement | null {
 export function dispatchMouseEvent(type: string, clientX: number): void {
   requestAnimationFrame(() => {
     const event = new MouseEvent(type, {
-      view: window,
+      view: globalThis.window,
       bubbles: true,
       cancelable: true,
       clientX,
     });
-    window.dispatchEvent(event);
+    globalThis.window.dispatchEvent(event);
   });
 }
 
@@ -62,8 +62,8 @@ export default function createTableResizingPlugin(): Plugin {
       event.stopImmediatePropagation();
       dispatchMouseEvent(event.type, maxClientX);
     } else if (event.type === 'mouseup') {
-      window.removeEventListener('mousemove', captureMouse, true);
-      window.removeEventListener('mouseup', captureMouse, true);
+      globalThis.window.removeEventListener('mousemove', captureMouse, true);
+      globalThis.window.removeEventListener('mouseup', captureMouse, true);
     }
   };
 
@@ -77,8 +77,8 @@ export default function createTableResizingPlugin(): Plugin {
       maxClientX = targetTable
         ? calculateMaxClientX(event, targetTable)
         : Number.MAX_VALUE;
-      window.addEventListener('mousemove', captureMouse, true);
-      window.addEventListener('mouseup', captureMouse, true);
+      globalThis.window.addEventListener('mousemove', captureMouse, true);
+      globalThis.window.addEventListener('mouseup', captureMouse, true);
       mousedown.call(this, view, event);
       return false;
     },

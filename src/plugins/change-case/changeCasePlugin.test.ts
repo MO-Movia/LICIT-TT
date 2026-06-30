@@ -4,6 +4,7 @@
  */
 
 import { ChangeCasePlugin } from './changeCasePlugin';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 
 describe('ChangeCasePlugin', () => {
 
@@ -16,5 +17,28 @@ describe('ChangeCasePlugin', () => {
         expect(plugin.initButtonCommands('dark')).toBeDefined();
     });
 
+    it('should use the light theme icon when theme is light', () => {
+        expect(plugin.initButtonCommands('light')).toEqual({
+            [`[${LightThemeIcon}] Change Case`]: [
+                {
+                    UpperCase: expect.anything(),
+                    LowerCase: expect.anything(),
+                    SentenceCase: expect.anything(),
+                },
+            ],
+        });
+    });
+
+    it('should use the dark theme icon for non-light themes', () => {
+        expect(plugin.initButtonCommands('sepia')).toEqual({
+            [`[${DarkThemeIcon}] Change Case`]: [
+                {
+                    UpperCase: expect.anything(),
+                    LowerCase: expect.anything(),
+                    SentenceCase: expect.anything(),
+                },
+            ],
+        });
+    });
 
 });

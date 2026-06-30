@@ -3,6 +3,13 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
+jest.mock('./ui/Icon', () => ({
+  __esModule: true,
+  Icon: {
+    get: jest.fn(() => null),
+  },
+}));
+
 import {createEditor, doc, p} from 'jest-prosemirror';
 import {
   EditorState,
@@ -11,7 +18,6 @@ import {
   Plugin,
   PluginKey,
 } from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
 import {MultimediaPlugin, bindImageView, bindVideoView} from './index';
 import {VideoEditorState} from './ui/VideoEditor';
 import {VideoSourceCommand, insertIFrame} from './VideoSourceCommand';
@@ -81,7 +87,7 @@ describe('MultimediaPlugin', () => {
   isOffline();
   new VideoSourceCommand().executeWithUserInput(
     state,
-    view.dispatch as (tr: Transform) => void,
+    view.dispatch,
     view,
     veState
   );

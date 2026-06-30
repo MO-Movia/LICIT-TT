@@ -1,8 +1,6 @@
 /**
  * @license MIT
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
- *
- * @flow
  */
 
 import * as React from 'react';

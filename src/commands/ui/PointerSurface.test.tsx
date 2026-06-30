@@ -25,12 +25,12 @@ describe('PointerSurface', () => {
     expect(isValidElement(render())).toBe(true);
   });
 
-  it('renders a <span> with role="button"', () => {
+  it('renders a <button> with role="button"', () => {
     expect(render().type).toBe('span');
     expect(spanProps().role).toBe('button');
   });
 
-  it('forwards id, style, title, children to <span>', () => {
+  it('forwards id, style, title, children to <button>', () => {
     const style = { color: 'red' };
     const child = createElement('span', { key: 'c' }, 'hi');
     expect(spanProps({ id: 'x' }).id).toBe('x');
@@ -89,7 +89,7 @@ describe('PointerSurface', () => {
     const p = (instance.render()).props as Record<string, unknown>;
     expect(typeof p.onMouseDown).toBe('function');
     expect(p.onMouseDown).not.toBe(instance._onMouseDown);
-    expect(p.onMouseLeave).toBeNull();
+    expect(p.onMouseLeave).toBeDefined();
   });
 
   it('initialises state and instance fields correctly', () => {

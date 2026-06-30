@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import {
@@ -46,7 +46,7 @@ export class LinkTooltipView {
   _editor = null;
 
   constructor(editorView: EditorView) {
-    this.update(editorView as EditorViewEx, null);
+    this.update(editorView, null);
   }
 
   update(view: EditorViewEx, _lastState: EditorState): void {

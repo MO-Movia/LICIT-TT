@@ -107,7 +107,7 @@ export class CustomNodeView implements NodeView {
   props: NodeViewProps;
   reactRoot: Root | null = null; // Declare reactRoot
   _selected: boolean;
-
+  _lastRenderedProps: NodeViewProps | null;
   constructor(
     node: Node,
     editorView: EditorFocused,
@@ -130,7 +130,7 @@ export class CustomNodeView implements NodeView {
     this.props.dom = dom;
 
     this.reactRoot = null; // To store the root instance
-
+    this._lastRenderedProps = null;
     pendingViews.add(this);
     if (pendingViews.size === 1) {
       // Observe the editorview's dom insteadof root document so that
@@ -144,12 +144,40 @@ export class CustomNodeView implements NodeView {
   }
 
   update(node: Node, _decorations: Array<Decoration>): boolean {
+    const oldNode = this.props.node;
     this.props = {
       ...this.props,
       node,
     };
-    this.__renderReactComponent();
+    // Only re-render if the node actually changed
+    if (this._shouldUpdate(oldNode, node)) {
+      this.__renderReactComponent();
+    }
     return true;
+  }
+  _shouldUpdate(oldNode, newNode) {
+    // Check if node attributes changed (this is a shallow comparison)
+    // For deep comparison, you might need to compare individual attributes
+    const oldAttrs = oldNode?.attrs;
+    const newAttrs = newNode?.attrs;
+    if (oldAttrs !== newAttrs) {
+      // Check if any attribute actually changed
+      const oldKeys = Object.keys(oldAttrs);
+      const newKeys = Object.keys(newAttrs);
+      if (oldKeys?.length !== newKeys?.length) {
+        return true;
+      }
+      for (const key of oldKeys) {
+        if (oldAttrs[key] !== newAttrs[key]) {
+          return true;
+        }
+      }
+    }
+    // Check if it's a different node entirely
+    if (oldNode !== newNode) {
+      return true;
+    }
+    return false;
   }
 
   stopEvent(): boolean {
@@ -158,16 +186,24 @@ export class CustomNodeView implements NodeView {
 
   // Mark this node as being the selected node.
   selectNode(): void {
+    const wasSelected = this._selected;
     this._selected = true;
     this.dom.classList.add(SELECTED_NODE_CLASS_NAME);
-    this.__renderReactComponent();
+    // Only re-render if selection state changed
+    if (!wasSelected) {
+      this.__renderReactComponent();
+    }
   }
 
   // Remove selected node marking from this node.
   deselectNode(): void {
+    const wasSelected = this._selected;
     this._selected = false;
     this.dom.classList.remove(SELECTED_NODE_CLASS_NAME);
-    this.__renderReactComponent();
+    // Only re-render if selection state changed
+    if (wasSelected) {
+      this.__renderReactComponent();
+    }
   }
 
   // This should be overwrite by subclass.
@@ -189,31 +225,53 @@ export class CustomNodeView implements NodeView {
     // When destroying the node view, remove from the set.
     // FIX: This solves the image missing issue.
     pendingViews.delete(this);
+    mountedViews.delete(this);
     this.cleanup();
   }
 
   cleanup() {
     if (this.reactRoot) {
-      this.reactRoot = null; // Reset reactRoot
+      this.reactRoot.unmount(); // Properly unmount the React root
+      this.reactRoot = null;
     }
+    this._lastRenderedProps = null;
   }
 
   __renderReactComponent(): void {
     const {editorView, getPos} = this.props;
-
+    let selected = false;
+    let focused = false;
     if (editorView?.state?.selection) {
       const {from} = editorView.state.selection;
       const pos = getPos();
-      this.props.selected = this._selected;
-      this.props.focused = editorView.focused && pos === from;
-    } else {
-      this.props.selected = false;
-      this.props.focused = false;
+      selected = this._selected;
+      // logic: if the node is selected, it's focused (if the editor has focus).
+      // pos === from is strict check for cursor position, but for NodeSelection
+      // the node itself is the selection.
+      focused = editorView.focused && (selected || pos === from);
     }
+    // Only re-render if props actually changed
+    const propsChanged =
+      this._lastRenderedProps?.selected !== selected ||
+      this._lastRenderedProps?.focused !== focused ||
+      this._lastRenderedProps?.node !== this.props.node;
+    if (!propsChanged) {
+      return; // Skip render if nothing changed
+    }
+    // Update the props with new selection/focus state
+    this.props.selected = selected;
+    this.props.focused = focused;
+    // Initialize React root if needed
     if (!this.reactRoot) {
-      this.reactRoot = createRoot(this.dom); // Initialize reactRoot
+      this.reactRoot = createRoot(this.dom);
     }
-
+    // Render the React component
     this.reactRoot.render(this.renderReactComponent());
+    // Store the props we just rendered for comparison next time
+    this._lastRenderedProps = {
+      ...this.props,
+      selected,
+      focused,
+    };
   }
 }

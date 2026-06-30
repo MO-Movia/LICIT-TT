@@ -277,7 +277,7 @@ describe('Callbacks', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    expect(onReady).toHaveBeenCalled();
+    expect(onReady).toHaveBeenCalledTimes(1);
   });
 
   it('should call onChange when content changes', async () => {

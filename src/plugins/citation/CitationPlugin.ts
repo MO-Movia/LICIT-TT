@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Plugin, Transaction, EditorState } from 'prosemirror-state';
@@ -120,12 +120,12 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
           let citElement = null;
 
           if (citNodes.length > 0) {
-            citNodes.forEach((element) => {
+            for (const element of citNodes) {
               citElement = (this as CitationPlugin).createCitationNotObject(
                 element.attributes
               );
               element.replaceWith(citElement);
-            });
+            };
           }
           return htmlDoc.body.outerHTML;
         },
@@ -211,7 +211,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
           nextState.tr.selection.$head.pos -
           nextState.tr.selection.$head.parentOffset -
           1;
-        parentPos = parentPos < 0 ? 0 : parentPos;
+        parentPos = Math.max(0, parentPos);
         const parentNode = nextState.tr.doc.nodeAt(parentPos);
 
         if (
@@ -304,9 +304,9 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
 
   createCitationNotObject(Nodeattrs: NamedNodeMap) {
     const newCitationTag = document.createElement(CITATION_NOTE);
-    citationFields.forEach((field) =>
+    for (const field of citationFields) {
       newCitationTag.setAttribute(field, Nodeattrs[field] ?? '')
-    );
+    };
 
     newCitationTag.setAttribute('from', Nodeattrs['posfrom'] ?? '');
     newCitationTag.setAttribute('to', Nodeattrs['posto'] ?? '');

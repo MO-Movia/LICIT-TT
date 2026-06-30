@@ -1,10 +1,10 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import * as React from 'react';
-import nullthrows from 'nullthrows';
+import nullthrows from '../nullthrows';
 import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';

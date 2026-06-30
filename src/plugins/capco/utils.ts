@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { Compartment } from './compartment';
@@ -75,8 +75,9 @@ export function safeCapcoParse(
 
 
 export function getCapcoString(capco: unknown, fallback = 'error'): string {
-  return safeCapcoParse(capco, { ism: null, portionMarking: fallback })
+  const portionMarking = safeCapcoParse(capco, { ism: null, portionMarking: fallback })
     .portionMarking;
+  return portionMarking?.trim() ? portionMarking : 'TBD';
 }
 
 export function getBlockControlCapco(state: EditorState, pos: number): number {

@@ -65,7 +65,7 @@ describe('selection observer', () => {
     selectionobserver._callback = () => undefined;
     const elem = document.createElement('div');
     selectionobserver._observables = [
-      {target: elem, selection: {from: 0, to: 0}} as unknown as never,
+      {target: elem, selection: {from: 0, to: 0}},
     ];
 
     expect(selectionobserver._check()).toBeUndefined();
@@ -75,7 +75,7 @@ describe('selection observer', () => {
     const elem = document.createElement('div');
     //elem.addEventListener()
     selectionobserver._observables = [
-      {target: elem, selection: {from: 0, to: 0}} as unknown as never,
+      {target: elem, selection: {from: 0, to: 0}},
     ];
 
     expect(selectionobserver.disconnect()).toBeUndefined();

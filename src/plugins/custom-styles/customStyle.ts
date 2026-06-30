@@ -8,7 +8,7 @@ import { EditorView } from 'prosemirror-view';
 import {
   RESERVED_STYLE_NONE,
   RESERVED_STYLE_NONE_NUMBERING,
-} from './CustomStyleNodeSpec';
+} from './customStyleConstants';
 import { DEFAULT_NORMAL_STYLE } from './Constants';
 import { setCustomStyles } from '../../commands';
 
@@ -42,15 +42,27 @@ function isValidStyleName(styleName?: string) {
   );
 }
 
+function shouldFallbackToNormalStyle(styleName?: string): boolean {
+  if (!styleName) {
+    return true;
+  }
+
+  const normalized = styleName.trim().toLowerCase();
+  return (
+    normalized === RESERVED_STYLE_NONE.toLowerCase() ||
+    normalized === 'default'
+  );
+}
+
 export function addStyleToList(style: Style): Style[] {
   if (0 < customStyles.length && style?.styleName) {
     const index = customStyles.findIndex(
       (item) => item?.styleName === style?.styleName
     );
-    if (index !== -1) {
-      customStyles[index] = style;
-    } else {
+    if (index === -1) {
       customStyles.push(style);
+    } else {
+      customStyles[index] = style;
     }
   }
   return customStyles;
@@ -82,10 +94,15 @@ export function getCustomStyleByName(name: string): Style {
         style = customStyles[i];
         has = true;
       }
-      // Marks are not getting applied to an undefined style.
-      else {
-        style = DEFAULT_NORMAL_STYLE;
-      }
+    }
+
+    // Imported docs may carry style names that do not exist in the runtime
+    // style list (e.g. class-derived names like CellHeading). Do not coerce
+    // those unknown names to Normal, or we inject Normal spacing unexpectedly.
+    if (!has) {
+      style = shouldFallbackToNormalStyle(name)
+        ? DEFAULT_NORMAL_STYLE
+        : ({ styleName: name, styles: {} });
     }
   } else {
     style = DEFAULT_NORMAL_STYLE;
@@ -200,67 +217,93 @@ export function getCustomStyle(customStyle) {
   const style: CSSStyle = {};
 
   for (const property in customStyle) {
-    switch (property) {
-      case 'strong':
-        // Deselected Bold, Italics and Underline are not removed from the example style near style name
-        if (!customStyle.boldPartial && customStyle[property]) {
-          style.fontWeight = 'bold';
-        }
-        break;
-
-      case 'em':
-        // Deselected Bold, Italics and Underline are not removed from the example style near style name
-        if (customStyle[property]) {
-          style.fontStyle = 'italic';
-        }
-        break;
-
-      case 'color':
-        style.color = customStyle[property];
-        break;
-
-      case 'textHighlight':
-        style.backgroundColor = customStyle[property];
-        break;
-
-      case 'fontSize':
-        style.fontSize = customStyle[property];
-        break;
-
-      case 'fontName':
-        style.fontName = customStyle[property];
-        break;
-      // Fix:icluded strike through in custom styles.
-      case 'strike':
-        if (customStyle[property]) {
-          style.textDecorationLine = 'line-through';
-        }
-        break;
-
-      case 'super':
-        style.verticalAlign = 'super';
-        break;
-
-      case 'underline':
-        // Deselected Bold, Italics and Underline are not removed from the example style near style name
-        if (customStyle[property]) {
-          style.textDecoration = 'underline';
-        }
-        break;
-
-      case 'textAlign':
-        style.textAlign = customStyle[property];
-        break;
-
-      case 'lineHeight':
-        style.lineHeight = customStyle[property];
-        break;
-
-      default:
-        break;
-    }
+    applyCustomStyleProperty(style, customStyle, property);
   }
   return style;
+}
+
+function applyCustomStyleProperty(
+  style: CSSStyle,
+  customStyle,
+  property: string
+): void {
+  const styleWithMargins = style as CSSStyle & {
+    marginTop?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    marginRight?: string;
+  };
+
+  switch (property) {
+    case 'strong':
+      applyStrongStyle(style, customStyle);
+      break;
+    case 'em':
+      applyConditionalStyle(style, customStyle[property], 'fontStyle', 'italic');
+      break;
+    case 'color':
+      style.color = customStyle[property];
+      break;
+    case 'textHighlight':
+      style.backgroundColor = customStyle[property];
+      break;
+    case 'fontSize':
+      style.fontSize = customStyle[property];
+      break;
+    case 'fontName':
+      style.fontName = customStyle[property];
+      break;
+    case 'strike':
+      applyConditionalStyle(
+        style,
+        customStyle[property],
+        'textDecorationLine',
+        'line-through'
+      );
+      break;
+    case 'super':
+      style.verticalAlign = 'super';
+      break;
+    case 'underline':
+      applyConditionalStyle(
+        style,
+        customStyle[property],
+        'textDecoration',
+        'underline'
+      );
+      break;
+    case 'textAlign':
+      style.textAlign = customStyle[property];
+      break;
+    case 'lineHeight':
+      style.lineHeight = customStyle[property];
+      break;
+    case 'marginTop':
+    case 'marginBottom':
+    case 'marginLeft':
+    case 'marginRight':
+      styleWithMargins[property] = customStyle[property];
+      break;
+    default:
+      break;
+  }
+}
+
+function applyStrongStyle(style: CSSStyle, customStyle): void {
+  if (!customStyle.boldPartial && customStyle.strong) {
+    style.fontWeight = 'bold';
+  }
+}
+
+function applyConditionalStyle(
+  style: CSSStyle,
+  enabled: unknown,
+  property: string,
+  value: string
+): void {
+  if (enabled) {
+    (style as Record<string, string>)[property] = value;
+  }
 }
 // method to save,retrive,rename and remove style from the style server.
 export function saveStyle(

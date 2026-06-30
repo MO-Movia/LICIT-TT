@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import React, {
@@ -14,12 +14,11 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Extension, Editor } from '@tiptap/core';
 import { EditorEvents, getSchema, JSONContent, useEditor } from '@tiptap/react';
 import {StarterKit} from '@tiptap/starter-kit';
 import {Underline} from '@tiptap/extension-underline';
-import { v4 as uuidv4 } from 'uuid';
 import {Collaboration} from '@tiptap/extension-collaboration';
 import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
@@ -71,9 +70,11 @@ import DocLayoutCommand from './commands/docLayoutCommand';
  *  theme {string} [light] light/dark theme support for toolbar.
  */
 
-export interface ChangeCB {
-  (data: JSONContent, isEmpty: boolean, view: EditorView): void;
-}
+export type ChangeCB = (
+  data: JSONContent,
+  isEmpty: boolean,
+  view: EditorView
+) => void;
 
 export type ReadyCB = (ref: LicitHandle) => void;
 export interface LicitProps {
@@ -276,11 +277,11 @@ const updateSpec = (
   const keysUpdate: string[] = [];
 
   // Check which keys need to be added
-  keys.forEach((key) => {
+  for (const key of keys) {
     if (!editorSchema[attrName][key]) {
       keysUpdate.push(key);
     }
-  });
+  };
 
   // Convert OrderedMap to array [name, spec, name, spec, ...]
   const specMap = schema.spec[attrName] as OrderedMap<unknown>;
@@ -292,7 +293,7 @@ const updateSpec = (
 
   // update current array with the latest info
   for (let i = 0; i < collection.length; i += 2) {
-    if (keysUpdate.find((element) => element === collection[i])) {
+    if (keysUpdate.includes(collection[i] as string)) {
       existingSchema.spec[attrName] = (
         existingSchema.spec[attrName] as OrderedMap<unknown>
       ).update(collection[i] as string, collection[i + 1]);
@@ -328,11 +329,11 @@ export const updateSpecAttrs = (
         const attrsLicit = (spec as { attrs?: Record<string, unknown> })?.attrs;
         if (attrsLicit) {
           const attrKeys = Object.keys(attrsTipTap);
-          attrKeys.forEach((key) => {
+          for (const key of attrKeys) {
             if (!attrsLicit[key]) {
               attrsLicit[key] = attrsTipTap[key];
             }
-          });
+          };
         }
       }
     });
@@ -347,7 +348,9 @@ const initDevTool = (debug: boolean, editorView: EditorView): void => {
         try {
           // Method is exported as both the default and named, Using named
           // for clarity and future proofing.
-          const applyPMDevTools = await import('prosemirror-dev-tools');
+          const applyPMDevTools = await import('prosemirror-dev-tools').catch(
+            () => undefined
+          );
           // got the pm dev tools instance.
           applyDevTools = applyPMDevTools.default;
           // Attach debug tools to current editor instance.
@@ -361,7 +364,7 @@ const initDevTool = (debug: boolean, editorView: EditorView): void => {
               '.'.concat('__prosemirror-dev-tools__')
             );
             if (place) {
-              ReactDOM.unmountComponentAtNode(place);
+              createRoot(place).unmount();
               place.innerHTML = '';
             }
           });
@@ -476,14 +479,14 @@ const LicitComponent = (
   }: LicitProps,
   ref: ForwardedRef<LicitHandle>
 ): ReactElement => {
-  const instanceIDRef = useRef<string>(uuidv4());
+  const instanceIDRef = useRef<string>(crypto.randomUUID());
   const instanceID = instanceIDRef.current;
 
   // Track initialization state
   const isSchemaInitializedRef = useRef(false);
   const collabConfigRef = useRef({
     collaboration: false,
-    currentUser: null as Record<string, unknown> | null,
+    currentUser: null,
   });
 
   // [FS] IRAD-981 2020-06-10
@@ -672,7 +675,7 @@ const LicitComponent = (
       isNodeHasAttribute,
     ]
   );
-  const [, setEditorState] = useState(editor?.state);
+  const [, setEditorState] = useState(editor?.state); //NOSONAR
   // Register event handlers only once when editor is available
   useEffect(() => {
     if (!editor) return;
@@ -746,13 +749,13 @@ const LicitComponent = (
   // Set runtime on editor view when available
   useEffect(() => {
     if (editor?.view) {
-      const eView: EditorViewEx = editor.view as EditorViewEx;
+      const eView: EditorViewEx = editor.view;
       eView.runtime = finalRuntime;
     }
   }, [editor, finalRuntime]);
 
   if (editor) {
-    const eView: EditorViewEx = editor.view as EditorViewEx;
+    const eView: EditorViewEx = editor.view;
     const wrapperClass = 'prosemirror-editor-wrapper' + ' ' + finalTheme;
     const mainClassName = cx(wrapperClass, {
       embedded: finalEmbedded,

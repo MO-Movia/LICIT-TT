@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import cx from 'classnames';
@@ -26,7 +26,9 @@ function toCSS(val?: number | string): string {
     // instead of auto...
     return undefined;
   }
-  if (isNaN(val as number)) {
+  // Prefer isNaN() over Number.isNaN() to avoid appending 'vh'
+  // to CSS string values like '100px' or '50%'.
+  if (isNaN(val as number)) {   //NOSONAR
     return `${val}`;
   }
   return `${val}vh`;

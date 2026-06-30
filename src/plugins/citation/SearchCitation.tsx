@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 // [FS] IRAD-1251 2021-03-10
@@ -46,12 +46,12 @@ export class SearchCitation extends React.PureComponent<
         ?.then((result) => {
           if (result) {
             citations = [];
-            result.forEach((obj) => {
+             for (const obj of result) {
               citations.push({
                 ...obj,
                 publishedDateTitle: obj.publishedDateTitle ?? 'Published',
               });
-            });
+            };
             this.setState({
               citations: citations,
             });
@@ -276,7 +276,7 @@ export class SearchCitation extends React.PureComponent<
         if (
           '' !== filter[key] &&
           (item[key] === undefined ||
-            item[key].toUpperCase().indexOf(filter[key].toUpperCase()) === -1)
+            !item[key].toUpperCase().includes(filter[key].toUpperCase()))
         ) {
           return false;
         }

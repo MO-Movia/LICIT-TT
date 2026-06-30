@@ -17,4 +17,16 @@ describe('ImageUploadCommand', () => {
     const command = new ImageUploadCommand();
     expect(command.executeCustomStyleForTable(null!, tr)).toBe(tr);
   });
+  it('should return false for isActive', () => {
+    const command = new ImageUploadCommand();
+    expect(command.isActive()).toBe(false);
+  });
+  it('should return null for renderLabel', () => {
+    const command = new ImageUploadCommand();
+    expect(command.renderLabel()).toBeNull();
+  });
+  it('should return ImageUploadEditor for getEditor', () => {
+    const command = new ImageUploadCommand();
+    expect(command.getEditor()).toBeDefined();
+  });
 });

@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import type { LicitNode, LicitDocument } from '../models/licit-document';
@@ -42,7 +42,9 @@ function processNodeContent(this: void, node: LicitNode): void {
       node.type = 'horizontalRule'; // czi to tiptap type
       break;
   }
-  node.content?.forEach(processNodeContent);
+  for (const child of node.content ?? []) {
+    processNodeContent(child);
+  }
 }
 function repairTextNode(content: LicitNode): void {
   content.text ??= ' ';

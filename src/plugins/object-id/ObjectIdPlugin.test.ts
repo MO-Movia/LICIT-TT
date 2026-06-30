@@ -87,7 +87,7 @@ describe('Object ID plugin', () => {
       cutObjectIds: [
         {
           objectId: '123',
-          objectMetaData: null as unknown as Record<string, unknown>,
+          objectMetaData: null,
           selectionId: 'selectionId123',
         },
       ],
@@ -137,7 +137,7 @@ describe('Object ID plugin', () => {
     const plugin = new ObjectIdPlugin();
     const boundkeydown = plugin?.props?.handleDOMEvents?.keydown?.bind(plugin);
     const dummyView = { lastKeyCode: 13 } as unknown as EditorView;
-    expect(boundkeydown(dummyView, {} as unknown as Event)).toBeFalsy();
+    expect(boundkeydown(dummyView, {})).toBeFalsy();
   });
 
   it('SHOULD HANDLE paste with cutObjectIds.length 1', () => {
@@ -259,7 +259,7 @@ describe('Object ID plugin', () => {
     expect(
       boundHandlePaste(
         editorview,
-        {} as unknown as Event,
+        {},
         {
           content: {
             childCount: 2,
@@ -279,7 +279,7 @@ describe('Object ID plugin', () => {
               },
             ],
           },
-        } as unknown
+        }
       )
     ).toBeFalsy();
   });
@@ -301,7 +301,7 @@ describe('Object ID plugin', () => {
         },
         {
           objectId: 'abc',
-          objectMetaData: null as unknown as Record<string, unknown>,
+          objectMetaData: null,
           selectionId: 'selectionId124',
         },
       ],
@@ -409,7 +409,7 @@ describe('Object ID plugin', () => {
     expect(
       boundHandlePaste(
         editorview,
-        {} as unknown as Event,
+        {},
         {
           content: {
             childCount: 2,
@@ -429,7 +429,7 @@ describe('Object ID plugin', () => {
               },
             ],
           },
-        } as unknown
+        }
       )
     ).toBeFalsy();
   });
@@ -481,8 +481,8 @@ describe('Object ID plugin', () => {
     expect(
       boundHandlePaste(
         dummyView,
-        {} as unknown as Event,
-        { content: { content: [{ attrs: true }] } } as unknown
+        {},
+        { content: { content: [{ attrs: true }] } }
       )
     ).toBeFalsy();
   });
@@ -570,7 +570,7 @@ describe('Object ID plugin', () => {
       state: editorState,
     } as unknown as EditorView;
 
-    boundHandleCut(dummyView, {} as unknown as Event);
+    boundHandleCut(dummyView, {});
     expect(spy).toHaveBeenCalled();
   });
 
@@ -1019,12 +1019,12 @@ describe('Object ID plugin', () => {
       cutObjectIds: [
         {
           objectId: '123',
-          objectMetaData: null as unknown as Record<string, unknown>,
+          objectMetaData: null,
           selectionId: 'selectionId123',
         },
         {
           objectId: '123',
-          objectMetaData: null as unknown as Record<string, unknown>,
+          objectMetaData: null,
           selectionId: 'selectionId124',
         },
       ],
@@ -1166,6 +1166,46 @@ describe('Object ID plugin', () => {
       state.doc.content.size
     );
     expect(result).toBeNull();
+  });
+
+  it('should set dirty flag for every capco position', () => {
+    const plugin = new ObjectIdPlugin();
+    const testSchema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          attrs: { dirty: { default: false } }
+        },
+        text: {}
+      }
+    });
+    const testDoc = testSchema.node('doc', null, [
+      testSchema.node('paragraph', { dirty: false }, [testSchema.text('a')]),
+      testSchema.node('paragraph', { dirty: false }, [testSchema.text('b')])
+    ]);
+    const state = EditorState.create({
+      schema: testSchema,
+      doc: testDoc,
+      selection: TextSelection.create(testDoc, 1, 4)
+    });
+    const tr = { setNodeMarkup: jest.fn().mockReturnThis() } as unknown as Transaction;
+
+    plugin.setDirtyFlagOnChange(state, state, tr, true, [0, 3]);
+
+    expect(tr.setNodeMarkup).toHaveBeenCalledTimes(2);
+    expect(tr.setNodeMarkup).toHaveBeenNthCalledWith(
+      1,
+      0,
+      null,
+      expect.objectContaining({ dirty: true })
+    );
+    expect(tr.setNodeMarkup).toHaveBeenNthCalledWith(
+      2,
+      3,
+      null,
+      expect.objectContaining({ dirty: true })
+    );
   });
 
   it('should set dirty flag on parent table', () => {
@@ -1311,7 +1351,7 @@ describe('Object ID plugin', () => {
     } as unknown as EditorView;
 
     const boundHandlePaste = plugin?.props?.handlePaste?.bind(plugin);
-    const result = boundHandlePaste(view, {} as Event, {} as Slice);
+    const result = boundHandlePaste(view, {}, {});
     expect(result).toBeFalsy();
   });
 
@@ -1342,4 +1382,3 @@ describe('Object ID plugin', () => {
     expect(result).toBeDefined();
   });
 });
-

@@ -7,11 +7,13 @@ import React, { SyntheticEvent } from 'react';
 import { EditorState } from 'prosemirror-state';
 import { Schema, Node } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
+import { EditorView } from 'prosemirror-view';
 import { UICommand } from '../../../core';
 import { uuid } from './Uuid';
 import { CustomStyleItem } from './CustomStyleItem';
 import { CustomStyleSubMenu } from './CustomStyleSubMenu';
 import { CustomStyleEditor } from './CustomStyleEditor';
+import type { Style } from '../StyleRuntime';
 import {
   applyLatestStyle,
   CustomStyleCommand,
@@ -33,12 +35,35 @@ import {
 } from '../../../commands';
 import { setParagraphSpacing } from '../ParagraphSpacingCommand';
 import { RESERVED_STYLE_NONE } from '../CustomStyleNodeSpec';
+
 let HEADING_COMMANDS = {
   [RESERVED_STYLE_NONE]: new HeadingCommand(0),
 };
 
- 
-export class CustomMenuUI extends React.PureComponent<any, any> {
+type CustomMenuCommandGroup = Record<string, unknown>;
+
+type CustomMenuUIProps = {
+  dispatch: (tr: Transform) => void;
+  editorState: EditorState;
+  editorView: Partial<EditorView> & { disabled?: boolean };
+  onCommand?: () => void;
+  staticCommand: CustomMenuCommandGroup[];
+  theme?: string;
+};
+
+type CustomMenuUIState = {
+  expanded: boolean;
+  style: {
+    display: string;
+    top: string;
+    left: string;
+  };
+};
+
+export class CustomMenuUI extends React.PureComponent<
+  CustomMenuUIProps,
+  CustomMenuUIState
+> {
   _popUp = null;
   _stylePopup = null;
   _styleName = null;
@@ -57,6 +82,82 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
   };
   theme = null;
 
+  normalizeSavedStyles(
+    result
+  ): Style[] {
+    const normalizedResult = Array.isArray(result)
+      ? result
+      : addStyleToList(result);
+    return normalizedResult as Style[];
+  }
+
+  closeStylePopup() {
+    this.props.editorView.focus?.();
+    this._stylePopup?.close();
+    this._stylePopup = null;
+  }
+
+  findMatchingStyle(
+    result: Style[],
+    styleName: string
+  ) {
+    return result.find((obj) => styleName === obj.styleName);
+  }
+
+  applySavedStyleResult(val, result, getTransform) {
+    if (!result) {
+      this.closeStylePopup();
+      return;
+    }
+
+    const normalizedResult = this.normalizeSavedStyles(result);
+    setStyles(normalizedResult);
+    const matchingStyle = this.findMatchingStyle(normalizedResult, val.styleName);
+    const tr = matchingStyle ? getTransform(matchingStyle) : null;
+    if (tr) {
+      this.props.editorView.dispatch?.(tr);
+    }
+    this.closeStylePopup();
+  }
+
+  saveStyleAndApply(val, getTransform) {
+    delete val.editorView;
+    saveStyle(val)
+      .then((result) => {
+        this.applySavedStyleResult(val, result, getTransform);
+      })
+      .catch(console.warn);
+  }
+
+  handleEditModeSave(val) {
+    this.saveStyleAndApply(val, (obj) =>
+      updateDocument(
+        this.props.editorState,
+        this.props.editorState.tr,
+        val.styleName,
+        obj
+      )
+    );
+  }
+
+  handleRenameModeSave(val) {
+    renameStyle(this._styleName, val.styleName)
+      .then((result) => {
+        if (null == result) {
+          return;
+        }
+        this.saveStyleAndApply(val, () =>
+          this.renameStyleInDocument(
+            this.props.editorState,
+            this.props.editorState.tr,
+            this._styleName,
+            val.styleName
+          )
+        );
+      })
+      .catch(console.warn);
+  }
+
   render() {
     const { dispatch, editorState, editorView, staticCommand, onCommand } =
       this.props;
@@ -68,8 +169,8 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
     this.theme =  this.props.theme;
     const selectedName = this.getTheSelectedCustomStyle(this.props.editorState);
     const commandGroups_nw = this.getCommandGroups();
-    commandGroups_nw.forEach((group) => {
-      Object.keys(group).forEach((label) => {
+    for (const group of commandGroups_nw) {
+      for (const label of Object.keys(group)) {
         const command = group[label];
         counter++;
         if (label === selectedName && '' === selecteClassName) {
@@ -84,7 +185,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
             disabled={!!editorView?.disabled}
             dispatch={dispatch}
             editorState={editorState}
-            editorView={editorView}
+            editorView={editorView as EditorView}
             hasText={true}
             key={label}
             label={label}
@@ -95,18 +196,18 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
             value={command}
           ></CustomStyleItem>
         );
-      });
-    });
-    staticCommand.forEach((group) => {
-      Object.keys(group).forEach((label) => {
-        const command = group[label];
+      };
+    };
+    for (const group of staticCommand) {
+      for (const label of Object.keys(group)) {
+        const command = group[label] as CustomStyleCommand;
         children1.push(
           <CustomStyleItem
             command={command}
             disabled={!!editorView?.disabled}
             dispatch={dispatch}
             editorState={editorState}
-            editorView={editorView}
+            editorView={editorView as EditorView}
             hasText={false}
             key={label}
             label={command._customStyleName}
@@ -117,8 +218,8 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
             value={command}
           ></CustomStyleItem>
         );
-      });
-    });
+      };
+    };
     const className = 'molsp-dropbtn ' + theme;
     return (
       <div>
@@ -162,7 +263,7 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
   _execute = (command: UICommand, e: SyntheticEvent<Element>) => {
     if (undefined !== command) {
       const { dispatch, editorState, editorView, onCommand } = this.props;
-      command.execute(editorState, dispatch, editorView, e);
+      command.execute(editorState, dispatch, editorView as EditorView, e);
       onCommand?.();
     }
   };
@@ -247,16 +348,16 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
     });
 
     if (!tasks.length) {
-      textAlignNode.forEach((eachnode) => {
+      for (const eachnode of textAlignNode) {
         const { node, pos } = eachnode;
         const newattrs = { ...node.attrs, styleName: customStyleName };
         tr = tr?.setNodeMarkup(pos, undefined, newattrs);
-      });
+      };
       // to remove both text align format and line spacing
       tr = this.removeTextAlignAndLineSpacing(tr, editorState.schema);
     }
 
-    tasks.forEach((job) => {
+    for (const job of tasks) {
       const { node, mark, pos } = job;
       tr = tr.removeMark(pos, pos + node.nodeSize, mark.type);
       // reset the custom style name to NONE after remove the styles
@@ -268,13 +369,15 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
         newNode?.attrs?.styleName,
         editorState,
         tr,
-        newNode,
-        pos,
-        pos + node.nodeSize - 1,
-        null,
-        1
+        {
+          node: newNode,
+          startPos: pos,
+          endPos: pos + node.nodeSize - 1,
+          opt: 1,
+        },
+        null
       );
-    });
+    };
 
     // to remove both text align format and line spacing
     tr = this.removeTextAlignAndLineSpacing(tr, editorState.schema);
@@ -325,87 +428,19 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
           if (this._stylePopup) {
             //handle save style object part here
             if (undefined !== val) {
-              const { dispatch } = this.props.editorView;
               // [FS] IRAD-1112 2020-12-14
               // Issue fix: Duplicate style created while modified the style name.
               delete val.runtime;
               if (1 === mode) {
                 // update
-                delete val.editorView;
-                let tr;
-                saveStyle(val)
-                  .then((result) => {
-                  if (result) {
-                    //in bladelicitruntime, the response of the saveStyle() changed from list to a object
-                    //so need to add that style object to the current style list
-                    if (!Array.isArray(result)) {
-                      result = addStyleToList(result);
-                    }
-                    setStyles(result);
-                    result.forEach((obj) => {
-                      if (val.styleName === obj.styleName) {
-                        tr = updateDocument(
-                          this.props.editorState,
-                          this.props.editorState.tr,
-                          val.styleName,
-                          obj
-                        );
-                      }
-                    });
-                    if (tr) {
-                      dispatch(tr);
-                    }
-                  }
-                  this.props.editorView.focus();
-                  this._stylePopup.close();
-                  this._stylePopup = null;
-                })
-                  .catch(console.warn);
+                this.handleEditModeSave(val);
               } else {
                 // rename
-                renameStyle(this._styleName, val.styleName)
-                  .then((result) => {
-                  // [FS] IRAD-1133 2021-01-06
-                  // Issue fix: After modify a custom style, the modified style not applied to the paragraph.
-
-                  if (null != result) {
-                    let tr;
-                    delete val.editorView;
-                    saveStyle(val)
-                      .then((result) => {
-                      if (result) {
-                        //in bladelicitruntime, the response of the saveStyle() changed from list to a object
-                        //so need to add that style object to the current style list
-                        if (!Array.isArray(result)) {
-                          result = addStyleToList(result);
-                        }
-                        setStyles(result);
-                        result.forEach((obj) => {
-                          if (val.styleName === obj.styleName) {
-                            tr = this.renameStyleInDocument(
-                              this.props.editorState,
-                              this.props.editorState.tr,
-                              this._styleName,
-                              val.styleName
-                            );
-                          }
-                        });
-                        if (tr) {
-                          dispatch(tr);
-                        }
-                      }
-                      this.props.editorView.focus();
-                      this._stylePopup.close();
-                      this._stylePopup = null;
-                    })
-                      .catch(console.warn);
-                  }
-                })
-                  .catch(console.warn);
+                this.handleRenameModeSave(val);
               }
             }
           }
-          this.props.editorView.focus();
+          this.props.editorView.focus?.();
         },
       }
     );
@@ -474,13 +509,13 @@ export class CustomMenuUI extends React.PureComponent<any, any> {
           );
         }
 
-        HEADING_NAMES.forEach((obj) => {
+        for (const obj of HEADING_NAMES) {
           if (RESERVED_STYLE_NONE != obj.styleName)
             HEADING_COMMANDS[obj.styleName] = new CustomStyleCommand(
               obj,
               obj.styleName
             );
-        });
+        };
       }
       return [HEADING_COMMANDS];
     }

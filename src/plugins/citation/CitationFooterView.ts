@@ -1,6 +1,6 @@
 /**
  * @license MIT
- * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { EditorView } from 'prosemirror-view';
@@ -49,7 +49,7 @@ export class CitationFooterView {
   findElementByObjectId(root: Element, id: string): Element {
     const tags = ['p', 'div.tableWrapper', 'ul'];
     let element: Element;
-    tags.forEach((tag) => {
+    for (const tag of tags) {
       const elements: Element[] = Array.from(root?.querySelectorAll(tag) || []);
       const e = elements.find((value) => {
         const elementWithDesc = value as ElementWithPmViewDesc;
@@ -59,7 +59,7 @@ export class CitationFooterView {
       if (e) {
         element = e;
       }
-    });
+    };
 
     return element;
   }
@@ -143,16 +143,16 @@ export class CitationFooterView {
     });
     citations.sort((a, b) => a.pos - b.pos);
     (this.dom as HTMLElement).innerText = '';
-    citations.forEach((citation) => {
+    for (const citation of citations) {
       const content = document.createElement('p');
       content.innerText = citation.citationText;
       content.setAttribute('refID', citation.refId);
       content.setAttribute('citationID', citation.citationId);
       content.setAttribute('citation-from', citation.objectId);
       this.dom.appendChild(content);
-    });
+    };
     if (citations.length > 0) {
-      this.lastAddedCitation = citations[citations.length - 1].citationText;
+      this.lastAddedCitation = citations.at(-1)!.citationText;
     }
   }
 
