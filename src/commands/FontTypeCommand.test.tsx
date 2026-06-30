@@ -9,9 +9,9 @@ import {Schema, Node} from 'prosemirror-model';
 import {schema} from 'prosemirror-test-builder';
 import * as applymark from './applyMark';
 import {Transform} from 'prosemirror-transform';
-import findActiveFontType from '../licit/findActiveFontType';
+import findActiveFontType from './findActiveFontType';
 
-jest.mock('../licit/findActiveFontType', () => ({
+jest.mock('./findActiveFontType', () => ({
   __esModule: true,
   default: jest.fn(),
 }));
@@ -284,7 +284,7 @@ describe('FontTypeCommand (group 2)', () => {
         }
       },
     } as unknown as EditorState;
-    plugin = new FontTypeCommand(null as unknown as string);
+    plugin = new FontTypeCommand(null);
     const test = plugin.execute(state, (_x) => {
       return '';
     });

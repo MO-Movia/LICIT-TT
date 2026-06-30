@@ -5,13 +5,13 @@
 
 import {EditorState, TextSelection} from 'prosemirror-state';
 import {schema} from 'prosemirror-schema-basic';
-import { MARK_FONT_TYPE } from '../commands/MarkNames';
-import { HEADING } from '../commands/NodeNames';
+import { MARK_FONT_TYPE } from './MarkNames';
+import { HEADING } from './NodeNames';
 import findActiveFontType from './findActiveFontType';
-import findActiveMark from './findActiveMark';
-import FontTypeMarkSpec from './specs/fontTypeMarkSpec';
+import findActiveMark from '../licit/findActiveMark';
+import FontTypeMarkSpec from '../licit/specs/fontTypeMarkSpec';
 
-jest.mock('./findActiveMark', () => jest.fn());
+jest.mock('../licit/findActiveMark', () => jest.fn());
 
 const createState = (selection, storedMarks = []) => {
   return {

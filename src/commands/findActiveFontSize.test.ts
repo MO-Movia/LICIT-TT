@@ -5,14 +5,14 @@
 
 import {EditorState, TextSelection} from 'prosemirror-state';
 import {schema} from 'prosemirror-schema-basic';
-import { MARK_FONT_SIZE } from '../commands/MarkNames';
-import { HEADING } from '../commands/NodeNames';
+import { MARK_FONT_SIZE } from './MarkNames';
+import { HEADING } from './NodeNames';
 import findActiveFontSize from './findActiveFontSize';
-import findActiveMark from './findActiveMark';
+import findActiveMark from '../licit/findActiveMark';
 import {findParentNodeOfType} from 'prosemirror-utils';
-import StrongMarkSpec from './specs/strongMarkSpec';
+import StrongMarkSpec from '../licit/specs/strongMarkSpec';
 
-jest.mock('./findActiveMark', () => jest.fn());
+jest.mock('../licit/findActiveMark', () => jest.fn());
 // Mock the module and findParentNodeOfType
 jest.mock('prosemirror-utils', (): typeof import('prosemirror-utils') => ({
   ...jest.requireActual('prosemirror-utils'),
@@ -57,6 +57,17 @@ describe('findActiveFontSize', () => {
 
     const state = createState(selection, storedMarks);
     expect(findActiveFontSize(state)).toBe('18');
+  });
+
+  it('returns default size when stored mark has no point size', () => {
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', null, [schema.text('Test text')]),
+    ]);
+    const selection = TextSelection.create(doc, 1);
+    const storedMarks = [{type: StrongMarkSpec, attrs: {pt: 0}}];
+
+    const state = createState(selection, storedMarks);
+    expect(findActiveFontSize(state)).toBe('11');
   });
 
   it('should return default font size if $cursor.marks has value', () => {
@@ -176,6 +187,24 @@ describe('findActiveFontSize', () => {
       empty: false,
     });
     expect(findActiveFontSize(state)).toBe(18);
+  });
+
+  it('returns default size for an unmapped heading level', () => {
+    (findActiveMark as jest.Mock).mockReturnValue(null);
+    (findParentNodeOfType as jest.Mock).mockReturnValue(
+      jest.fn().mockReturnValue({
+        node: {attrs: {level: '7'}},
+      })
+    );
+
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', null, [schema.text('Hello, world!')]),
+    ]);
+    const state = createState({
+      ...EditorState.create({doc}).selection,
+      empty: false,
+    });
+    expect(findActiveFontSize(state)).toBe('11');
   });
 
   it('returns default size if no heading or mark is found', () => {

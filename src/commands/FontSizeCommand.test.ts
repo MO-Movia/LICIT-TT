@@ -11,9 +11,9 @@ import {schema} from 'prosemirror-test-builder';
 import {Transform} from 'prosemirror-transform';
 import * as applymark from './applyMark';
 import * as ismarkcommandenabled from './isTextStyleMarkCommandEnabled';
-import findActiveFontSize from '../licit/findActiveFontSize';
+import findActiveFontSize from './findActiveFontSize';
 
-jest.mock('../licit/findActiveFontSize', () => ({
+jest.mock('./findActiveFontSize', () => ({
   __esModule: true,
   default: jest.fn(),
 }));
@@ -123,7 +123,7 @@ describe('FontSizeCommand', () => {
   });
 
   it('should handle when pt is undefined', () => {
-    plugin._pt = undefined as unknown as number;
+    plugin._pt = undefined;
     jest
       .spyOn(TextSelection, 'create')
       .mockReturnValue({} as unknown as TextSelection);

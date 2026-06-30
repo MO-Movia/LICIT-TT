@@ -6,9 +6,9 @@
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { findParentNodeOfType } from 'prosemirror-utils';
 
-import { MARK_FONT_SIZE } from '../commands/MarkNames';
-import { HEADING } from '../commands/NodeNames';
-import findActiveMark from './findActiveMark';
+import { MARK_FONT_SIZE } from './MarkNames';
+import { HEADING } from './NodeNames';
+import findActiveMark from '../licit/findActiveMark';
 
 // This should map to `--czi-content-font-size` at `czi-editor.css`.
 const FONT_PT_SIZE_DEFAULT = 11;

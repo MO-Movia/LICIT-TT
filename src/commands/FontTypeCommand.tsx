@@ -13,7 +13,7 @@ import * as React from 'react';
 import {MARK_FONT_TYPE} from './MarkNames';
 import {applyMark, updateMarksAttrs} from './applyMark';
 import { UICommand } from '../core';
-import findActiveFontType from '../licit/findActiveFontType';
+import findActiveFontType from './findActiveFontType';
 
 function setFontType(
   tr: Transform,
