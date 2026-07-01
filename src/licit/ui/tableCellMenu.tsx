@@ -9,7 +9,6 @@ import * as React from 'react';
 
 import CommandMenuButton from './commandMenuButton';
 import {TABLE_COMMANDS_GROUP} from './editorToolbarConfig';
-import Icon from './icon';
 
 type TableCellMenuProps = {
   editorState: EditorState;
@@ -40,13 +39,13 @@ class TableCellMenu extends React.PureComponent<TableCellMenuProps> {
 
     return (
       <CommandMenuButton
-        className="czi-table-cell-menu"
+        className="czi-table-cell-menu licit-block-control-trigger"
         commandGroups={cmdGrps}
         dispatch={editorView.dispatch}
         editorState={editorState}
         editorView={editorView}
-        icon={Icon.get('icon_edit')}
-        title="Edit"
+        icon={<span aria-hidden="true">{'\u2630'}</span>}
+        title="Table options"
       />
     );
   }

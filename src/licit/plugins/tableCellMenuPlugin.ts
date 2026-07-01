@@ -14,8 +14,14 @@ import isElementFullyVisible from '../isElementFullyVisible';
 import {EditorViewEx} from '../constants';
 import {CellSelection} from 'prosemirror-tables';
 
+function findCellElement(node: Node): HTMLElement | null {
+  const element =
+    node instanceof HTMLElement ? node : node.parentElement;
+  return element?.closest('td, th') || null;
+}
+
 class TableCellTooltipView {
-  _cellElement: Node | null;
+  _cellElement: HTMLElement | null;
   _popUp = null;
   _scrollHandle = null;
   _menu = null;
@@ -40,7 +46,7 @@ class TableCellTooltipView {
       return;
     }
 
-    let cellEl = domFound.node;
+    let cellEl = findCellElement(domFound.node);
     const popUp = this._popUp;
     let actionNode = null;
     if (result && state.selection instanceof CellSelection) {
@@ -53,7 +59,7 @@ class TableCellTooltipView {
       actionNode,
     };
 
-    if (cellEl && !isElementFullyVisible(cellEl as HTMLElement)) {
+    if (cellEl && !isElementFullyVisible(cellEl)) {
       cellEl = null;
     }
 
@@ -71,7 +77,7 @@ class TableCellTooltipView {
       // Does not allow Table Menu Popuup button in disable mode
       if (!view.disabled) {
         this._popUp = createPopUp(TableCellMenu, viewPops, {
-          anchor: cellEl as Element,
+          anchor: cellEl,
           autoDismiss: false,
           onClose: this._onClose,
           position: atAnchorTopRight,
@@ -91,7 +97,7 @@ class TableCellTooltipView {
     if (!cellEl) {
       return;
     }
-    this._scrollHandle = bindScrollHandler(cellEl as Element, this._onScroll);
+    this._scrollHandle = bindScrollHandler(cellEl, this._onScroll);
   };
 
   _onClose = (): void => {

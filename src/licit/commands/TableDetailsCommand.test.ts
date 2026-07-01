@@ -9,14 +9,35 @@ import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 import {UICommand} from '../../core';
 import TableInsertCommand from './tableInsertCommand';
-import {Schema} from 'prosemirror-model';
+import {Node as ProseMirrorNode, Schema} from 'prosemirror-model';
 import {Editor} from '@tiptap/react';
+import {createPopUp} from '../../commands';
+import TableDetailsCommand from './TableDetailsCommand';
 
 jest.mock('../ui/tableGridSizeEditor', () => {
   return jest.fn(() => '<div>Mocked Table Grid Size Editor</div>');
 });
 
 jest.mock('nullthrows', () => jest.fn(<T>(val: T) => val), {virtual: true});
+
+jest.mock('../../commands', () => {
+  const actual = jest.requireActual<typeof import('../../commands')>(
+    '../../commands'
+  );
+
+  return {
+    ...actual,
+    createPopUp: jest.fn((
+      _component,
+      _props,
+      options: {onClose?: (value?: unknown) => void} | undefined
+    ) => ({
+      close: jest.fn((value?: unknown) => {
+        options?.onClose?.(value);
+      }),
+    })),
+  };
+});
 
 describe('TableInsertCommand', () => {
   let command;
@@ -268,5 +289,337 @@ describe('TableInsertCommand', () => {
       const result = command.executeCustom(editorState, mockTransform, 0, 1);
       expect(result).toBe(mockTransform);
     });
+  });
+});
+
+type MockEditorView = EditorView & {
+  dispatch: jest.Mock;
+  focus: jest.Mock;
+};
+
+const schema = new Schema({
+  nodes: {
+    doc: {content: 'block+'},
+    text: {group: 'inline'},
+    paragraph: {content: 'inline*', group: 'block'},
+    table: {
+      attrs: {
+        noOfColumns: {default: null},
+        tableHeight: {default: null},
+      },
+      content: 'table_row+',
+      group: 'block',
+      tableRole: 'table',
+    },
+    table_row: {
+      attrs: {
+        rowHeight: {default: null},
+        rowWidth: {default: null},
+      },
+      content: 'table_cell+',
+      tableRole: 'row',
+    },
+    table_cell: {
+      attrs: {
+        colspan: {default: 1},
+        rowspan: {default: 1},
+        colwidth: {default: null},
+        cellWidth: {default: null},
+        cellStyle: {default: null},
+        fontSize: {default: null},
+        letterSpacing: {default: null},
+        marginTop: {default: null},
+        MarginBottom: {default: null},
+      },
+      content: 'paragraph+',
+      tableRole: 'cell',
+    },
+    blockquote: {
+      content: 'paragraph+',
+      group: 'block',
+    },
+  },
+});
+
+function createTableDoc(): ProseMirrorNode {
+  const p = (text: string) => schema.nodes.paragraph.create(null, schema.text(text));
+  const cell = (text: string) => schema.nodes.table_cell.create(null, [p(text)]);
+  const row = (first: string, second: string) =>
+    schema.nodes.table_row.create(null, [cell(first), cell(second)]);
+
+  return schema.nodes.doc.create(null, [
+    schema.nodes.table.create(
+      {noOfColumns: 2, tableHeight: '120px'},
+      [row('a', 'b'), row('c', 'd')]
+    ),
+  ]);
+}
+
+function findTextPos(doc: ProseMirrorNode, text: string): number {
+  let found = -1;
+  doc.descendants((node, pos) => {
+    if (node.isText && node.text === text) {
+      found = pos;
+      return false;
+    }
+    return true;
+  });
+  return found;
+}
+
+function createState(doc = createTableDoc(), text = 'a'): EditorState {
+  return EditorState.create({
+    doc,
+    schema,
+    selection: TextSelection.create(doc, findTextPos(doc, text)),
+  });
+}
+
+function createTableDom(): {
+  table: HTMLTableElement;
+  td: HTMLTableCellElement;
+  text: Text;
+} {
+  const table = document.createElement('table');
+  const tbody = document.createElement('tbody');
+  const tr = document.createElement('tr');
+  const td = document.createElement('td');
+  const text = document.createTextNode('a');
+  td.appendChild(text);
+  tr.appendChild(td);
+  tbody.appendChild(tr);
+  table.appendChild(tbody);
+  table.getBoundingClientRect = jest.fn(
+    () => ({width: 222, height: 111}) as DOMRect
+  );
+  td.getBoundingClientRect = jest.fn(
+    () => ({width: 55, height: 44}) as DOMRect
+  );
+  return {table, td, text};
+}
+
+function createView(state = createState()): MockEditorView {
+  const {table, text} = createTableDom();
+  return {
+    state,
+    dispatch: jest.fn(),
+    focus: jest.fn(),
+    domAtPos: jest.fn((pos: number) => {
+      if (pos === state.selection.from) {
+        return {node: text, offset: 0};
+      }
+      return {node: table, offset: 0};
+    }),
+  } as unknown as MockEditorView;
+}
+
+describe('TableDetailsCommand', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('opens table details with table, row and cell metadata', () => {
+    const command = new TableDetailsCommand();
+    const state = createState();
+    const view = createView(state);
+
+    expect(command.execute(state, jest.fn(), view)).toBe(true);
+
+    expect(createPopUp).toHaveBeenCalled();
+    const props = (createPopUp as jest.Mock).mock.calls[0][1];
+    expect(props.table).toEqual({
+      width: 222,
+      height: 111,
+      noOfColumns: 2,
+      tableHeight: '120px',
+    });
+    expect(props.row).toEqual({rowHeight: null, rowWidth: null});
+    expect(props.cell).toMatchObject({
+      width: 55,
+      height: 44,
+      cellWidth: null,
+      cellStyle: null,
+    });
+
+    props.close();
+    props.onApply({
+      noOfColumns: '3',
+      tableHeight: '90px',
+      rowHeight: '24px',
+      rowWidth: '100%',
+      cellWidth: '88px',
+      cellStyle: 'highlight',
+      fontSize: '12pt',
+      letterSpacing: '1px',
+      marginTop: '2px',
+      MarginBottom: '3px',
+    });
+
+    expect(view.dispatch).toHaveBeenCalled();
+    expect(view.focus).toHaveBeenCalled();
+  });
+
+  it('returns false when execute cannot locate required context', () => {
+    const command = new TableDetailsCommand();
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.blockquote.create(null, [
+        schema.nodes.paragraph.create(null, schema.text('outside')),
+      ]),
+    ]);
+    const state = createState(doc, 'outside');
+    const view = createView(state);
+    view.domAtPos = jest.fn(() => ({node: document.createTextNode('x'), offset: 0}));
+
+    expect(command.execute(state, jest.fn(), null)).toBe(false);
+    expect(command.execute(state, jest.fn(), view)).toBe(false);
+  });
+
+  it('covers lookup, DOM and normalization helper branches', async () => {
+    const command = new TableDetailsCommand();
+    const state = createState();
+    const view = createView(state);
+
+    expect(command.isActive(state)).toBe(false);
+    expect(command.isEnabled(state)).toBe(true);
+    await expect(command.waitForUserInput(state, jest.fn(), view, null)).resolves.toBe(
+      undefined
+    );
+    expect(command.executeWithUserInput(state, jest.fn(), view, 'x')).toBe(false);
+    const customTr = state.tr;
+    const customStyleTr = state.tr;
+    expect(command.executeCustom(state, customTr, 0, 1)).toBe(customTr);
+    expect(command.executeCustomStyleForTable(state, customStyleTr)).toBe(
+      customStyleTr
+    );
+
+    expect(command.getNodeType(schema, ['missing', 'table'])).toBe(
+      schema.nodes.table
+    );
+    expect(command.getNodeType(schema, ['missing'])).toBeNull();
+    expect(command.getNodeTypes(schema, ['missing', 'table_cell'])).toEqual([
+      schema.nodes.table_cell,
+    ]);
+    expect(command.getParentNodeRef(state.selection, null)).toBeNull();
+    expect(command.getParentNodeRefByTypes(state.selection, [])).toBeNull();
+    expect(command.getParentNodeRef(state.selection, schema.nodes.table)).not.toBeNull();
+    expect(
+      command.getParentNodeRefByTypes(state.selection, [schema.nodes.table_cell])
+    ).not.toBeNull();
+
+    expect(command.normalizeString('  value  ')).toBe('value');
+    expect(command.normalizeString('   ')).toBeNull();
+    expect(command.normalizeNumber('42')).toBe(42);
+    expect(command.normalizeNumber('bad')).toBeNull();
+    expect(command.normalizeSizeAsNumber('12.6px')).toBe(13);
+    expect(command.normalizeSizeAsNumber('0')).toBeNull();
+    expect(command.normalizeSizeAsNumber('bad')).toBeNull();
+
+    expect(command.findTableDOM(view, 1)).not.toBeNull();
+    view.domAtPos = jest.fn(() => ({node: document.createTextNode('x'), offset: 0}));
+    expect(command.findTableDOM(view, 1)).toBeNull();
+    expect(command.getSelectedCellDOM(view)).toBeNull();
+  });
+
+  it('covers selected cell DOM element and non-text selection paths', () => {
+    const command = new TableDetailsCommand();
+    const state = createState();
+    const view = createView(state);
+    const td = document.createElement('td');
+    view.domAtPos = jest.fn(() => ({node: td, offset: 0}));
+
+    expect(command.getSelectedCellDOM(view)).toBe(td);
+
+    const nonTextView = {
+      ...view,
+      state: {
+        ...state,
+        selection: {},
+      },
+    } as unknown as MockEditorView;
+    expect(command.getSelectedCellDOM(nonTextView)).toBeNull();
+  });
+
+  it('covers applyColumnWidth guard branches', () => {
+    const command = new TableDetailsCommand();
+    const state = createState();
+    const tableRef = command.getParentNodeRef(
+      state.selection,
+      schema.nodes.table
+    );
+    const cellRef = command.getParentNodeRefByTypes(state.selection, [
+      schema.nodes.table_cell,
+    ]);
+
+    expect(tableRef).not.toBeNull();
+    expect(cellRef).not.toBeNull();
+
+    if (!tableRef || !cellRef) {
+      throw new Error('Expected table and cell refs for coverage setup');
+    }
+
+    const missingTableTr = state.tr;
+    const missingTableRef = {...tableRef, pos: state.doc.content.size};
+    expect(command.applyColumnWidth(missingTableTr, missingTableRef, cellRef, 50)).toBe(
+      missingTableTr
+    );
+
+    const notTableTr = state.tr;
+    const notTableRef = {...tableRef, pos: cellRef.pos, node: cellRef.node};
+    expect(command.applyColumnWidth(notTableTr, notTableRef, cellRef, 50)).toBe(
+      notTableTr
+    );
+
+    const missingCellTr = state.tr;
+    const missingCellRef = {...cellRef, pos: tableRef.pos};
+    expect(command.applyColumnWidth(missingCellTr, tableRef, missingCellRef, 50)).toBe(
+      missingCellTr
+    );
+
+    const updated = command.applyColumnWidth(state.tr, tableRef, cellRef, 77);
+    expect(updated.doc.nodeAt(cellRef.pos)?.attrs.colwidth).toEqual([77]);
+  });
+
+  it('applies table and row attributes without a selected cell', () => {
+    const command = new TableDetailsCommand();
+    const state = createState();
+    const view = createView(state);
+    const tableRef = command.getParentNodeRef(
+      state.selection,
+      schema.nodes.table
+    );
+    const rowRef = command.getParentNodeRef(state.selection, schema.nodes.table_row);
+    if (!tableRef) {
+      throw new Error('Expected table ref for coverage setup');
+    }
+
+    command.applyAttributeInputs(
+      view,
+      {table: tableRef, row: rowRef, cell: null},
+      {
+        noOfColumns: '',
+        tableHeight: '',
+        rowHeight: '30px',
+        rowWidth: 'auto',
+        cellWidth: '',
+        cellStyle: '',
+        fontSize: '',
+        letterSpacing: '',
+        marginTop: '',
+        MarginBottom: '',
+      }
+    );
+
+    expect(view.dispatch).toHaveBeenCalled();
+    expect(view.focus).toHaveBeenCalled();
+  });
+
+  it('closes an active popup on cancel', () => {
+    const command = new TableDetailsCommand();
+    const close = jest.fn();
+    command._popUp = {close};
+
+    command.cancel();
+
+    expect(close).toHaveBeenCalledWith(undefined);
   });
 });

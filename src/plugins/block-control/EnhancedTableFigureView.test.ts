@@ -74,11 +74,14 @@ describe('EnhancedTableFigureView', () => {
       expect(view.dom.getAttribute('data-figure-type')).toBe('table');
 
       expect(view.contentDOM).toBeDefined();
-      expect(view.contentDOM.parentElement).toBe(view.dom);
+      expect(view.contentScrollDOM.parentElement).toBe(view.dom);
+      expect(view.contentDOM.parentElement).toBe(view.contentScrollDOM);
       expect(view.contentDOM.className).toBe('enhanced-table-figure-content');
 
-      expect(view.addNotesButton).toBeDefined();
       expect(view.selectHandle).toBeDefined();
+      expect(view.selectHandle.getAttribute('aria-label')).toBe(
+        'Enhanced content options'
+      );
     });
 
     it('should set correct styles for portrait orientation', () => {
@@ -149,39 +152,9 @@ describe('EnhancedTableFigureView', () => {
   });
 
   describe('updateNotesTrigger', () => {
-    it('should show add notes button when no notes exist and figureType is table', () => {
+    it('should remain a no-op compatibility shim', () => {
       (mockNode.forEach as jest.Mock).mockImplementation(() => undefined); // Simulate no notes
-      view.updateNotesTrigger();
-      expect(view.addNotesButton.style.display).toBe('none');
-    });
-
-    it('should hide add notes button when notes exist', () => {
-      (mockNode.forEach as jest.Mock).mockImplementation((callback) => {
-        callback({
-          type: {
-            name: 'enhanced_table_figure_notes',
-          },
-        });
-      });
-      view.updateNotesTrigger();
-      expect(view.addNotesButton.style.display).toBe('none');
-    });
-
-    it('should hide add notes button for non-table/figure types', () => {
-      const otherNode = {
-        ...mockNode,
-        attrs: {
-          ...mockNode.attrs,
-          figureType: 'other',
-        },
-      };
-      const otherView = new EnhancedTableFigureView(
-        otherNode as unknown as ProseMirrorNode,
-        mockView,
-        mockGetPos
-      );
-      otherView.updateNotesTrigger();
-      expect(otherView.addNotesButton.style.display).toBe('none');
+      expect(view.updateNotesTrigger()).toBeUndefined();
     });
   });
 
@@ -201,41 +174,50 @@ describe('EnhancedTableFigureView', () => {
   });
 
   describe('destroy', () => {
-    it('should close inline editor on destroy', () => {
-      // Mock that we have an inline editor
-      view._inlineEditor = {close: jest.fn()} as unknown as NonNullable<
-        EnhancedTableFigureView['_inlineEditor']
-      >;
+    it('should close open menu and crop editor on destroy', () => {
+      const menu = {close: jest.fn()};
+      const cropEditor = {close: jest.fn()};
+      view._menu = menu as unknown as EnhancedTableFigureView['_menu'];
+      view._cropEditor =
+        cropEditor as unknown as EnhancedTableFigureView['_cropEditor'];
 
       view.destroy();
-      expect(view._inlineEditor?.close).toHaveBeenCalled();
+      expect(menu.close).toHaveBeenCalled();
+      expect(cropEditor.close).toHaveBeenCalled();
     });
   });
 
   describe('stopEvent', () => {
-    it('should always return false', () => {
-      expect(view.stopEvent(new Event('click'))).toBe(false);
+    it('should stop events from the hamburger handle', () => {
+      const event = new Event('click');
+      Object.defineProperty(event, 'target', {
+        value: view.selectHandle,
+      });
+
+      expect(view.stopEvent(event)).toBe(true);
+    });
+
+    it('should allow non-handle events through', () => {
+      const event = new Event('click');
+      Object.defineProperty(event, 'target', {
+        value: document.createElement('div'),
+      });
+
+      expect(view.stopEvent(event)).toBe(false);
     });
   });
 
-  describe('_renderInlineEditor', () => {
-    it('should not render if element not active', () => {
-      jest.spyOn(document, 'getElementById').mockReturnValue({
-        getAttribute: () => 'false',
-      } as unknown as HTMLElement);
+  describe('menu items', () => {
+    it('should expose table actions without image-only actions for table figures', () => {
+      const items = view['getMenuItems']().filter((item) => !item.hidden);
+      const ids = items.map((item) => item.id);
 
-      view['_renderInlineEditor']();
-      expect(view._inlineEditor).toBeUndefined();
-    });
-
-    it('should create popup when element is active', () => {
-      jest.spyOn(document, 'getElementById').mockReturnValue({
-        getAttribute: () => 'true',
-        closest: () => document.createElement('div'),
-      } as unknown as HTMLElement);
-
-      view.selectNode(); // This will call _renderInlineEditor
-      expect(view._inlineEditor).toBeUndefined();
+      expect(ids).toEqual([
+        'insert-above',
+        'insert-below',
+        'add-notes',
+        'delete',
+      ]);
     });
   });
 });
