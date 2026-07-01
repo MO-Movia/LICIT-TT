@@ -30,6 +30,7 @@ import {
   setTextAlign,
   setTextLineSpacing,
   atViewportCenter,
+  atAnchorRight,
   createPopUp,
   HeadingCommand,
 } from '../../../commands';
@@ -354,7 +355,7 @@ export class CustomMenuUI extends React.PureComponent<
   _onUIEnter = (command: UICommand, event: SyntheticEvent<Element>) => {
     if (command.shouldRespondToUIEvent(event)) {
       // check the mouse clicked on down arror to show sub menu
-      if (event.currentTarget.className === 'czi-custom-menu-item edit-icon') {
+      if (event.currentTarget.classList.contains('edit-icon')) {
         this.showSubMenu(command, event);
       } else {
         this._execute(command, event);
@@ -390,6 +391,7 @@ export class CustomMenuUI extends React.PureComponent<
         anchor,
         autoDismiss: true,
         IsChildDialog: true,
+        position: atAnchorRight,
         onClose: (val) => {
           if (this._popUp) {
             this._popUp = null;

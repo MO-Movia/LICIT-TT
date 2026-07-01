@@ -18,9 +18,12 @@ import { getCustomStyleByName, getHidenumberingFlag } from './customStyle';
 
 // This assumes that every 36pt maps to one indent level.
 export const ATTRIBUTE_PREFIX = 'prefix';
+export const ATTRIBUTE_NUMBERING_STYLE = 'numbering-style';
 export const ATTRIBUTE_TOT = 'tot';
 export const ATTRIBUTE_TOF = 'tof';
 export const ATTRIBUTE_HIDENUMBERING = 'hideNumbering';
+export const ATTRIBUTE_HIDECAPCO = 'hideCapco';
+export const ATTRIBUTE_CONTNUMBER = 'contNumber';
 export const INDENT_MARGIN_PT_SIZE = 36;
 export const MIN_INDENT_LEVEL = 0;
 export const MAX_INDENT_LEVEL = 7;
@@ -171,14 +174,26 @@ function toDOM(base: toDOMFn | undefined, node: Node) {
     bulletDetails,
     isListStyle,
     prefix,
+    numberingStyle,
     hideNumbering,
+    hideCapco,
+    contNumber,
     tot,
     tof,
   } = getStyle(node.attrs);
   applyStyleDOMAttrs(output, style);
   applyStyleLevelDOMAttrs(output, node, styleLevel, isListStyle);
   applyIndentDOMAttrs(output, node, indentPosition, indentOverriden);
-  applyNumberingDOMAttrs(output, prefix, tot, tof, hideNumbering);
+  applyNumberingDOMAttrs(
+    output,
+    prefix,
+    numberingStyle,
+    tot,
+    tof,
+    hideNumbering,
+    hideCapco,
+    contNumber
+  );
   applyBulletDOMAttrs(output, bulletDetails);
 
   return output;
@@ -233,12 +248,18 @@ function applyIndentDOMAttrs(
 function applyNumberingDOMAttrs(
   output: DOMOutputSpec,
   prefix: string,
+  numberingStyle: string,
   tot: boolean,
   tof: boolean,
-  hideNumbering: boolean
+  hideNumbering: boolean,
+  hideCapco?: boolean,
+  contNumber?: boolean
 ) {
   if (prefix) {
     output[1][ATTRIBUTE_PREFIX] = prefix;
+  }
+  if (numberingStyle) {
+    output[1][ATTRIBUTE_NUMBERING_STYLE] = numberingStyle;
   }
   if (tot) {
     output[1][ATTRIBUTE_TOT] = tot;
@@ -248,6 +269,12 @@ function applyNumberingDOMAttrs(
   }
   if (hideNumbering) {
     output[1][ATTRIBUTE_HIDENUMBERING] = hideNumbering;
+  }
+  if (hideCapco !== undefined) {
+    output[1][ATTRIBUTE_HIDECAPCO] = hideCapco;
+  }
+  if (contNumber !== undefined) {
+    output[1][ATTRIBUTE_CONTNUMBER] = contNumber;
   }
 }
 
@@ -430,9 +457,12 @@ function createStyleData(align, lineSpacing) {
     bulletDetails: undefined,
     isListStyle: false,
     prefix: '',
+    numberingStyle: '',
     tot: false,
     tof: false,
     hideNumbering: false,
+    hideCapco: undefined,
+    contNumber: undefined,
   };
 }
 
@@ -458,7 +488,9 @@ function applyCounterStyleData(styleData, styles) {
   styleData.tot = styles.tot;
   styleData.tof = styles.tof;
   styleData.prefix = styles.prefixValue;
+  styleData.numberingStyle = styles.numberingStyle || '';
   styleData.hideNumbering = styles.hideNumbering;
+  styleData.contNumber = styles.contNumber;
   styleData.style += refreshCounters(styleData.styleLevel, styleData.isListStyle);
 }
 
@@ -477,6 +509,7 @@ function applyCustomStyleData(styleData, align, styleProps) {
   }
 
   styleData.style = applyParagraphSpacingStyle(styleData.style, styles);
+  styleData.hideCapco = styles.hideCapco;
   applyCounterStyleData(styleData, styles);
 }
 

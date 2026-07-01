@@ -1,14 +1,14 @@
 /**
  * @license MIT
- * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { findParentNodeOfType } from 'prosemirror-utils';
 
-import { MARK_FONT_SIZE } from '../commands/MarkNames';
-import { HEADING } from '../commands/NodeNames';
-import findActiveMark from './findActiveMark';
+import { MARK_FONT_SIZE } from './MarkNames';
+import { HEADING } from './NodeNames';
+import findActiveMark from '../licit/findActiveMark';
 
 // This should map to `--czi-content-font-size` at `czi-editor.css`.
 const FONT_PT_SIZE_DEFAULT = 11;
@@ -37,7 +37,9 @@ export default function findActiveFontSize(state: EditorState): string {
     const storedMarks =
       tr.storedMarks ||
       state.storedMarks ||
-      (selection as TextSelection).$cursor?.marks?.() ||
+      ((selection as TextSelection).$cursor &&
+        (selection as TextSelection).$cursor.marks &&
+        (selection as TextSelection).$cursor.marks()) ||
       [];
     const sm = storedMarks.find((m) => m.type === markType);
     return sm ? String(sm.attrs.pt || defaultSize) : defaultSize;

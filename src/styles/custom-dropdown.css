@@ -4,9 +4,9 @@
   border-style: solid;
   border-width: 1px;
   color: var(--czi-text-color);
-  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.8);
+  box-shadow: 0 8px 16px 0 rgb(0 0 0 / 80%);
   cursor: pointer;
-  font-family: 'Arial', sans-serif;
+  font-family: Arial, sans-serif;
   font-size: 14px;
   min-width: 160px;
   padding: 5px;
@@ -57,31 +57,60 @@
   background-color: var(--czi-bg);
   border-color: var(--czi-molsp-dropbtn-border-color);
   color: var(--czi-text-color);
-  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.8);
+  box-shadow: 0 8px 16px 0 rgb(0 0 0 / 80%);
   border-style: solid;
   border-width: 1px;
   box-sizing: border-box;
-  font-family: 'Arial', sans-serif;
+  font-family: Arial, sans-serif;
   font-size: 14px;
   height: 95px;
   line-height: 0.75;
   width: max-content;
 }
 
+.czi-editor-frameset .molsp-style-edit-menu {
+  border-color: #cfcfcf;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+  height: auto;
+  line-height: normal;
+  min-width: 174px;
+  padding: 8px 0;
+}
+
+.czi-editor-frameset .molsp-style-edit-menu button {
+  background: transparent;
+  border: 0;
+  box-sizing: border-box;
+  color: var(--czi-text-color);
+  cursor: pointer;
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 14px;
+  text-align: left;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.czi-editor-frameset .molsp-style-edit-menu button:hover,
+.czi-editor-frameset .molsp-style-edit-menu button:focus {
+  background-color: var(--czi-button-hover-background-color);
+  outline: none;
+}
+
 .czi-editor-frameset .div-height-large {   
-  height: 71px; 
+  height: 112px; 
 }
 
 .czi-editor-frameset .div-height-small {   
-  height: 25px; 
+  height: 48px; 
 }
 
 .czi-editor-frameset .molsp-dropdown-content a {
   display: block;
-  padding-bottom: 6px;
-  padding-left: 14px;
-  padding-right: 14px;
-  padding-top: 6px;
+  padding: 6px 14px;
   text-decoration: none;
 }
 
