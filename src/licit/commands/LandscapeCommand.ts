@@ -44,7 +44,7 @@ waitForUserInput = (): Promise<null> => Promise.resolve(null);
         if (!type) {
             return false;
         }
-        return $from.node(-1)?.type === type;
+        return this.findLandscapeDepth($from, type) > -1;
     };
 
     private toggleLandscape(
@@ -95,6 +95,11 @@ waitForUserInput = (): Promise<null> => Promise.resolve(null);
         const tableDepth = this.findSharedTableDepth($from, $to);
         if (tableDepth > -1) {
             return this.wrapTableInLandscape(state, dispatch, type, tableDepth);
+        }
+
+        const listDepth = this.findListDepth($from);
+        if (listDepth > -1) {
+            return this.wrapListInLandscape(state, dispatch, type, listDepth);
         }
 
         if (state.selection.empty) {
@@ -204,6 +209,49 @@ waitForUserInput = (): Promise<null> => Promise.resolve(null);
 
     private isTableNode(type: NodeType): boolean {
         return type.name === 'table' || type.spec.tableRole === 'table';
+    }
+
+    private findListDepth($from: ResolvedPos): number {
+        let listDepth = -1;
+        for (let d = $from.depth; d > 0; d--) {
+            if (this.isListNode($from.node(d).type)) {
+                listDepth = d;
+            }
+        }
+        return listDepth;
+    }
+
+    private isListNode(type: NodeType): boolean {
+        return type.name === 'ordered_list' || type.name === 'bullet_list';
+    }
+
+    private wrapListInLandscape(
+        state: EditorState,
+        dispatch: ((tr: Transaction) => void) | undefined,
+        type: NodeType,
+        listDepth: number
+    ): boolean {
+        const { $from } = state.selection;
+        const listNode = $from.node(listDepth);
+        const parent = $from.node(listDepth - 1);
+        const index = $from.index(listDepth - 1);
+
+        if (!parent.canReplaceWith(index, index + 1, type)) {
+            return false;
+        }
+
+        if (dispatch) {
+            const listStart = $from.before(listDepth);
+            const listEnd = $from.after(listDepth);
+            const landscapeNode = type.create(null, listNode.copy(listNode.content));
+            let tr = state.tr.replaceRangeWith(listStart, listEnd, landscapeNode);
+            const mappedPos = tr.mapping.map($from.pos);
+            const safePos = Math.min(Math.max(0, mappedPos), tr.doc.content.size);
+            tr = tr.setSelection(TextSelection.near(tr.doc.resolve(safePos)));
+            dispatch(tr.scrollIntoView());
+        }
+
+        return true;
     }
 
     private wrapTableInLandscape(
