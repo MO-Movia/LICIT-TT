@@ -27,7 +27,7 @@ describe('BlockControlMenu', () => {
       root.render(
         <BlockControlMenu
           {...(includeClose ? { close } : {})}
-          items={items as unknown as BlockControlMenuItem[]}
+          items={items}
         />
       );
     });
@@ -36,11 +36,11 @@ describe('BlockControlMenu', () => {
   };
 
   const clickButton = (id: string) => {
-    const button = container.querySelector(
+    const button = container.querySelector<HTMLButtonElement>(
       `[data-id="${id}"]`
-    ) as HTMLButtonElement;
+    );
     act(() => {
-      button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
   };
 

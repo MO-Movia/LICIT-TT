@@ -104,6 +104,27 @@ function makeState(): EditorState {
   });
 }
 
+const customMarkSchema = new Schema({
+  nodes: schema.spec.nodes,
+  marks: {
+    strong: {},
+    em: {},
+    'mark-text-color': {
+      attrs: { color: { default: null } },
+    },
+    'mark-font-size': {
+      attrs: { pt: { default: null } },
+    },
+    'mark-font-type': {
+      attrs: { name: { default: null } },
+    },
+    'mark-text-highlight': {
+      attrs: { highlightColor: { default: null } },
+    },
+    underline: {},
+  },
+});
+
 describe('CustomStyleCommand', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -263,6 +284,84 @@ describe('CustomStyleCommand helpers', () => {
     expect(csc.compareAttributes(mark, { underline: true })).toBe(true);
   });
 
+  it('compareAttributes covers matching custom mark names', () => {
+    expect(
+      csc.compareAttributes(
+        {
+          type: { name: 'mark-text-color' },
+          attrs: { color: '#123456', overridden: false },
+        },
+        { color: '#123456' }
+      )
+    ).toBe(true);
+    expect(
+      csc.compareAttributes(
+        {
+          type: { name: 'mark-font-size' },
+          attrs: { pt: 14, overridden: false },
+        },
+        { fontSize: 14 }
+      )
+    ).toBe(true);
+    expect(
+      csc.compareAttributes(
+        {
+          type: { name: 'mark-font-type' },
+          attrs: { name: 'Arial', overridden: false },
+        },
+        { fontName: 'Arial' }
+      )
+    ).toBe(true);
+    expect(
+      csc.compareAttributes(
+        {
+          type: { name: 'mark-text-highlight' },
+          attrs: { highlightColor: '#FFFF00', overridden: false },
+        },
+        { textHighlight: '#FFFF00' }
+      )
+    ).toBe(true);
+  });
+
+  it('compareAttributes covers mismatched custom mark attributes', () => {
+    expect(
+      csc.compareAttributes(
+        {
+          type: { name: 'mark-text-color' },
+          attrs: { color: '#000000', overridden: false },
+        },
+        { color: '#FFFFFF' }
+      )
+    ).toBe(false);
+    expect(
+      csc.compareAttributes(
+        {
+          type: { name: 'mark-font-size' },
+          attrs: { pt: 12, overridden: false },
+        },
+        { fontSize: 14 }
+      )
+    ).toBe(false);
+    expect(
+      csc.compareAttributes(
+        {
+          type: { name: 'mark-font-type' },
+          attrs: { name: 'Arial', overridden: false },
+        },
+        { fontName: 'Times' }
+      )
+    ).toBe(false);
+    expect(
+      csc.compareAttributes(
+        {
+          type: { name: 'mark-text-highlight' },
+          attrs: { highlightColor: '#FFFF00', overridden: false },
+        },
+        { textHighlight: '#00FFFF' }
+      )
+    ).toBe(false);
+  });
+
   it('compareMarkWithStyle returns the same transaction and does not modify when style matches', () => {
     const mark = { type: { name: 'em' }, attrs: { overridden: false } };
     const tr = {} as Transform;
@@ -316,6 +415,51 @@ describe('CustomStyleCommand helpers', () => {
 
     const marks = csc.getMarkByStyleName('UndefinedStyle', schema);
     expect(marks.length).toBe(0);
+  });
+
+  it('getMarkByStyleName creates all supported custom marks', () => {
+    mockedCustomstyles.getCustomStyleByName.mockReturnValueOnce({
+      styleName: 'RichStyle',
+      styles: {
+        boldPartial: true,
+        color: '#123456',
+        em: true,
+        fontName: 'Arial',
+        fontSize: '14',
+        strong: true,
+        textHighlight: '#FFFF00',
+        underline: true,
+      },
+    });
+
+    const marks = csc.getMarkByStyleName('RichStyle', customMarkSchema);
+
+    expect(marks.map((mark) => mark.type.name)).toEqual(
+      expect.arrayContaining([
+        'strong',
+        'em',
+        'mark-text-color',
+        'mark-font-size',
+        'mark-font-type',
+        'mark-text-highlight',
+        'underline',
+      ])
+    );
+  });
+
+  it('getMarkByStyleName skips disabled boolean marks', () => {
+    mockedCustomstyles.getCustomStyleByName.mockReturnValueOnce({
+      styles: {
+        boldPartial: false,
+        em: false,
+        strong: false,
+        unknownProp: true,
+      },
+    } as unknown as Style);
+
+    const marks = csc.getMarkByStyleName('DisabledStyle', customMarkSchema);
+
+    expect(marks).toEqual([]);
   });
 });
 
@@ -1241,6 +1385,34 @@ describe('removeAllMarksExceptLink', () => {
   it('handles undefined transform safely', () => {
     expect(() => csc.removeAllMarksExceptLink(0, 10, undefined)).not.toThrow();
   });
+
+  it('removes only eligible marks from document nodes', () => {
+    const removeMark = jest.fn().mockReturnThis();
+    const strongMark = { attrs: {}, type: { name: 'strong' } };
+    const linkMark = { attrs: {}, type: { name: 'link' } };
+    const overrideMark = { attrs: {}, type: { name: 'override' } };
+    const spacerMark = { attrs: {}, type: { name: 'spacer' } };
+    const tr = {
+      doc: {
+        nodesBetween: (_from: number, _to: number, cb) => {
+          cb({ marks: undefined, nodeSize: 1 }, 0);
+          cb(
+            {
+              marks: [strongMark, linkMark, overrideMark, spacerMark],
+              nodeSize: 4,
+            },
+            1
+          );
+        },
+      },
+      removeMark,
+    } as unknown as Transform;
+
+    csc.removeAllMarksExceptLink(0, 5, tr);
+
+    expect(removeMark).toHaveBeenCalledTimes(1);
+    expect(removeMark).toHaveBeenCalledWith(1, 5, strongMark.type);
+  });
 });
 
 describe('removeAllMarksExceptLinkForTableColumnCell', () => {
@@ -1272,6 +1444,32 @@ describe('removeAllMarksExceptLinkForTableColumnCell', () => {
     const tr = state.tr;
     const result = csc.removeAllMarksExceptLinkForTableColumnCell(0, node, tr);
     expect(result).toBeDefined();
+  });
+
+  it('removes eligible child text marks from paragraph cells', () => {
+    const removeMark = jest.fn().mockReturnThis();
+    const strongMark = { attrs: {}, type: { name: 'strong' } };
+    const linkMark = { attrs: {}, type: { name: 'link' } };
+    const overriddenMark = {
+      attrs: { overridden: true },
+      type: { name: 'em' },
+    };
+    const child = {
+      isText: true,
+      marks: [strongMark, linkMark, overriddenMark],
+      nodeSize: 3,
+    };
+    const node = {
+      child: jest.fn(() => child),
+      childCount: 1,
+      type: { name: 'paragraph' },
+    } as unknown as Node;
+    const tr = { removeMark } as unknown as Transform;
+
+    csc.removeAllMarksExceptLinkForTableColumnCell(4, node, tr);
+
+    expect(removeMark).toHaveBeenCalledTimes(1);
+    expect(removeMark).toHaveBeenCalledWith(5, 8, strongMark.type);
   });
 });
 
@@ -1324,6 +1522,23 @@ describe('isCustomStyleAlreadyApplied', () => {
 });
 
 describe('isLevelUpdated', () => {
+  function makeAppliedStyleState(styleName = 'AppliedStyle'): EditorState {
+    return {
+      doc: {
+        nodeSize: 3,
+        nodesBetween: (_from: number, _to: number, cb) => {
+          cb(
+            {
+              attrs: { styleName },
+              content: { size: 1 },
+            },
+            0
+          );
+        },
+      },
+    } as unknown as EditorState;
+  }
+
   it('returns false when the custom style is not already applied in the doc', () => {
     mockedCustomstyles.getCustomStyleByName.mockReturnValue({
       styles: { styleLevel: 1 },
@@ -1349,6 +1564,73 @@ describe('isLevelUpdated', () => {
       styles: { hasNumbering: false },
     } as Style);
     expect(result).toBe(false);
+  });
+
+  it('returns false when applied style keeps numbering and level unchanged', () => {
+    mockedCustomstyles.getCustomStyleByName.mockReturnValue({
+      styles: { styleLevel: 2 },
+    } as Style);
+
+    const result = csc.isLevelUpdated(
+      makeAppliedStyleState(),
+      'AppliedStyle',
+      {
+        styleName: 'AppliedStyle',
+        styles: { hasNumbering: true, styleLevel: 2 },
+      }
+    );
+
+    expect(result).toBe(false);
+  });
+
+  it('returns true when applied style removes numbering', () => {
+    mockedCustomstyles.getCustomStyleByName.mockReturnValue({
+      styles: { styleLevel: 2 },
+    } as Style);
+
+    const result = csc.isLevelUpdated(
+      makeAppliedStyleState(),
+      'AppliedStyle',
+      {
+        styleName: 'AppliedStyle',
+        styles: { hasNumbering: false, styleLevel: 2 },
+      }
+    );
+
+    expect(result).toBe(true);
+  });
+
+  it('returns true when applied style removes styleLevel', () => {
+    mockedCustomstyles.getCustomStyleByName.mockReturnValue({
+      styles: { styleLevel: 2 },
+    } as Style);
+
+    const result = csc.isLevelUpdated(
+      makeAppliedStyleState(),
+      'AppliedStyle',
+      {
+        styleName: 'AppliedStyle',
+        styles: { hasNumbering: true },
+      }
+    );
+
+    expect(result).toBe(true);
+  });
+
+  it('returns true when applied style has no styles object', () => {
+    mockedCustomstyles.getCustomStyleByName.mockReturnValue({
+      styles: { styleLevel: 2 },
+    } as Style);
+
+    const result = csc.isLevelUpdated(
+      makeAppliedStyleState(),
+      'AppliedStyle',
+      {
+        styleName: 'AppliedStyle',
+      }
+    );
+
+    expect(result).toBe(true);
   });
 });
 
@@ -1493,6 +1775,34 @@ describe('addElementEx / addElement', () => {
     );
     expect(result.counter).toBe(0);
     expect(result.level).toBe(1);
+  });
+});
+
+describe('manageElementsAfterSelection', () => {
+  it('stops when the next hierarchy level does not skip a level', () => {
+    mockedCustomstyles.getCustomStyleByName.mockReturnValue({
+      styles: { styleLevel: 1 },
+    } as Style);
+    const state = makeState();
+    const setNodeMarkup = jest.fn().mockReturnThis();
+    const tr = { ...state.tr, setNodeMarkup } as unknown as Transform;
+    const firstNode = {
+      attrs: { styleName: 'Level1' },
+    } as unknown as Node;
+    const secondNode = {
+      attrs: { styleName: 'Level3' },
+    } as unknown as Node;
+
+    csc.manageElementsAfterSelection(
+      [
+        { node: firstNode, pos: 4 },
+        { node: secondNode, pos: 8 },
+      ],
+      state,
+      tr
+    );
+
+    expect(setNodeMarkup).not.toHaveBeenCalled();
   });
 });
 
@@ -1693,6 +2003,106 @@ describe('applyStyleForTableColumnCell', () => {
       1
     );
     expect(result).toBeDefined();
+  });
+
+  it('uses overridden node attrs for align, spacing, and indent commands', () => {
+    const state = makeState();
+    const setNodeMarkup = jest.fn().mockReturnThis();
+    const setSelection = jest.fn().mockReturnThis();
+    const tr = {
+      doc: state.doc,
+      setNodeMarkup,
+      setSelection,
+    } as unknown as Transaction;
+    const node = {
+      attrs: {
+        id: null,
+        overriddenAlign: true,
+        overriddenAlignValue: 'right',
+        overriddenIndent: true,
+        overriddenIndentValue: 6,
+        overriddenLineSpacing: true,
+        overriddenLineSpacingValue: '200%',
+      },
+      childCount: 0,
+      nodeSize: 2,
+      type: { name: 'paragraph' },
+    } as unknown as Node;
+    const styleProp = {
+      styleName: 'OverrideStyle',
+      styles: {
+        align: 'left',
+        indent: 2,
+        lineHeight: '150%',
+      },
+    } as unknown as Style;
+
+    csc.applyStyleForTableColumnCell(
+      styleProp,
+      'OverrideStyle',
+      state,
+      tr,
+      node,
+      1,
+      1
+    );
+
+    expect(setNodeMarkup).toHaveBeenCalledWith(
+      1,
+      undefined,
+      expect.objectContaining({
+        align: 'right',
+        indent: 6,
+        lineSpacing: '200%',
+      })
+    );
+  });
+
+  it('uses style attrs for paragraph spacing and level-based indent commands', () => {
+    const state = makeState();
+    const setNodeMarkup = jest.fn().mockReturnThis();
+    const setSelection = jest.fn().mockReturnThis();
+    const tr = {
+      doc: state.doc,
+      setNodeMarkup,
+      setSelection,
+    } as unknown as Transaction;
+    const node = {
+      attrs: { id: 'node-id' },
+      childCount: 0,
+      nodeSize: 2,
+      type: { name: 'paragraph' },
+    } as unknown as Node;
+    const styleProp = {
+      styleName: 'LevelStyle',
+      styles: {
+        indent: 4,
+        isLevelbased: true,
+        paragraphSpacingAfter: 12,
+        paragraphSpacingBefore: 8,
+        styleLevel: 3,
+      },
+    } as unknown as Style;
+
+    csc.applyStyleForTableColumnCell(
+      styleProp,
+      'LevelStyle',
+      state,
+      tr,
+      node,
+      1,
+      1
+    );
+
+    expect(setNodeMarkup).toHaveBeenCalledWith(
+      1,
+      undefined,
+      expect.objectContaining({
+        indent: 3,
+        paragraphSpacingAfter: 12,
+        paragraphSpacingBefore: 8,
+      })
+    );
   });
 });
 

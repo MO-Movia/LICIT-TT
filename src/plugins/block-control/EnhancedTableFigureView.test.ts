@@ -606,8 +606,11 @@ describe('EnhancedTableFigureView', () => {
         value: [file],
       });
       jest.spyOn(input, 'click').mockImplementation(() => undefined);
-      const createElement = document.createElement.bind(document);
-      jest.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const createElement: typeof document.createElement =
+        document.createElement.bind(document);
+      jest
+        .spyOn(document, 'createElement')
+        .mockImplementation((tagName: string): HTMLElement => {
         if (tagName === 'input') {
           return input;
         }
@@ -650,8 +653,11 @@ describe('EnhancedTableFigureView', () => {
         value: [],
       });
       jest.spyOn(input, 'click').mockImplementation(() => undefined);
-      const createElement = document.createElement.bind(document);
-      jest.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const createElement: typeof document.createElement =
+        document.createElement.bind(document);
+      jest
+        .spyOn(document, 'createElement')
+        .mockImplementation((tagName: string): HTMLElement => {
         if (tagName === 'input') {
           return input;
         }
@@ -673,8 +679,11 @@ describe('EnhancedTableFigureView', () => {
         value: [file],
       });
       jest.spyOn(input, 'click').mockImplementation(() => undefined);
-      const createElement = document.createElement.bind(document);
-      jest.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const createElement: typeof document.createElement =
+        document.createElement.bind(document);
+      jest
+        .spyOn(document, 'createElement')
+        .mockImplementation((tagName: string): HTMLElement => {
         if (tagName === 'input') {
           return input;
         }

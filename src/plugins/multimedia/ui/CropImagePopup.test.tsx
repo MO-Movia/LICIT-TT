@@ -8,11 +8,24 @@ import { createRoot, Root } from 'react-dom/client';
 import {
   centerCrop,
   makeAspectCrop,
+  type Crop,
 } from 'react-image-crop';
 import { CropDataPropValue, CropImagePopup } from './CropImagePopup';
 
+type ReactCropMockProps = {
+  children: React.ReactNode;
+  crop: Crop;
+  onChange: (crop: Crop) => void;
+  onComplete: (crop: Crop) => void;
+};
+
 jest.mock('react-image-crop', () => ({
-  ReactCrop: ({ children, crop, onChange, onComplete }) => (
+  ReactCrop: ({
+    children,
+    crop,
+    onChange,
+    onComplete,
+  }: ReactCropMockProps): React.ReactElement => (
     <div data-testid="react-crop" data-unit={crop.unit}>
       <button
         onClick={() =>
@@ -33,8 +46,8 @@ jest.mock('react-image-crop', () => ({
       {children}
     </div>
   ),
-  centerCrop: jest.fn((crop) => ({ ...crop, x: 5, y: 6 })),
-  makeAspectCrop: jest.fn((crop) => ({ ...crop, height: 75 })),
+  centerCrop: jest.fn((crop: Crop): Crop => ({ ...crop, x: 5, y: 6 })),
+  makeAspectCrop: jest.fn((crop: Crop): Crop => ({ ...crop, height: 75 })),
 }));
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -54,12 +67,20 @@ function computeCropData(
   };
 }
 
+function getImage(container: HTMLElement): HTMLImageElement {
+  const image = container.querySelector('img');
+  if (!(image instanceof HTMLImageElement)) {
+    throw new Error('Expected crop image to be rendered');
+  }
+  return image;
+}
+
 function computeScales(image: {
   naturalWidth: number;
   naturalHeight: number;
   width: number;
   height: number;
-}) {
+}): { scaleX: number; scaleY: number } {
   return {
     scaleX: image.naturalWidth / image.width,
     scaleY: image.naturalHeight / image.height,
@@ -329,7 +350,7 @@ describe('CropImagePopup component', () => {
 
   it('centers the initial crop when the image loads', () => {
     renderPopup();
-    const image = container.querySelector('img') as HTMLImageElement;
+    const image = getImage(container);
     setImageDimensions(image);
 
     act(() => {
@@ -359,7 +380,7 @@ describe('CropImagePopup component', () => {
 
   it('does not confirm when canvas context is unavailable', () => {
     const { onConfirm } = renderPopup();
-    const image = container.querySelector('img') as HTMLImageElement;
+    const image = getImage(container);
     setImageDimensions(image);
     jest
       .spyOn(HTMLCanvasElement.prototype, 'getContext')
@@ -373,7 +394,7 @@ describe('CropImagePopup component', () => {
 
   it('draws the selected crop and confirms crop data', () => {
     const { onConfirm } = renderPopup();
-    const image = container.querySelector('img') as HTMLImageElement;
+    const image = getImage(container);
     const drawImage = jest.fn();
     setImageDimensions(image);
     jest
