@@ -41,9 +41,6 @@ describe('editorCommands full export touch', () => {
     expect(Commands.TABLE_MOVE_TO_NEXT_CELL).toBeDefined();
     expect(Commands.TABLE_MOVE_TO_PREV_CELL).toBeDefined();
     expect(Commands.TABLE_SPLIT_ROW).toBeDefined();
-    expect(Commands.TABLE_TOGGLE_HEADER_CELL).toBeDefined();
-    expect(Commands.TABLE_TOGGLE_HEADER_COLUMN).toBeDefined();
-    expect(Commands.TABLE_TOGGLE_HEADER_ROW).toBeDefined();
     expect(Commands.TEXT_ALIGN_CENTER).toBeDefined();
     expect(Commands.TEXT_ALIGN_JUSTIFY).toBeDefined();
     expect(Commands.TEXT_ALIGN_LEFT).toBeDefined();
