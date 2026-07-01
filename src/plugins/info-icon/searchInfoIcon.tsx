@@ -40,8 +40,7 @@ export class SearchInfoIcon extends React.PureComponent<SearchInfoProps, SearchI
           </div>
           <div className='icons icons-container'>
             {this.state.icons.map((icon) => {
-              return <div className='molinfo-icon-list-div' key={icon.id}
-              style={{ display: 'contents', float: 'left' }}>
+              return <div className='molinfo-icon-list-div' key={icon.id}>
                 <i className={icon.name + (this.state.selectedIcon?.name === icon.name ? ' molinfo-icon-active' : '')}
                 onClick={() => this.selectInfoIcon(icon)} onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
