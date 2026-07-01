@@ -7,6 +7,7 @@ import type { NodeSpec } from 'prosemirror-model';
 // Body spec – where the table (or multimedia) is inserted.
 export const enhancedTableFigureBodyNodeSpec: NodeSpec = {
   group: 'block',
+  selectable: false,
   content: 'block+', // This will allow your table node from the table plugin.
   parseDOM: [{ tag: "div[data-type='enhanced-table-figure-body']" }],
   toDOM() {

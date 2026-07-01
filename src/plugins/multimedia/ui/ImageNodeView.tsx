@@ -6,14 +6,15 @@
 import cx from 'classnames';
 import {Node} from 'prosemirror-model';
 import {Decoration} from 'prosemirror-view';
-import {NodeSelection} from 'prosemirror-state';
+import {NodeSelection, TextSelection} from 'prosemirror-state';
 import React from 'react';
 import {CustomNodeView} from './CustomNodeView';
 import {Icon} from './Icon';
 import {ImageResizeBox, MIN_SIZE} from './ImageResizeBox';
 import {
+  atAnchorBottomLeft,
   createPopUp,
-  atAnchorBottomCenter,
+  atAnchorTopCenter,
   PopUpHandle,
 } from '../../../commands';
 import {resolveImage} from './resolveImage';
@@ -24,8 +25,14 @@ import type {NodeViewProps} from './CustomNodeView';
 
 import type {ResizeObserverEntry} from './ResizeObserver';
 import {observe, unobserve} from './ResizeObserver';
-import {ImageInlineEditor} from './ImageInlineEditor';
 import {FP_WIDTH} from '../Constants';
+import {
+  BlockControlHandleButton,
+  BlockControlMenu,
+  BlockControlMenuItem,
+  getBlockControlIcon,
+} from '../../../licit/ui/blockControls';
+import {CropDataPropValue, CropImagePopup} from './CropImagePopup';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const EMPTY_SRC =
@@ -37,6 +44,8 @@ const IMAGE_MARGIN = 2;
 
 const MAX_SIZE = 100000;
 const IMAGE_PLACEHOLDER_SIZE = 24;
+const ENHANCED_TABLE_FIGURE = 'enhanced_table_figure';
+const ENHANCED_TABLE_FIGURE_BODY = 'enhanced_table_figure_body';
 
 const DEFAULT_ORIGINAL_SIZE = {
   src: '',
@@ -58,6 +67,13 @@ type OriginalSize = MaxSize & {
 type ImageState = {
   maxSize: MaxSize;
   originalSize: OriginalSize;
+};
+
+type ImageRenderStyles = {
+  clipStyle: React.CSSProperties;
+  imageStyle: React.CSSProperties;
+  pStyle: React.CSSProperties;
+  renderWidth: number | string;
 };
 
 // Get the maxWidth that the image could be resized to.
@@ -82,13 +98,13 @@ function getMaxResizeWidth(el): number {
   return MAX_SIZE;
 }
 
-async function resolveURL(
+function resolveURL(
   runtime: EditorRuntime,
   src: string,
   dom: Element
 ): Promise<string> {
   if (!runtime) {
-    return src;
+    return Promise.resolve(src);
   }
   const {canProxyImageSrc, getProxyImageSrc} = runtime;
   if (src && getProxyImageSrc && canProxyImageSrc?.(src)) {
@@ -99,7 +115,7 @@ async function resolveURL(
       ? lazyResolved(src, getProxyImageSrc, dom)
       : getProxyImageSrc(src).catch(() => src);
   }
-  return src;
+  return Promise.resolve(src);
 }
 
 async function lazyResolved(
@@ -136,7 +152,9 @@ export class ImageViewBody extends React.PureComponent<
 
   _body?: HTMLElement | React.ReactInstance;
   _id = uuid();
-  _inlineEditor?: PopUpHandle;
+  _cropEditor?: PopUpHandle;
+  _menu?: PopUpHandle;
+  _menuButton?: HTMLButtonElement;
   _mounted = false;
   _resizeLoopCount = 0;
   _lastResizeTime = 0;
@@ -152,16 +170,17 @@ export class ImageViewBody extends React.PureComponent<
   componentDidMount(): void {
     this._mounted = true;
     void this._resolveOriginalSize().catch(console.warn);
-    this._renderInlineEditor();
   }
 
   componentWillUnmount(): void {
     this._mounted = false;
-    this._inlineEditor?.close(undefined);
-    this._inlineEditor = undefined;
+    this._cropEditor?.close(undefined);
+    this._menu?.close(undefined);
+    this._cropEditor = undefined;
+    this._menu = undefined;
   }
 
-  componentDidUpdate(prevProps: NodeViewProps, prevState): void {
+  componentDidUpdate(prevProps: NodeViewProps, prevState?: ImageState): void {
     const prevSrc = prevProps.node.attrs.src;
     const {node} = this.props;
     const {src} = node.attrs;
@@ -169,21 +188,16 @@ export class ImageViewBody extends React.PureComponent<
       // A new image is provided, resolve it.
       void this._resolveOriginalSize().catch(console.warn);
     }
-    // Only render inline editor when selection/focus state changes
+
     const prevActive =
       prevProps.selected && prevProps.focused && !prevProps.editorView.readOnly;
     const currentActive =
       this.props.selected &&
       this.props.focused &&
       !this.props.editorView.readOnly;
-    // Also re-render the inline editor when the image finishes loading
-    // (originalSize.complete flips to true) while the node is already selected.
-    // Without this, clicking a large image while it's still resolving would
-    // never show the menu � _renderInlineEditor was only triggered by prop
-    // changes, not by the setState that follows _resolveOriginalSize().
-    const prevComplete = prevState?.originalSize?.complete;
-    const currentComplete = this.state.originalSize?.complete;
-    const completionChanged = prevComplete !== currentComplete;
+    const completionChanged =
+      prevState?.originalSize?.complete !==
+      this.state.originalSize?.complete;
 
     if (prevActive !== currentActive || (completionChanged && currentActive)) {
       this._renderInlineEditor();
@@ -194,6 +208,8 @@ export class ImageViewBody extends React.PureComponent<
     const {originalSize, maxSize} = this.state;
     const {editorView, node, selected, focused} = this.props;
     const {readOnly} = editorView;
+    const shouldShowMenuButton =
+      !readOnly && !this.isInsideEnhancedTableFigureBody();
     const {attrs} = node;
     const {align, crop, rotate} = attrs;
 
@@ -226,13 +242,15 @@ export class ImageViewBody extends React.PureComponent<
       active,
       error,
       focused,
+      'has-hover-handle': shouldShowMenuButton,
       loading,
       selected,
     });
 
+    const fitToParent = this.props.node.attrs['fitToParent'];
     const resizeBox = this.isUnaltered(active, attrs.cropData, rotate) ? (
       <ImageResizeBox
-        fitToParent={this.props.node.attrs['fitToParent']}
+        fitToParent={fitToParent}
         height={height}
         onResizeEnd={this._onResizeEnd}
         src={src}
@@ -240,64 +258,23 @@ export class ImageViewBody extends React.PureComponent<
       />
     ) : null;
 
-    const imageStyle: React.CSSProperties = {
-      backgroundImage: loading ? EMPTY_SRC : undefined,
-      backgroundSize: 'cover',
-      display: 'inline-block',
-      height: height + 'px',
-      left: '0',
-      top: '0',
-      width: width + 'px',
-      position: 'relative',
-    };
-
-    const clipStyle: React.CSSProperties = {};
-    if (attrs.cropData) {
-      clipStyle.width = `${attrs.cropData.width}px`;
-      clipStyle.height = `${attrs.cropData.height}px`;
-      clipStyle.overflow = 'hidden';
-      clipStyle.position = 'relative';
-      clipStyle.display = 'inline-block';
-    } else if (crop) {
-      const cropped = {...crop};
-      if (scale !== 1) {
-        scale = maxSize.width / cropped.width;
-        cropped.width *= scale;
-        cropped.height *= scale;
-        cropped.left *= scale;
-        cropped.top *= scale;
-      }
-      clipStyle.width = cropped.width + 'px';
-      clipStyle.height = cropped.height + 'px';
-      imageStyle.left = cropped.left + 'px';
-      imageStyle.top = cropped.top + 'px';
-    }
-
-    if (rotate) {
-      clipStyle.transform = `rotate(${rotate}rad)`;
-    }
+    const {clipStyle, imageStyle, pStyle, renderWidth} =
+      this.getImageRenderStyles({
+        crop,
+        cropData: attrs.cropData,
+        fitToParent,
+        height,
+        loading,
+        maxSize,
+        rotate,
+        scale,
+        width,
+      });
 
     const errorView = error ? Icon.get('error') : null;
     const errorTitle = error
       ? `Unable to load image from ${attrs.src || ''}`
       : undefined;
-
-    const pStyle: React.CSSProperties = {};
-    if (this.props.node.attrs['fitToParent']) {
-      width = FP_WIDTH;
-      clipStyle.width = FP_WIDTH;
-      imageStyle.width = FP_WIDTH;
-      pStyle.width = FP_WIDTH;
-
-      pStyle.height = height;
-
-      clipStyle.padding = '0';
-      clipStyle.margin = '0';
-      imageStyle.padding = '0';
-      imageStyle.margin = '0';
-      pStyle.padding = '0';
-      pStyle.margin = '0';
-    }
 
     return (
       <span
@@ -326,13 +303,49 @@ export class ImageViewBody extends React.PureComponent<
                     }
                   : undefined
               }
-              width={width}
+              width={renderWidth}
             />
             {errorView}
           </span>
         </span>
+        {shouldShowMenuButton ? (
+          <BlockControlHandleButton
+            label="Image options"
+            onClick={this._onMenuClick}
+            ref={this._onMenuButtonRef}
+          />
+        ) : null}
         {resizeBox}
       </span>
+    );
+  }
+
+  isInsideEnhancedTableFigureBody(): boolean {
+    const {dom, editorView, getPos} = this.props;
+
+    try {
+      const pos = getPos?.();
+      if (Number.isFinite(pos)) {
+        const resolvedPos = editorView.state.doc.resolve(pos);
+        for (let depth = resolvedPos.depth; depth >= 0; depth--) {
+          const nodeName = resolvedPos.node(depth).type.name;
+          if (
+            nodeName === ENHANCED_TABLE_FIGURE ||
+            nodeName === ENHANCED_TABLE_FIGURE_BODY
+          ) {
+            return true;
+          }
+        }
+      }
+    } catch {
+      // Fall through to the DOM check below.
+    }
+
+    return (
+      dom instanceof Element &&
+      !!dom.closest(
+        "[data-type='enhanced-table-figure'], [data-type='enhanced-table-figure-body'], .enhanced-table-figure, .enhanced-table-figure-body"
+      )
     );
   }
 
@@ -366,33 +379,94 @@ export class ImageViewBody extends React.PureComponent<
     return {width, height};
   }
 
+  getImageRenderStyles({
+    crop,
+    cropData,
+    fitToParent,
+    height,
+    loading,
+    maxSize,
+    rotate,
+    scale,
+    width,
+  }: {
+    crop: CropDataPropValue | null | undefined;
+    cropData: CropDataPropValue | null | undefined;
+    fitToParent: boolean;
+    height: number;
+    loading: boolean;
+    maxSize: MaxSize;
+    rotate: number | null | undefined;
+    scale: number;
+    width: number;
+  }): ImageRenderStyles {
+    const imageStyle: React.CSSProperties = {
+      backgroundImage: loading ? EMPTY_SRC : undefined,
+      backgroundSize: 'cover',
+      display: 'inline-block',
+      height: height + 'px',
+      left: '0',
+      top: '0',
+      width: width + 'px',
+      position: 'relative',
+    };
+    const clipStyle: React.CSSProperties = {};
+    const pStyle: React.CSSProperties = {};
+    let renderWidth: number | string = width;
+
+    if (cropData) {
+      clipStyle.width = `${cropData.width}px`;
+      clipStyle.height = `${cropData.height}px`;
+      clipStyle.overflow = 'hidden';
+      clipStyle.position = 'relative';
+      clipStyle.display = 'inline-block';
+    } else if (crop) {
+      const cropped = {...crop};
+      if (scale !== 1) {
+        scale = maxSize.width / cropped.width;
+        cropped.width *= scale;
+        cropped.height *= scale;
+        cropped.left *= scale;
+        cropped.top *= scale;
+      }
+      clipStyle.width = cropped.width + 'px';
+      clipStyle.height = cropped.height + 'px';
+      imageStyle.left = cropped.left + 'px';
+      imageStyle.top = cropped.top + 'px';
+    }
+
+    if (rotate) {
+      clipStyle.transform = `rotate(${rotate}rad)`;
+    }
+
+    if (fitToParent) {
+      renderWidth = FP_WIDTH;
+      clipStyle.width = FP_WIDTH;
+      imageStyle.width = FP_WIDTH;
+      pStyle.width = FP_WIDTH;
+      pStyle.height = height;
+      clipStyle.padding = '0';
+      clipStyle.margin = '0';
+      imageStyle.padding = '0';
+      imageStyle.margin = '0';
+      pStyle.padding = '0';
+      pStyle.margin = '0';
+    }
+
+    return {clipStyle, imageStyle, pStyle, renderWidth};
+  }
+
   _renderInlineEditor(): void {
     const el = document.getElementById(this._id);
-    if (el?.dataset.active !== 'true') {
-      this._inlineEditor?.close?.(undefined);
+    if (!el || el.dataset.active !== 'true') {
+      this._closeMenu();
       return;
     }
 
-    const {node} = this.props;
-    const editorProps = {
-      value: node.attrs,
-      onSelect: this._onChange,
-      editorView: this.props.editorView,
-      imageId: this._id,
-    };
-    if (this._inlineEditor) {
-      this._inlineEditor.update(editorProps);
-    } else {
-      this._inlineEditor = createPopUp(ImageInlineEditor, editorProps, {
-        anchor: el,
-        autoDismiss: false,
-        container: el.closest(`.${FRAMESET_BODY_CLASSNAME}`),
-        position: atAnchorBottomCenter,
-        onClose: (_val) => {
-          this._inlineEditor = null;
-        },
-      });
-    }
+    this._menu?.update({
+      close: this._closeMenu,
+      items: this._getMenuItems(),
+    });
   }
 
   _resolveOriginalSize = async (): Promise<void> => {
@@ -429,50 +503,315 @@ export class ImageViewBody extends React.PureComponent<
   _onResizeEnd = (width: number, height: number): void => {
     const {getPos, node, editorView} = this.props;
     const pos = getPos();
-    if (pos) {
-      const attrs = {
-        ...node.attrs,
-        crop: null,
-        width,
-        height,
-      };
-      let tr = editorView.state.tr;
-      const {selection} = editorView.state;
-      tr = tr.setNodeMarkup(pos, null, attrs);
-      // Upgrade outdated packages.
-      // reset selection to original using the latest doc.
-      try {
-        const origSelection = NodeSelection.create(tr.doc, selection.from);
-        tr = tr.setSelection(origSelection);
-      } catch {
-        // Ignore if can't select
-      }
-      editorView.dispatch(tr);
-    }
-  };
-
-  _onChange = (value?: {align: string}): void => {
-    if (!this._mounted) {
+    if (pos === undefined || pos === null) {
       return;
     }
-
-    const align = value ? value.align : null;
-    const {getPos, node, editorView} = this.props;
-    const pos = getPos();
     const attrs = {
       ...node.attrs,
-      align,
+      crop: null,
+      width,
+      height,
     };
-
     let tr = editorView.state.tr;
     const {selection} = editorView.state;
     tr = tr.setNodeMarkup(pos, null, attrs);
     // Upgrade outdated packages.
     // reset selection to original using the latest doc.
-    const origSelection = NodeSelection.create(tr.doc, selection.from);
-    tr = tr.setSelection(origSelection);
+    try {
+      const origSelection = NodeSelection.create(tr.doc, selection.from);
+      tr = tr.setSelection(origSelection);
+    } catch {
+      // Ignore if can't select
+    }
     editorView.dispatch(tr);
   };
+
+  _onChange = (value?: {align: string}): void => {
+    const align = value ? value.align : null;
+    this._updateImageAttrs({align});
+  };
+
+  _onMenuButtonRef = (ref: HTMLButtonElement): void => {
+    this._menuButton = ref;
+  };
+
+  _onMenuClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (this._menu) {
+      this._closeMenu();
+      return;
+    }
+
+    const anchor = this._menuButton;
+    if (!anchor) {
+      return;
+    }
+
+    const items = this._getMenuItems();
+    this._menu = createPopUp(
+      BlockControlMenu,
+      {
+        close: this._closeMenu,
+        items,
+      },
+      {
+        anchor,
+        autoDismiss: true,
+        container: anchor.closest(`.${FRAMESET_BODY_CLASSNAME}`),
+        position: atAnchorBottomLeft,
+        onClose: () => {
+          this._menu = undefined;
+        },
+      }
+    );
+  };
+
+  _getMenuItems(): BlockControlMenuItem[] {
+    const {align} = this.props.node.attrs;
+
+    return [
+      {
+        id: 'insert-above',
+        label: 'Insert Paragraph Above',
+        icon: getBlockControlIcon('insertAbove', 'Insert Paragraph Above'),
+        action: () => this._insertParagraph('above'),
+      },
+      {
+        id: 'insert-below',
+        label: 'Insert Paragraph Below',
+        icon: getBlockControlIcon('insertBelow', 'Insert Paragraph Below'),
+        action: () => this._insertParagraph('below'),
+      },
+      {
+        id: 'align-left',
+        label: 'Left Align',
+        icon: getBlockControlIcon('alignLeft', 'Left Align'),
+        action: () => this._onChange({align: 'left'}),
+        active: align === 'left',
+        disabled: align === 'left',
+      },
+      {
+        id: 'align-center',
+        label: 'Center Align',
+        icon: getBlockControlIcon('alignCenter', 'Center Align'),
+        action: () => this._onChange({align: 'center'}),
+        active: align === 'center',
+        disabled: align === 'center',
+      },
+      {
+        id: 'align-right',
+        label: 'Right Align',
+        icon: getBlockControlIcon('alignRight', 'Right Align'),
+        action: () => this._onChange({align: 'right'}),
+        active: align === 'right',
+        disabled: align === 'right',
+      },
+      {
+        id: 'float-left',
+        label: 'Float Left',
+        icon: getBlockControlIcon('floatLeft', 'Float Left'),
+        action: () => this._onChange({align: 'float-left'}),
+        active: align === 'float-left',
+        disabled: align === 'float-left',
+      },
+      {
+        id: 'float-right',
+        label: 'Float Right',
+        icon: getBlockControlIcon('floatRight', 'Float Right'),
+        action: () => this._onChange({align: 'float-right'}),
+        active: align === 'float-right',
+        disabled: align === 'float-right',
+      },
+      {
+        id: 'crop',
+        label: 'Crop',
+        icon: getBlockControlIcon('crop', 'Crop'),
+        action: () => this._onCrop(),
+      },
+      {
+        id: 'reset-crop',
+        label: 'Reset Crop',
+        icon: getBlockControlIcon('resetCrop', 'Reset Crop'),
+        action: () => this._updateImageAttrs({crop: null, cropData: null}),
+        disabled: !this.props.node.attrs.crop && !this.props.node.attrs.cropData,
+      },
+      {
+        id: 'choose-file',
+        label: 'Choose File',
+        icon: getBlockControlIcon('file', 'Choose File'),
+        action: () => this._onChooseFile(),
+      },
+      {
+        id: 'paste-clipboard',
+        label: 'Paste from Clipboard',
+        icon: getBlockControlIcon('clipboard', 'Paste from Clipboard'),
+        action: () => this._onPasteFromClipboard(),
+        disabled: !navigator.clipboard?.read,
+      },
+      {
+        id: 'delete',
+        label: 'Delete',
+        icon: getBlockControlIcon('delete', 'Delete'),
+        action: () => this._onRemove(),
+      },
+    ];
+  }
+
+  _closeMenu = (): void => {
+    const menu = this._menu;
+    this._menu = undefined;
+    menu?.close?.(undefined);
+  };
+
+  _insertParagraph(placement: 'above' | 'below'): void {
+    const {getPos, node, editorView} = this.props;
+    const pos = getPos();
+    if (pos === undefined || pos === null) {
+      return;
+    }
+
+    const paragraphType = editorView.state.schema.nodes.paragraph;
+    const paragraph = paragraphType?.createAndFill();
+    if (!paragraph) {
+      return;
+    }
+
+    const boundary = this._getParagraphInsertBoundary(pos, node);
+    const insertPos = placement === 'above' ? boundary.before : boundary.after;
+    let tr = editorView.state.tr.insert(insertPos, paragraph);
+    tr = tr.setSelection(TextSelection.create(tr.doc, insertPos + 1));
+    editorView.dispatch(tr.scrollIntoView());
+  }
+
+  _getParagraphInsertBoundary(
+    pos: number,
+    node: Node
+  ): {before: number; after: number} {
+    if (node.isBlock) {
+      return {before: pos, after: pos + node.nodeSize};
+    }
+
+    const resolvedPos = this.props.editorView.state.doc.resolve(pos);
+    if (resolvedPos.depth === 0) {
+      return {before: pos, after: pos + node.nodeSize};
+    }
+
+    return {
+      before: resolvedPos.before(resolvedPos.depth),
+      after: resolvedPos.after(resolvedPos.depth),
+    };
+  }
+
+  _onRemove(): void {
+    const {getPos, node, editorView} = this.props;
+    const pos = getPos();
+    if (pos === undefined || pos === null) {
+      return;
+    }
+    editorView.dispatch(editorView.state.tr.delete(pos, pos + node.nodeSize));
+  }
+
+  _onCrop(): void {
+    const {node} = this.props;
+    const src = node.attrs.src;
+    if (!src) {
+      return;
+    }
+
+    this._cropEditor = createPopUp(
+      CropImagePopup,
+      {
+        src,
+        position: atAnchorTopCenter,
+        onConfirm: (cropData: CropDataPropValue) => {
+          this._updateImageAttrs({cropData});
+          this._cropEditor?.close(cropData);
+        },
+        onCancel: () => {
+          this._cropEditor?.close(null);
+        },
+        defaultUnit: 'px',
+      },
+      {
+        anchor: document.body,
+        autoDismiss: true,
+        onClose: () => {
+          this._cropEditor = undefined;
+        },
+      }
+    );
+  }
+
+  _onChooseFile(): void {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = () => {
+      const file = fileInput.files?.[0];
+      if (!file) {
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          this._updateImageAttrs({
+            crop: null,
+            cropData: null,
+            src: reader.result,
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    fileInput.click();
+  }
+
+  _onPasteFromClipboard(): void {
+    if (!navigator.clipboard?.read) {
+      return;
+    }
+
+    void navigator.clipboard.read().then((clipboardItems) => {
+      for (const clipboardItem of clipboardItems) {
+        const imageType = clipboardItem.types.find((type) =>
+          type.startsWith('image/')
+        );
+        if (!imageType) {
+          continue;
+        }
+        void clipboardItem.getType(imageType).then((blob) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === 'string') {
+              this._updateImageAttrs({
+                crop: null,
+                cropData: null,
+                src: reader.result,
+              });
+            }
+          };
+          reader.readAsDataURL(blob);
+        });
+        return;
+      }
+    });
+  }
+
+  _updateImageAttrs(attrs: Record<string, unknown>): void {
+    const {getPos, node, editorView} = this.props;
+    const pos = getPos();
+    if (pos === undefined || pos === null) {
+      return;
+    }
+    editorView.dispatch(
+      editorView.state.tr.setNodeMarkup(pos, null, {
+        ...node.attrs,
+        ...attrs,
+      })
+    );
+  }
 
   _bodyEl: HTMLElement | null = null;
   _onBodyRef = (ref?: HTMLElement): void => {
@@ -488,7 +827,6 @@ export class ImageViewBody extends React.PureComponent<
       this._bodyEl = null;
     }
   };
-
   _onBodyResize = (_info: ResizeObserverEntry): void => {
     const now = Date.now();
     // Increase window to 2000ms because layout thrashing can be slow

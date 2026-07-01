@@ -747,8 +747,16 @@ describe('capco plugin', () => {
     expect(capcoplugin.pendingItems.length).toBeGreaterThan(0);
     expect(capcoplugin.pendingItems).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ pos: 1, attrs: { updated: true } }),
-        expect.objectContaining({ pos: 2, attrs: { updated: true } }),
+        expect.objectContaining({
+          pos: 2,
+          assoc: -1,
+          attrs: { updated: true },
+        }),
+        expect.objectContaining({
+          pos: 2,
+          assoc: 1,
+          attrs: { updated: true },
+        }),
       ])
     );
   });
@@ -2040,6 +2048,15 @@ describe('CapcoPlugin – branch-flipping coverage', () => {
           attrs: { vignette: { default: false } },
           toDOM: () => ['table', ['tbody', 0]],
         },
+        enhanced_table_figure_notes: {
+          group: 'block',
+          content: 'paragraph+',
+          toDOM: () => [
+            'div',
+            {'data-type': 'enhanced-table-figure-notes'},
+            0,
+          ],
+        },
         text: {},
       },
       marks: {},
@@ -2063,6 +2080,26 @@ describe('CapcoPlugin – branch-flipping coverage', () => {
     });
 
     const state = EditorState.create({ doc, schema });
+    expect(plugin.isNodeInsideTable(state, 2)).toBe(true);
+  });
+
+  it('isNodeInsideTable returns true when nested in EIC notes', () => {
+    const doc = schema.nodeFromJSON({
+      type: 'doc',
+      content: [
+        {
+          type: 'enhanced_table_figure_notes',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{type: 'text', text: 'x'}],
+            },
+          ],
+        },
+      ],
+    });
+
+    const state = EditorState.create({doc, schema});
     expect(plugin.isNodeInsideTable(state, 2)).toBe(true);
   });
 

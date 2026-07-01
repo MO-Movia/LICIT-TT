@@ -58,7 +58,7 @@ export function safeCapcoParse(
   const resolvedFallback: CapcoState =
     fallback ?? { ism: undefined, portionMarking: 'error' };
 
-  if (typeof capco === 'string') {
+  if (capco && typeof capco === 'string') {
     try {
       return JSON.parse(capco) as CapcoState;
     } catch (e) {

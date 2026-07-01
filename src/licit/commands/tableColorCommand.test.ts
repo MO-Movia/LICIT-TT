@@ -12,24 +12,6 @@ import TableColorCommand from './tableColorCommand';
 import { UICommand } from '../../core';
 import { createPopUp } from '../../commands';
 
-// Typed popup mock
-type MockPopup = {close: jest.Mock<void, [unknown]>};
-
-// Mock licit-ui-commands (typed)
-const createPopUpMock = jest
-  .fn()
-  .mockImplementation(
-    (
-      _Component: unknown,
-      _props: unknown,
-      opts: {onClose?: (v: string) => void}
-    ): MockPopup => {
-      return {
-        close: jest.fn((_val: unknown) => opts.onClose?.('mocked value')),
-      };
-    }
-  );
-
 jest.mock('../../commands', () => {
   // define inside the factory → safe from hoisting issues
   const createPopUpMock = jest
@@ -170,23 +152,29 @@ describe('TableColorCommand (typed)', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should not create popup when already open', async () => {
-    command._popUp = {close: jest.fn()};
+  it('should replace existing popup when opening again', async () => {
+    const close = jest.fn();
+    command._popUp = {close, update: jest.fn()};
 
     const evt: FakeReactEvent = {
       type: 'mouseenter',
       currentTarget: document.createElement('div'),
     } as unknown as FakeReactEvent;
 
-    const result = await command.waitForUserInput(
+    const promise = command.waitForUserInput(
       mockState,
       dispatchMock,
       viewMock,
       evt
     );
+    const call = (createPopUp as jest.Mock).mock.calls[0];
+    const options = call[2];
+    options.onClose('mocked value');
 
-    expect(createPopUpMock).not.toHaveBeenCalled();
-    expect(result).toBeUndefined();
+    expect(close).toHaveBeenCalledWith(undefined);
+    expect(createPopUp).toHaveBeenCalled();
+    expect(command._popUp).toBeNull();
+    await expect(promise).resolves.toBe('mocked value');
   });
 
   it('returns false when hex undefined', () => {
@@ -227,10 +215,11 @@ it('calls setCellBorders when success is true', () => {
 
   it('cancel closes popup if exists', () => {
     const close = jest.fn();
-    command._popUp = {close};
+    command._popUp = {close, update: jest.fn()};
 
     command.cancel();
     expect(close).toHaveBeenCalledWith(undefined);
+    expect(command._popUp).toBeNull();
   });
 
   it('cancel does nothing when no popup', () => {
@@ -259,6 +248,7 @@ it('calls setCellBorders when success is true', () => {
     const options = call[2];
 
     expect(options).toHaveProperty('onClose');
+    expect(options.autoDismiss).toBe(true);
     const onClose = options.onClose!;
     expect(command._popUp).not.toBeNull();
     onClose('close-value');

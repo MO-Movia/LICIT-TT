@@ -168,6 +168,21 @@ describe('SelectionPlaceholderPlugin', () => {
     expect(meta.remove).toBeDefined();
   });
 
+  it('should request placeholder removal even when no decoration is present', () => {
+    const plugin = view.state.plugins.find(
+      (p) => p instanceof SelectionPlaceholderPlugin
+    ) as Plugin;
+
+    const result = hideSelectionPlaceholder(
+      view.state,
+      view.state.tr
+    ) as Transaction;
+
+    const meta = result.getMeta(plugin) as {remove?: unknown};
+
+    expect(meta.remove).toBeDefined();
+  });
+
   it('Should return same tr if plugin is not available', () => {
     const {state} = view;
 

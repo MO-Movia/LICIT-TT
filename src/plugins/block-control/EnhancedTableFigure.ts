@@ -3,9 +3,9 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Plugin, PluginKey} from 'prosemirror-state';
-import {Schema} from 'prosemirror-model';
-import {EnhancedTableCommands} from './EnhancedTableCommands';
+import { Plugin, PluginKey } from 'prosemirror-state';
+import { Schema } from 'prosemirror-model';
+import { EnhancedTableCommands, removeEmptyNotesCommand } from './EnhancedTableCommands';
 import {
   enhancedTableFigureNodeSpec,
   enhancedTableFigureBodyNodeSpec,
@@ -18,9 +18,9 @@ import {
   ENHANCED_TABLE_FIGURE_CAPCO,
   ENHANCED_TABLE_FIGURE_NOTES,
 } from './Constants';
-import {ImageUploadCommand} from './ImageUploadCommand';
-import {EnhancedTableFigureView} from './EnhancedTableFigureView';
-import {DarkThemeIcon, LightThemeIcon} from './images';
+import { ImageUploadCommand } from './ImageUploadCommand';
+import { EnhancedTableFigureView } from './EnhancedTableFigureView';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 export class EnhancedTableFigure extends Plugin {
   constructor() {
     super({
@@ -34,6 +34,13 @@ export class EnhancedTableFigure extends Plugin {
         },
       },
       props: {
+        handleKeyDown(view, event) {
+          if (event.key !== 'Backspace') {
+            return false;
+          }
+
+          return removeEmptyNotesCommand(view.state, view.dispatch);
+        },
         nodeViews: {
           enhanced_table_figure(node, view, getPos) {
             return new EnhancedTableFigureView(node, view, getPos);

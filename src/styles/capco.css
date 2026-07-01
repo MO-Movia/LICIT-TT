@@ -58,6 +58,10 @@
   background: #c3c3c3;
 }
 
+.czi-editor-frameset .molcap-keyboardnav li:hover {
+  background: transparent;
+}
+
 .czi-editor-frameset .molcap-context-menu li span.arrow {
   position: absolute;
   font-size: 0.8em;
@@ -184,5 +188,13 @@
 }
 
 .ProseMirror .lint-iconinner::before {
-  content: "+";
+  content: '+';
+}
+.ProseMirror
+  p[hangingindent='true']:has(span[prefix='0'])
+  capco-mark.ProseMirror-widget {
+  position: absolute;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: visible;
 }

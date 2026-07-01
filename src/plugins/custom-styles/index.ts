@@ -29,7 +29,7 @@ import {
 import { RESERVED_STYLE_NONE } from './CustomStyleNodeSpec';
 import { getLineSpacingValue } from '../../commands';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
-import { Mark, Node, Schema, Slice } from 'prosemirror-model';
+import { Fragment, Mark, Node, Schema, Slice } from 'prosemirror-model';
 import { CustomstyleDropDownCommand } from './ui/CustomstyleDropDownCommand';
 import { applyEffectiveSchema } from './EditorSchema';
 import type { StyleRuntime } from './StyleRuntime';
@@ -39,6 +39,7 @@ const ENTERKEYCODE = 13;
 const BACKSPACEKEYCODE = 8;
 const PARA_POSITION_DIFF = 4;
 const ATTR_STYLE_NAME = 'styleName';
+const ZERO_WIDTH_SPACE = '\u200B';
 type CustomStyleView = Plugin['spec']['view'] extends (view: infer T) => unknown
   ? T & { input?: { lastKeyCode?: number } }
   : { state: EditorState; input?: { lastKeyCode?: number } };
@@ -55,19 +56,13 @@ type SliceNodeInfo = {
   hasParentAttrs: boolean;
   needsMarkup: boolean;
 };
-type HangingIndentScan = {
-  hasSpacer: boolean;
-  hasHangingIndent: boolean;
-};
-type HangingIndentContentState = {
-  content: Node[];
-  spacerRemoved: boolean;
-  startsWithTab: boolean;
-  spacerChild: Node | null;
-};
 type StyleWithNextLine = {
   styleName?: string;
   styles?: {
+    align?: unknown;
+    indent?: unknown;
+    indentPosition?: unknown;
+    lineHeight?: string;
     nextLineStyleName?: string;
   };
 };
@@ -619,19 +614,30 @@ export function applyStyleForPreviousEmptyParagraph(
   nextState: LooseState,
   tr: LooseTr
 ): LooseTr {
-  if (tr.selection.$from.parentOffset === 0) {
-    const prevNode = nextState.doc.resolve(
-      tr.selection.$anchor.pos - 1
-    ).nodeBefore;
+  const selection = tr.selection;
+  if (selection.$from.parentOffset === 0) {
+    const previousNodeEndPos = selection.$anchor.pos - 1;
+    const prevNode = nextState.doc.resolve(previousNodeEndPos).nodeBefore;
     if (prevNode) {
+      const style = getCustomStyleByName(prevNode.attrs.styleName);
+      const emptyParaStyleName =
+        prevNode.attrs.styleName === style?.styles?.nextLineStyleName
+          ? prevNode?.attrs?.styleName
+          : RESERVED_STYLE_NONE;
+      const previousNodeStartPos = Math.max(
+        previousNodeEndPos - prevNode.nodeSize,
+        0
+      );
       tr = applyLatestStyle(
-        prevNode?.attrs?.styleName,
+        emptyParaStyleName,
         nextState as EditorState,
         tr,
         {
           node: prevNode,
-          startPos: tr.selection.$head.before(),
-          endPos: tr.selection.$from.end(),
+          startPos: previousNodeStartPos,
+          endPos:
+            previousNodeStartPos +
+            (prevNode.content?.size ?? Math.max(prevNode.nodeSize - 2, 0)),
         },
         null
       ) as Transaction;
@@ -753,6 +759,7 @@ function applyLineStyleForBoldPartial(
         ) as Transaction;
       }
       if (style?.styles?.indentPosition) {
+        tr = removeResolvedHangingIndentAnchors(tr, nextState, pos);
         tr = applyHangingIndentTransform(
           tr,
           nextState as EditorState,
@@ -1021,35 +1028,49 @@ export function setNodeAttrs(
   nextLineStyleName: string,
   newattrs: Record<string, unknown>
 ): Record<string, unknown> {
-  if (nextLineStyleName) {
-    const nextLineStyle = getCustomStyleByName(nextLineStyleName);
-    if (nextLineStyle?.styles) {
-      newattrs.styleName = nextLineStyleName;
-      newattrs.indent = nextLineStyle.styles.indent;
-      newattrs.align = nextLineStyle.styles.align;
-      if (newattrs.innerLink) {
-        newattrs.innerLink = null;
-      }
-      if (newattrs.reset === 'true') {
-        newattrs.reset = 'false';
-      }
-      newattrs.overriddenAlign = null;
-      newattrs.overriddenAlignValue = null;
-      newattrs.overriddenIndent = null;
-      newattrs.overriddenIndentValue = null;
-      newattrs.overriddenLineSpacing = null;
-      newattrs.overriddenLineSpacingValue = null;
-
-      // Line spacing not working for next line style
-      newattrs.lineSpacing = getLineSpacingValue(
-        nextLineStyle.styles.lineHeight ? nextLineStyle.styles.lineHeight : ''
-      );
-    } else if (RESERVED_STYLE_NONE === nextLineStyleName) {
-      // Next line style None not applied
-      newattrs = resetNodeAttrs(newattrs, nextLineStyleName);
-    }
+  if (!nextLineStyleName) {
+    return newattrs;
   }
 
+  const nextLineStyle = getCustomStyleByName(nextLineStyleName);
+  if (nextLineStyle?.styles) {
+    return applyNextLineStyleAttrs(newattrs, nextLineStyleName, nextLineStyle);
+  }
+
+  if (RESERVED_STYLE_NONE === nextLineStyleName) {
+    return resetNodeAttrs(newattrs, nextLineStyleName);
+  }
+
+  return newattrs;
+}
+
+function applyNextLineStyleAttrs(
+  newattrs: Record<string, unknown>,
+  nextLineStyleName: string,
+  nextLineStyle: StyleWithNextLine
+): Record<string, unknown> {
+  newattrs.styleName = nextLineStyleName;
+  newattrs.indent = nextLineStyle.styles.indent;
+  newattrs.align = nextLineStyle.styles.align;
+  if (newattrs.innerLink) {
+    newattrs.innerLink = null;
+  }
+  if (newattrs.reset === 'true') {
+    newattrs.reset = 'false';
+  }
+  newattrs.overriddenAlign = null;
+  newattrs.overriddenAlignValue = null;
+  newattrs.overriddenIndent = null;
+  newattrs.overriddenIndentValue = null;
+  newattrs.overriddenLineSpacing = null;
+  newattrs.overriddenLineSpacingValue = null;
+  newattrs.lineSpacing = getLineSpacingValue(
+    nextLineStyle.styles.lineHeight ? nextLineStyle.styles.lineHeight : ''
+  );
+  if (nextLineStyle.styles.indentPosition) {
+    newattrs.indentPosition = nextLineStyle.styles.indentPosition;
+    newattrs.hangingIndent = true;
+  }
   return newattrs;
 }
 
@@ -1126,6 +1147,20 @@ function haveEligibleChildren(node: Node, contentLen: number): boolean {
   );
 }
 
+type HangingIndentBuildState = {
+  emptyChild?: Node;
+  existingMarks: Mark[];
+  isParagraphStartsWithTab: boolean;
+  newContent: Node[];
+  prefix1AnchorInserted: boolean;
+  spacerRemoved: boolean;
+};
+
+type HangingIndentScan = {
+  foundHangingIndent: boolean;
+  foundSpacer: boolean;
+};
+
 // Hanging indent implementation
 export function applyHangingIndentTransform(
   tr: Transaction,
@@ -1135,146 +1170,321 @@ export function applyHangingIndentTransform(
   isPaste: boolean
 ): Transaction {
   if (node?.type.name !== 'paragraph') return tr;
+  const mappedPos = tr.mapping.mapResult(pos, -1).pos;
+  const children = getFragmentChildren(node.content);
+  const scan = scanHangingIndentChildren(children, isPaste);
 
-  const scan = scanHangingIndentMarks(node, isPaste);
+  if (!scan.foundSpacer || scan.foundHangingIndent) return tr;
 
-  // Skip if no spacer or already has hanging-indent
-  if (!scan.hasSpacer || scan.hasHangingIndent) return tr;
-
-  const newContent = buildHangingIndentContent(node, state);
-  const newParagraph = node.type.create(node.attrs, newContent);
-  tr.replaceWith(pos, pos + node.nodeSize, newParagraph);
-  tr.setSelection(TextSelection.create(tr.doc, state.selection?.from));
+  const contentState = buildHangingIndentContent(state, children);
+  for (let index = contentState.newContent.length - 1; index >= 0; index -= 1) {
+    if (contentState.newContent[index]?.text === ZERO_WIDTH_SPACE) {
+      contentState.newContent.splice(index, 1);
+    }
+  }
+  // Recreate updated paragraph
+  const newParagraph = node.type.create(node.attrs, contentState.newContent);
+  tr.replaceWith(mappedPos, mappedPos + node.nodeSize, newParagraph);
+  const prefix1Pos = getHangingIndentPrefixStartPos(
+    tr.doc.nodeAt(mappedPos),
+    mappedPos,
+    1
+  );
+  const selectionPos = prefix1Pos ?? tr.mapping.mapResult(state.selection?.from, -1).pos;
+  tr.setSelection(
+    TextSelection.create(tr.doc, Math.min(selectionPos, tr.doc.content.size))
+  );
 
   return tr;
 }
 
-function scanHangingIndentMarks(
-  node: Node,
+function scanHangingIndentChildren(
+  children: Node[],
   isPaste: boolean
 ): HangingIndentScan {
-  const scan = {
-    hasSpacer: false,
-    hasHangingIndent: false,
-  };
-
-  for (let i = 0; i < node.content.childCount; i++) {
-    const child = node.content.child(i);
-    scan.hasSpacer ||= hasMark(child, 'spacer');
-    scan.hasHangingIndent ||= hasMark(child, 'mark-hanging-indent') && !isPaste;
+  let foundSpacer = false;
+  let foundHangingIndent = false;
+  for (const child of children) {
+    foundSpacer ||= hasMark(child, 'spacer');
+    foundHangingIndent ||= !isPaste && hasHangingIndentPrefix(child, 1);
   }
-
-  return scan;
+  return { foundHangingIndent, foundSpacer };
 }
 
-function buildHangingIndentContent(node: Node, state: EditorState): Node[] {
-  const contentState: HangingIndentContentState = {
-    content: [],
+function buildHangingIndentContent(
+  state: EditorState,
+  children: Node[]
+): HangingIndentBuildState {
+  const buildState: HangingIndentBuildState = {
+    existingMarks: [],
+    isParagraphStartsWithTab: false,
+    newContent: [],
+    prefix1AnchorInserted: false,
     spacerRemoved: false,
-    startsWithTab: false,
-    spacerChild: null,
   };
 
-  for (let i = 0; i < node.content.childCount; i++) {
-    const child = node.content.child(i);
-    // Remove the *first* spacer-marked text node
-    if (removeFirstSpacer(child, contentState, i)) {
+  for (const [index, child] of children.entries()) {
+    if (consumeSpacerChild(buildState, child, index)) {
       continue;
     }
-
-    appendHangingIndentChild(child, state, contentState);
+    appendHangingIndentChild(state, buildState, child);
   }
 
-  appendMissingHangingIndentContent(state, contentState);
-  return contentState.content;
+  appendOnlySpacerContent(state, buildState);
+  appendTrailingPrefixContent(state, buildState);
+  return buildState;
 }
 
-function removeFirstSpacer(
+function consumeSpacerChild(
+  buildState: HangingIndentBuildState,
   child: Node,
-  contentState: HangingIndentContentState,
   index: number
 ): boolean {
-  if (contentState.spacerRemoved || !hasMark(child, 'spacer')) {
+  if (buildState.spacerRemoved || !hasMark(child, 'spacer')) {
     return false;
   }
-
-  contentState.spacerRemoved = true;
-  contentState.startsWithTab = index === 0;
-  contentState.spacerChild = child;
+  buildState.spacerRemoved = true;
+  buildState.isParagraphStartsWithTab = index === 0;
+  buildState.emptyChild = child;
+  if (child.text === ' ') {
+    buildState.existingMarks = getContentMarks(child);
+  }
   return true;
 }
 
 function appendHangingIndentChild(
-  child: Node,
   state: EditorState,
-  contentState: HangingIndentContentState
+  buildState: HangingIndentBuildState,
+  child: Node
 ): void {
-  const existingMarks = removeSpacerMarks(child.marks);
-  const hangingIndentMark = createHangingIndentMark(
-    state,
-    contentState.spacerRemoved ? 1 : 0
-  );
-
-  if (contentState.startsWithTab) {
-    contentState.content.push(createHangingIndentText(state, existingMarks, 0));
-    contentState.startsWithTab = false;
+  let updatedChild = child;
+  if (updatedChild.text !== ' ') {
+    buildState.existingMarks = getContentMarks(child);
   }
 
-  // Ensure hangingIndent is the *outermost* mark
-  contentState.content.push(child.mark([hangingIndentMark, ...existingMarks]));
+  const hangingIndentMark = state.schema.marks['mark-hanging-indent'].create({
+    prefix: buildState.spacerRemoved ? 1 : 0,
+  });
+
+  if (buildState.isParagraphStartsWithTab) {
+    appendLeadingTabContent(state, buildState, hangingIndentMark);
+    updatedChild = updatedChild.mark([
+      hangingIndentMark,
+      ...buildState.existingMarks,
+    ]);
+  } else {
+    updatedChild = applyHangingIndentMark(
+      state,
+      buildState,
+      updatedChild,
+      hangingIndentMark
+    );
+  }
+
+  buildState.newContent.push(updatedChild);
 }
 
-function appendMissingHangingIndentContent(
+function appendLeadingTabContent(
   state: EditorState,
-  contentState: HangingIndentContentState
+  buildState: HangingIndentBuildState,
+  hangingIndentMark: Mark
 ): void {
-  if (contentState.startsWithTab && contentState.content.length === 0) {
-    appendHangingIndentTextPair(state, contentState);
+  const prefix0 = state.schema.marks['mark-hanging-indent'].create({
+    prefix: 0,
+  });
+  buildState.newContent.push(
+    state.schema.text(' ', [...buildState.existingMarks, prefix0]),
+    state.schema.text(ZERO_WIDTH_SPACE, [
+      hangingIndentMark,
+      ...buildState.existingMarks,
+    ])
+  );
+  buildState.prefix1AnchorInserted = true;
+  buildState.isParagraphStartsWithTab = false;
+}
+
+function applyHangingIndentMark(
+  state: EditorState,
+  buildState: HangingIndentBuildState,
+  child: Node,
+  hangingIndentMark: Mark
+): Node {
+  const nodeMarks = [hangingIndentMark, ...buildState.existingMarks];
+  if (buildState.spacerRemoved && !buildState.prefix1AnchorInserted) {
+    buildState.newContent.push(state.schema.text(ZERO_WIDTH_SPACE, nodeMarks));
+    buildState.prefix1AnchorInserted = true;
+  }
+  return child.mark(nodeMarks);
+}
+
+function appendOnlySpacerContent(
+  state: EditorState,
+  buildState: HangingIndentBuildState
+): void {
+  if (!buildState.isParagraphStartsWithTab || buildState.newContent.length) {
     return;
   }
-
-  if (contentState.content.length === 1 && contentState.spacerRemoved) {
-    const existingMarks = getSpacerChildMarks(contentState);
-    contentState.content.push(createHangingIndentText(state, existingMarks, 1));
-  }
-}
-
-function appendHangingIndentTextPair(
-  state: EditorState,
-  contentState: HangingIndentContentState
-): void {
-  const existingMarks = getSpacerChildMarks(contentState);
-  contentState.content.push(
-    createHangingIndentText(state, existingMarks, 0),
-    createHangingIndentText(state, existingMarks, 1)
+  const marks = getContentMarks(buildState.emptyChild);
+  const prefix0 = state.schema.marks['mark-hanging-indent'].create({
+    prefix: 0,
+  });
+  const prefix1 = state.schema.marks['mark-hanging-indent'].create({
+    prefix: 1,
+  });
+  buildState.newContent.push(
+    state.schema.text(ZERO_WIDTH_SPACE, [...marks, prefix0]),
+    state.schema.text(`${ZERO_WIDTH_SPACE}${ZERO_WIDTH_SPACE}`, [
+      ...marks,
+      prefix1,
+    ])
   );
 }
 
-function getSpacerChildMarks(
-  contentState: HangingIndentContentState
-): readonly Mark[] {
-  return removeSpacerMarks(contentState.spacerChild?.marks ?? []);
-}
-
-function createHangingIndentText(
+function appendTrailingPrefixContent(
   state: EditorState,
-  marks: readonly Mark[],
-  prefix: number
-): Node {
-  return state.schema.text(' ', [
-    ...marks,
-    createHangingIndentMark(state, prefix),
-  ]);
+  buildState: HangingIndentBuildState
+): void {
+  if (buildState.newContent.length !== 1 || !buildState.spacerRemoved) {
+    return;
+  }
+  const marks =
+    buildState.emptyChild?.text?.trim() === ''
+      ? buildState.existingMarks
+      : getContentMarks(buildState.emptyChild);
+  const prefix1 = state.schema.marks['mark-hanging-indent'].create({
+    prefix: 1,
+  });
+  buildState.newContent.push(
+    state.schema.text(`${ZERO_WIDTH_SPACE}${ZERO_WIDTH_SPACE}`, [
+      ...marks,
+      prefix1,
+    ])
+  );
 }
 
-function createHangingIndentMark(state: EditorState, prefix: number): Mark {
-  return state.schema.marks['mark-hanging-indent'].create({ prefix });
-}
-
-function removeSpacerMarks(marks: readonly Mark[]): readonly Mark[] {
-  return marks.filter((mark) => mark.type.name !== 'spacer');
+function getContentMarks(node: Node | undefined): Mark[] {
+  return (
+    node?.marks.filter(
+      (mark) => !['spacer', 'mark-hanging-indent'].includes(mark.type.name)
+    ) ?? []
+  );
 }
 
 function hasMark(node: Node, markName: string): boolean {
-  return node.marks.some((mark) => mark?.type.name === markName);
+  return node.marks.some((mark) => mark.type.name === markName);
+}
+
+function getHangingIndentPrefixStartPos(
+  node: Node | null | undefined,
+  pos: number,
+  prefix: number
+): number | null {
+  if (!node || node.type.name !== 'paragraph') {
+    return null;
+  }
+  let offset = 0;
+  let prefixPos: number | null = null;
+  for (const child of getChildNodes(node)) {
+    if (prefixPos !== null) {
+      break;
+    }
+    if (hasHangingIndentPrefix(child, prefix)) {
+      prefixPos =
+        child.text?.startsWith(ZERO_WIDTH_SPACE)
+          ? pos + 1 + offset + 1
+          : pos + 1 + offset;
+      break;
+    }
+    offset += child.nodeSize;
+  }
+  return prefixPos;
+}
+
+function getChildNodes(node: Node): Node[] {
+  return Array.from(
+    { length: node.childCount },
+    (_, index) => node.child(index)
+  );
+}
+
+function getFragmentChildren(content: Fragment): Node[] {
+  return Array.from(
+    { length: content.childCount },
+    (_, index) => content.child(index)
+  );
+}
+
+function hasHangingIndentPrefix(child: Node, prefix: number): boolean {
+  return child.marks.some(
+    (mark) =>
+      mark.type.name === 'mark-hanging-indent' &&
+      mark.attrs?.prefix === prefix
+  );
+}
+
+function getZeroWidthSpaceDeletePositions(
+  text: string,
+  startPos: number
+): number[] {
+  if (text.replaceAll(ZERO_WIDTH_SPACE, '').length === 0) {
+    return [];
+  }
+
+  const deletePositions: number[] = [];
+  for (let index = 0; index < text.length; index++) {
+    if (text[index] === ZERO_WIDTH_SPACE) {
+      deletePositions.push(startPos + index);
+    }
+  }
+  return deletePositions;
+}
+
+function getResolvedHangingIndentAnchorPositions(
+  node: Node,
+  mappedPos: number
+): number[] {
+  const deletePositions: number[] = [];
+  let offset = 0;
+  for (const child of getChildNodes(node)) {
+    if (hasHangingIndentPrefix(child, 1) && child.text?.includes(ZERO_WIDTH_SPACE)) {
+      deletePositions.push(
+        ...getZeroWidthSpaceDeletePositions(child.text, mappedPos + 1 + offset)
+      );
+    }
+    offset += child.nodeSize;
+  }
+  return deletePositions;
+}
+
+function removeResolvedHangingIndentAnchors(
+  tr: Transaction | null,
+  state: LooseState,
+  pos: number
+): Transaction {
+  if (!tr) {
+    tr = state.tr;
+  }
+  const mappedPos = tr.mapping.mapResult(pos, -1).pos;
+  const node = tr.doc.nodeAt(mappedPos);
+  if (!node || node.type.name !== 'paragraph') {
+    return tr;
+  }
+
+  const deletePositions = getResolvedHangingIndentAnchorPositions(node, mappedPos);
+
+  if (deletePositions.length === 0) {
+    return tr;
+  }
+
+  const selectionFrom = state.selection?.from ?? mappedPos;
+  deletePositions.sort((left, right) => right - left);
+  for (const deletePos of deletePositions) {
+    tr = tr.delete(deletePos, deletePos + 1);
+  }
+
+  const mappedSelection = Math.min(
+    tr.mapping.mapResult(selectionFrom, -1).pos,
+    tr.doc.content.size
+  );
+  return tr.setSelection(TextSelection.create(tr.doc, mappedSelection));
 }

@@ -122,14 +122,9 @@ export function hideSelectionPlaceholder(
     return tr;
   }
 
-  const deco = findSelectionPlaceholder(state);
-  if (deco) {
-    tr = (tr as Transaction).setMeta(plugin, {
-      remove: {},
-    });
-  }
-
-  return tr;
+  return (tr as Transaction).setMeta(plugin, {
+    remove: {},
+  });
 }
 
 export default SelectionPlaceholderPlugin;

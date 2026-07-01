@@ -909,7 +909,7 @@ describe('toCustomStyleDOM', () => {
     });
   });
 
-  describe('toCustomStyleDOM - prefix, tot, tof, hideNumbering branches', () => {
+  describe('toCustomStyleDOM - prefix, numbering, tot, tof, hideNumbering branches', () => {
     it('should handle prefix attribute', () => {
       jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
         styles: {
@@ -1008,6 +1008,58 @@ describe('toCustomStyleDOM', () => {
 
       const result = toCustomStyleDOM(base, node as unknown as Node);
       expect(result[1].hideNumbering).toBe(true);
+    });
+
+    it('should handle numberingStyle and contNumber attributes', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          contNumber: true,
+          hasNumbering: true,
+          numberingStyle: 'lower-alpha',
+          styleLevel: 2,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1]['numbering-style']).toBe('lower-alpha');
+      expect(result[1].contNumber).toBe(true);
+    });
+
+    it('should handle hideCapco when style has no numbering level', () => {
+      jest.spyOn(customstyle, 'getCustomStyleByName').mockReturnValue({
+        styles: {
+          hasNumbering: false,
+          hideCapco: true,
+          styleLevel: 0,
+        },
+        styleName: 'test',
+      });
+
+      const node = {
+        type: 'paragraph',
+        attrs: {
+          align: null,
+          lineSpacing: null,
+          styleName: 'test',
+          indent: null,
+        },
+        content: [],
+      };
+
+      const result = toCustomStyleDOM(base, node as unknown as Node);
+      expect(result[1].hideCapco).toBe(true);
     });
   });
 

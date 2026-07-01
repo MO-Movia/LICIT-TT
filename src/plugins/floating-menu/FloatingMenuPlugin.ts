@@ -345,9 +345,10 @@ export async function clipboardHasProseMirrorData(): Promise<boolean> {
 export function getDecorations(doc: Node, state: EditorState): DecorationSet {
   const decorations: Decoration[] = [];
 
-  doc?.forEach( // NOSONAR not an iterable
-    (node: Node, pos: number) => {
+  doc?.descendants(
+    (node: Node, pos: number, parent: Node | null) => {
       if (node.type.name !== 'paragraph') return;
+      if (!isFloatingMenuParagraphParent(parent)) return;
       const wrapper = document.createElement('span');
       wrapper.className = 'pm-hamburger-wrapper';
 
@@ -404,6 +405,11 @@ export function getDecorations(doc: Node, state: EditorState): DecorationSet {
       }
     });
   return DecorationSet.create(state.doc, decorations);
+}
+
+function isFloatingMenuParagraphParent(parent: Node | null): boolean {
+  const parentName = parent?.type?.name;
+  return parentName === 'doc' || parentName === 'landscape_section';
 }
 
 export function positionAboveOrBelow(anchorRect?: Rect, bodyRect?: Rect): Rect {

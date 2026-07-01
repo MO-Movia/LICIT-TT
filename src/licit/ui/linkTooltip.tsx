@@ -20,6 +20,7 @@ class LinkTooltip extends React.PureComponent {
     href: string;
     onCancel: (view: EditorView) => void;
     onEdit: (view: EditorView) => void;
+    onOpen?: (view: EditorView) => void;
     onRemove: (view: EditorView) => void;
   };
 
@@ -28,7 +29,7 @@ class LinkTooltip extends React.PureComponent {
   };
 
   render(): React.ReactElement<CustomButton> {
-    const { href, editorView, onEdit, onRemove } = this.props;
+    const { href, editorView, onEdit, onOpen, onRemove } = this.props;
     // [FS] IRAD-1013 2020-07-09
     // Change button in "Apply Link" missing in LICIT.
 
@@ -39,9 +40,9 @@ class LinkTooltip extends React.PureComponent {
             <CustomButton
               className="czi-link-tooltip-href"
               label={href}
-              onClick={this._openLink}
+              onClick={onOpen ?? this._openLink}
               title={href}
-              value={href}
+              value={onOpen ? editorView : href}
             />
             <CustomButton label="Change" onClick={onEdit} value={editorView} />
             <CustomButton

@@ -3,6 +3,7 @@
 @import url('./custom-dropdown.css');
 @import url('./custom-style-edit.css');
 @import url('./czi-animations.css');
+@import url('./block-control-menu.css');
 @import url('./czi-body-layout-editor.css');
 @import url('./czi-bookmark-view.css');
 @import url('./czi-color-editor.css');
@@ -46,6 +47,7 @@
 @import url('./icon-font.css');
 @import url('./infoicon-note.css');
 @import url('./infoIconDialog.css');
+@import url('./searchInfo.css');
 @import url('./licit.css');
 @import url('./landscape.css');
 @import url('./listType.css');

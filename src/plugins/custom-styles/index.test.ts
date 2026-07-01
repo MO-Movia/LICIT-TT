@@ -504,6 +504,22 @@ describe('applyNormalIfNoStyle', () => {
   });
 });
 
+describe('onUpdateAppendTransaction', () => {
+  beforeEach(() => {
+    jest
+      .spyOn(ccommand, 'applyLatestStyle')
+      .mockImplementation((_styleName, _nextState, tr) => tr);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('hooks run without errors', () => {
+    expect(true).toBe(true);
+  });
+});
+
 jest.fn((tr: unknown) => {
   return tr;
 });

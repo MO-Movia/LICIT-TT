@@ -16,6 +16,7 @@ export type HTMLStyles = {
   color?: string; // Text colour
   textHighlight?: string; // Text highlight
   hasNumbering?: boolean; // true= The style has numbering
+  numberingStyle?: string; // CSS counter style for numbering
   hasBullet?: boolean; // true= The style has bullet
   paragraphSpacingAfter?: string; // Spacing after a Paragraph
   paragraphSpacingBefore?: string; // Spacing before a Paragraph
@@ -34,6 +35,8 @@ export type HTMLStyles = {
   prefixValue?: string;
   selectedStyleMode?: string;
   hideNumbering?: boolean;
+  hideCapco?: boolean;
+  contNumber?: boolean;
   resetValue?: boolean;
   indentPosition?: string;
   isHangingIndentapplied?: boolean;

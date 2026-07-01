@@ -152,6 +152,35 @@ describe('TableCellMenuPlugin', () => {
     expect(createPopUp).toHaveBeenCalled();
   });
 
+  it('should anchor popup to closest table cell when domAtPos returns a child node', () => {
+    const td = document.createElement('td');
+    const paragraph = document.createElement('p');
+    const text = document.createTextNode('Cell text');
+    paragraph.appendChild(text);
+    td.appendChild(paragraph);
+    document.body.appendChild(td);
+
+    (findActionableCell as jest.Mock).mockReturnValue({pos: 10});
+    (isElementFullyVisible as jest.Mock).mockReturnValue(true);
+    editorView.domAtPos = jest.fn().mockReturnValue({node: text});
+    (createPopUp as jest.Mock).mockReturnValue({
+      close: jest.fn(),
+      update: jest.fn(),
+    });
+
+    const tooltipView = plugin.spec.view(editorView);
+    tooltipView.update(editorView, state);
+
+    expect(isElementFullyVisible).toHaveBeenCalledWith(td);
+    expect(createPopUp).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({anchor: td})
+    );
+
+    document.body.removeChild(td);
+  });
+
   it('should close existing popup if cell is not fully visible', () => {
     (findActionableCell as jest.Mock).mockReturnValue({pos: 10});
     (isElementFullyVisible as jest.Mock).mockReturnValue(false);

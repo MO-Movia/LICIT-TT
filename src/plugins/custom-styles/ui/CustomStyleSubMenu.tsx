@@ -26,7 +26,7 @@ export class CustomStyleSubMenu extends React.PureComponent<
     const styleName = (command as CustomStyleCommand)._customStyleName;
     const showMenu = styleName !== RESERVED_STYLE_NONE;
 
-    const className = 'molsp-dropdown-content ' + theme;
+    const className = 'molsp-dropdown-content molsp-style-edit-menu ' + theme;
     const divClassName = cx(className, {
       'div-height-large': showMenu,
       'div-height-small': !showMenu,

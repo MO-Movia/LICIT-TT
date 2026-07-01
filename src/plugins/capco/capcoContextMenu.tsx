@@ -18,6 +18,7 @@ import { EditorView } from 'prosemirror-view';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { CapcoRuntime, CapcoState } from './types';
 import { getBlockControlCapco, safeCapcoParse } from './utils';
+import { MenuKeyboardNav } from '../../commands/ui/menuKeyboardNav';
 
 export type capcoContextMenuProps = {
   editorView: EditorView;
@@ -28,16 +29,42 @@ export type capcoContextMenuProps = {
   close?: (val?) => void;
 };
 
+type CapcoMenuState = capcoContextMenuProps & { selectedIndex: number };
+
 export class CapcoContextMenu extends React.Component<
   capcoContextMenuProps,
-  capcoContextMenuProps
+  CapcoMenuState
 > {
+
+  _menuRef = React.createRef<HTMLDivElement>();
+  _navActions: Array<() => void> = [];
+  _kbd = new MenuKeyboardNav({
+    getRoot: () => this._menuRef.current,
+    getNavCount: () => this._navActions.length,
+    getSelectedIndex: () => this.state.selectedIndex,
+    setSelectedIndex: (index, done) =>
+      this.setState({ selectedIndex: index }, done),
+    activate: (index) => this._navActions[index]?.(),
+    scrollSelectedIntoView: () => this._scrollSelectedIntoView(),
+
+    captureKeysOnDocument: true,
+  });
+
   constructor(props: capcoContextMenuProps) {
     super(props);
     this.state = {
       ...props,
       customCapcoListItems: this.props.customCapcoListItems ?? [],
+      // Nothing highlighted until the user presses an arrow key or hovers.
+      selectedIndex: -1,
     };
+  }
+
+  _scrollSelectedIntoView(): void {
+    const row = this._menuRef.current?.querySelector(
+      `[data-index="${this.state.selectedIndex}"]`
+    );
+    row?.scrollIntoView?.({ block: 'nearest' });
   }
   createDefaultMenu(capcoList: CapcoEle[]): CapcoEle[] {
     capcoList.push(
@@ -260,14 +287,14 @@ export class CapcoContextMenu extends React.Component<
       selectedParagraphPositions.length > 0 ? selectedParagraphPositions : [pos];
     let tr = this.props.editorView.state.tr;
     if (selectedParagraphPositions.length > 0) {
-      selectedParagraphPositions.forEach((paragraphPos) => {
+      for (const paragraphPos of selectedParagraphPositions) {
         const paragraphNode = tr.doc.nodeAt(paragraphPos);
         tr = tr.setNodeMarkup(
           paragraphPos,
           null,
           this.getCapcoAttrs(paragraphNode, capco)
         );
-      });
+      }
     } else {
       tr = tr.setNodeMarkup(pos, null, newAttrs);
     }
@@ -289,8 +316,19 @@ export class CapcoContextMenu extends React.Component<
     if (typeof tr.setMeta === 'function') {
       tr.setMeta('capcoChangedPos', capcoChangedPositions);
     }
-    this.props.editorView.dispatch(tr);
+    const view = this.props.editorView;
+    view.dispatch(tr);
     this.props.close();
+    // The ProseMirror selection state stays correct, but the capco popup took
+    // focus and the paragraph re-rendered, so the browser drops the visible
+    // selection highlight. Re-focusing the editor makes ProseMirror repaint the
+    // DOM selection from its (already-correct) state. Deferred so the popup's
+    // own focus teardown runs first.
+    setTimeout(() => {
+      if (view && !view.isDestroyed) {
+        view.focus();
+      }
+    }, 0);
   }
   private correctNodeTarget(node: ProseMirrorNode, pos: number) {
     if (!node) {
@@ -365,6 +403,13 @@ export class CapcoContextMenu extends React.Component<
         this.setState({ customCapcoListItems: customCapcoListItems })
       )
       .catch((error) => console.error('Error fetching data:', error));
+    // [Keyboard navigation] Focus the menu so arrows work without a click and
+    // wire hover via the shared controller.
+    this._kbd.mount();
+  }
+
+  componentWillUnmount() {
+    this._kbd.unmount();
   }
 
   onKeyDownCmenuclicked = (e: React.KeyboardEvent<unknown>, item: CapcoEle) => {
@@ -391,6 +436,16 @@ export class CapcoContextMenu extends React.Component<
       customCapcoList,
       customCapcoListItems
     );
+    // [Keyboard navigation] One flat sequence of activation callbacks across
+    // all three sections, indexed to match the data-index on each <li>.
+    this._navActions = [
+      ...defMenu.map((item) => () => this.onCapcoMenuClicked(item.name)),
+      ...capcoList.map((c) => () => this.wrapItemWithCapco(c.displayName)),
+      ...customCapcoList.map((c) => () => c.action?.(undefined)),
+    ];
+    const sysBase = defMenu.length;
+    const customBase = defMenu.length + capcoList.length;
+    const { selectedIndex } = this.state;
     const selection = this.props.editorView.state.selection;
     const cursorPos = selection.$anchor?.pos;
     const node = this.props.editorView.domAtPos(cursorPos).node as HTMLElement;
@@ -421,8 +476,10 @@ export class CapcoContextMenu extends React.Component<
 
     return (
       <div
-        className="ProseMirror molcap-context-menu"
+        className="ProseMirror molcap-context-menu molcap-keyboardnav"
+        onKeyDown={this._kbd.onKeyDown}
         onMouseLeave={() => this.closePopUP()}
+        ref={this._menuRef}
         role="menu"
         style={{
           background: 'white',
@@ -441,8 +498,14 @@ export class CapcoContextMenu extends React.Component<
             fontFamily: 'calibri, serif',
           }}
         >
-          {defMenu.map((item) => (
-            <li key={item.name}>
+          {defMenu.map((item, i) => (
+            <li
+              data-index={i}
+              key={item.name}
+              style={{
+                backgroundColor: i === selectedIndex ? '#c3c3c3' : undefined,
+              }}
+            >
               <button
                 id={item.name}
                 onClick={this.onCapcoMenuClicked.bind(this, item.name)}
@@ -469,8 +532,15 @@ export class CapcoContextMenu extends React.Component<
             fontFamily: 'calibri, serif',
           }}
         >
-          {capcoList.map((capcoitem) => (
-            <li key={capcoitem.name}>
+          {capcoList.map((capcoitem, i) => (
+            <li
+              data-index={sysBase + i}
+              key={capcoitem.name}
+              style={{
+                backgroundColor:
+                  sysBase + i === selectedIndex ? '#c3c3c3' : undefined,
+              }}
+            >
               <button
                 id={capcoitem.name}
                 onClick={() => this.wrapItemWithCapco(capcoitem.displayName)}
@@ -499,13 +569,16 @@ export class CapcoContextMenu extends React.Component<
             fontFamily: 'calibri, serif',
           }}
         >
-          {customCapcoList.map((customcapcoitem) => (
+          {customCapcoList.map((customcapcoitem, i) => (
             <li
+              data-index={customBase + i}
               key={customcapcoitem.name}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                backgroundColor:
+                  customBase + i === selectedIndex ? '#c3c3c3' : undefined,
               }}
             >
               <button
