@@ -68,6 +68,12 @@ describe('CommandButton', () => {
 
     ReactDOM.render(element, container);
 
+    expect(mockCommand.isEnabled).toHaveBeenCalledWith(
+      mockEditorState,
+      mockEditorView,
+      ''
+    );
+
     // Verify CustomButton was called correctly
     expect(CustomButton).toHaveBeenCalledWith(
       expect.objectContaining({

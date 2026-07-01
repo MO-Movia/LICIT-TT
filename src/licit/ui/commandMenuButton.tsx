@@ -112,9 +112,8 @@ export class CommandMenu extends React.PureComponent<
   state = {selectedIndex: 0};
 
   render(): React.ReactElement {
-    const {commandGroups, editorState, title, theme} = this.props;
-
-    const isHorizontal = isExpandButton(title);
+    const {commandGroups, editorState, editorView, title, theme} = this.props;
+    const isHorizontal = isExpandButton(title);    
     const children = [];
     this._navCommands = [];
     const jj = commandGroups.length - 1;
@@ -127,6 +126,7 @@ export class CommandMenu extends React.PureComponent<
             label,
             command,
             editorState,
+            editorView,
             icon,
             theme
           );
@@ -207,14 +207,23 @@ export class CommandMenu extends React.PureComponent<
     label: string,
     command: UICommand,
     editorState: EditorState,
+    editorView: EditorView | undefined,
     icon: string | React.ReactElement,
     theme: string
   ): React.ReactElement<CustomMenuItem> => {
     const {title} = parseLabel(label, theme);
+    let disabled = true;
+    try {
+      disabled =
+        !editorView || !command.isEnabled(editorState, editorView, label);
+    } catch (_error) {
+      console.error('Error checking if command is enabled:', _error);
+      disabled = false;
+    }
     return (
       <CustomMenuItem
         active={command.isActive(editorState)}
-        disabled={!command.isEnabled(editorState)}
+        disabled={disabled}
         icon={icon}
         key={label}
         label={
@@ -263,7 +272,9 @@ export class CommandMenu extends React.PureComponent<
 
   _onUIEnter = (command: UICommand, event: React.SyntheticEvent): void => {
     if (command.shouldRespondToUIEvent(event)) {
-      this._activeCommand?.cancel();
+      if (this._activeCommand && this._activeCommand !== command) {
+        this._activeCommand.cancel();
+      }
       this._activeCommand = command;
       this._execute(command, event);
     }
