@@ -23,9 +23,7 @@ export default function findActiveFontType(state: EditorState): string {
     const storedMarks =
       tr.storedMarks ||
       state.storedMarks ||
-      ((selection as TextSelection).$cursor &&
-        (selection as TextSelection).$cursor.marks &&
-        (selection as TextSelection).$cursor.marks()) ||
+      (selection as TextSelection).$cursor?.marks?.() ||
       [];
     const sm = storedMarks.find((m) => m.type === markType);
     return sm?.attrs?.name as string  || FONT_TYPE_NAME_DEFAULT;

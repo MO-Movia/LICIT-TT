@@ -27,12 +27,12 @@ import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { CustomStyleCommand } from '../CustomStyleCommand';
 import { UICommand } from '../../../core';
-import { ChangeEvent, SyntheticEvent } from 'react';
-import type * as React from 'react';
+import { SyntheticEvent } from 'react';
 import { Transform } from 'prosemirror-transform';
 import * as customStyle from '../customStyle';
 import * as commands from '../../../commands';
 import type { Style } from '../StyleRuntime';
+import type { MenuKeyEvent } from '../../../commands/ui/menuKeyboardNav';
 
 describe('Custom Menu UI', () => {
   const TestCustomStyleRuntime = {
@@ -549,7 +549,7 @@ describe('Custom Menu UI', () => {
       .mockImplementation((update, cb?: () => void) => {
         const partial =
           typeof update === 'function'
-            ? (update as (s: object) => object)(custommenuui.state)
+            ? update(custommenuui.state, custommenuui.props)
             : update;
         custommenuui.state = { ...custommenuui.state, ...partial };
         cb?.();
@@ -609,27 +609,28 @@ describe('Custom Menu UI', () => {
   });
 
   const mockSyncSetState = () =>
-    jest.spyOn(custommenuui, 'setState').mockImplementation((update, cb) => {
-      const partial =
-        typeof update === 'function'
-          ? (update as (s: object) => object)(custommenuui.state)
-          : update;
-      custommenuui.state = { ...custommenuui.state, ...partial };
-      (cb as undefined | (() => void))?.();
-    });
+    jest
+      .spyOn(custommenuui, 'setState')
+      .mockImplementation((update, cb?: () => void) => {
+        const partial =
+          typeof update === 'function'
+            ? update(custommenuui.state, custommenuui.props)
+            : update;
+        custommenuui.state = { ...custommenuui.state, ...partial };
+        cb?.();
+      });
 
-  const navKeyEvent = (key: string) =>
-    ({
-      key,
-      preventDefault: jest.fn(),
-      stopPropagation: jest.fn(),
-    }) as unknown as React.KeyboardEvent;
+  const navKeyEvent = (key: string): MenuKeyEvent => ({
+    key,
+    preventDefault: jest.fn(),
+    stopPropagation: jest.fn(),
+  });
 
   it('should move highlight down with ArrowDown through the controller', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
       { command: cmdGrp2, label: 'b' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 0 };
     const setStateSpy = mockSyncSetState();
     const e = navKeyEvent('ArrowDown');
@@ -643,7 +644,7 @@ describe('Custom Menu UI', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
       { command: cmdGrp2, label: 'b' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 0 };
     const setStateSpy = mockSyncSetState();
     custommenuui._kbd.onKeyDown(navKeyEvent('ArrowUp'));
@@ -655,7 +656,7 @@ describe('Custom Menu UI', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
       { command: cmdGrp2, label: 'b' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui._staticItems = [];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 1 };
     const execSpy = jest
@@ -669,10 +670,10 @@ describe('Custom Menu UI', () => {
   it('should activate a static row on Enter when selected below the hr', () => {
     custommenuui._navItems = [
       { command: cmdGrp1, label: 'a' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui._staticItems = [
       { command: cmdGrp2, label: 'static' },
-    ] as unknown as Array<{ command: UICommand; label: string }>;
+    ];
     custommenuui.state = { ...custommenuui.state, selectedIndex: 1 };
     const execSpy = jest
       .spyOn(custommenuui, '_execute')
@@ -687,11 +688,12 @@ describe('Custom Menu UI', () => {
     row.setAttribute('data-index', '3');
     custommenuui.state = { ...custommenuui.state, selectedIndex: 0 };
     const setStateSpy = mockSyncSetState();
-    custommenuui._kbd.onMouseOver({
-      target: row,
+    const event = new MouseEvent('mouseover', {
       clientX: 10,
       clientY: 20,
-    } as unknown as MouseEvent);
+    });
+    Object.defineProperty(event, 'target', { value: row });
+    custommenuui._kbd.onMouseOver(event);
     expect(custommenuui.state.selectedIndex).toBe(3);
     setStateSpy.mockRestore();
   });

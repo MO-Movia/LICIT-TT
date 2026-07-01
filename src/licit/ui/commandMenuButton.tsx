@@ -112,55 +112,17 @@ export class CommandMenu extends React.PureComponent<
   state = {selectedIndex: 0};
 
   render(): React.ReactElement {
-    const {commandGroups, editorState, editorView, title, theme} = this.props;
-    const isHorizontal = isExpandButton(title);    
-    const children = [];
+    const {commandGroups, title, theme} = this.props;
+    const isHorizontal = isExpandButton(title);
     this._navCommands = [];
-    const jj = commandGroups.length - 1;
-    for (const [ii, group] of commandGroups.entries()) {
-      for (const label of Object.keys(group)) {
-        const command = group[label];
-        if (isUICommandLike(command)) {
-          const {icon} = parseLabel(label, theme.toString());
-          const item = this._renderCustomMenuItem(
-            label,
-            command,
-            editorState,
-            editorView,
-            icon,
-            theme
-          );
-          if (isHorizontal) {
-            children.push(item);
-          } else {
-            const index = this._navCommands.length;
-            if (command.isActive(editorState)) {
-              this._activeIndex = index;
-            }
-            const isSelected = index === this.state.selectedIndex;
-            // Wrap each navigable row so hover can map back to it via
-            // data-index and the shared highlight can be applied to it.
-            children.push(
-              <div
-                className={cx('mo-menu-row', {
-                  'mo-menu-row--selected': isSelected,
-                })}
-                data-index={index}
-                key={label}
-              >
-                {item}
-              </div>
-            );
-            this._navCommands.push(command);
-          }
-        } else if (Array.isArray(command)) {
-          children.push(this._renderMenuButton(label, command, theme));
-        }
-      };
-      if (ii !== jj) {
-        children.push(<CustomMenuItem.Separator key={`${String(ii)}-hr`} />);
-      }
-    };
+    const children = commandGroups.flatMap((group, index) =>
+      this.renderCommandGroup(
+        group,
+        index < commandGroups.length - 1,
+        isHorizontal,
+        theme
+      )
+    );
     const menu = (
       <CustomMenu theme={theme} isHorizontal={isHorizontal}>
         {children}
@@ -174,9 +136,80 @@ export class CommandMenu extends React.PureComponent<
         className="mo-menu-keyboardnav"
         onKeyDown={this._kbd.onKeyDown}
         ref={this._menuRef}
+        role="menu"
         tabIndex={-1}
       >
         {menu}
+      </div>
+    );
+  }
+
+  renderCommandGroup(
+    group: Arr,
+    appendSeparator: boolean,
+    isHorizontal: boolean,
+    theme: string
+  ): React.ReactElement[] {
+    const children = Object.keys(group)
+      .map((label) =>
+        this.renderCommandEntry(label, group[label], isHorizontal, theme)
+      )
+      .filter(Boolean);
+
+    if (appendSeparator) {
+      children.push(<CustomMenuItem.Separator key={`${children.length}-hr`} />);
+    }
+
+    return children;
+  }
+
+  renderCommandEntry(
+    label: string,
+    command: UICommand | Array<unknown>,
+    isHorizontal: boolean,
+    theme: string
+  ): React.ReactElement | null {
+    if (isUICommandLike(command)) {
+      const {editorState, editorView} = this.props;
+      const {icon} = parseLabel(label, theme.toString());
+      const item = this._renderCustomMenuItem(
+        label,
+        command,
+        editorState,
+        editorView,
+        icon,
+        theme
+      );
+      return isHorizontal ? item : this.renderNavigationRow(label, command, item);
+    }
+
+    return Array.isArray(command)
+      ? this._renderMenuButton(label, command, theme)
+      : null;
+  }
+
+  renderNavigationRow(
+    label: string,
+    command: UICommand,
+    item: React.ReactElement
+  ): React.ReactElement {
+    const index = this._navCommands.length;
+    if (command.isActive(this.props.editorState)) {
+      this._activeIndex = index;
+    }
+    this._navCommands.push(command);
+
+    return (
+      <div
+        className={cx('mo-menu-row', {
+          'mo-menu-row--selected': index === this.state.selectedIndex,
+        })}
+        data-index={index}
+        key={label}
+        role="menuitem"
+        tabIndex={-1}
+      >
+        {item}
       </div>
     );
   }
@@ -199,7 +232,7 @@ export class CommandMenu extends React.PureComponent<
   _scrollSelectedIntoView(): void {
     const row = this._menuRef.current?.querySelector(
       `[data-index="${this.state.selectedIndex}"]`
-    ) as HTMLElement | null;
+    );
     row?.scrollIntoView?.({block: 'nearest'});
   }
 
@@ -244,7 +277,7 @@ export class CommandMenu extends React.PureComponent<
 
   _renderMenuButton = (
     label: string,
-    commandGroups: Array<Arr>,
+    commandGroups: Array<unknown>,
     theme: string
   ): React.ReactElement<CommandMenuButton> => {
     const {editorState, editorView, dispatch} = this.props;

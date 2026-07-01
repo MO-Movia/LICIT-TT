@@ -184,83 +184,26 @@ export class CustomMenuUI extends React.PureComponent<
   }
 
   render() {
-    const { dispatch, editorState, editorView, staticCommand, onCommand } =
-      this.props;
-    const children = [];
-    const children1 = [];
     const theme = this.props.theme;
     this.theme =  this.props.theme;
     const searchTerm = this.state.searchTerm.toLowerCase();
-    const selectedName = this.getTheSelectedCustomStyle(this.props.editorState);
 
     this._navItems = [];
     this._staticItems = [];
-    const commandGroups_nw = this.getCommandGroups();
-    for (const group of commandGroups_nw) {
-      for (const label of Object.keys(group)) {
-        if (!this.isStyleMatch(label, searchTerm)) {
-          continue;
-        }
-        const command = group[label];
-        const index = this._navItems.length;
-        if (label === selectedName) {
-          this._appliedIndex = index;
-        }
-        const isSelected = index === this.state.selectedIndex;
-        children.push(
-          <CustomStyleItem
-            command={command}
-            disabled={!!editorView?.disabled}
-            dispatch={dispatch}
-            editorState={editorState}
-            editorView={editorView as EditorView}
-            hasText={true}
-            index={index}
-            key={label}
-            label={label}
-            onClick={this._onUIEnter}
-            onCommand={onCommand}
-            onMouseEnter={this._onUIEnter}
-            selectionClassName={isSelected ? 'selectbackground' : ''}
-            value={command}
-          ></CustomStyleItem>
-        );
-        this._navItems.push({ command: command as UICommand, label });
-      };
-    };
-    for (const group of staticCommand) {
-      for (const label of Object.keys(group)) {
-        const command = group[label] as CustomStyleCommand;
-        const index = this._navItems.length + this._staticItems.length;
-        const isSelected = index === this.state.selectedIndex;
-        children1.push(
-          <CustomStyleItem
-            command={command}
-            disabled={!!editorView?.disabled}
-            dispatch={dispatch}
-            editorState={editorState}
-            editorView={editorView as EditorView}
-            hasText={false}
-            index={index}
-            key={label}
-            label={command._customStyleName}
-            onClick={this._onUIEnter}
-            onCommand={onCommand}
-            onMouseEnter={this._onUIEnter}
-            selectionClassName={isSelected ? 'selectbackground' : ''}
-            value={command}
-          ></CustomStyleItem>
-        );
-        this._staticItems.push({ command, label: command._customStyleName });
-      };
-    };
+    const children = this.renderStyleItems(searchTerm);
+    const children1 = this.renderStaticItems();
     const className = 'molsp-dropbtn ' + theme;
     const styleNamesClassName =
       searchTerm && !children.length
         ? 'molsp-stylenames molsp-stylenames-empty'
         : 'molsp-stylenames';
     return (
-      <div onKeyDown={this._kbd.onKeyDown} ref={this._menuRef} tabIndex={-1}>
+      <div
+        onKeyDown={this._kbd.onKeyDown}
+        ref={this._menuRef}
+        role="menu"
+        tabIndex={-1}
+      >
         <span data-cy="cyStyleDropdown">
           <div className={className} id={this._id}>
             <div className="molsp-search-wrapper">
@@ -283,6 +226,81 @@ export class CustomMenuUI extends React.PureComponent<
           </div>
         </span>
       </div>
+    );
+  }
+
+  renderStyleItems(searchTerm: string): React.ReactElement[] {
+    const selectedName = this.getTheSelectedCustomStyle(this.props.editorState);
+    return this.getCommandGroups().flatMap((group) =>
+      Object.keys(group)
+        .filter((label) => this.isStyleMatch(label, searchTerm))
+        .map((label) => this.renderStyleItem(label, group[label], selectedName))
+    );
+  }
+
+  renderStyleItem(
+    label: string,
+    command: unknown,
+    selectedName: string
+  ): React.ReactElement {
+    const index = this._navItems.length;
+    if (label === selectedName) {
+      this._appliedIndex = index;
+    }
+    this._navItems.push({ command: command as UICommand, label });
+    return this.renderCustomStyleItem(
+      label,
+      command as CustomStyleCommand,
+      true,
+      index,
+      label
+    );
+  }
+
+  renderStaticItems(): React.ReactElement[] {
+    return this.props.staticCommand.flatMap((group) =>
+      Object.keys(group).map((label) => {
+        const command = group[label] as CustomStyleCommand;
+        const index = this._navItems.length + this._staticItems.length;
+        this._staticItems.push({ command, label: command._customStyleName });
+        return this.renderCustomStyleItem(
+          label,
+          command,
+          false,
+          index,
+          command._customStyleName
+        );
+      })
+    );
+  }
+
+  renderCustomStyleItem(
+    key: string,
+    command: CustomStyleCommand,
+    hasText: boolean,
+    index: number,
+    label: string
+  ): React.ReactElement {
+    const { dispatch, editorState, editorView, onCommand } = this.props;
+    return (
+      <CustomStyleItem
+        command={command}
+        disabled={!!editorView?.disabled}
+        dispatch={dispatch}
+        editorState={editorState}
+        editorView={editorView as EditorView}
+        hasText={hasText}
+        index={index}
+        key={key}
+        label={label}
+        onClick={this._onUIEnter}
+        onCommand={onCommand}
+        onMouseEnter={this._onUIEnter}
+        selectionClassName={
+          index === this.state.selectedIndex ? 'selectbackground' : ''
+        }
+        value={command}
+      ></CustomStyleItem>
     );
   }
 

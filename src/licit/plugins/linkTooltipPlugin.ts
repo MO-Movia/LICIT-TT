@@ -11,6 +11,7 @@ import {
   Transaction,
 } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { Node as PMNode } from 'prosemirror-model';
 import {
   MARK_LINK,
   applyMark,
@@ -29,6 +30,41 @@ import LinkSetURLCommand from '../commands/linkSetURLCommand';
 const linkSetURLCommand = new LinkSetURLCommand();
 const LINK_TOOLTIP_SELECTOR = '.czi-link-tooltip-body';
 const LINK_TOOLTIP_CLOSE_DELAY_MS = 1200;
+
+type LinkRangeResult = {
+  from?: { pos?: number };
+  to?: { pos?: number };
+};
+
+function getSelectedLinkText(
+  doc: PMNode,
+  from: number,
+  to: number,
+  result: LinkRangeResult | null | undefined
+): string {
+  if (typeof doc.textBetween !== 'function') {
+    return '';
+  }
+
+  if (result?.from?.pos !== undefined && result?.to?.pos !== undefined) {
+    return doc.textBetween(result.from.pos, result.to.pos + 1, ' ');
+  }
+
+  return doc.textBetween(from, to, ' ');
+}
+
+function getNextLinkText(
+  existingText: string,
+  existingHref: string,
+  href: string,
+  linkDisplayText?: string
+): string | null {
+  if (linkDisplayText && linkDisplayText !== href) {
+    return linkDisplayText;
+  }
+
+  return shouldReplaceLinkText(existingText, existingHref) ? href : null;
+}
 
 // https://prosemirror.net/examples/tooltip/
 const SPEC = {
@@ -71,16 +107,16 @@ const SPEC = {
         return false;
       },
     },
-    handleClickOn: (view, pos, node, _nodePos, event, direct) => {
+    handleClickOn: (view, pos, _node, _nodePos, event, direct) => {
       if (!direct) {
         return false;
       }
 
-      node = view.state.doc.nodeAt(pos);
-      if (!node) {
+      const clickedNode = view.state.doc.nodeAt(pos);
+      if (!clickedNode) {
         return false;
       }
-      const linkMark = node.marks?.find((m) => m?.type?.name === MARK_LINK);
+      const linkMark = clickedNode.marks?.find((m) => m?.type?.name === MARK_LINK);
       if (!linkMark) {
         return false;
       }
@@ -247,7 +283,7 @@ export class LinkTooltipView {
   _scheduleClose = (): void => {
     this._isTooltipHovered = false;
     this._clearCloseTimer();
-    this._closeTimer = window.setTimeout(() => {
+    this._closeTimer = globalThis.setTimeout(() => {
       if (!this._isTooltipHovered) {
         this._closePopup();
       }
@@ -256,7 +292,7 @@ export class LinkTooltipView {
 
   _clearCloseTimer = (): void => {
     if (this._closeTimer !== null) {
-      window.clearTimeout(this._closeTimer);
+      globalThis.clearTimeout(this._closeTimer);
       this._closeTimer = null;
     }
   };
@@ -313,12 +349,7 @@ export class LinkTooltipView {
     }
 
     const href = result.mark.attrs.href;
-    const selectedText =
-      typeof doc.textBetween === 'function'
-        ? result?.from?.pos !== undefined && result?.to?.pos !== undefined
-          ? doc.textBetween(result.from.pos, result.to.pos + 1, ' ')
-          : doc.textBetween(from, to, ' ')
-        : '';
+    const selectedText = getSelectedLinkText(doc, from, to, result);
 
     this._editor = {
       close: (value?: string) => {
@@ -390,6 +421,9 @@ export class LinkTooltipView {
     this._closePopup();
     const href = mark.attrs['href'];
     const selectionId = this.getInnerLinkSelectionId(mark.attrs);
+    if (!href && !selectionId) {
+      return false;
+    }
     let tocItemPos = null;
     if (selectionId) {
       tocItemPos = this.getInnerlinkSelected_position(
@@ -404,7 +438,7 @@ export class LinkTooltipView {
     }
     this.jumpLink(view, tocItemPos, href, selectionId);
     event?.preventDefault(); // prevent default browser navigation
-    return true;
+    return event?.defaultPrevented ?? true;
   }
 
   getInnerLinkSelectionId = (
@@ -449,7 +483,7 @@ export class LinkTooltipView {
 
   _openLink = (href: string): void => {
     if (this.isBookMarkHref(href)) {
-      const id = href.substr(1);
+      const id = href.slice(1);
       const el = document.getElementById(id);
       if (el) {
         void scrollIntoView(el, {
@@ -461,7 +495,7 @@ export class LinkTooltipView {
     }
 
     if (href) {
-      window.open(sanitizeURL(href), '_blank', 'noopener,noreferrer');
+      globalThis.open(sanitizeURL(href), '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -502,68 +536,85 @@ export class LinkTooltipView {
     let tr = hideSelectionPlaceholder(state);
 
     if (href !== undefined) {
-      const { schema } = state;
-      const markType = schema.marks[MARK_LINK];
-      if (markType) {
-        const result = findNodesWithSameMark(
-          tr.doc,
-          initialSelection.from,
-          getInclusiveSelectionTo(initialSelection.from, initialSelection.to),
-          markType
-        );
-        if (result) {
-          const existingHref = result.mark.attrs.href;
-          const existingText = tr.doc.textBetween(
-            result.from.pos,
-            result.to.pos + 1,
-            ' '
-          );
-          const explicitDisplayText =
-            linkDisplayText && linkDisplayText !== href
-              ? linkDisplayText
-              : null;
-          const nextText =
-            explicitDisplayText ??
-            (shouldReplaceLinkText(existingText, existingHref) ? href : null);
-          const linkSelection = TextSelection.create(
-            tr.doc,
-            result.from.pos,
-            result.to.pos + 1
-          );
-          tr = (tr as Transaction).setSelection(linkSelection);
-          const selectionId = this.getInnerLinkSelectionId({ href });
-          const attrs = href
-            ? {
-              href,
-              selectionId: selectionId || null,
-            }
-            : null;
-          if (href && nextText && nextText !== existingText) {
-            tr = (tr as Transaction).replaceWith(
-              result.from.pos,
-              result.to.pos + 1,
-              schema.text(nextText, [markType.create(attrs)]),
-            );
-          } else {
-            tr = applyMark(tr, schema, markType, attrs);
-          }
-
-          // [FS] IRAD-1005 2020-07-09
-          // Upgrade outdated packages.
-          // reset selection to original using the latest doc.
-          const maxSelectionPos = tr.doc.content.size;
-          const origSelection = TextSelection.create(
-            tr.doc,
-            Math.min(initialSelection.from, maxSelectionPos),
-            Math.min(initialSelection.to, maxSelectionPos)
-          );
-          tr = (tr as Transaction).setSelection(origSelection);
-        }
-      }
+      tr = this.applyEditedLinkChange(
+        tr as Transaction,
+        state,
+        initialSelection,
+        href,
+        linkDisplayText
+      );
     }
     dispatch(tr as Transaction);
     view.focus();
   };
+
+  applyEditedLinkChange(
+    tr: Transaction,
+    state: EditorState,
+    initialSelection: TextSelection,
+    href: string,
+    linkDisplayText?: string
+  ): Transaction {
+    const { schema } = state;
+    const markType = schema.marks[MARK_LINK];
+    if (!markType) {
+      return tr;
+    }
+
+    const result = findNodesWithSameMark(
+      tr.doc,
+      initialSelection.from,
+      getInclusiveSelectionTo(initialSelection.from, initialSelection.to),
+      markType
+    );
+    if (!result) {
+      return tr;
+    }
+
+    const existingHref = result.mark.attrs.href;
+    const existingText = tr.doc.textBetween(
+      result.from.pos,
+      result.to.pos + 1,
+      ' '
+    );
+    const nextText = getNextLinkText(
+      existingText,
+      existingHref,
+      href,
+      linkDisplayText
+    );
+    const linkSelection = TextSelection.create(
+      tr.doc,
+      result.from.pos,
+      result.to.pos + 1
+    );
+    tr = tr.setSelection(linkSelection);
+    const selectionId = this.getInnerLinkSelectionId({ href });
+    const attrs = href
+      ? {
+        href,
+        selectionId: selectionId || null,
+      }
+      : null;
+    if (href && nextText && nextText !== existingText) {
+      tr = tr.replaceWith(
+        result.from.pos,
+        result.to.pos + 1,
+        schema.text(nextText, [markType.create(attrs)]),
+      );
+    } else {
+      tr = applyMark(tr, schema, markType, attrs) as Transaction;
+    }
+
+    const maxSelectionPos = tr.doc.content.size;
+    return tr.setSelection(
+      TextSelection.create(
+        tr.doc,
+        Math.min(initialSelection.from, maxSelectionPos),
+        Math.min(initialSelection.to, maxSelectionPos)
+      )
+    );
+  }
 }
 
 function shouldReplaceLinkText(

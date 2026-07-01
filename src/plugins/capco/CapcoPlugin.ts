@@ -251,7 +251,10 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
     const len = this.pendingItems.length;
 
     for (const [i, element] of this.pendingItems.entries()) {
-      let pos = selTrx.mapping.map(element.pos, element.assoc ?? 1);
+      let pos = selTrx.mapping.mapResult(
+        element.pos,
+        element.assoc ?? 1
+      ).pos;
 
       if (!drop || (drop && len > 1 && i !== 0)) {
         pos = this.getPendingItemPos(pos, i, drop, len, doc, element, schema);
@@ -386,7 +389,7 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
     const rulerElement = this.getOrCreateTempCapcoElement();
 
     // Copy font styles from capcoMark to rulerElement
-    const computedStyle = window.getComputedStyle(
+    const computedStyle = globalThis.getComputedStyle(
       document.querySelector('.ProseMirror') || document.body
     );
     rulerElement.style.fontSize = computedStyle.fontSize;
@@ -444,16 +447,18 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
         attrs: this.resetCapco(node, node.attrs.capco),
       });
     } else if (cPos > start && cPos < end) {
-      this.pendingItems.push({
-        pos: cPos,
-        assoc: -1,
-        attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
-      });
-      this.pendingItems.push({
-        pos: cPos,
-        assoc: 1,
-        attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
-      });
+      this.pendingItems.push(
+        {
+          pos: cPos,
+          assoc: -1,
+          attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
+        },
+        {
+          pos: cPos,
+          assoc: 1,
+          attrs: this.resetCapco(node, SYSTEMCAPCO.TBD),
+        }
+      );
     } else if (cPos === end) {
       this.pendingItems.push({
         pos: cPos,

@@ -20,13 +20,13 @@ const HangingIndentMarkSpec: MarkSpec = {
 
         const element = domNode;
         const _prefix = element.getAttribute('prefix');
-        return { prefix: _prefix || null, overridden: false };
+        return { prefix: _prefix || null, overridden: true };
       },
     },
   ],
   toDOM(mark, _inline) {
     const { prefix } = mark.attrs;
-    const attrs = { prefix, overridden: false };
+    const attrs = { prefix, overridden: true };
     return ['span', attrs, 0];
   },
   rank: 5000,

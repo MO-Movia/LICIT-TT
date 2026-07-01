@@ -172,7 +172,7 @@ export class CustomStyleItem extends React.PureComponent<
         return '';
       }
       const buildLevel = (value: string, trailingDot = false) => {
-        const levelStyle = Array(levelCount).fill(value).join('.');
+        const levelStyle = new Array(levelCount).fill(value).join('.');
         return `${styles.prefixValue || ''}${levelStyle}${trailingDot && levelCount === 1 ? '.' : ''}`;
       };
       switch (styles.numberingStyle) {
@@ -196,13 +196,8 @@ export class CustomStyleItem extends React.PureComponent<
         default:
           break;
       }
-      const sampleCounter =
-        styles.numberingStyle === 'lower-alpha'
-          ? 'a'
-          : styles.numberingStyle === 'lower-roman'
-            ? 'i'
-            : '1';
-      level = Array(levelCount).fill(sampleCounter).join('.');
+      const sampleCounter = this.getSampleCounter(styles.numberingStyle);
+      level = new Array(levelCount).fill(sampleCounter).join('.');
       level = `${styles.prefixValue || ''}${level}${levelCount === 1 ? '.' : ''}`;
     }
 
@@ -211,6 +206,13 @@ export class CustomStyleItem extends React.PureComponent<
     }
 
     return level;
+  }
+
+  getSampleCounter(numberingStyle: string): string {
+    if (numberingStyle === 'lower-alpha') {
+      return 'a';
+    }
+    return numberingStyle === 'lower-roman' ? 'i' : '1';
   }
 
   hasBoldPartial(styles: HTMLStyles) {

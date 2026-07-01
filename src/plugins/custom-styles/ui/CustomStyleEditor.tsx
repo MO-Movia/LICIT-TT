@@ -199,12 +199,8 @@ export class CustomStyleEditor extends React.PureComponent<
     if (!this.state.styles.fontSize) {
       this.state.styles.fontSize = '11';
     }
-    if (this.state.styles.hideCapco === undefined) {
-      this.state.styles.hideCapco = false;
-    }
-    if (this.state.styles.contNumber === undefined) {
-      this.state.styles.contNumber = false;
-    }
+    this.state.styles.hideCapco ??= false;
+    this.state.styles.contNumber ??= false;
     if (!this.state.styles.numberingStyle) {
       this.state.styles.numberingStyle = 'decimal';
     }
@@ -507,7 +503,7 @@ export class CustomStyleEditor extends React.PureComponent<
       return '';
     }
     const buildLevel = (value: string, trailingDot = false) => {
-      const levelStyle = Array(levelCount).fill(value).join('.');
+      const levelStyle = new Array(levelCount).fill(value).join('.');
       return `${prefix}${levelStyle}${trailingDot && levelCount === 1 ? '.' : ''} `;
     };
 
@@ -533,14 +529,16 @@ export class CustomStyleEditor extends React.PureComponent<
         break;
     }
 
-    const sampleCounter =
-      numberingStyle === 'lower-alpha'
-        ? 'a'
-        : numberingStyle === 'lower-roman'
-          ? 'i'
-          : '1';
-    const levelStyle = Array(levelCount).fill(sampleCounter).join('.');
+    const sampleCounter = this.getSampleCounter(numberingStyle);
+    const levelStyle = new Array(levelCount).fill(sampleCounter).join('.');
     return `${prefix}${levelStyle}${levelCount === 1 ? '.' : ''} `;
+  }
+
+  getSampleCounter(numberingStyle: string): string {
+    if (numberingStyle === 'lower-alpha') {
+      return 'a';
+    }
+    return numberingStyle === 'lower-roman' ? 'i' : '1';
   }
 
   onNumberingStyleChange(e) {

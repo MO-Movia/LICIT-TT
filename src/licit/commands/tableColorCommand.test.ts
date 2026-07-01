@@ -12,24 +12,6 @@ import TableColorCommand from './tableColorCommand';
 import { UICommand } from '../../core';
 import { createPopUp } from '../../commands';
 
-// Typed popup mock
-type MockPopup = {close: jest.Mock<void, [unknown]>};
-
-// Mock licit-ui-commands (typed)
-const createPopUpMock = jest
-  .fn()
-  .mockImplementation(
-    (
-      _Component: unknown,
-      _props: unknown,
-      opts: {onClose?: (v: string) => void}
-    ): MockPopup => {
-      return {
-        close: jest.fn((_val: unknown) => opts.onClose?.('mocked value')),
-      };
-    }
-  );
-
 jest.mock('../../commands', () => {
   // define inside the factory → safe from hoisting issues
   const createPopUpMock = jest

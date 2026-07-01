@@ -59,7 +59,7 @@ export class MenuKeyboardNav {
 
   onMouseOver = (e: MouseEvent): void => {
     const target = e.target as HTMLElement | null;
-    const row = target?.closest?.('[data-index]') as HTMLElement | null;
+    const row = target?.closest?.('[data-index]');
     if (!row) {
       return;
     }
@@ -68,7 +68,7 @@ export class MenuKeyboardNav {
     }
     this.lastPointerX = e.clientX;
     this.lastPointerY = e.clientY;
-    const index = Number(row.getAttribute('data-index'));
+    const index = Number((row as HTMLElement).dataset.index);
     if (!Number.isNaN(index)) {
       this.opts.setSelectedIndex(index);
     }
@@ -79,21 +79,10 @@ export class MenuKeyboardNav {
     if (!count) {
       return;
     }
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    if (this.isArrowKey(e.key)) {
       e.preventDefault();
       e.stopPropagation();
-      const last = count - 1;
-      const cur = this.opts.getSelectedIndex();
-
-      const onRow = cur >= 0 && cur <= last;
-      let next: number;
-      if (!onRow) {
-        next = e.key === 'ArrowDown' ? 0 : last;
-      } else if (e.key === 'ArrowDown') {
-        next = cur < last ? cur + 1 : 0;
-      } else {
-        next = cur > 0 ? cur - 1 : last;
-      }
+      const next = this.getNextIndex(e.key, count);
       this.opts.setSelectedIndex(next, () => this.opts.scrollSelectedIntoView());
     } else if (e.key === 'Enter') {
       e.preventDefault();
@@ -101,4 +90,24 @@ export class MenuKeyboardNav {
       this.opts.activate(this.opts.getSelectedIndex(), e);
     }
   };
+
+  private isArrowKey(key: string): boolean {
+    return key === 'ArrowDown' || key === 'ArrowUp';
+  }
+
+  private getNextIndex(key: string, count: number): number {
+    const last = count - 1;
+    const cur = this.opts.getSelectedIndex();
+    const onRow = cur >= 0 && cur <= last;
+
+    if (!onRow) {
+      return key === 'ArrowDown' ? 0 : last;
+    }
+
+    if (key === 'ArrowDown') {
+      return cur < last ? cur + 1 : 0;
+    }
+
+    return cur > 0 ? cur - 1 : last;
+  }
 }
