@@ -1226,6 +1226,11 @@ export function applyHangingIndentTransform(
     const dummy1 = state.schema.text(`${ZERO_WIDTH_SPACE}${ZERO_WIDTH_SPACE}`, [...existingMarks, prefix1]);
     newContent.push(dummy1);
   }
+  for (let index = newContent.length - 1; index >= 0; index -= 1) {
+    if (newContent[index]?.text === ZERO_WIDTH_SPACE) {
+      newContent.splice(index, 1);
+    }
+  }
   // Recreate updated paragraph
   const newParagraph = node.type.create(node.attrs, newContent);
   tr.replaceWith(mappedPos, mappedPos + node.nodeSize, newParagraph);

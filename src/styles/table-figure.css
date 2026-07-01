@@ -28,12 +28,12 @@
 /* Enhanced Table Figure Container */
 .enhanced-table-figure {
   padding: 0;
-  margin: 0;
-  /* Default width: use portrait width or a fixed value; for example: */
-  width: 100%;
-  /* adjust as needed for your document's portrait width */
-  overflow-x: auto;
-  /* allow horizontal scrolling if content exceeds width */
+  border: 2px solid black;
+  position: relative;
+  overflow: visible;
+  width: 624px;
+  max-width: 624px;
+  margin: 0 auto;
 }
 
 /* When maximized, span the full viewport width */

@@ -3,11 +3,11 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Node as ProseMirrorNode} from 'prosemirror-model';
-import {TextSelection, Transaction} from 'prosemirror-state';
-import {EditorView, NodeView} from 'prosemirror-view';
+import { Node as ProseMirrorNode } from 'prosemirror-model';
+import { TextSelection, Transaction } from 'prosemirror-state';
+import { EditorView, NodeView } from 'prosemirror-view';
 
-import {addNotesCommand} from './EnhancedTableCommands';
+import { addNotesCommand } from './EnhancedTableCommands';
 import {
   atAnchorBottomLeft,
   atAnchorTopCenter,
@@ -21,7 +21,7 @@ import {
   createBlockControlHandle,
   getBlockControlIcon,
 } from '../../licit/ui/blockControls';
-import {CropDataPropValue, CropImagePopup} from './ui/CropImagePopup';
+import { CropDataPropValue, CropImagePopup } from './ui/CropImagePopup';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const PORTRAIT_WIDTH_PX = 6.5 * 96;
@@ -63,10 +63,7 @@ export class EnhancedTableFigureView implements NodeView {
 
     this.contentDOM = document.createElement('div');
     this.contentDOM.className = 'enhanced-table-figure-content';
-    this.contentDOM.style.width =
-      node.attrs.orientation === 'landscape'
-        ? `${LANDSCAPE_WIDTH_PX}px`
-        : '100%';
+    this.contentDOM.style.width = '100%';
     this.contentScrollDOM.appendChild(this.contentDOM);
     this.dom.appendChild(this.contentScrollDOM);
 
@@ -78,7 +75,7 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   onResizeEnd = (newWidth: number, newHeight: number): void => {
-    const {state, dispatch} = this.view;
+    const { state, dispatch } = this.view;
     const pos = this.getPos();
     dispatch(
       state.tr.setNodeMarkup(pos, undefined, {
@@ -101,10 +98,7 @@ export class EnhancedTableFigureView implements NodeView {
     this.contentScrollDOM.style.overflowX = 'auto';
     this.contentScrollDOM.style.overflowY = 'visible';
     this.contentScrollDOM.style.width = '100%';
-    this.contentDOM.style.width =
-      node.attrs.orientation === 'landscape'
-        ? `${LANDSCAPE_WIDTH_PX}px`
-        : '100%';
+    this.contentDOM.style.width = '100%';
 
     this.dom.dataset.id = String(node.attrs.id);
     this.dom.dataset.figureType = String(node.attrs.figureType);
@@ -264,7 +258,7 @@ export class EnhancedTableFigureView implements NodeView {
   };
 
   private insertParagraphAbove(): void {
-    const {state, dispatch} = this.view;
+    const { state, dispatch } = this.view;
     const pos = this.getPos();
     const paragraph = state.schema.nodes.paragraph.create();
     let tr = state.tr.insert(pos, paragraph);
@@ -273,7 +267,7 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   private insertParagraphBelow(): void {
-    const {state, dispatch} = this.view;
+    const { state, dispatch } = this.view;
     const posAfterNode = this.getPos() + this.node.nodeSize;
     const paragraph = state.schema.nodes.paragraph.create();
     let tr = state.tr.insert(posAfterNode, paragraph);
@@ -282,14 +276,14 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   private addNotes(): void {
-    const {state, dispatch} = this.view;
+    const { state, dispatch } = this.view;
     dispatch(
       addNotesCommand(state.tr, state.schema, this.getPos()) as Transaction
     );
   }
 
   private deleteFigure(): void {
-    const {state, dispatch} = this.view;
+    const { state, dispatch } = this.view;
     const pos = this.getPos();
     dispatch(state.tr.delete(pos, pos + this.node.nodeSize));
   }
@@ -310,7 +304,7 @@ export class EnhancedTableFigureView implements NodeView {
       {
         src: imageNode.attrs.src,
         onConfirm: (cropData: CropDataPropValue) => {
-          this.updateImageAttrs(imagePath, {cropData});
+          this.updateImageAttrs(imagePath, { cropData });
           this._cropEditor?.close(cropData);
         },
         onCancel: () => {
@@ -332,7 +326,7 @@ export class EnhancedTableFigureView implements NodeView {
   private handleResetCrop(): void {
     const imagePath = this.findImagePath(this.getPos());
     if (imagePath !== null) {
-      this.updateImageAttrs(imagePath, {crop: null, cropData: null});
+      this.updateImageAttrs(imagePath, { crop: null, cropData: null });
     }
   }
 
@@ -386,7 +380,7 @@ export class EnhancedTableFigureView implements NodeView {
   private updateImageSource(src: string): void {
     const imagePath = this.findImagePath(this.getPos());
     if (imagePath !== null) {
-      this.updateImageAttrs(imagePath, {crop: null, cropData: null, src});
+      this.updateImageAttrs(imagePath, { crop: null, cropData: null, src });
     }
   }
 
@@ -394,7 +388,7 @@ export class EnhancedTableFigureView implements NodeView {
     imagePath: number,
     attrs: Record<string, unknown>
   ): void {
-    const {state, dispatch} = this.view;
+    const { state, dispatch } = this.view;
     const imageNode = state.doc.nodeAt(imagePath);
     if (!imageNode) {
       return;
