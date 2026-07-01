@@ -316,8 +316,19 @@ export class CapcoContextMenu extends React.Component<
     if (typeof tr.setMeta === 'function') {
       tr.setMeta('capcoChangedPos', capcoChangedPositions);
     }
-    this.props.editorView.dispatch(tr);
+    const view = this.props.editorView;
+    view.dispatch(tr);
     this.props.close();
+    // The ProseMirror selection state stays correct, but the capco popup took
+    // focus and the paragraph re-rendered, so the browser drops the visible
+    // selection highlight. Re-focusing the editor makes ProseMirror repaint the
+    // DOM selection from its (already-correct) state. Deferred so the popup's
+    // own focus teardown runs first.
+    setTimeout(() => {
+      if (view && !view.isDestroyed) {
+        view.focus();
+      }
+    }, 0);
   }
   private correctNodeTarget(node: ProseMirrorNode, pos: number) {
     if (!node) {
