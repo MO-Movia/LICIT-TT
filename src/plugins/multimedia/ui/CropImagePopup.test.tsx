@@ -3,7 +3,41 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { CropDataPropValue } from './CropImagePopup';
+import React, { act } from 'react';
+import { createRoot, Root } from 'react-dom/client';
+import {
+  centerCrop,
+  makeAspectCrop,
+} from 'react-image-crop';
+import { CropDataPropValue, CropImagePopup } from './CropImagePopup';
+
+jest.mock('react-image-crop', () => ({
+  ReactCrop: ({ children, crop, onChange, onComplete }) => (
+    <div data-testid="react-crop" data-unit={crop.unit}>
+      <button
+        onClick={() =>
+          onChange({ unit: '%', x: 1, y: 2, width: 30, height: 40 })
+        }
+        type="button"
+      >
+        Change crop
+      </button>
+      <button
+        onClick={() =>
+          onComplete({ unit: 'px', x: 10, y: 20, width: 100, height: 80 })
+        }
+        type="button"
+      >
+        Complete crop
+      </button>
+      {children}
+    </div>
+  ),
+  centerCrop: jest.fn((crop) => ({ ...crop, x: 5, y: 6 })),
+  makeAspectCrop: jest.fn((crop) => ({ ...crop, height: 75 })),
+}));
+
+(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 function computeCropData(
   completedCrop: { x: number; y: number; width: number; height: number } | null,
@@ -205,4 +239,170 @@ describe('CropImagePopup logic', () => {
     expect(isCropValid({ width: 100, height: 80 })).toBe(true);
   });
 
+});
+
+describe('CropImagePopup component', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  const renderPopup = (props?: Partial<React.ComponentProps<typeof CropImagePopup>>) => {
+    const onConfirm = jest.fn();
+    const onCancel = jest.fn();
+
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    act(() => {
+      root.render(
+        <CropImagePopup
+          src="data:image/png;base64,image"
+          onConfirm={onConfirm}
+          onCancel={onCancel}
+          {...props}
+        />
+      );
+    });
+
+    return { onConfirm, onCancel };
+  };
+
+  const clickButton = (label: string) => {
+    const button = Array.from(container.querySelectorAll('button')).find(
+      (element) => element.textContent === label
+    );
+    act(() => {
+      button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+  };
+
+  const setImageDimensions = (
+    image: HTMLImageElement,
+    dimensions = {
+      naturalWidth: 800,
+      naturalHeight: 600,
+      width: 400,
+      height: 300,
+    }
+  ) => {
+    Object.entries(dimensions).forEach(([key, value]) => {
+      Object.defineProperty(image, key, {
+        configurable: true,
+        value,
+      });
+    });
+  };
+
+  afterEach(() => {
+    act(() => {
+      root?.unmount();
+    });
+    container?.remove();
+    jest.restoreAllMocks();
+  });
+
+  it('renders the crop image and default px crop unit', () => {
+    renderPopup();
+
+    expect(container.querySelector('.crop-popup-wrapper')).toBeTruthy();
+    expect(container.querySelector('[data-testid="react-crop"]')?.getAttribute('data-unit')).toBe('px');
+    expect(container.querySelector('img')?.getAttribute('src')).toBe(
+      'data:image/png;base64,image'
+    );
+  });
+
+  it('uses percent crop unit when requested and handles crop changes', () => {
+    renderPopup({ defaultUnit: '%' });
+
+    expect(container.querySelector('[data-testid="react-crop"]')?.getAttribute('data-unit')).toBe('%');
+    clickButton('Change crop');
+    expect(container.querySelector('[data-testid="react-crop"]')?.getAttribute('data-unit')).toBe('%');
+  });
+
+  it('calls onCancel from the cancel button', () => {
+    const { onCancel } = renderPopup();
+
+    clickButton('Cancel');
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('centers the initial crop when the image loads', () => {
+    renderPopup();
+    const image = container.querySelector('img') as HTMLImageElement;
+    setImageDimensions(image);
+
+    act(() => {
+      image.dispatchEvent(new Event('load'));
+    });
+
+    expect(makeAspectCrop).toHaveBeenCalledWith(
+      { unit: 'px', width: 320 },
+      4 / 3,
+      400,
+      300
+    );
+    expect(centerCrop).toHaveBeenCalledWith(
+      expect.objectContaining({ height: 75 }),
+      400,
+      300
+    );
+  });
+
+  it('does not confirm when crop dimensions are missing', () => {
+    const { onConfirm } = renderPopup();
+
+    clickButton('Crop');
+
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('does not confirm when canvas context is unavailable', () => {
+    const { onConfirm } = renderPopup();
+    const image = container.querySelector('img') as HTMLImageElement;
+    setImageDimensions(image);
+    jest
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue(null);
+
+    clickButton('Complete crop');
+    clickButton('Crop');
+
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('draws the selected crop and confirms crop data', () => {
+    const { onConfirm } = renderPopup();
+    const image = container.querySelector('img') as HTMLImageElement;
+    const drawImage = jest.fn();
+    setImageDimensions(image);
+    jest
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue({ drawImage } as unknown as CanvasRenderingContext2D);
+    jest
+      .spyOn(HTMLCanvasElement.prototype, 'toDataURL')
+      .mockReturnValue('data:image/png;base64,cropped');
+
+    clickButton('Complete crop');
+    clickButton('Crop');
+
+    expect(drawImage).toHaveBeenCalledWith(
+      image,
+      20,
+      40,
+      200,
+      160,
+      0,
+      0,
+      100,
+      80
+    );
+    expect(onConfirm).toHaveBeenCalledWith({
+      left: 10,
+      top: 20,
+      width: 100,
+      height: 80,
+      croppedBase64: 'data:image/png;base64,cropped',
+    });
+  });
 });

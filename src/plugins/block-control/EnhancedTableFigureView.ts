@@ -25,8 +25,6 @@ import { CropDataPropValue, CropImagePopup } from './ui/CropImagePopup';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const PORTRAIT_WIDTH_PX = 6.5 * 96;
-const LANDSCAPE_WIDTH_PX = 9 * 96;
-
 export class EnhancedTableFigureView implements NodeView {
   node: ProseMirrorNode;
   view: EditorView;

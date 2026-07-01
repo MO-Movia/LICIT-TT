@@ -87,4 +87,18 @@ describe('IndentCommand', () => {
   it('should not render label', () => {
     expect(command.renderLabel()).toBeNull();
   });
+  it('should execute custom style for table', () => {
+    const state = EditorState.create({ schema: schema1 });
+    const result = command.executeCustomStyleForTable(state, state.tr, 0, 1);
+    expect(result).toBeDefined();
+  });
+  it('should resolve waitForUserInput with undefined', async () => {
+    await expect(command.waitForUserInput({} as EditorState)).resolves.toBeUndefined();
+  });
+  it('should return false for executeWithUserInput', () => {
+    expect(command.executeWithUserInput({} as EditorState)).toBe(false);
+  });
+  it('should return null from cancel', () => {
+    expect(command.cancel()).toBeNull();
+  });
 });

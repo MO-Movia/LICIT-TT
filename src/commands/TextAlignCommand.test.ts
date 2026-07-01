@@ -229,6 +229,106 @@ describe('TextAlignCommand', () => {
   it('should not render label', () => {
     expect(command.renderLabel()).toBeNull();
   });
+  it('should resolve waitForUserInput with undefined', async () => {
+    await expect(command.waitForUserInput({} as EditorState)).resolves.toBeUndefined();
+  });
+  it('should return false for executeWithUserInput', () => {
+    expect(command.executeWithUserInput({} as EditorState)).toBe(false);
+  });
+  it('should return null from cancel', () => {
+    expect(command.cancel()).toBeNull();
+  });
+  it('should return true without dispatching when changed selection already has the alignment', () => {
+    const paragraphType = schema1.nodes.paragraph;
+    const changedParagraph = {
+      attrs: { align: 'left' },
+      marks: [],
+      type: paragraphType,
+    };
+    const tr = {
+      docChanged: true,
+      selection: {
+        from: 0,
+        to: 1,
+      },
+      doc: {
+        nodesBetween: (_from, _to, callback) => {
+          callback(changedParagraph, 0);
+        },
+        nodeAt: jest.fn(),
+      },
+      setNodeMarkup: jest.fn().mockReturnThis(),
+    } as unknown as Transform;
+    const state = {
+      schema: schema1,
+      selection: {
+        from: 0,
+        to: 1,
+        head: 1,
+        $head: {
+          parentOffset: 0,
+          parent: { attrs: { align: 'right' } },
+        },
+      },
+      tr: {
+        setSelection: jest.fn().mockReturnValue(tr),
+      },
+    } as unknown as EditorState;
+
+    expect(command.execute(state, dispatch)).toBe(true);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(tr.setNodeMarkup).toHaveBeenCalledWith(
+      0,
+      paragraphType,
+      expect.objectContaining({
+        align: 'right',
+        overriddenAlign: true,
+        overriddenAlignValue: 'right',
+      }),
+      []
+    );
+  });
+  it('should dispatch changed transaction when override target node is missing', () => {
+    const paragraphType = schema1.nodes.paragraph;
+    const changedParagraph = {
+      attrs: { align: 'left' },
+      marks: [],
+      type: paragraphType,
+    };
+    const tr = {
+      docChanged: true,
+      selection: {
+        from: 0,
+        to: 1,
+      },
+      doc: {
+        nodesBetween: (_from, _to, callback) => {
+          callback(changedParagraph, 0);
+        },
+        nodeAt: jest.fn().mockReturnValue(null),
+      },
+      setNodeMarkup: jest.fn().mockReturnThis(),
+    } as unknown as Transform;
+    const state = {
+      schema: schema1,
+      selection: {
+        from: 0,
+        to: 1,
+        head: 1,
+        $head: {
+          parentOffset: 0,
+          parent: { attrs: { align: 'left' } },
+        },
+      },
+      tr: {
+        setSelection: jest.fn().mockReturnValue(tr),
+      },
+    } as unknown as EditorState;
+
+    expect(command.execute(state, dispatch)).toBe(true);
+    expect(tr.doc.nodeAt).toHaveBeenCalledWith(0);
+    expect(dispatch).toHaveBeenCalledWith(tr);
+  });
 
   it('should handle setTextAlign', () => {
     const test = setTextAlign({ selection: {} as unknown as CellSelection, doc: { nodesBetween: () => { return {}; } } } as unknown as Transform, { nodes: { 'blockquote': null, 'heading': null, 'paragraph': null } } as unknown as Schema);
