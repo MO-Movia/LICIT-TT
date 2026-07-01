@@ -1177,7 +1177,11 @@ export function applyHangingIndentTransform(
   if (!scan.foundSpacer || scan.foundHangingIndent) return tr;
 
   const contentState = buildHangingIndentContent(state, children);
-
+  for (let index = contentState.newContent.length - 1; index >= 0; index -= 1) {
+    if (contentState.newContent[index]?.text === ZERO_WIDTH_SPACE) {
+      contentState.newContent.splice(index, 1);
+    }
+  }
   // Recreate updated paragraph
   const newParagraph = node.type.create(node.attrs, contentState.newContent);
   tr.replaceWith(mappedPos, mappedPos + node.nodeSize, newParagraph);
