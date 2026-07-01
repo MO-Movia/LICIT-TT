@@ -55,6 +55,7 @@ type CustomMenuUIProps = {
 type CustomMenuUIState = {
   expanded: boolean;
   selectedIndex: number;
+  searchTerm: string;
   style: {
     display: string;
     top: string;
@@ -327,8 +328,7 @@ export class CustomMenuUI extends React.PureComponent<
   }
 
   _onSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    this._selectedIndex = 0;
-    this.setState({ searchTerm: event.target.value });
+    this.setState({ searchTerm: event.target.value, selectedIndex: 0 });
   };
 
   _onSearchClick = (event: SyntheticEvent<HTMLInputElement>): void => {

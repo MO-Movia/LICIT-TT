@@ -29,7 +29,6 @@ import { CustomStyleCommand } from '../CustomStyleCommand';
 import { UICommand } from '../../../core';
 import { ChangeEvent, SyntheticEvent } from 'react';
 import type * as React from 'react';
-import { SyntheticEvent } from 'react';
 import { Transform } from 'prosemirror-transform';
 import * as customStyle from '../customStyle';
 import * as commands from '../../../commands';
@@ -2202,4 +2201,3 @@ describe('Custom Menu UI', () => {
     ).toBe(false);
   });
 });
-
