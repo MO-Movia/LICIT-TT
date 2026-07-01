@@ -14,13 +14,43 @@
 
 .czi-editor-frameset .molsp-stylenames {
   max-height: 205px;
-  min-height: 28px;
+  min-height: 18px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
+.czi-editor-frameset .molsp-stylenames-empty {
+  height: 18px;
+  overflow: hidden;
+}
+
 .czi-editor-frameset .molsp-stylenames-hr {
   margin: 2px;
+}
+
+.czi-editor-frameset .molsp-search-wrapper {
+  box-sizing: border-box;
+  padding: 4px 2px 6px;
+}
+
+.czi-editor-frameset .molsp-search-input {
+  background-color: var(--czi-bg);
+  border-color: var(--czi-molsp-dropbtn-border-color);
+  border-radius: 6px;
+  border-style: solid;
+  border-width: 1px;
+  box-sizing: border-box;
+  color: var(--czi-text-color);
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 4px 12px;
+  width: 100%;
+}
+
+.czi-editor-frameset .molsp-search-input:focus {
+  border-color: var(--czi-text-color);
+  outline: none;
 }
 
 .czi-editor-frameset .molsp-dropdown-content {
@@ -123,4 +153,3 @@
 .czi-editor-frameset .tooltip-text {
   text-decoration: underline;
 }
-

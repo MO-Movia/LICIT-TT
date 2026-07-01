@@ -27,6 +27,7 @@ import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { CustomStyleCommand } from '../CustomStyleCommand';
 import { UICommand } from '../../../core';
+import { ChangeEvent, SyntheticEvent } from 'react';
 import type * as React from 'react';
 import { SyntheticEvent } from 'react';
 import { Transform } from 'prosemirror-transform';
@@ -2201,3 +2202,4 @@ describe('Custom Menu UI', () => {
     ).toBe(false);
   });
 });
+
