@@ -81,10 +81,18 @@
   pointer-events: auto;
 }
 
-.ProseMirror[contenteditable="false"] .enhanced-table-figure-capco {
+.ProseMirror[contenteditable='false'] .enhanced-table-figure-capco {
   display: none !important;
 }
 
-.ProseMirror[contenteditable="false"] .enhanced-table-figure-select-handle {
-    display: none;
+.ProseMirror[contenteditable='false'] .enhanced-table-figure-select-handle {
+  display: none;
+}
+.export-pdf-mode .enhanced-table-figure-select-handle,
+.export-pdf-mode .enhanced-table-figure-maximize-button,
+.export-pdf-mode
+  .enhanced-table-figure.has-hover-handle:hover
+  .handle-hidden-on-hover {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

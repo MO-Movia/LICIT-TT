@@ -12,8 +12,9 @@
   margin-right: 6px;
   color: #555;
   font-size: 16px;
+  -webkit-user-select: none;
   user-select: none;
-  opacity: 0; /* hidden initially */
+  opacity: 0;
   transition: opacity 0.18s ease-in-out;
 }
 
@@ -181,4 +182,11 @@
 
 .ProseMirror[contenteditable="false"] .pm-hamburger-wrapper {
   display: none !important;
+}
+
+.ProseMirror p[hangingindent='true'] .pm-hamburger-wrapper {
+  position: absolute;
+  right: 0;
+  top: 0;
+  float: none;
 }

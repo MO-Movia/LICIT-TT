@@ -100,6 +100,25 @@ describe('ImageNodeView', () => {
     expect(imagenodeview).toBeDefined();
   });
 });
+
+function hasImageOptionsButton(node): boolean {
+  if (!node || typeof node !== 'object') {
+    return false;
+  }
+
+  if (node.props?.label === 'Image options') {
+    return true;
+  }
+
+  const children = node.props?.children;
+  if (!children) {
+    return false;
+  }
+
+  return []
+    .concat(children)
+    .some((child) => hasImageOptionsButton(child));
+}
 describe('Image view body', () => {
   const mockSchema = new Schema({
     nodes: {
@@ -183,7 +202,7 @@ describe('Image view body', () => {
     selected: true,
     focused: true,
   };
-  imageviewbody._inlineEditor = {
+  imageviewbody._menu = {
     close: () => undefined,
   } as unknown as PopUpHandle;
   it('should be defined (case 2)', () => {
@@ -191,9 +210,9 @@ describe('Image view body', () => {
   });
 
   it('should handle componentWillUnmount', () => {
-    imageviewbody._inlineEditor =
-      imageviewbody._inlineEditor ?? ({} as unknown as PopUpHandle);
-    const spy = jest.spyOn(imageviewbody._inlineEditor, 'close');
+    imageviewbody._menu =
+      imageviewbody._menu ?? ({close: () => undefined} as unknown as PopUpHandle);
+    const spy = jest.spyOn(imageviewbody._menu, 'close');
     imageviewbody.componentWillUnmount();
     expect(spy).toHaveBeenCalled();
   });
@@ -208,11 +227,45 @@ describe('Image view body', () => {
         dom: document.createElement('img'),
         selected: true,
         focused: true,
-      },
-      editorState
+      }
     );
     expect(spy).toHaveBeenCalled();
   });
+
+  it('should update image attrs when getPos returns 0', () => {
+    const docWithImage = mockSchema.node('doc', null, [
+      mockSchema.node('image', {align: 'left', fitToParent: 'fit'}),
+    ]);
+    const stateWithImage = EditorState.create({
+      doc: docWithImage,
+      schema: mockSchema,
+    });
+    const dispatch = jest.fn();
+    const imageViewBody = new ImageViewBody(
+      mockImageNode as unknown as NodeViewProps,
+      editorfocused
+    );
+    imageViewBody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        state: stateWithImage,
+        dispatch,
+      } as unknown as EditorFocused,
+      getPos: () => 0,
+      node: {
+        attrs: {align: 'left', fitToParent: 'fit'},
+      } as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+      focused: true,
+    };
+
+    imageViewBody._updateImageAttrs({src: 'data:image/png;base64,test'});
+
+    expect(dispatch).toHaveBeenCalled();
+  });
+
   it('should handle render', () => {
     imageviewbody.state = {
       maxSize: {
@@ -307,32 +360,229 @@ describe('Image view body', () => {
     ).toStrictEqual({width: 50, height: 10});
   });
 
-  it('should handle _renderInlineEditor', () => {
-    const elem = document.createElement('div');
-    const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
+  it('should prepare image menu items', () => {
+    const items = imageviewbody._getMenuItems();
 
-    expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    spy.mockRestore();
+    expect(items.map((item) => item.id)).toContain('choose-file');
+    expect(items.map((item) => item.id)).toContain('paste-clipboard');
   });
-  it('should handle _renderInlineEditor (case 2)', () => {
-    const elem = document.createElement('div');
-    elem.dataset.active = 'true';
-    const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
 
-    expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toHaveBeenCalled();
-  });
-  it('should handle _renderInlineEditor else statement', () => {
-    imageviewbody._inlineEditor = {
-      update: () => undefined,
-    } as unknown as PopUpHandle;
+  it('should refresh open image menu while the image is active', () => {
     const elem = document.createElement('div');
-    elem.dataset.active = 'true';
-    const spy = jest.spyOn(document, 'getElementById').mockReturnValue(elem);
+    elem.setAttribute('data-active', 'true');
+    const getElementByIdSpy = jest
+      .spyOn(document, 'getElementById')
+      .mockReturnValue(elem);
+    const update = jest.fn();
+    imageviewbody._menu = {
+      close: jest.fn(),
+      update,
+    };
 
-    expect(imageviewbody._renderInlineEditor()).toBeUndefined();
-    expect(spy).toHaveBeenCalled();
+    imageviewbody._renderInlineEditor();
+
+    expect(update).toHaveBeenCalledTimes(1);
+    const updateProps = update.mock.calls[0][0] as {
+      close: unknown;
+      items: Array<{id: string}>;
+    };
+    expect(updateProps.close).toBe(imageviewbody._closeMenu);
+    expect(updateProps.items.map((item) => item.id)).toEqual(
+      imageviewbody._getMenuItems().map((item) => item.id)
+    );
+    getElementByIdSpy.mockRestore();
   });
+
+  it('should close open image menu when the image is inactive', () => {
+    const elem = document.createElement('div');
+    const getElementByIdSpy = jest
+      .spyOn(document, 'getElementById')
+      .mockReturnValue(elem);
+    const close = jest.fn();
+    imageviewbody._menu = {
+      close,
+      update: jest.fn(),
+    };
+
+    imageviewbody._renderInlineEditor();
+
+    expect(close).toHaveBeenCalled();
+    expect(imageviewbody._menu).toBeUndefined();
+    getElementByIdSpy.mockRestore();
+  });
+
+  it('should not render image hamburger inside enhanced table figure', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: {content: 'enhanced_table_figure'},
+        text: {group: 'inline'},
+        paragraph: {content: 'inline*', group: 'block'},
+        image: {
+          inline: true,
+          attrs: {
+            align: {default: null},
+            crop: {default: null},
+            cropData: {default: null},
+            fitToParent: {default: null},
+            height: {default: null},
+            rotate: {default: null},
+            src: {default: null},
+            width: {default: null},
+          },
+          group: 'inline',
+        },
+        enhanced_table_figure: {
+          content: 'enhanced_table_figure_body',
+          group: 'block',
+        },
+        enhanced_table_figure_body: {
+          content: 'paragraph',
+          group: 'block',
+        },
+      },
+    });
+    const doc = schema.nodeFromJSON({
+      type: 'doc',
+      content: [
+        {
+          type: 'enhanced_table_figure',
+          content: [
+            {
+              type: 'enhanced_table_figure_body',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [
+                    {
+                      type: 'image',
+                      attrs: {src: '/path/to/image.jpg'},
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const state = EditorState.create({doc, schema});
+    const imageViewBody = new ImageViewBody(
+      mockImageNode as unknown as NodeViewProps
+    );
+    imageViewBody.state = {
+      maxSize: {
+        width: 10000,
+        height: 10000,
+        complete: true,
+      },
+      originalSize: {
+        src: '/path/to/image.jpg',
+        complete: true,
+        height: 100,
+        width: 100,
+      },
+    };
+    imageViewBody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        readOnly: false,
+        state,
+      } as unknown as EditorFocused,
+      getPos: () => 3,
+      node: schema.nodes.image.create({src: '/path/to/image.jpg'}),
+      dom: document.createElement('span'),
+      selected: true,
+      focused: true,
+    };
+
+    const rendered = imageViewBody.render();
+
+    expect(imageViewBody.isInsideEnhancedTableFigureBody()).toBe(true);
+    expect(rendered.props.className).not.toContain('has-hover-handle');
+    expect(hasImageOptionsButton(rendered)).toBe(false);
+  });
+
+  it('should dispatch image alignment menu actions', () => {
+    const mockSchema = new Schema({
+      nodes: {
+        doc: {content: 'block+'},
+        paragraph: {content: 'inline*', group: 'block'},
+        text: {group: 'inline'},
+        image: {
+          inline: true,
+          attrs: {align: {default: null}, fitToParent: {default: null}},
+          group: 'inline',
+        },
+      },
+      marks: {},
+    });
+    const stateWithImage = EditorState.create({
+      doc: mockSchema.nodeFromJSON({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'image',
+                attrs: {
+                  align: 'left',
+                  fitToParent: null,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+      schema: mockSchema,
+    });
+    const dispatch = jest.fn();
+    const imageViewBody = new ImageViewBody(
+      mockImageNode as unknown as NodeViewProps,
+      editorfocused
+    );
+    imageViewBody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        state: stateWithImage,
+        dispatch,
+      } as unknown as EditorFocused,
+      getPos: () => 1,
+      node: {
+        attrs: {align: 'left', fitToParent: null},
+      } as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+      focused: true,
+    };
+
+    const alignments = [
+      ['align-center', 'center'],
+      ['align-right', 'right'],
+      ['float-left', 'float-left'],
+      ['float-right', 'float-right'],
+    ];
+
+    for (const [itemId, align] of alignments) {
+      dispatch.mockClear();
+      imageViewBody._getMenuItems().find((item) => item.id === itemId)?.action();
+
+      expect(dispatch).toHaveBeenCalled();
+      const transaction = dispatch.mock.calls[0][0];
+      expect(transaction.doc.nodeAt(1)?.attrs.align).toBe(align);
+    }
+  });
+
+  it('should store menu button ref', () => {
+    const button = document.createElement('button');
+
+    imageviewbody._onMenuButtonRef(button);
+
+    expect(imageviewbody._menuButton).toBe(button);
+  });
+
   it('should handle _onResizeEnd', () => {
     const mockSchema = new Schema({
       nodes: {
@@ -404,7 +654,7 @@ describe('Image view body', () => {
       selected: true,
       focused: true,
     };
-    imageviewbody._inlineEditor = mockPopupHandle;
+    imageviewbody._menu = mockPopupHandle;
     expect(imageviewbody._onResizeEnd(10, 20)).toBeUndefined();
   });
 
@@ -479,7 +729,7 @@ describe('Image view body', () => {
       selected: true,
       focused: true,
     };
-    imageviewbody._inlineEditor = mockPopupHandle;
+    imageviewbody._menu = mockPopupHandle;
     expect(imageviewbody._onChange({align: 'left'})).toBeUndefined();
     imageviewbody._mounted = true;
     expect(imageviewbody._onChange({align: 'left'})).toBeUndefined();
@@ -652,8 +902,8 @@ describe('Image view body', () => {
   it('should handle calcWidthAndHeight', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
-        null,
-        null,
+        0,
+        0,
         1,
         {width: 1, height: 1, src: ''}
       )
@@ -662,12 +912,12 @@ describe('Image view body', () => {
   it('should handle calcWidthAndHeight (case 2)', () => {
     expect(
       imageviewbody.calcWidthAndHeight(
-        null,
-        null,
+        0,
+        0,
         1,
         {
-          width: null,
-          height: null,
+          width: 0,
+          height: 0,
           src: '',
         }
       )
