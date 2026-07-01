@@ -11,6 +11,7 @@ import {
   Transaction,
 } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { Node as PMNode } from 'prosemirror-model';
 import {
   MARK_LINK,
   applyMark,
@@ -21,16 +22,117 @@ import {
 import { hideSelectionPlaceholder } from './selectionPlaceholderPlugin';
 import lookUpElement from '../lookUpElement';
 import LinkTooltip from '../ui/linkTooltip';
-import LinkURLEditor from '../ui/linkURLEditor';
 import { EditorViewEx } from '../constants';
+import sanitizeURL from '../sanitizeURL';
+import scrollIntoView from 'smooth-scroll-into-view-if-needed';
+import LinkSetURLCommand from '../commands/linkSetURLCommand';
+
+const linkSetURLCommand = new LinkSetURLCommand();
+const LINK_TOOLTIP_SELECTOR = '.czi-link-tooltip-body';
+const LINK_TOOLTIP_CLOSE_DELAY_MS = 1200;
+
+type LinkRangeResult = {
+  from?: { pos?: number };
+  to?: { pos?: number };
+};
+
+function getSelectedLinkText(
+  doc: PMNode,
+  from: number,
+  to: number,
+  result: LinkRangeResult | null | undefined
+): string {
+  if (typeof doc.textBetween !== 'function') {
+    return '';
+  }
+
+  if (result?.from?.pos !== undefined && result?.to?.pos !== undefined) {
+    return doc.textBetween(result.from.pos, result.to.pos + 1, ' ');
+  }
+
+  return doc.textBetween(from, to, ' ');
+}
+
+function getNextLinkText(
+  existingText: string,
+  existingHref: string,
+  href: string,
+  linkDisplayText?: string
+): string | null {
+  if (linkDisplayText && linkDisplayText !== href) {
+    return linkDisplayText;
+  }
+
+  return shouldReplaceLinkText(existingText, existingHref) ? href : null;
+}
 
 // https://prosemirror.net/examples/tooltip/
 const SPEC = {
   // [FS] IRAD-1005 2020-07-07
   // Upgrade outdated packages.
   key: new PluginKey('LinkTooltipPlugin'),
+  props: {
+    handleDOMEvents: {
+      click: (_view: EditorView, event: MouseEvent): boolean => {
+        if (event.target instanceof Element && event.target.closest('a[href]')) {
+          event.preventDefault();
+        }
+        return false;
+      },
+      mouseover: (view: EditorView, event: MouseEvent): boolean => {
+        const anchorEl =
+          event.target instanceof Element
+            ? event.target.closest('a[href]')
+            : null;
+        if (anchorEl) {
+          (view.dom as HTMLElement & {
+            _linkTooltipView?: LinkTooltipView;
+          })._linkTooltipView?._handleMouseOver(view, anchorEl);
+        }
+        return false;
+      },
+      mouseout: (view: EditorView, event: MouseEvent): boolean => {
+        const anchorEl =
+          event.target instanceof Element
+            ? event.target.closest('a[href]')
+            : null;
+        if (anchorEl) {
+          (view.dom as HTMLElement & {
+            _linkTooltipView?: LinkTooltipView;
+          })._linkTooltipView?._handleLinkMouseOut(
+            anchorEl,
+            event.relatedTarget
+          );
+        }
+        return false;
+      },
+    },
+    handleClickOn: (view, pos, _node, _nodePos, event, direct) => {
+      if (!direct) {
+        return false;
+      }
+
+      const clickedNode = view.state.doc.nodeAt(pos);
+      if (!clickedNode) {
+        return false;
+      }
+      const linkMark = clickedNode.marks?.find((m) => m?.type?.name === MARK_LINK);
+      if (!linkMark) {
+        return false;
+      }
+
+      const pluginView = (view.dom as HTMLElement & {
+        _linkTooltipView?: LinkTooltipView;
+      })._linkTooltipView;
+      return pluginView?._handleClick(view, linkMark, event) ?? false;
+    },
+  },
   view(editorView: EditorView) {
-    return new LinkTooltipView(editorView);
+    const pluginView = new LinkTooltipView(editorView);
+    (editorView.dom as HTMLElement & {
+      _linkTooltipView?: LinkTooltipView;
+    })._linkTooltipView = pluginView;
+    return pluginView;
   },
 };
 
@@ -44,9 +146,15 @@ export class LinkTooltipView {
   _anchorEl = null;
   _popup = null;
   _editor = null;
+  _view = null;
+  _linkSelection = null;
+  _closeTimer = null;
+  _tooltipEl = null;
+  _isTooltipHovered = false;
 
   constructor(editorView: EditorView) {
     this.update(editorView, null);
+    this._view = editorView;
   }
 
   update(view: EditorViewEx, _lastState: EditorState): void {
@@ -61,8 +169,17 @@ export class LinkTooltipView {
     if (!markType) {
       return;
     }
-    const { from, to } = selection;
-    const result = findNodesWithSameMark(doc, from, to, markType);
+    if (!this._popup) {
+      return;
+    }
+
+    const { from, to } = this._linkSelection ?? selection;
+    const result = findNodesWithSameMark(
+      doc,
+      from,
+      getInclusiveSelectionTo(from, to),
+      markType
+    );
 
     if (!result) {
       this.destroy();
@@ -82,14 +199,26 @@ export class LinkTooltipView {
       return;
     }
 
+    this._showTooltip(view, result, anchorEl);
+  }
+
+  _showTooltip = (view: EditorView, result, anchorEl: Element): void => {
+    this._clearCloseTimer();
+    this._linkSelection = TextSelection.create(
+      view.state.doc,
+      result.from.pos,
+      result.to.pos + 1
+    );
     const popup = this._popup;
     const viewPops = {
-      editorState: state,
+      editorState: view.state,
       editorView: view,
       href: result.mark.attrs.href,
       onCancel: this._onCancel,
       onEdit: this._onEdit,
+      onOpen: this._onOpen,
       onRemove: this._onRemove,
+      selectionId: result.mark.attrs.selectionId,
     };
 
     if (popup && anchorEl === this._anchorEl) {
@@ -103,11 +232,84 @@ export class LinkTooltipView {
         onClose: this._onClose,
         position: atAnchorTopCenter,
       });
+      this._bindTooltipHoverEvents();
     }
-  }
+  };
+
+  _handleMouseOver = (view: EditorView, anchorEl: Element): void => {
+    const markType = view.state.schema.marks[MARK_LINK];
+    if (!markType) {
+      return;
+    }
+    const pos = view.posAtDOM(anchorEl, 0);
+    const result = findNodesWithSameMark(view.state.doc, pos, pos, markType);
+    if (result) {
+      this._showTooltip(view, result, anchorEl);
+    }
+  };
+
+  _bindTooltipHoverEvents = (): void => {
+    this._tooltipEl = document.querySelector(LINK_TOOLTIP_SELECTOR);
+    this._tooltipEl?.addEventListener('mouseenter', this._handleTooltipMouseEnter);
+    this._tooltipEl?.addEventListener('mousemove', this._handleTooltipMouseEnter);
+    this._tooltipEl?.addEventListener('mousedown', this._handleTooltipMouseEnter);
+    this._tooltipEl?.addEventListener('mouseleave', this._scheduleClose);
+  };
+
+  _handleLinkMouseOut = (anchorEl: Element, relatedTarget: EventTarget | null): void => {
+    if (
+      relatedTarget instanceof Node &&
+      (anchorEl.contains(relatedTarget) || this._isTooltipTarget(relatedTarget))
+    ) {
+      this._handleTooltipMouseEnter();
+      return;
+    }
+
+    this._scheduleClose();
+  };
+
+  _isTooltipTarget = (target: Node): boolean =>
+    Boolean(this._tooltipEl?.contains(target)) ||
+    (
+      target instanceof Element &&
+      Boolean(target.closest(LINK_TOOLTIP_SELECTOR))
+    );
+
+  _handleTooltipMouseEnter = (): void => {
+    this._isTooltipHovered = true;
+    this._clearCloseTimer();
+  };
+
+  _scheduleClose = (): void => {
+    this._isTooltipHovered = false;
+    this._clearCloseTimer();
+    this._closeTimer = globalThis.setTimeout(() => {
+      if (!this._isTooltipHovered) {
+        this._closePopup();
+      }
+    }, LINK_TOOLTIP_CLOSE_DELAY_MS);
+  };
+
+  _clearCloseTimer = (): void => {
+    if (this._closeTimer !== null) {
+      globalThis.clearTimeout(this._closeTimer);
+      this._closeTimer = null;
+    }
+  };
+
+  _closePopup = (): void => {
+    this._clearCloseTimer();
+    this._tooltipEl?.removeEventListener('mouseenter', this._handleTooltipMouseEnter);
+    this._tooltipEl?.removeEventListener('mousemove', this._handleTooltipMouseEnter);
+    this._tooltipEl?.removeEventListener('mousedown', this._handleTooltipMouseEnter);
+    this._tooltipEl?.removeEventListener('mouseleave', this._scheduleClose);
+    this._tooltipEl = null;
+    this._isTooltipHovered = false;
+    this._popup?.close();
+  };
 
   destroy() {
-    this._popup?.close();
+    this._closePopup();
     this._editor?.close();
   }
 
@@ -119,6 +321,7 @@ export class LinkTooltipView {
   _onClose = (): void => {
     this._anchorEl = null;
     this._editor = null;
+    this._linkSelection = null;
     this._popup = null;
   };
 
@@ -129,73 +332,308 @@ export class LinkTooltipView {
 
     const { state } = view;
     const { schema, doc, selection } = state;
-    const { from, to } = selection;
+    const linkSelection = this._linkSelection ?? selection;
+    const { from, to } = linkSelection;
     const markType = schema.marks[MARK_LINK];
-    const result = findNodesWithSameMark(doc, from, to, markType);
+    if (!markType) {
+      return;
+    }
+    const result = findNodesWithSameMark(
+      doc,
+      from,
+      getInclusiveSelectionTo(from, to),
+      markType
+    );
     if (!result) {
       return;
     }
 
     const href = result.mark.attrs.href;
-    this._editor = createPopUp(
-      LinkURLEditor,
-      { href },
-      {
-        onClose: (value) => {
-          this._editor = null;
-          this._onEditEnd(view, selection as TextSelection, value);
-        },
-      }
+    const selectedText = getSelectedLinkText(doc, from, to, result);
+
+    this._editor = {
+      close: (value?: string) => {
+        this._editor = null;
+        this._onEditEnd(view, linkSelection as TextSelection, value);
+      },
+    };
+
+    const runtime = linkSetURLCommand.getLinkDialogRuntime(view);
+
+    if (runtime?.openLinkDialog) {
+      void linkSetURLCommand.showTocList(view).then((linkItems) => {
+        if (!this._editor) {
+          return;
+        }
+        runtime.openLinkDialog(
+          href,
+          selectedText,
+          (nextHref?: string, linkDisplayText?: string) => {
+            this._editor = null;
+            this._onEditEnd(
+              view,
+              linkSelection as TextSelection,
+              nextHref,
+              linkDisplayText
+            );
+          },
+          () => {
+            this._editor = null;
+            this._onEditEnd(view, linkSelection as TextSelection);
+          },
+          linkItems
+        );
+      });
+      return;
+    }
+
+    this._editor.close();
+  };
+
+  _onOpen = (view: EditorView): void => {
+    const { state } = view;
+    const markType = state.schema.marks[MARK_LINK];
+    if (!markType) {
+      return;
+    }
+
+    const selection = this._linkSelection ?? state.selection;
+    const result = findNodesWithSameMark(
+      state.doc,
+      selection.from,
+      getInclusiveSelectionTo(selection.from, selection.to),
+      markType
     );
+    if (result) {
+      this._handleClick(view, result.mark);
+    }
   };
 
   _onRemove = (view: EditorView): void => {
-    this._onEditEnd(view, view.state.selection as TextSelection, null);
+    this._onEditEnd(
+      view,
+      (this._linkSelection ?? view.state.selection) as TextSelection,
+      null
+    );
   };
+
+  _handleClick(view: EditorView, mark, event?: MouseEvent): boolean {
+    this._closePopup();
+    const href = mark.attrs['href'];
+    const selectionId = this.getInnerLinkSelectionId(mark.attrs);
+    if (!href && !selectionId) {
+      return false;
+    }
+    let tocItemPos = null;
+    if (selectionId) {
+      tocItemPos = this.getInnerlinkSelected_position(
+        view,
+        selectionId
+      );
+      if (null === tocItemPos) {
+        this.openSelectedSection(selectionId);
+        event?.preventDefault(); // prevent default browser navigation
+        return true;
+      }
+    }
+    this.jumpLink(view, tocItemPos, href, selectionId);
+    event?.preventDefault(); // prevent default browser navigation
+    return event?.defaultPrevented ?? true;
+  }
+
+  getInnerLinkSelectionId = (
+    attrs: Record<string, string | null | undefined>
+  ): string => {
+    const selectionId = attrs.selectionId || attrs.href;
+    if (!this.isBookMarkHref(selectionId)) {
+      return attrs.selectionId ?? '';
+    }
+    return selectionId.slice(1);
+  };
+
+  openSelectedSection = (selectionId): void => {
+    if (selectionId) {
+      if (this._view?.runtime?.goToInnerLinkSection) {
+        this._view.runtime.goToInnerLinkSection(selectionId);
+      }
+    }
+  };
+
+  jumpLink = (view: EditorView, tocItemPos, href, selectionId): void => {
+    if (selectionId && tocItemPos) {
+      this.jumpInnerLink(view, tocItemPos);
+    } else {
+      this._openLink(href);
+    }
+  };
+
+  jumpInnerLink = (view: EditorView, tocItemPos): void => {
+    const transaction = view.state.tr;
+    const tr = transaction.setSelection(
+      TextSelection.create(transaction.doc, tocItemPos.position + 1)
+    );
+    view.dispatch(tr.scrollIntoView());
+    const dom = view.domAtPos(tocItemPos.position + 1).node;
+    const target =
+      dom instanceof Element ? dom : dom?.parentElement;
+    if (target?.scrollIntoView) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  _openLink = (href: string): void => {
+    if (this.isBookMarkHref(href)) {
+      const id = href.slice(1);
+      const el = document.getElementById(id);
+      if (el) {
+        void scrollIntoView(el, {
+          scrollMode: 'if-needed',
+          behavior: 'smooth',
+        });
+      }
+      return;
+    }
+
+    if (href) {
+      globalThis.open(sanitizeURL(href), '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  isBookMarkHref = (href: string): boolean => {
+    return !!href && href.startsWith('#') && href.length >= 2;
+  };
+
+
+  getInnerlinkSelected_position = (
+    view: EditorView,
+    selectionId
+  ): {position: number; textContent: string} | null => {
+    let tocItemPos: {position: number; textContent: string} | null = null;
+    if (selectionId) {
+      const targetSelectionId = this.normalizeSelectionId(selectionId);
+      view.state.tr.doc.descendants((node, pos) => {
+        const nodeSelectionId = this.normalizeSelectionId(
+          node.attrs.selectionId
+        );
+        if (node.attrs.styleName && nodeSelectionId === targetSelectionId) {
+          tocItemPos = { position: pos, textContent: node.textContent };
+        }
+      });
+    }
+    return tocItemPos;
+  };
+
+  normalizeSelectionId = (selectionId?: string | null): string =>
+    selectionId?.startsWith('#') ? selectionId.slice(1) : selectionId ?? '';
 
   _onEditEnd = (
     view: EditorView,
     initialSelection: TextSelection,
-    href?: string
+    href?: string,
+    linkDisplayText?: string
   ): void => {
     const { state, dispatch } = view;
     let tr = hideSelectionPlaceholder(state);
 
     if (href !== undefined) {
-      const { schema } = state;
-      const markType = schema.marks[MARK_LINK];
-      if (markType) {
-        const result = findNodesWithSameMark(
-          tr.doc,
-          initialSelection.from,
-          initialSelection.to,
-          markType
-        );
-        if (result) {
-          const linkSelection = TextSelection.create(
-            tr.doc,
-            result.from.pos,
-            result.to.pos + 1
-          );
-          tr = (tr as Transaction).setSelection(linkSelection);
-          const attrs = href ? { href } : null;
-          tr = applyMark(tr, schema, markType, attrs);
-
-          // [FS] IRAD-1005 2020-07-09
-          // Upgrade outdated packages.
-          // reset selection to original using the latest doc.
-          const origSelection = TextSelection.create(
-            tr.doc,
-            initialSelection.from,
-            initialSelection.to
-          );
-          tr = (tr as Transaction).setSelection(origSelection);
-        }
-      }
+      tr = this.applyEditedLinkChange(
+        tr as Transaction,
+        state,
+        initialSelection,
+        href,
+        linkDisplayText
+      );
     }
     dispatch(tr as Transaction);
     view.focus();
   };
+
+  applyEditedLinkChange(
+    tr: Transaction,
+    state: EditorState,
+    initialSelection: TextSelection,
+    href: string,
+    linkDisplayText?: string
+  ): Transaction {
+    const { schema } = state;
+    const markType = schema.marks[MARK_LINK];
+    if (!markType) {
+      return tr;
+    }
+
+    const result = findNodesWithSameMark(
+      tr.doc,
+      initialSelection.from,
+      getInclusiveSelectionTo(initialSelection.from, initialSelection.to),
+      markType
+    );
+    if (!result) {
+      return tr;
+    }
+
+    const existingHref = result.mark.attrs.href;
+    const existingText = tr.doc.textBetween(
+      result.from.pos,
+      result.to.pos + 1,
+      ' '
+    );
+    const nextText = getNextLinkText(
+      existingText,
+      existingHref,
+      href,
+      linkDisplayText
+    );
+    const linkSelection = TextSelection.create(
+      tr.doc,
+      result.from.pos,
+      result.to.pos + 1
+    );
+    tr = tr.setSelection(linkSelection);
+    const selectionId = this.getInnerLinkSelectionId({ href });
+    const attrs = href
+      ? {
+        href,
+        selectionId: selectionId || null,
+      }
+      : null;
+    if (href && nextText && nextText !== existingText) {
+      tr = tr.replaceWith(
+        result.from.pos,
+        result.to.pos + 1,
+        schema.text(nextText, [markType.create(attrs)]),
+      );
+    } else {
+      tr = applyMark(tr, schema, markType, attrs) as Transaction;
+    }
+
+    const maxSelectionPos = tr.doc.content.size;
+    return tr.setSelection(
+      TextSelection.create(
+        tr.doc,
+        Math.min(initialSelection.from, maxSelectionPos),
+        Math.min(initialSelection.to, maxSelectionPos)
+      )
+    );
+  }
+}
+
+function shouldReplaceLinkText(
+  existingText: string,
+  existingHref: string
+): boolean {
+  if (!existingText || !existingHref) {
+    return false;
+  }
+
+  return normalizeUrlText(existingText) === normalizeUrlText(existingHref);
+}
+
+function normalizeUrlText(value: string): string {
+  return value.replace(/^https?:\/\//i, '').replace(/\/$/i, '');
+}
+
+function getInclusiveSelectionTo(from: number, to: number): number {
+  return to > from ? to - 1 : to;
 }
 
 export default LinkTooltipPlugin;

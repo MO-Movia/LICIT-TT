@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Node, mergeAttributes} from '@tiptap/core';
+import { Node, mergeAttributes } from '@tiptap/core';
 import toCSSLineSpacing from '../toCSSLineSpacing';
 import convertToCSSPTValue from '../convertToCSSPTValue';
 import { DOMOutputSpec } from 'prosemirror-model';
@@ -146,6 +146,7 @@ function getAttrs(dom: HTMLElement): Record<string, unknown> {
   const marginBottom = resolveMarginValue(dom, 'margin-bottom');
   const marginLeftValue = resolveMarginValue(dom, 'margin-left');
   const marginRight = resolveMarginValue(dom, 'margin-right');
+  const hangingIndent = dom.getAttribute('hangingIndent') || '';
   return {
     align,
     indent,
@@ -166,10 +167,11 @@ function getAttrs(dom: HTMLElement): Record<string, unknown> {
     overriddenIndentValue,
     selectionId,
     objectId,
+    hangingIndent,
   };
 }
 
-function getStyle(attrs: {[key: string]: unknown}): string {
+function getStyle(attrs: { [key: string]: unknown }): string {
   return getStyleEx(attrs);
 }
 
@@ -224,7 +226,7 @@ function getStyleEx({
   return style;
 }
 
-function toDOM(node):DOMOutputSpec  {
+function toDOM(node): DOMOutputSpec {
   const {
     indent,
     id,
@@ -236,8 +238,10 @@ function toDOM(node):DOMOutputSpec  {
     overriddenIndent,
     overriddenIndentValue,
     selectionId,
+    indentPosition,
+    hangingIndent
   } = node.attrs;
-  const attrs = {...node.attrs};
+  const attrs = { ...node.attrs };
   const style = getStyle(node.attrs);
 
   if (style) {
@@ -250,6 +254,13 @@ function toDOM(node):DOMOutputSpec  {
   if (id) {
     attrs.id = id;
   }
+  if (indentPosition && hangingIndent) {
+    attrs['hangingIndent'] = 'true';
+    attrs['indentPosition'] = indentPosition;
+    const hIndentpx = Number(indentPosition) * 96;
+    document.documentElement.style.setProperty('--hangingIndentMargin', `${hIndentpx}px`);
+  }
+  attrs.hangingIndent = hangingIndent;
   attrs.reset = reset;
   attrs.overriddenAlign = overriddenAlign;
   attrs.overriddenLineSpacing = overriddenLineSpacing;
@@ -299,11 +310,11 @@ const ParagraphNode = Node.create({
     return {
       align: {
         default: null,
-        parseHTML: (element) => 
+        parseHTML: (element) =>
           getAttrs(element).align,
         renderHTML: (attributes) => {
           if (!attributes.align) return {};
-          return {align: String(attributes.align)};
+          return { align: String(attributes.align) };
         },
       },
       color: {
@@ -314,7 +325,7 @@ const ParagraphNode = Node.create({
         parseHTML: (element) => getAttrs(element).id,
         renderHTML: (attributes) => {
           if (!attributes.id) return {};
-          return {id: attributes.id};
+          return { id: attributes.id };
         },
       },
       indent: {
@@ -322,7 +333,7 @@ const ParagraphNode = Node.create({
         parseHTML: (element) => getAttrs(element).indent,
         renderHTML: (attributes) => {
           if (!attributes.indent) return {};
-          return {[ATTRIBUTE_INDENT]: String(attributes.indent)};
+          return { [ATTRIBUTE_INDENT]: String(attributes.indent) };
         },
       },
       lineSpacing: {
@@ -398,14 +409,14 @@ const ParagraphNode = Node.create({
         default: null,
         parseHTML: (element) => getAttrs(element).reset,
         renderHTML: (attributes) => {
-          return {reset: attributes.reset || ''};
+          return { reset: attributes.reset || '' };
         },
       },
       overriddenAlign: {
         default: null,
         parseHTML: (element) => getAttrs(element).overriddenAlign,
         renderHTML: (attributes) => {
-          return {overriddenAlign: attributes.overriddenAlign || ''};
+          return { overriddenAlign: attributes.overriddenAlign || '' };
         },
       },
       overriddenLineSpacing: {
@@ -421,7 +432,7 @@ const ParagraphNode = Node.create({
         default: null,
         parseHTML: (element) => getAttrs(element).overriddenIndent,
         renderHTML: (attributes) => {
-          return {overriddenIndent: attributes.overriddenIndent || ''};
+          return { overriddenIndent: attributes.overriddenIndent || '' };
         },
       },
       overriddenAlignValue: {
@@ -452,12 +463,21 @@ const ParagraphNode = Node.create({
           };
         },
       },
+      hangingIndent: {
+        default: null,
+        parseHTML: (element) => getAttrs(element).hangingIndent,
+        renderHTML: (attributes) => {
+          return {
+            hangingIndent: attributes.hangingIndent || '',
+          };
+        },
+      },
       selectionId: {
         default: null,
         parseHTML: (element) => getAttrs(element).selectionId,
         renderHTML: (attributes) => {
           if (!attributes.selectionId) return {};
-          return {selectionId: attributes.selectionId};
+          return { selectionId: attributes.selectionId };
         },
       },
       objectId: {
@@ -465,19 +485,19 @@ const ParagraphNode = Node.create({
         parseHTML: (element) => getAttrs(element).objectId,
         renderHTML: (attributes) => {
           if (!attributes.objectId) return {};
-          return {objectId: attributes.objectId};
+          return { objectId: attributes.objectId };
         },
       },
     };
   },
 
   parseHTML() {
-    return [{tag: 'p'}];
+    return [{ tag: 'p' }];
   },
 
-  renderHTML({HTMLAttributes}) {
+  renderHTML({ HTMLAttributes }) {
     const style = getStyle(HTMLAttributes);
-    const attrs = {...HTMLAttributes};
+    const attrs = { ...HTMLAttributes };
 
     if (style) {
       attrs.style = style;

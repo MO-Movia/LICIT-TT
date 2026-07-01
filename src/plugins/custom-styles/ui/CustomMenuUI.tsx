@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import React, { SyntheticEvent } from 'react';
+import React, { ChangeEvent, SyntheticEvent } from 'react';
 import { EditorState } from 'prosemirror-state';
 import { Schema, Node } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
@@ -30,11 +30,13 @@ import {
   setTextAlign,
   setTextLineSpacing,
   atViewportCenter,
+  atAnchorRight,
   createPopUp,
   HeadingCommand,
 } from '../../../commands';
 import { setParagraphSpacing } from '../ParagraphSpacingCommand';
 import { RESERVED_STYLE_NONE } from '../CustomStyleNodeSpec';
+import { MenuKeyboardNav } from '../../../commands/ui/menuKeyboardNav';
 
 let HEADING_COMMANDS = {
   [RESERVED_STYLE_NONE]: new HeadingCommand(0),
@@ -53,6 +55,8 @@ type CustomMenuUIProps = {
 
 type CustomMenuUIState = {
   expanded: boolean;
+  selectedIndex: number;
+  searchTerm: string;
   style: {
     display: string;
     top: string;
@@ -70,10 +74,31 @@ export class CustomMenuUI extends React.PureComponent<
   _menuItemHeight = 24;
 
   _id = uuid();
-  _selectedIndex = 0;
+  _menuRef = React.createRef<HTMLDivElement>();
+  _navItems: Array<{ command: UICommand; label: string }> = [];
+  _staticItems: Array<{ command: UICommand; label: string }> = [];
+  _appliedIndex = 0;
+  _kbd = new MenuKeyboardNav({
+    getRoot: () => this._menuRef.current,
+    getNavCount: () => this._navItems.length,
+    getSelectedIndex: () => this.state.selectedIndex,
+    setSelectedIndex: (index, done) =>
+      this.setState({ selectedIndex: index }, done),
+    activate: (index, event) => {
+      const selected =
+        this._navItems[index] ??
+        this._staticItems[index - this._navItems.length];
+      if (selected) {
+        this._execute(selected.command, event as unknown as SyntheticEvent);
+      }
+    },
+    scrollSelectedIntoView: () => this.scrollSelectedIntoView(),
+  });
 
   state = {
     expanded: false,
+    selectedIndex: 0,
+    searchTerm: '',
     style: {
       display: 'none',
       top: '',
@@ -159,73 +184,42 @@ export class CustomMenuUI extends React.PureComponent<
   }
 
   render() {
-    const { dispatch, editorState, editorView, staticCommand, onCommand } =
-      this.props;
-    const children = [];
-    const children1 = [];
-    let counter = 0;
-    let selecteClassName = '';
     const theme = this.props.theme;
     this.theme =  this.props.theme;
-    const selectedName = this.getTheSelectedCustomStyle(this.props.editorState);
-    const commandGroups_nw = this.getCommandGroups();
-    for (const group of commandGroups_nw) {
-      for (const label of Object.keys(group)) {
-        const command = group[label];
-        counter++;
-        if (label === selectedName && '' === selecteClassName) {
-          selecteClassName = 'selectbackground';
-          this._selectedIndex = counter;
-        } else {
-          selecteClassName = '';
-        }
-        children.push(
-          <CustomStyleItem
-            command={command}
-            disabled={!!editorView?.disabled}
-            dispatch={dispatch}
-            editorState={editorState}
-            editorView={editorView as EditorView}
-            hasText={true}
-            key={label}
-            label={label}
-            onClick={this._onUIEnter}
-            onCommand={onCommand}
-            onMouseEnter={this._onUIEnter}
-            selectionClassName={selecteClassName}
-            value={command}
-          ></CustomStyleItem>
-        );
-      };
-    };
-    for (const group of staticCommand) {
-      for (const label of Object.keys(group)) {
-        const command = group[label] as CustomStyleCommand;
-        children1.push(
-          <CustomStyleItem
-            command={command}
-            disabled={!!editorView?.disabled}
-            dispatch={dispatch}
-            editorState={editorState}
-            editorView={editorView as EditorView}
-            hasText={false}
-            key={label}
-            label={command._customStyleName}
-            onClick={this._onUIEnter}
-            onCommand={onCommand}
-            onMouseEnter={this._onUIEnter}
-            selectionClassName={''}
-            value={command}
-          ></CustomStyleItem>
-        );
-      };
-    };
+    const searchTerm = this.state.searchTerm.toLowerCase();
+
+    this._navItems = [];
+    this._staticItems = [];
+    const children = this.renderStyleItems(searchTerm);
+    const children1 = this.renderStaticItems();
     const className = 'molsp-dropbtn ' + theme;
+    const styleNamesClassName =
+      searchTerm && !children.length
+        ? 'molsp-stylenames molsp-stylenames-empty'
+        : 'molsp-stylenames';
     return (
-      <div>
+      <div
+        onKeyDown={this._kbd.onKeyDown}
+        ref={this._menuRef}
+        role="menu"
+        tabIndex={-1}
+      >
         <span data-cy="cyStyleDropdown">
           <div className={className} id={this._id}>
-            <div className="molsp-stylenames">{children}</div>
+            <div className="molsp-search-wrapper">
+              <input
+                aria-label="Search custom styles"
+                className="molsp-search-input"
+                onChange={this._onSearchChange}
+                onClick={this._onSearchClick}
+                onContextMenu={this._onSearchContextMenu}
+                onKeyDown={this._onSearchKeyDown}
+                placeholder="Search styles"
+                type="search"
+                value={this.state.searchTerm}
+              />
+            </div>
+            <div className={styleNamesClassName}>{children}</div>
 
             <hr className="molsp-stylenames-hr"></hr>
             <div className="molsp-stylenames">{children1}</div>
@@ -235,11 +229,138 @@ export class CustomMenuUI extends React.PureComponent<
     );
   }
 
-  componentDidMount() {
-    const styleDiv = document.getElementsByClassName('molsp-stylenames')[0];
-    styleDiv.scrollTop =
-      this._menuItemHeight * this._selectedIndex - this._menuItemHeight * 2 - 5;
+  renderStyleItems(searchTerm: string): React.ReactElement[] {
+    const selectedName = this.getTheSelectedCustomStyle(this.props.editorState);
+    return this.getCommandGroups().flatMap((group) =>
+      Object.keys(group)
+        .filter((label) => this.isStyleMatch(label, searchTerm))
+        .map((label) => this.renderStyleItem(label, group[label], selectedName))
+    );
   }
+
+  renderStyleItem(
+    label: string,
+    command: unknown,
+    selectedName: string
+  ): React.ReactElement {
+    const index = this._navItems.length;
+    if (label === selectedName) {
+      this._appliedIndex = index;
+    }
+    this._navItems.push({ command: command as UICommand, label });
+    return this.renderCustomStyleItem(
+      label,
+      command as CustomStyleCommand,
+      true,
+      index,
+      label
+    );
+  }
+
+  renderStaticItems(): React.ReactElement[] {
+    return this.props.staticCommand.flatMap((group) =>
+      Object.keys(group).map((label) => {
+        const command = group[label] as CustomStyleCommand;
+        const index = this._navItems.length + this._staticItems.length;
+        this._staticItems.push({ command, label: command._customStyleName });
+        return this.renderCustomStyleItem(
+          label,
+          command,
+          false,
+          index,
+          command._customStyleName
+        );
+      })
+    );
+  }
+
+  renderCustomStyleItem(
+    key: string,
+    command: CustomStyleCommand,
+    hasText: boolean,
+    index: number,
+    label: string
+  ): React.ReactElement {
+    const { dispatch, editorState, editorView, onCommand } = this.props;
+    return (
+      <CustomStyleItem
+        command={command}
+        disabled={!!editorView?.disabled}
+        dispatch={dispatch}
+        editorState={editorState}
+        editorView={editorView as EditorView}
+        hasText={hasText}
+        index={index}
+        key={key}
+        label={label}
+        onClick={this._onUIEnter}
+        onCommand={onCommand}
+        onMouseEnter={this._onUIEnter}
+        selectionClassName={
+          index === this.state.selectedIndex ? 'selectbackground' : ''
+        }
+        value={command}
+      ></CustomStyleItem>
+    );
+  }
+
+  componentDidMount() {
+
+    this.setState({ selectedIndex: this._appliedIndex }, () =>
+      this._scrollAppliedStyleIntoView()
+    );
+    this._kbd.mount();
+  }
+
+  componentWillUnmount() {
+    this._kbd.unmount();
+  }
+
+  _scrollAppliedStyleIntoView() {
+    const styleDiv = document.getElementsByClassName('molsp-stylenames')[0];
+    if (styleDiv) {
+      styleDiv.scrollTop =
+        this._menuItemHeight * this.state.selectedIndex -
+        this._menuItemHeight * 2 -
+        5;
+    }
+  }
+
+  scrollSelectedIntoView() {
+    const styleDiv = document.getElementsByClassName('molsp-stylenames')[0];
+    if (!styleDiv) {
+      return;
+    }
+    const rowTop = this._menuItemHeight * this.state.selectedIndex;
+    const rowBottom = rowTop + this._menuItemHeight;
+    const viewTop = styleDiv.scrollTop;
+    const viewBottom = viewTop + styleDiv.clientHeight;
+    if (rowTop < viewTop) {
+      styleDiv.scrollTop = rowTop;
+    } else if (rowBottom > viewBottom) {
+      styleDiv.scrollTop = rowBottom - styleDiv.clientHeight;
+    }
+  }
+
+  isStyleMatch(label: string, searchTerm: string): boolean {
+    return !searchTerm || label.toLowerCase().includes(searchTerm);
+  }
+
+  _onSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    this.setState({ searchTerm: event.target.value, selectedIndex: 0 });
+  };
+
+  _onSearchClick = (event: SyntheticEvent<HTMLInputElement>): void => {
+    event.stopPropagation();
+  };
+
+  _onSearchContextMenu = (event: SyntheticEvent<HTMLInputElement>): void => {
+    event.stopPropagation();
+  };
+
+  _onSearchKeyDown = (event: SyntheticEvent<HTMLInputElement>): void => {
+    event.stopPropagation();
+  };
 
   isAllowedNode(node: Node) {
     return (
@@ -252,7 +373,7 @@ export class CustomMenuUI extends React.PureComponent<
   _onUIEnter = (command: UICommand, event: SyntheticEvent<Element>) => {
     if (command.shouldRespondToUIEvent(event)) {
       // check the mouse clicked on down arror to show sub menu
-      if (event.currentTarget.className === 'czi-custom-menu-item edit-icon') {
+      if (event.currentTarget.classList.contains('edit-icon')) {
         this.showSubMenu(command, event);
       } else {
         this._execute(command, event);
@@ -288,6 +409,7 @@ export class CustomMenuUI extends React.PureComponent<
         anchor,
         autoDismiss: true,
         IsChildDialog: true,
+        position: atAnchorRight,
         onClose: (val) => {
           if (this._popUp) {
             this._popUp = null;

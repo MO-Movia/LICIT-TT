@@ -18,6 +18,7 @@ import {
   ThemeContext,
 } from '../../commands';
 import { UICommand } from '../../core';
+import { MenuKeyboardNav } from '../../commands/ui/menuKeyboardNav';
 import uuid from './uuid';
 import {isExpandButton, parseLabel} from './toolbarLabelUtils';
 import {EditorViewEx} from '../constants';
@@ -78,50 +79,184 @@ type StateType = {
   expanded: boolean;
 };
 
-export class CommandMenu extends React.PureComponent<CommandMenuProps> {
+type CommandMenuState = {
+  selectedIndex: number;
+};
+
+export class CommandMenu extends React.PureComponent<
+  CommandMenuProps,
+  CommandMenuState
+> {
   _activeCommand?: UICommand = null;
+
+  _menuRef = React.createRef<HTMLDivElement>();
+  _navCommands: UICommand[] = [];
+  _activeIndex = 0;
+  _kbd = new MenuKeyboardNav({
+    getRoot: () => this._menuRef.current,
+    getNavCount: () => this._navCommands.length,
+    getSelectedIndex: () => this.state.selectedIndex,
+    setSelectedIndex: (index, done) =>
+      this.setState({selectedIndex: index}, done),
+    activate: (index, event) => {
+      const command = this._navCommands[index];
+      if (command) {
+        this._execute(command, event as unknown as React.SyntheticEvent);
+      }
+    },
+    scrollSelectedIntoView: () => this._scrollSelectedIntoView(),
+  });
 
   declare props: CommandMenuProps;
 
+  state = {selectedIndex: 0};
+
   render(): React.ReactElement {
-    const {commandGroups, editorState, title, theme} = this.props;
-    const children = [];
-    const jj = commandGroups.length - 1;
-    for (const [ii, group] of commandGroups.entries()) {
-      for (const label of Object.keys(group)) {
-        const command = group[label];
-        if (isUICommandLike(command)) {
-          const {icon} = parseLabel(label, theme.toString());
-          children.push(
-            this._renderCustomMenuItem(label, command, editorState, icon, theme)
-          );
-        } else if (Array.isArray(command)) {
-          children.push(this._renderMenuButton(label, command, theme));
-        }
-      };
-      if (ii !== jj) {
-        children.push(<CustomMenuItem.Separator key={`${String(ii)}-hr`} />);
-      }
-    };
-    return (
-      <CustomMenu theme={theme} isHorizontal={isExpandButton(title)}>
+    const {commandGroups, title, theme} = this.props;
+    const isHorizontal = isExpandButton(title);
+    this._navCommands = [];
+    const children = commandGroups.flatMap((group, index) =>
+      this.renderCommandGroup(
+        group,
+        index < commandGroups.length - 1,
+        isHorizontal,
+        theme
+      )
+    );
+    const menu = (
+      <CustomMenu theme={theme} isHorizontal={isHorizontal}>
         {children}
       </CustomMenu>
     );
+    if (isHorizontal) {
+      return menu;
+    }
+    return (
+      <div
+        className="mo-menu-keyboardnav"
+        onKeyDown={this._kbd.onKeyDown}
+        ref={this._menuRef}
+        role="menu"
+        tabIndex={-1}
+      >
+        {menu}
+      </div>
+    );
+  }
+
+  renderCommandGroup(
+    group: Arr,
+    appendSeparator: boolean,
+    isHorizontal: boolean,
+    theme: string
+  ): React.ReactElement[] {
+    const children = Object.keys(group)
+      .map((label) =>
+        this.renderCommandEntry(label, group[label], isHorizontal, theme)
+      )
+      .filter(Boolean);
+
+    if (appendSeparator) {
+      children.push(<CustomMenuItem.Separator key={`${children.length}-hr`} />);
+    }
+
+    return children;
+  }
+
+  renderCommandEntry(
+    label: string,
+    command: UICommand | Array<unknown>,
+    isHorizontal: boolean,
+    theme: string
+  ): React.ReactElement | null {
+    if (isUICommandLike(command)) {
+      const {editorState, editorView} = this.props;
+      const {icon} = parseLabel(label, theme.toString());
+      const item = this._renderCustomMenuItem(
+        label,
+        command,
+        editorState,
+        editorView,
+        icon,
+        theme
+      );
+      return isHorizontal ? item : this.renderNavigationRow(label, command, item);
+    }
+
+    return Array.isArray(command)
+      ? this._renderMenuButton(label, command, theme)
+      : null;
+  }
+
+  renderNavigationRow(
+    label: string,
+    command: UICommand,
+    item: React.ReactElement
+  ): React.ReactElement {
+    const index = this._navCommands.length;
+    if (command.isActive(this.props.editorState)) {
+      this._activeIndex = index;
+    }
+    this._navCommands.push(command);
+
+    return (
+      <div
+        className={cx('mo-menu-row', {
+          'mo-menu-row--selected': index === this.state.selectedIndex,
+        })}
+        data-index={index}
+        key={label}
+        role="menuitem"
+        tabIndex={-1}
+      >
+        {item}
+      </div>
+    );
+  }
+
+  componentDidMount(): void {
+
+    if (isExpandButton(this.props.title)) {
+      return;
+    }
+    this.setState({selectedIndex: this._activeIndex}, () =>
+      this._scrollSelectedIntoView()
+    );
+    this._kbd.mount();
+  }
+
+  componentWillUnmount(): void {
+    this._kbd.unmount();
+  }
+
+  _scrollSelectedIntoView(): void {
+    const row = this._menuRef.current?.querySelector(
+      `[data-index="${this.state.selectedIndex}"]`
+    );
+    row?.scrollIntoView?.({block: 'nearest'});
   }
 
   _renderCustomMenuItem = (
     label: string,
     command: UICommand,
     editorState: EditorState,
+    editorView: EditorView | undefined,
     icon: string | React.ReactElement,
     theme: string
   ): React.ReactElement<CustomMenuItem> => {
     const {title} = parseLabel(label, theme);
+    let disabled = true;
+    try {
+      disabled =
+        !editorView || !command.isEnabled(editorState, editorView, label);
+    } catch (_error) {
+      console.error('Error checking if command is enabled:', _error);
+      disabled = false;
+    }
     return (
       <CustomMenuItem
         active={command.isActive(editorState)}
-        disabled={!command.isEnabled(editorState)}
+        disabled={disabled}
         icon={icon}
         key={label}
         label={
@@ -142,7 +277,7 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
 
   _renderMenuButton = (
     label: string,
-    commandGroups: Array<Arr>,
+    commandGroups: Array<unknown>,
     theme: string
   ): React.ReactElement<CommandMenuButton> => {
     const {editorState, editorView, dispatch} = this.props;
@@ -170,7 +305,9 @@ export class CommandMenu extends React.PureComponent<CommandMenuProps> {
 
   _onUIEnter = (command: UICommand, event: React.SyntheticEvent): void => {
     if (command.shouldRespondToUIEvent(event)) {
-      this._activeCommand?.cancel();
+      if (this._activeCommand && this._activeCommand !== command) {
+        this._activeCommand.cancel();
+      }
       this._activeCommand = command;
       this._execute(command, event);
     }

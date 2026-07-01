@@ -214,3 +214,31 @@
 .ProseMirror-hideselection *::selection {
   background-color: transparent;
 }
+.ProseMirror p[hangingindent='true'] {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+}
+/* prefix=0 always starts at 0 and has fixed width = hangingIndentMargin
+   capco overlays on top of it — no impact on layout */
+.ProseMirror p[hangingindent='true'] span[prefix='0'] {
+  min-width: var(--hangingIndentMargin);
+  flex-shrink: 0;
+  display: inline-block;
+  box-sizing: border-box;
+  padding-left: var(--capcoWidth, 52px); /* set this once globally */
+}
+
+/* All other spans should take remaining space */
+.ProseMirror p[hangingindent='true'] span[prefix]:not([prefix='0']) {
+  flex: 1;
+  min-width: 0; /* allows text to wrap properly */
+}
+
+/* Remove wrapper interference (like .czi-font-size-mark spans) */
+.ProseMirror p[hangingindent='true'] > span.czi-font-size-mark {
+  display: contents;
+}
+.ProseMirror p[hangingindent='true'] > span.czi-font-size-mark > span {
+  display: contents;
+}

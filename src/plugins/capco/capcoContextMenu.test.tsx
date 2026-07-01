@@ -1488,4 +1488,53 @@ describe('Capco Builder Component', () => {
 
     expect(result).toEqual(capcoList);
   });
+
+  const syncCapcoSetState = () =>
+    jest
+      .spyOn(capcoContextMenu, 'setState')
+      .mockImplementation((update, cb?: () => void) => {
+        const partial =
+          typeof update === 'function'
+            ? update(capcoContextMenu.state)
+            : update;
+        capcoContextMenu.state = { ...capcoContextMenu.state, ...partial };
+        cb?.();
+      });
+
+  it('should move the highlight with ArrowDown via the controller', () => {
+    capcoContextMenu._navActions = [jest.fn(), jest.fn()];
+    capcoContextMenu.state = { ...capcoContextMenu.state, selectedIndex: -1 };
+    const setStateSpy = syncCapcoSetState();
+    // selection starts at -1 (nothing highlighted) → ArrowDown enters at 0
+    capcoContextMenu._kbd.onKeyDown({
+      key: 'ArrowDown',
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    });
+    expect(capcoContextMenu.state.selectedIndex).toBe(0);
+    setStateSpy.mockRestore();
+  });
+
+  it('should activate the highlighted row on Enter via the controller', () => {
+    const action0 = jest.fn();
+    const action1 = jest.fn();
+    capcoContextMenu._navActions = [action0, action1];
+    capcoContextMenu.state = { ...capcoContextMenu.state, selectedIndex: 1 };
+    capcoContextMenu._kbd.onKeyDown({
+      key: 'Enter',
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    });
+    expect(action1).toHaveBeenCalled();
+    expect(action0).not.toHaveBeenCalled();
+  });
+
+  it('should unmount the controller on componentWillUnmount', () => {
+    const unmountSpy = jest
+      .spyOn(capcoContextMenu._kbd, 'unmount')
+      .mockImplementation(() => undefined);
+    capcoContextMenu.componentWillUnmount();
+    expect(unmountSpy).toHaveBeenCalled();
+    unmountSpy.mockRestore();
+  });
 });

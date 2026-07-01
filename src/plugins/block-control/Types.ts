@@ -5,10 +5,10 @@
 
 import {Decoration, EditorView} from 'prosemirror-view';
 export type ImageProps = {
-    height: number;
+    height?: number;
     id: string;
     src: string;
-    width: number;
+    width?: number;
 };
 export type ImageInlineEditorValue = {
   align?: string;
@@ -20,10 +20,10 @@ export type ImageInlineEditorValue = {
     editorView: EditorView;
   };
 export type ImageLike = {
-  height: number,
+  height?: number,
   id: string,
   src: string,
-  width: number,
+  width?: number,
 };
   export type EditorFocused = EditorView & {
   focused: boolean;
@@ -46,5 +46,5 @@ export type EditorRuntime = {
 
   // Image Upload
   canUploadImage?: () => boolean;
-  uploadImage?: (obj: Blob) => Promise<{ src: string }>;
+  uploadImage?: (obj: Blob) => Promise<ImageLike>;
 };

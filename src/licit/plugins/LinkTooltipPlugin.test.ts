@@ -7,7 +7,12 @@ import {EditorState, TextSelection} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {Schema, DOMParser} from 'prosemirror-model';
 import LinkTooltipPlugin from './linkTooltipPlugin';
-import { findNodesWithSameMark, MARK_LINK, createPopUp } from '../../commands';
+import {
+  findNodesWithSameMark,
+  MARK_LINK,
+  RuntimeService,
+  createPopUp,
+} from '../../commands';
 
 jest.mock('../../commands', () => {
   const actual =
@@ -29,8 +34,6 @@ jest.mock('../lookUpElement', () => {
 });
 import lookUpElement from '../lookUpElement';
 
-const mockCreatePopUp = createPopUp as jest.MockedFunction<typeof createPopUp>;
-
 /** A single paragraph well over 40 characters. We can safely pick pos=5..9. */
 function createTestSchema() {
   return new Schema({
@@ -38,6 +41,10 @@ function createTestSchema() {
       doc: {content: 'block+'},
       text: {},
       paragraph: {
+        attrs: {
+          styleName: {default: null},
+          selectionId: {default: null},
+        },
         content: 'text*',
         group: 'block',
         toDOM: () => ['p', 0],
@@ -45,7 +52,7 @@ function createTestSchema() {
     },
     marks: {
       [MARK_LINK]: {
-        attrs: {href: {}},
+        attrs: {href: {}, selectionId: {default: null}},
         toDOM: (node) => ['a', {href: node.attrs.href}, 0],
       },
     },
@@ -89,11 +96,13 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     if (editorView) {
       editorView.destroy();
       editorView = null;
     }
     pluginView = null;
+    RuntimeService.Runtime = null;
   });
 
   it('instantiates plugin & pluginView without warning', () => {
@@ -123,19 +132,195 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
     expect(true).toBe(true); // No console.warn or crash
   });
 
+  it('updates visible URL text when editing a link whose text is the old href', () => {
+    if (!editorView) return;
+    const from = 5;
+    const oldHref = 'https://old.com';
+    const newHref = 'https://new.com';
+    const markType = editorView.state.schema.marks[MARK_LINK];
+
+    insertLinkedTextAtPos(editorView, from, oldHref, oldHref);
+    (
+      findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+    ).mockReturnValue({
+      mark: markType.create({href: oldHref}),
+      from: {node: null, pos: from},
+      to: {node: null, pos: from + oldHref.length - 1},
+    });
+
+    pluginView._onEditEnd?.(
+      editorView,
+      TextSelection.create(editorView.state.doc, from, from + oldHref.length),
+      newHref
+    );
+
+    expect(editorView.state.doc.textContent).toContain(newHref);
+    expect(editorView.state.doc.textContent).not.toContain(oldHref);
+    expect(editorView.state.doc.nodeAt(from)?.marks[0]?.attrs.href).toBe(
+      newHref
+    );
+  });
+
+  it('replaces stripped URL text instead of inserting the edited href beside it', () => {
+    if (!editorView) return;
+    const from = 5;
+    const oldText = 'www.google.com';
+    const oldHref = 'https://www.google.com';
+    const newHref = 'https://chatgpt.com/';
+    const markType = editorView.state.schema.marks[MARK_LINK];
+
+    insertLinkedTextAtPos(editorView, from, oldText, oldHref);
+    (
+      findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+    ).mockReturnValue({
+      mark: markType.create({href: oldHref}),
+      from: {node: null, pos: from},
+      to: {node: null, pos: from + oldText.length - 1},
+    });
+
+    pluginView._onEditEnd?.(
+      editorView,
+      TextSelection.create(editorView.state.doc, from, from + oldText.length),
+      newHref,
+      newHref
+    );
+
+    expect(editorView.state.doc.textContent).toContain(newHref);
+    expect(editorView.state.doc.textContent).not.toContain(oldText);
+    expect(editorView.state.doc.nodeAt(from)?.marks[0]?.attrs.href).toBe(
+      newHref
+    );
+  });
+
+  it('keeps custom link text when the link dialog returns the edited href as display text', () => {
+    if (!editorView) return;
+    const from = 5;
+    const oldText = 'custom label';
+    const oldHref = 'https://www.google.com';
+    const newHref = 'https://chatgpt.com/';
+    const markType = editorView.state.schema.marks[MARK_LINK];
+
+    insertLinkedTextAtPos(editorView, from, oldText, oldHref);
+    (
+      findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+    ).mockReturnValue({
+      mark: markType.create({href: oldHref}),
+      from: {node: null, pos: from},
+      to: {node: null, pos: from + oldText.length - 1},
+    });
+
+    pluginView._onEditEnd?.(
+      editorView,
+      TextSelection.create(editorView.state.doc, from, from + oldText.length),
+      newHref,
+      newHref
+    );
+
+    expect(editorView.state.doc.textContent).toContain(oldText);
+    expect(editorView.state.doc.textContent).not.toContain(newHref);
+    expect(editorView.state.doc.nodeAt(from)?.marks[0]?.attrs.href).toBe(
+      newHref
+    );
+  });
+
   it('calls _onRemove => no warnings, no crashes', () => {
     pluginView._onRemove?.(editorView);
     expect(true).toBe(true);
   });
 
-  it('calls _onEdit => simulating user typed new href in LinkURLEditor', () => {
-    // We'll mock createPopUp so onClose sets a new href
-    mockCreatePopUp.mockImplementationOnce((_comp, _props, opts) => {
-      opts?.onClose?.('https://edited.com');
-      return {update: jest.fn(), close: jest.fn()};
+  it('calls _onEdit through the angular link dialog callback with link items', async () => {
+    const markType = editorView.state.schema.marks[MARK_LINK];
+    (
+      findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+    ).mockReturnValue({
+      mark: markType.create({href: 'https://example.com'}),
+      from: {node: null, pos: 5},
+      to: {node: null, pos: 9},
     });
+    const runtime = {
+      openLinkDialog: jest.fn((_href, _text, applyLink) => {
+        applyLink?.('https://edited.com');
+      }),
+    };
+    RuntimeService.Runtime = runtime;
+
     pluginView._onEdit?.(editorView);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(runtime.openLinkDialog).toHaveBeenCalled();
+    expect(runtime.openLinkDialog).toHaveBeenCalledWith(
+      'https://example.com',
+      expect.any(String),
+      expect.any(Function),
+      expect.any(Function),
+      expect.objectContaining({
+        paragraphs: expect.arrayContaining([
+          expect.objectContaining({
+            label: expect.stringContaining('ABCDE12345'),
+          }),
+        ]),
+      })
+    );
     expect(true).toBe(true);
+  });
+
+  it('uses an inclusive end position when editing a stored link selection', () => {
+    const markType = editorView.state.schema.marks[MARK_LINK];
+    (
+      findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+    ).mockReturnValue({
+      mark: markType.create({href: 'https://example.com'}),
+      from: {node: null, pos: 5},
+      to: {node: null, pos: 9},
+    });
+    RuntimeService.Runtime = {
+      openLinkDialog: jest.fn(),
+    };
+    pluginView._linkSelection = TextSelection.create(editorView.state.doc, 5, 10);
+
+    pluginView._onEdit?.(editorView);
+
+    expect(findNodesWithSameMark).toHaveBeenCalledWith(
+      editorView.state.doc,
+      5,
+      9,
+      markType
+    );
+  });
+
+  it('jumps to an inner link target when href contains a selection id', () => {
+    const schema = editorView.state.schema;
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', null, [schema.text('Intro paragraph')]),
+      schema.node(
+        'paragraph',
+        {styleName: 'Table Caption', selectionId: 'target-selection'},
+        [schema.text('Target table')]
+      ),
+    ]);
+    editorView.updateState(
+      EditorState.create({
+        schema,
+        doc,
+        plugins: [new LinkTooltipPlugin()],
+      })
+    );
+
+    let targetPos = 0;
+    editorView.state.doc.descendants((node, pos) => {
+      if (node.attrs.selectionId === 'target-selection') {
+        targetPos = pos;
+      }
+    });
+
+    const markType = editorView.state.schema.marks[MARK_LINK];
+    const handled = pluginView._handleClick?.(
+      editorView,
+      markType.create({href: '#target-selection'})
+    );
+
+    expect(handled).toBe(true);
+    expect(editorView.state.selection.from).toBe(targetPos + 1);
   });
 
   it('handles view.readOnly mode by calling destroy()', () => {
@@ -165,6 +350,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
   it('calls destroy() when domAtPos returns null (covers !domFound)', () => {
     const mockDestroy = jest.spyOn(pluginView, 'destroy');
+    pluginView._popup = {close: jest.fn(), update: jest.fn()};
 
     // Get link mark type from schema
     const markType = editorView.state.schema.marks[MARK_LINK];
@@ -221,8 +407,9 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
     expect(mockPopup.update).not.toHaveBeenCalled();
   });
 
-  it('calls destroy() when lookUpElement returns null (covers !anchorEl)', () => {
+it('calls destroy() when lookUpElement returns null (covers !anchorEl)', () => {
   const mockDestroy = jest.spyOn(pluginView, 'destroy');
+  pluginView._popup = {close: jest.fn(), update: jest.fn()};
 
   // Mock domAtPos to return a valid node so that lookUpElement is actually called
   const mockDomAtPos: EditorView['domAtPos'] = () => ({
@@ -259,6 +446,7 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
 it('returns early when anchorEl is the same as this._anchorEl (covers equality branch)', () => {
   const mockDestroy = jest.spyOn(pluginView, 'destroy');
+  pluginView._popup = {close: jest.fn(), update: jest.fn()};
 
   // Create a shared anchor element
   const sameAnchor = document.createElement('a');
@@ -309,18 +497,94 @@ it('returns early when anchorEl is the same as this._anchorEl (covers equality b
   expect(pluginView._anchorEl).toBe(sameAnchor); // cached anchor unchanged
 });
 
+it('opens the link tooltip when linked text is hovered', () => {
+  const anchor = document.createElement('a');
+  const markType = editorView.state.schema.marks[MARK_LINK];
+  const popup = {close: jest.fn(), update: jest.fn()};
+  (createPopUp as jest.Mock).mockReturnValueOnce(popup);
+  (
+    findNodesWithSameMark as jest.MockedFunction<typeof findNodesWithSameMark>
+  ).mockReturnValue({
+    mark: markType.create({href: 'https://example.com'}),
+    from: {node: null, pos: 5},
+    to: {node: null, pos: 8},
+  });
+  const mockView = {
+    ...editorView,
+    posAtDOM: jest.fn().mockReturnValue(5),
+    state: editorView.state,
+  } as unknown as EditorView;
+
+  pluginView._handleMouseOver(mockView, anchor);
+
+  expect(createPopUp).toHaveBeenCalled();
+  expect(pluginView._anchorEl).toBe(anchor);
+});
+
+it('closes an open tooltip when linked text is clicked', () => {
+  const close = jest.fn();
+  pluginView._popup = {close, update: jest.fn()};
+  pluginView._handleClick(
+    editorView,
+    editorView.state.schema.marks[MARK_LINK].create({href: ''})
+  );
+
+  expect(close).toHaveBeenCalled();
+});
+
+it('keeps the tooltip open when the pointer moves from the link into its actions', () => {
+  jest.useFakeTimers();
+  const tooltipBody = document.createElement('div');
+  tooltipBody.className = 'czi-link-tooltip-body';
+  document.body.appendChild(tooltipBody);
+  const close = jest.fn();
+  pluginView._popup = {close, update: jest.fn()};
+
+  pluginView._bindTooltipHoverEvents();
+  pluginView._scheduleClose();
+  tooltipBody.dispatchEvent(new MouseEvent('mouseenter'));
+  jest.advanceTimersByTime(1200);
+
+  expect(close).not.toHaveBeenCalled();
+  tooltipBody.remove();
+  jest.useRealTimers();
+});
+
+it('does not schedule close when leaving the link for the tooltip body', () => {
+  const anchor = document.createElement('a');
+  const tooltipBody = document.createElement('div');
+  tooltipBody.className = 'czi-link-tooltip-body';
+  document.body.appendChild(tooltipBody);
+  const scheduleClose = jest.spyOn(pluginView, '_scheduleClose');
+
+  pluginView._tooltipEl = tooltipBody;
+  pluginView._handleLinkMouseOut(anchor, tooltipBody);
+
+  expect(scheduleClose).not.toHaveBeenCalled();
+  tooltipBody.remove();
+});
+
 
 });
 
 /** Insert 'Link' text with a link mark at a known valid position (pos=5). */
 function insertLinkAtPos(editorView: EditorView, pos: number, href: string) {
+  insertLinkedTextAtPos(editorView, pos, 'Link', href);
+}
+
+function insertLinkedTextAtPos(
+  editorView: EditorView,
+  pos: number,
+  text: string,
+  href: string
+) {
   const {state, dispatch} = editorView;
   const linkMark = state.schema.marks[MARK_LINK];
   if (!linkMark) return;
 
   const tr = state.tr.insert(
     pos,
-    state.schema.text('Link').mark([linkMark.create({href})])
+    state.schema.text(text).mark([linkMark.create({href})])
   );
   dispatch(tr);
 }
