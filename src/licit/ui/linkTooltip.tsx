@@ -22,7 +22,6 @@ class LinkTooltip extends React.PureComponent {
     onEdit: (view: EditorView) => void;
     onOpen?: (view: EditorView) => void;
     onRemove: (view: EditorView) => void;
-    selectionId?: string;
   };
 
   state = {

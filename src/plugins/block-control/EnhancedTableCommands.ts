@@ -167,13 +167,12 @@ export function addNotesCommand(
     schema.text('\u200B') // optional placeholder
   );
 
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
+  for (const child of getNodeChildren(node)) {
     children.push(child);
     if (child.type.name === ENHANCED_TABLE_FIGURE_NOTES) {
       notesExists = true;
     }
-  };
+  }
   if (notesExists) return tr;
 
   // Create a blank notes node (with a zero-width space placeholder).
@@ -183,8 +182,7 @@ export function addNotesCommand(
   // Insert the notes node after the body.
   const newChildren = [];
   let inserted = false;
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i];
+  for (const child of children) {
     newChildren.push(child);
     if (!inserted && child.type.name === ENHANCED_TABLE_FIGURE_BODY) {
       newChildren.push(notesNode);
@@ -194,6 +192,13 @@ export function addNotesCommand(
 
   const newNode = node.type.create(node.attrs, Fragment.fromArray(newChildren));
   return tr.replaceWith(pos, pos + node.nodeSize, newNode);
+}
+
+function getNodeChildren(node: Node): Node[] {
+  return Array.from(
+    { length: node.childCount },
+    (_, index) => node.child(index)
+  );
 }
 
 

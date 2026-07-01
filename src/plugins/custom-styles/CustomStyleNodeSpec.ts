@@ -184,16 +184,15 @@ function toDOM(base: toDOMFn | undefined, node: Node) {
   applyStyleDOMAttrs(output, style);
   applyStyleLevelDOMAttrs(output, node, styleLevel, isListStyle);
   applyIndentDOMAttrs(output, node, indentPosition, indentOverriden);
-  applyNumberingDOMAttrs(
-    output,
+  applyNumberingDOMAttrs(output, {
     prefix,
     numberingStyle,
     tot,
     tof,
     hideNumbering,
     hideCapco,
-    contNumber
-  );
+    contNumber,
+  });
   applyBulletDOMAttrs(output, bulletDetails);
 
   return output;
@@ -247,14 +246,25 @@ function applyIndentDOMAttrs(
 
 function applyNumberingDOMAttrs(
   output: DOMOutputSpec,
-  prefix: string,
-  numberingStyle: string,
-  tot: boolean,
-  tof: boolean,
-  hideNumbering: boolean,
-  hideCapco?: boolean,
-  contNumber?: boolean
+  options: {
+    prefix: string;
+    numberingStyle: string;
+    tot: boolean;
+    tof: boolean;
+    hideNumbering: boolean;
+    hideCapco?: boolean;
+    contNumber?: boolean;
+  }
 ) {
+  const {
+    prefix,
+    numberingStyle,
+    tot,
+    tof,
+    hideNumbering,
+    hideCapco,
+    contNumber,
+  } = options;
   if (prefix) {
     output[1][ATTRIBUTE_PREFIX] = prefix;
   }
@@ -473,12 +483,6 @@ function applyBulletStyleData(styleData, styles) {
 
   styleData.bulletDetails = getBulletDetails(styles.bulletLevel);
   styleData.styleLevel = styles.styleLevel;
-  //handle hanging indent position for each paragraph
-  if (styles.indentPosition) {
-    const indentPosition = styles.indentPosition;
-    const hIndentpx = Number(indentPosition) * 96;
-    styleData.style += `--hangingIndentMargin: ${hIndentpx}px;`;
-  }
 }
 
 function applyCounterStyleData(styleData, styles) {

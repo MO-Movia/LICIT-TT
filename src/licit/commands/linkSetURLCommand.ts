@@ -4,7 +4,8 @@
  */
 
 import * as React from 'react';
-import { EditorState } from 'prosemirror-state';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { MarkType, Node as PMNode, Schema } from 'prosemirror-model';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
 
@@ -65,6 +66,11 @@ type LinkCounterState = {
   tables: number;
 };
 
+type LinkRangeResult = {
+  from?: { pos?: number };
+  to?: { pos?: number };
+};
+
 const EMPTY_LINK_ITEMS: LinkToolItems = {
   toc: [],
   figures: [],
@@ -73,6 +79,56 @@ const EMPTY_LINK_ITEMS: LinkToolItems = {
 };
 
 const INNER_LINK_PREFIX = '#';
+
+function getLinkToolHref(value?: LinkToolValue): string | undefined {
+  return typeof value === 'string' ? value : value?.href;
+}
+
+function getLinkDisplayText(value?: LinkToolValue): string | undefined {
+  return typeof value === 'string' ? undefined : value?.linkDisplayText;
+}
+
+function getSelectedLinkText(
+  doc: PMNode,
+  from: number,
+  to: number,
+  result: LinkRangeResult | null | undefined
+): string {
+  if (typeof doc.textBetween !== 'function') {
+    return '';
+  }
+
+  if (result?.from?.pos !== undefined && result?.to?.pos !== undefined) {
+    return doc.textBetween(result.from.pos, result.to.pos + 1, ' ');
+  }
+
+  return doc.textBetween(from, to, ' ');
+}
+
+function applyLinkValue(
+  tr: Transaction,
+  state: EditorState,
+  schema: Schema,
+  markType: MarkType,
+  href: string,
+  selectionId: string | null,
+  displayText?: string
+): Transaction {
+  const attrs = href ? { href, selectionId } : null;
+  if (href && displayText) {
+    return tr.replaceSelectionWith(
+      schema.text(displayText, [markType.create(attrs)]),
+      false
+    );
+  }
+
+  return applyMark(
+    tr.setSelection(state.selection),
+    schema,
+    markType,
+    attrs
+  ) as Transaction;
+}
 
 class LinkSetURLCommand extends UICommand {
   _popUp: {
@@ -146,7 +202,7 @@ class LinkSetURLCommand extends UICommand {
       tocStyles.map((style) => [style.name, style.level])
     );
     const counters: LinkCounterState = {
-      content: Array(11).fill(0),
+      content: new Array(11).fill(0),
       figures: 0,
       tables: 0,
     };
@@ -256,7 +312,7 @@ class LinkSetURLCommand extends UICommand {
     [generatedNumber, this.formatCapco(capco), textContent]
       .filter(Boolean)
       .join(' ')
-      .replace(/\s+/g, ' ')
+      .replaceAll(/\s+/g, ' ')
       .trim();
 
   formatCapco = (capco: unknown): string => {
@@ -322,11 +378,11 @@ class LinkSetURLCommand extends UICommand {
     const stack: { item: LinkToolItem; level: number }[] = [];
 
     for (const candidate of candidates) {
-      while (stack.length && stack[stack.length - 1].level >= candidate.level) {
+      while (stack.length && stack.at(-1).level >= candidate.level) {
         stack.pop();
       }
 
-      const parent = stack[stack.length - 1]?.item;
+      const parent = stack.at(-1)?.item;
       if (parent) {
         parent.children = parent.children ?? [];
         parent.children.push(candidate.item);
@@ -363,24 +419,19 @@ class LinkSetURLCommand extends UICommand {
     const { from, to } = selection;
     const result = findNodesWithSameMark(doc, from, to, markType);
     const href = result ? result.mark.attrs.href : '';
-    const selectedText =
-      typeof doc.textBetween === 'function'
-        ? result?.from?.pos !== undefined && result?.to?.pos !== undefined
-          ? doc.textBetween(result.from.pos, result.to.pos + 1, ' ')
-          : doc.textBetween(from, to, ' ')
-        : '';
+    const selectedText = getSelectedLinkText(doc, from, to, result);
 
     return new Promise((resolve) => {
       const close = (hrefValue?: string, linkDisplayText?: string): void => {
         if (this._popUp) {
           this._popUp = null;
           resolve(
-            hrefValue !== undefined
-              ? {
-                href: hrefValue,
-                linkDisplayText: linkDisplayText ?? hrefValue,
-              }
-              : undefined
+            hrefValue === undefined
+              ? undefined
+              : {
+                  href: hrefValue,
+                  linkDisplayText: linkDisplayText ?? hrefValue,
+                }
           );
         }
       };
@@ -416,31 +467,19 @@ class LinkSetURLCommand extends UICommand {
       let { tr } = state;
       (tr as Transform) = view ? hideSelectionPlaceholder(view.state) : tr;
       tr = tr?.setSelection(selection);
-      const href = typeof value === 'string' ? value : value?.href;
+      const href = getLinkToolHref(value);
       if (href !== undefined) {
         const markType = schema.marks[MARK_LINK];
         const selectionId = this.getSelectionIdFromHref(href);
-        const attrs = href
-          ? {
-            href,
-            selectionId,
-          }
-          : null;
-        const displayText =
-          typeof value === 'string' ? undefined : value?.linkDisplayText;
-        if (href && displayText) {
-          tr = tr.replaceSelectionWith(
-            schema.text(displayText, [markType.create(attrs)]),
-            false
-          );
-        } else {
-          (tr as Transform) = applyMark(
-            tr.setSelection(state.selection),
-            schema,
-            markType,
-            attrs
-          );
-        }
+        tr = applyLinkValue(
+          tr,
+          state,
+          schema,
+          markType,
+          href,
+          selectionId,
+          getLinkDisplayText(value)
+        );
       }
       dispatch(tr);
     }

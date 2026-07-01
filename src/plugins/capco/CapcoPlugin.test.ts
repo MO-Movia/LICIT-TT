@@ -747,8 +747,16 @@ describe('capco plugin', () => {
     expect(capcoplugin.pendingItems.length).toBeGreaterThan(0);
     expect(capcoplugin.pendingItems).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ pos: 1, attrs: { updated: true } }),
-        expect.objectContaining({ pos: 2, attrs: { updated: true } }),
+        expect.objectContaining({
+          pos: 2,
+          assoc: -1,
+          attrs: { updated: true },
+        }),
+        expect.objectContaining({
+          pos: 2,
+          assoc: 1,
+          attrs: { updated: true },
+        }),
       ])
     );
   });

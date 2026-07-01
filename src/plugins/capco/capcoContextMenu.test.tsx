@@ -1510,7 +1510,7 @@ describe('Capco Builder Component', () => {
       key: 'ArrowDown',
       preventDefault: jest.fn(),
       stopPropagation: jest.fn(),
-    } as unknown as React.KeyboardEvent);
+    });
     expect(capcoContextMenu.state.selectedIndex).toBe(0);
     setStateSpy.mockRestore();
   });
@@ -1524,7 +1524,7 @@ describe('Capco Builder Component', () => {
       key: 'Enter',
       preventDefault: jest.fn(),
       stopPropagation: jest.fn(),
-    } as unknown as React.KeyboardEvent);
+    });
     expect(action1).toHaveBeenCalled();
     expect(action0).not.toHaveBeenCalled();
   });

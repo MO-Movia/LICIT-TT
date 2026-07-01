@@ -15,16 +15,38 @@ type Range = {
   to: number;
 };
 
+type StepMapInternals = {
+  inverted?: boolean;
+  ranges: readonly number[];
+};
+
 function getChangedRanges(transactions: readonly Transaction[]): Range[] {
   const ranges: Range[] = [];
 
-  transactions.forEach((transaction) => {
-    transaction.mapping.maps.forEach((map) => {
-      map.forEach((_oldStart, _oldEnd, newStart, newEnd) => {
-        ranges.push({ from: newStart, to: newEnd });
-      });
-    });
-  });
+  for (const transaction of transactions) {
+    for (const map of transaction.mapping.maps) {
+      ranges.push(...getChangedRangesFromMap(map as unknown as StepMapInternals));
+    }
+  }
+
+  return ranges;
+}
+
+function getChangedRangesFromMap(map: StepMapInternals): Range[] {
+  const { inverted = false, ranges: mapRanges } = map;
+  const oldIndex = inverted ? 2 : 1;
+  const newIndex = inverted ? 1 : 2;
+  const ranges: Range[] = [];
+  let diff = 0;
+
+  for (let index = 0; index < mapRanges.length; index += 3) {
+    const start = mapRanges[index];
+    const oldSize = mapRanges[index + oldIndex];
+    const newSize = mapRanges[index + newIndex];
+    const newStart = start + (inverted ? 0 : diff);
+    ranges.push({ from: newStart, to: newStart + newSize });
+    diff += newSize - oldSize;
+  }
 
   return ranges;
 }
@@ -35,11 +57,11 @@ function shouldSplitListItem(node: Node): boolean {
   }
 
   let allChildrenAreParagraphs = true;
-  node.forEach((child) => {
+  for (const child of getNodeChildren(node)) {
     if (child.type.name !== PARAGRAPH) {
       allChildrenAreParagraphs = false;
     }
-  });
+  }
 
   return allChildrenAreParagraphs;
 }
@@ -51,7 +73,7 @@ function splitListItemsWithMultipleParagraphs(
   const splitPositions = [];
   const positions = new Set<number>();
 
-  ranges.forEach(({ from, to }) => {
+  for (const { from, to } of ranges) {
     const safeFrom = Math.max(0, from);
     const safeTo = Math.min(tr.doc.content.size, Math.max(from, to));
 
@@ -63,25 +85,33 @@ function splitListItemsWithMultipleParagraphs(
       }
       return true;
     });
-  });
+  }
 
-  splitPositions
-    .sort((a, b) => b.pos - a.pos)
-    .forEach(({ node, pos }) => {
-      const listItems = [];
+  const orderedSplitPositions = splitPositions.slice();
+  orderedSplitPositions.sort((a, b) => b.pos - a.pos);
+  for (const { node, pos } of orderedSplitPositions) {
+    const listItems = [];
 
-      node.forEach((child) => {
-        if (child.type.name === PARAGRAPH) {
-          listItems.push(node.type.create(node.attrs, Fragment.from(child)));
-        }
-      });
-
-      if (listItems.length > 1) {
-        tr = tr.replaceWith(pos, pos + node.nodeSize, Fragment.from(listItems));
+    for (const child of getNodeChildren(node)) {
+      if (child.type.name === PARAGRAPH) {
+        listItems.push(node.type.create(node.attrs, Fragment.from(child)));
       }
-    });
+    }
+
+    if (listItems.length > 1) {
+      tr = tr.replaceWith(pos, pos + node.nodeSize, Fragment.from(listItems));
+    }
+  }
 
   return tr;
+}
+
+function getNodeChildren(node: Node): Node[] {
+  const children: Node[] = [];
+  for (let index = 0; index < node.childCount; index++) {
+    children.push(node.child(index));
+  }
+  return children;
 }
 
 export default class ListPasteNormalizerPlugin extends Plugin {

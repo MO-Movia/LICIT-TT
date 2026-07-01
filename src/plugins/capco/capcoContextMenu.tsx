@@ -63,7 +63,7 @@ export class CapcoContextMenu extends React.Component<
   _scrollSelectedIntoView(): void {
     const row = this._menuRef.current?.querySelector(
       `[data-index="${this.state.selectedIndex}"]`
-    ) as HTMLElement | null;
+    );
     row?.scrollIntoView?.({ block: 'nearest' });
   }
   createDefaultMenu(capcoList: CapcoEle[]): CapcoEle[] {
@@ -287,14 +287,14 @@ export class CapcoContextMenu extends React.Component<
       selectedParagraphPositions.length > 0 ? selectedParagraphPositions : [pos];
     let tr = this.props.editorView.state.tr;
     if (selectedParagraphPositions.length > 0) {
-      selectedParagraphPositions.forEach((paragraphPos) => {
+      for (const paragraphPos of selectedParagraphPositions) {
         const paragraphNode = tr.doc.nodeAt(paragraphPos);
         tr = tr.setNodeMarkup(
           paragraphPos,
           null,
           this.getCapcoAttrs(paragraphNode, capco)
         );
-      });
+      }
     } else {
       tr = tr.setNodeMarkup(pos, null, newAttrs);
     }
