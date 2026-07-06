@@ -62,7 +62,7 @@ describe('CitationView', () => {
   it('should return false when pNode is null', () => {
     const result = citationView.parentNodeType(null);
 
-    expect(result).toBe(null);
+    expect(result).toBe(false);
   });
   it('should return false when pNode.type.name is not CITATION_NOTE', () => {
     const pNode = {

@@ -405,10 +405,15 @@ describe('ImageSourceCommand', () => {
     it('should not dispatch when dispatch is null', () => {
       const mockInputs:ImageLike = {src: 'test.jpg',height: 400, width: 300, id: '1'};
 
-      command.executeWithUserInput(mockState, null, mockView, mockInputs);
+      const result = command.executeWithUserInput(
+        mockState,
+        null,
+        mockView,
+        mockInputs
+      );
 
       // Should not throw and should not call dispatch
-      expect(true).toBe(true);
+      expect(result).toBe(false);
     });
 
     it('should call hideCursorPlaceholder when view exists', async () => {

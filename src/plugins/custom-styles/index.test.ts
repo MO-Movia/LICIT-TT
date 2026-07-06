@@ -516,7 +516,20 @@ describe('onUpdateAppendTransaction', () => {
   });
 
   it('hooks run without errors', () => {
-    expect(true).toBe(true);
+    const state = EditorState.create({doc: doc(p('text'))});
+    const tr = state.tr;
+
+    const result = onUpdateAppendTransaction(
+      {},
+      tr as UpdateTr,
+      state,
+      state,
+      {input: {lastKeyCode: 0}} as unknown as UpdateArgs[4],
+      [],
+      null
+    );
+
+    expect(result).toBe(tr);
   });
 });
 
@@ -1171,7 +1184,9 @@ describe('Custom Style Plugin pass', () => {
       editorState: state,
       editorView: editor.view,
     };
-    expect(new CustomstyleDropDownCommand(props)).toBeDefined();
+    const command = new CustomstyleDropDownCommand(props);
+
+    expect(command.props).toBe(props);
   });
   it('should call uuid', () => {
     const id = uuid();

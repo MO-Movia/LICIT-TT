@@ -157,7 +157,7 @@ export function addNotesCommand(
   pos: number
 ): Transform {
   const node = tr.doc.nodeAt(pos);
-  if (!node || node.type.name !== ENHANCED_TABLE_FIGURE) return tr;
+  if (node?.type.name !== ENHANCED_TABLE_FIGURE) return tr;
 
   // Check if notes already exist.
   let notesExists = false;

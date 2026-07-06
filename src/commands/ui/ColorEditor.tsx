@@ -46,7 +46,6 @@ export class ColorEditor extends React.PureComponent<{
   hex?: string;
 }> {
   render(): React.ReactElement<CustomButton> {
-    const renderColor = this._renderColor;
     const selectedColor = this.props.hex;
     return (
       <div className="czi-color-editor">
@@ -60,16 +59,24 @@ export class ColorEditor extends React.PureComponent<{
           />
         </div>
         <div className="czi-color-editor-section">
-          {generateGreyColors(10).map(renderColor)}
+          {generateGreyColors(10).map((color, index) =>
+            this._renderColor(color, index)
+          )}
         </div>
         <div className="czi-color-editor-section">
-          {generateRainbowColors(10, 90, 50).map(renderColor)}
+          {generateRainbowColors(10, 90, 50).map((color, index) =>
+            this._renderColor(color, index)
+          )}
         </div>
         <div className="czi-color-editor-section">
-          {generateRainbowColors(30, 70, 70).map(renderColor)}
+          {generateRainbowColors(30, 70, 70).map((color, index) =>
+            this._renderColor(color, index)
+          )}
         </div>
         <div className="czi-color-editor-section">
-          {generateRainbowColors(30, 90, 30).map(renderColor)}
+          {generateRainbowColors(30, 90, 30).map((color, index) =>
+            this._renderColor(color, index)
+          )}
         </div>
       </div>
     );

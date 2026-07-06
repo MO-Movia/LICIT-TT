@@ -158,11 +158,7 @@ export class AddCitationCommand extends UICommand {
   _isEnabled = (state: EditorState): boolean => {
     const tr = state.tr;
     const { selection } = tr;
-    return !(
-      selection &&
-      (selection as NodeSelection).node &&
-      'image' === (selection as NodeSelection).node.type.name
-    );
+    return (selection as NodeSelection)?.node?.type.name !== 'image';
   };
 
   createCitationObject(mode: number, editorView?: EditorView): CitationProps {

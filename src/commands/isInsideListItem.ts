@@ -12,5 +12,5 @@ export function isInsideListItem(doc: Node, pos: number): boolean {
     return false;
   }
   const prevNode = doc.nodeAt(pos - 1);
-  return prevNode && prevNode.type.name === LIST_ITEM;
+  return prevNode?.type.name === LIST_ITEM;
 }

@@ -230,7 +230,7 @@ export class LicitTableNodeView extends TableView {
     }
 
     const table = this._view?.state.doc.nodeAt(this._tablePos);
-    if (!table || table.type.spec.tableRole !== 'table') {
+    if (table?.type.spec.tableRole !== 'table') {
       return null;
     }
 

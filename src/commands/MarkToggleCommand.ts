@@ -183,7 +183,7 @@ export function toggleCustomStyle(
   if ((empty && !$cursor) || !markApplies(state.doc, ranges, markType)) {
     return tr;
   }
-  if ($cursor && $cursor.parentOffset === 0 && posfrom === posto) {
+  if ($cursor?.parentOffset === 0 && posfrom === posto) {
     if (markType.isInSet(state.storedMarks || $cursor.marks())) {
       tr = state.tr.removeStoredMark(markType);
     } else {

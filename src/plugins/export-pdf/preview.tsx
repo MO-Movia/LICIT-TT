@@ -1459,10 +1459,7 @@ export class PreviewForm extends React.PureComponent<Props, State> {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       const divContainer = document.getElementById('holder');
-      printWindow.document.open();
-      printWindow.document.writeln('<!DOCTYPE html><html><body></body></html>');
-
-    const docElement = printWindow.document.documentElement;
+      const docElement = printWindow.document.documentElement;
       while (docElement.firstChild) {
           docElement.firstChild.remove();
       } 

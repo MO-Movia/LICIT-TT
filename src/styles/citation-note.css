@@ -211,7 +211,7 @@
 .czi-editor-frameset .molcit-alert {
   background-color: white;
   box-sizing: border-box;
-  color: darkgray;
+  color: #666;
   padding: 20px;
   width: 340px;
 }

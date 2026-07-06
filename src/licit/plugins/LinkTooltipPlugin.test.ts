@@ -112,14 +112,19 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
 
   it('calls update(), _onCancel, _onClose without warnings', () => {
     if (!editorView) return;
+    const focusSpy = jest.spyOn(editorView, 'focus').mockImplementation();
+
     pluginView.update(editorView, null);
     pluginView._onCancel?.(editorView);
     pluginView._onClose?.();
-    expect(true).toBe(true);
+
+    expect(focusSpy).toHaveBeenCalled();
+    expect(pluginView._linkSelection).toBeNull();
   });
 
   it('insert link at pos=5, calls _onEditEnd with selection=5..9 => no warning', () => {
     if (!editorView) return;
+    const focusSpy = jest.spyOn(editorView, 'focus').mockImplementation();
     // Insert "Link" mark at position=5
     insertLinkAtPos(editorView, 5, 'https://example.com');
 
@@ -129,7 +134,8 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
       TextSelection.create(editorView.state.doc, 5, 9),
       'https://newhref.com'
     );
-    expect(true).toBe(true); // No console.warn or crash
+
+    expect(focusSpy).toHaveBeenCalled();
   });
 
   it('updates visible URL text when editing a link whose text is the old href', () => {
@@ -224,8 +230,11 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
   });
 
   it('calls _onRemove => no warnings, no crashes', () => {
+    insertLinkAtPos(editorView, 5, 'https://example.com');
+
     pluginView._onRemove?.(editorView);
-    expect(true).toBe(true);
+
+    expect(editorView.state.doc.nodeAt(5)?.marks).toHaveLength(0);
   });
 
   it('calls _onEdit through the angular link dialog callback with link items', async () => {
@@ -261,7 +270,6 @@ describe('LinkTooltipPlugin - No Warning / In-Bounds Selection', () => {
         ]),
       })
     );
-    expect(true).toBe(true);
   });
 
   it('uses an inclusive end position when editing a stored link selection', () => {
