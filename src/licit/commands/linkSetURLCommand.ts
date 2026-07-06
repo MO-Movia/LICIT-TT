@@ -48,6 +48,10 @@ type LinkDialogRuntime = {
     closeLinkTool?: () => void,
     linkItems?: LinkToolItems
   ) => void;
+  getStylesAsync?: () => Promise<RuntimeStyle[] | null | undefined>;
+  fetchInnerLinkSelectionIds?: (
+    styles: string[]
+  ) => Promise<RuntimeNode[] | null | undefined>;
 };
 
 type TocStyleKey = 'toc' | 'tof' | 'tot';
@@ -69,6 +73,21 @@ type LinkCounterState = {
 type LinkRangeResult = {
   from?: { pos?: number };
   to?: { pos?: number };
+};
+
+type RuntimeStyle = {
+  name?: string;
+  styleName?: string;
+  level?: number | string;
+  styles?: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+type RuntimeNode = {
+  type?: string;
+  text?: string;
+  attrs?: Record<string, unknown>;
+  content?: RuntimeNode[];
 };
 
 const EMPTY_LINK_ITEMS: LinkToolItems = {
@@ -130,6 +149,37 @@ function applyLinkValue(
   ) as Transaction;
 }
 
+function isStyleFlagEnabled(
+  style: RuntimeStyle | null | undefined,
+  styleKey: TocStyleKey
+): boolean {
+  const styles = style?.styles;
+  const value = styles?.[styleKey] ?? style?.[styleKey];
+  const selectedStyleMode =
+    styles?.selectedStyleMode ?? style?.selectedStyleMode;
+  return (
+    value === true ||
+    value === 'true' ||
+    value === styleKey ||
+    value === 1 ||
+    value === '1' ||
+    selectedStyleMode === styleKey
+  );
+}
+
+function getRuntimeStyleName(style: RuntimeStyle): string {
+  return style.styleName ?? style.name ?? '';
+}
+
+function getRuntimeStyleLevel(style: RuntimeStyle): number {
+  return Number(style.styles?.styleLevel ?? style.level) || 1;
+}
+
+function getRuntimeStylePrefix(style: RuntimeStyle): string | undefined {
+  const prefix = style.styles?.prefixValue ?? style.prefixValue;
+  return typeof prefix === 'string' ? prefix : undefined;
+}
+
 class LinkSetURLCommand extends UICommand {
   _popUp: {
     close?: (href?: string, linkDisplayText?: string) => void;
@@ -149,32 +199,162 @@ class LinkSetURLCommand extends UICommand {
     }
 
     try {
-      const styles = await getStylesAsync();
-      return this.fetchInnerLinkSelectionIds(
+      const styles = await this.getLinkToolStyles(view);
+      const tocStyles = this.getAppliedStyles(styles, 'toc');
+      const tofStyles = this.getAppliedStyles(styles, 'tof');
+      const totStyles = this.getAppliedStyles(styles, 'tot');
+      const documentItems = this.fetchInnerLinkSelectionIds(
         view,
-        this.getAppliedStyles(styles, 'toc'),
-        this.getAppliedStyles(styles, 'tof'),
-        this.getAppliedStyles(styles, 'tot')
+        tocStyles,
+        tofStyles,
+        totStyles
       );
+      const runtimeItems = await this.fetchRuntimeInnerLinkSelectionIds(
+        view,
+        tocStyles,
+        tofStyles,
+        totStyles
+      );
+      return runtimeItems
+        ? { ...runtimeItems, paragraphs: documentItems.paragraphs }
+        : documentItems;
     } catch (error) {
       console.warn(error);
       return EMPTY_LINK_ITEMS;
     }
   };
 
-  getAppliedStyles = (
-    styles: Awaited<ReturnType<typeof getStylesAsync>>,
-    styleKey: TocStyleKey
-  ): TocStyle[] =>
+  getLinkToolStyles = async (view?: EditorView): Promise<RuntimeStyle[]> => {
+    try {
+      const runtimeStyles =
+        await this.getLinkDialogRuntime(view)?.getStylesAsync?.();
+      if (runtimeStyles?.length) {
+        return runtimeStyles;
+      }
+    } catch (error) {
+      console.warn(error);
+    }
+
+    return (await getStylesAsync()) as RuntimeStyle[];
+  };
+
+  getAppliedStyles = (styles: RuntimeStyle[], styleKey: TocStyleKey): TocStyle[] =>
     styles
-      .filter((style) => style?.styles?.[styleKey] === true)
+      .filter((style) => isStyleFlagEnabled(style, styleKey))
       .map((style) => ({
-        name: style.styleName,
-        level: Number(style.styles?.styleLevel) || 1,
-        prefix: style.styles?.prefixValue,
-        tof: style.styles?.tof === true,
-        tot: style.styles?.tot === true,
-      }));
+        name: getRuntimeStyleName(style),
+        level: getRuntimeStyleLevel(style),
+        prefix: getRuntimeStylePrefix(style),
+        tof: isStyleFlagEnabled(style, 'tof'),
+        tot: isStyleFlagEnabled(style, 'tot'),
+      }))
+      .filter((style) => !!style.name);
+
+  fetchRuntimeInnerLinkSelectionIds = async (
+    view: EditorView,
+    tocStyles: TocStyle[],
+    tofStyles: TocStyle[],
+    totStyles: TocStyle[]
+  ): Promise<LinkToolItems | null> => {
+    const runtime = this.getLinkDialogRuntime(view);
+    const styleNames = [
+      ...new Set(
+        [...tocStyles, ...tofStyles, ...totStyles].map((style) => style.name)
+      ),
+    ];
+    if (!runtime?.fetchInnerLinkSelectionIds || styleNames.length === 0) {
+      return null;
+    }
+
+    try {
+      const nodes = await runtime.fetchInnerLinkSelectionIds(styleNames);
+      if (!nodes?.length) {
+        return null;
+      }
+      return this.buildLinkItemsFromRuntimeNodes(
+        nodes,
+        tocStyles,
+        tofStyles,
+        totStyles
+      );
+    } catch (error) {
+      console.warn(error);
+      return null;
+    }
+  };
+
+  buildLinkItemsFromRuntimeNodes = (
+    nodes: RuntimeNode[],
+    tocStyles: TocStyle[],
+    tofStyles: TocStyle[],
+    totStyles: TocStyle[]
+  ): LinkToolItems => {
+    const linkItems: LinkToolItems = {
+      toc: [],
+      figures: [],
+      tables: [],
+      paragraphs: [],
+    };
+    const tocCandidates: { item: LinkToolItem; level: number }[] = [];
+    const tocStyleNames = new Set(tocStyles.map((style) => style.name));
+    const tofStyleNames = new Set(tofStyles.map((style) => style.name));
+    const totStyleNames = new Set(totStyles.map((style) => style.name));
+    const styleByName = new Map(
+      [...tocStyles, ...tofStyles, ...totStyles].map((style) => [
+        style.name,
+        style,
+      ])
+    );
+    const tocLevels = new Map(
+      tocStyles.map((style) => [style.name, style.level])
+    );
+    const counters: LinkCounterState = {
+      content: new Array(11).fill(0),
+      figures: 0,
+      tables: 0,
+    };
+
+    nodes.forEach((node) => {
+      const attrs = node.attrs ?? {};
+      const styleName =
+        typeof attrs.styleName === 'string' ? attrs.styleName : '';
+      const appliedStyle = styleByName.get(styleName);
+      const generatedNumber = appliedStyle
+        ? this.updateAndFormatGeneratedNumber(appliedStyle, attrs, counters)
+        : '';
+      const label = this.getFullLinkLabel(
+        generatedNumber,
+        attrs.capco,
+        this.getRuntimeNodeText(node)
+      );
+      const item = label ? this.createRuntimeLinkToolItem(attrs, label) : null;
+      if (!item) {
+        return;
+      }
+
+      if (tocStyleNames.has(styleName)) {
+        tocCandidates.push({
+          item,
+          level: tocLevels.get(styleName) ?? 1,
+        });
+      } else if (tofStyleNames.has(styleName)) {
+        linkItems.figures.push(item);
+      } else if (totStyleNames.has(styleName)) {
+        linkItems.tables.push(item);
+      }
+    });
+
+    linkItems.toc = this.buildTocTree(tocCandidates);
+    return linkItems;
+  };
+
+  getRuntimeNodeText = (node: RuntimeNode): string => {
+    if (typeof node.text === 'string') {
+      return node.text;
+    }
+
+    return node.content?.map((child) => this.getRuntimeNodeText(child)).join('') ?? '';
+  };
 
   fetchInnerLinkSelectionIds = (
     view: EditorView,
@@ -365,6 +545,25 @@ class LinkSetURLCommand extends UICommand {
     pos: number
   ): LinkToolItem => {
     const targetId = attrs.selectionId || attrs.objectId || `pos-${pos}`;
+    return {
+      id: targetId.startsWith('#') ? targetId : `#${targetId}`,
+      label,
+    };
+  };
+
+  createRuntimeLinkToolItem = (
+    attrs: Record<string, unknown>,
+    label: string
+  ): LinkToolItem | null => {
+    const targetId =
+      typeof attrs.selectionId === 'string'
+        ? attrs.selectionId
+        : typeof attrs.objectId === 'string'
+          ? attrs.objectId
+          : '';
+    if (!targetId) {
+      return null;
+    }
     return {
       id: targetId.startsWith('#') ? targetId : `#${targetId}`,
       label,
