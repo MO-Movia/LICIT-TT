@@ -1393,7 +1393,7 @@ function getHangingIndentPrefixStartPos(
   pos: number,
   prefix: number
 ): number | null {
-  if (!node || node.type.name !== 'paragraph') {
+  if (node?.type.name !== 'paragraph') {
     return null;
   }
   let offset = 0;
@@ -1480,7 +1480,7 @@ function removeResolvedHangingIndentAnchors(
   }
   const mappedPos = tr.mapping.mapResult(pos, -1).pos;
   const node = tr.doc.nodeAt(mappedPos);
-  if (!node || node.type.name !== 'paragraph') {
+  if (node?.type.name !== 'paragraph') {
     return tr;
   }
 

@@ -70,11 +70,12 @@ describe('CommentHighlightMarkSpec', () => {
     dom.style.zIndex = '1';
     dom.style.opacity = '0.25';
 
-    expect(getMarkAttrs(mockGetAttrs, dom)).not.toBe({
-      highlightColor: '',
-      hasComment: true,
-      markFrom: 1,
-    });
+    const attrs = getMarkAttrs(mockGetAttrs, dom);
+
+    expect(attrs.highlightColor).toBe('');
+    expect(attrs.markFrom).toBe('0.25');
+    expect(attrs.appliedHighlight).toBe('rgba(0,0,0,0)');
+    expect(attrs.hasCitation).toBe(true);
   });
 
   it('getMarkAttrs solid color', () => {
@@ -91,10 +92,11 @@ describe('CommentHighlightMarkSpec', () => {
     dom.style.zIndex = '2';
     dom.style.opacity = '0.25';
 
-    expect(getMarkAttrs(mockGetAttrs, dom)).not.toBe({
-      highlightColor: '',
-      hasComment: true,
-      markFrom: 1,
-    });
+    const attrs = getMarkAttrs(mockGetAttrs, dom);
+
+    expect(attrs.highlightColor).toBe('#c40df2');
+    expect(attrs.markFrom).toBe('0.25');
+    expect(attrs.appliedHighlight).toBe('transparent');
+    expect(attrs.hasCitation).toBe(false);
   });
 });

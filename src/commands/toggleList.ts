@@ -275,13 +275,11 @@ export function wrapItemsWithListInternal(
   const $toPos = tr.doc.resolve(toPos);
 
   const hasSameListNodeBefore =
-    $fromPos.nodeBefore &&
-    $fromPos.nodeBefore.type === listNodeType &&
+    $fromPos.nodeBefore?.type === listNodeType &&
     $fromPos.nodeBefore.attrs.indent === 0;
 
   const hasSameListNodeAfter =
-    $toPos.nodeAfter &&
-    $toPos.nodeAfter.type === listNodeType &&
+    $toPos.nodeAfter?.type === listNodeType &&
     $toPos.nodeAfter.attrs.indent === 0;
 
   if (hasSameListNodeBefore) {

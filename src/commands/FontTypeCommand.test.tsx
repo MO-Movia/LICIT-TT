@@ -62,7 +62,9 @@ describe('FontTypeCommand (group 2)', () => {
     plugin = new FontTypeCommand('Arielle');
   });
   it('should create when name is null', () => {
-    expect(new FontTypeCommand(null)).toBeTruthy();
+    const command = new FontTypeCommand(null);
+
+    expect(command._name).toBeNull();
   });
   it('should create', () => {
     expect(plugin).toBeTruthy();

@@ -88,7 +88,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
           const pos =
             view.state.selection.from < 2 ? 0 : view.state.selection.from - 2;
           const node = view.state.tr.doc.nodeAt(pos);
-          if (node && CITATION_NOTE === node.type.name) {
+          if (CITATION_NOTE === node?.type.name) {
             event.preventDefault();
             retVal = true;
           }
@@ -105,7 +105,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
             });
             if (dropPos?.pos && 0 <= dropPos.pos - 2) {
               const node = view.state.tr.doc.nodeAt(dropPos.pos - 2);
-              if (node && CITATION_NOTE === node.type.name) {
+              if (CITATION_NOTE === node?.type.name) {
                 event.preventDefault();
                 retVal = true;
               }
@@ -136,7 +136,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
             const pos =
               view.state.selection.from < 2 ? 0 : view.state.selection.from - 2;
             const node = view.state.tr.doc.nodeAt(pos);
-            if (node && CITATION_NOTE === node.type.name) {
+            if (CITATION_NOTE === node?.type.name) {
               const allowedKeys = [
                 'Enter',
                 'ArrowRight',
@@ -169,8 +169,8 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
                 retVal = true;
               }
             } else if (
-              view.state.selection.$anchor.nodeAfter &&
-              CITATION_NOTE === view.state.selection.$anchor.nodeAfter.type.name
+              CITATION_NOTE ===
+                view.state.selection.$anchor.nodeAfter?.type.name
             ) {
               event.preventDefault();
             }

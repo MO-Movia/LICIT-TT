@@ -8,8 +8,8 @@
   float: right;
   margin-top: 5px;
   margin-right: 10px;
-  background-color: #007bff;
-  border-color: #007bff;
+  background-color: #0056b3;
+  border-color: #0056b3;
   color: white;
   width: 68px;
   height: 33px;
@@ -241,7 +241,7 @@
   border: none;
   border-bottom: solid thin grey;
   font-size: 16px;
-  color: grey;
+  color: #666;
   width: 400px;
   min-height: 20px;
   max-height: 25px;
@@ -270,10 +270,10 @@
 
 .czi-editor-frameset .molcap-btn-text {
   padding-top: 3px;
-  color: grey;
+  color: #666;
   font-size: 20px;
   border-radius: 20px;
-  border-color: grey;
+  border-color: #666;
   background-color: white;
   font-weight: 600;
   width: 341px;
@@ -294,7 +294,7 @@
   margin-top: 9px;
   margin-right: 32px;
   font-size: 12px;
-  background-color: grey;
+  background-color: #666;
   border: none;
   color: white;
   border-radius: 8px;

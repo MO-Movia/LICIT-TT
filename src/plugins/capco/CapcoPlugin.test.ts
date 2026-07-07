@@ -205,11 +205,15 @@ describe('Capco Plugin', () => {
   });
 
   it('should return capcomode', () => {
-    expect(new CapcoPlugin(2 as unknown as CAPCOMODE)).toBeDefined();
+    const plugin = new CapcoPlugin(2 as unknown as CAPCOMODE);
+
+    expect(plugin.mode).toBe(CAPCOMODE.FORCED);
   });
 
   it('should create plugin with default capco', () => {
-    expect(new CapcoPlugin(CAPCOMODE.FORCED, 'U')).toBeDefined();
+    const plugin = new CapcoPlugin(CAPCOMODE.FORCED, 'U');
+
+    expect(plugin.defaultCapco).toBe('U');
   });
 
   it('should handle handlePaste 2', () => {
@@ -531,8 +535,8 @@ describe('Capco Plugin', () => {
     dom.setAttribute('capco', '{"ism": {"classification": "U"}}');
     dom.style.zIndex = '1';
     dom.style.opacity = '0.25';
-    expect(getParagraphNodeAttrs(mockGetAttrs, dom)).not.toBe({
-      capco: '',
+    expect(getParagraphNodeAttrs(mockGetAttrs, dom)).toMatchObject({
+      capco: '{"ism": {"classification": "U"}}',
     });
   });
 
