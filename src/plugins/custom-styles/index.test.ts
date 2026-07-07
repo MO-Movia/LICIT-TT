@@ -521,10 +521,10 @@ describe('onUpdateAppendTransaction', () => {
 
     const result = onUpdateAppendTransaction(
       {},
-      tr as UpdateTr,
+      tr,
       state,
       state,
-      {input: {lastKeyCode: 0}} as unknown as UpdateArgs[4],
+      {input: {lastKeyCode: 0}},
       [],
       null
     );

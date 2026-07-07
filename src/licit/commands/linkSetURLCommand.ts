@@ -235,7 +235,7 @@ class LinkSetURLCommand extends UICommand {
       console.warn(error);
     }
 
-    return (await getStylesAsync()) as RuntimeStyle[];
+    return getStylesAsync();
   };
 
   getAppliedStyles = (styles: RuntimeStyle[], styleKey: TocStyleKey): TocStyle[] =>
@@ -555,12 +555,13 @@ class LinkSetURLCommand extends UICommand {
     attrs: Record<string, unknown>,
     label: string
   ): LinkToolItem | null => {
-    const targetId =
-      typeof attrs.selectionId === 'string'
-        ? attrs.selectionId
-        : typeof attrs.objectId === 'string'
-          ? attrs.objectId
-          : '';
+    let targetId = '';
+    if (typeof attrs.selectionId === 'string') {
+      targetId = attrs.selectionId;
+    } else if (typeof attrs.objectId === 'string') {
+      targetId = attrs.objectId;
+    }
+
     if (!targetId) {
       return null;
     }
