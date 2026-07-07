@@ -59,15 +59,7 @@ export class FloatingMenuPlugin extends Plugin {
 
           decos = DecorationSet.prototype.map.call(decos, tr.mapping, tr.doc);
 
-          const requiresRescan =
-            tr.steps.some((step) => {
-              const s = step.toJSON();
-              return (
-                s.stepType === 'replace' ||
-                s.stepType === 'replaceAround' ||
-                s.stepType === 'setNodeMarkup'
-              );
-            }) || tr.getMeta(CMPluginKey)?.forceRescan;
+          const requiresRescan = shouldRescanDecorations(tr);
 
           if (requiresRescan) {
             decos = getDecorations(tr.doc, newState);
@@ -351,6 +343,8 @@ export function getDecorations(doc: Node, state: EditorState): DecorationSet {
       if (!isFloatingMenuParagraphParent(parent)) return;
       const wrapper = document.createElement('span');
       wrapper.className = 'pm-hamburger-wrapper';
+      wrapper.contentEditable = 'false';
+      wrapper.style.userSelect = 'none';
 
       const hamburger = document.createElement('span');
       hamburger.className = 'float-icon fa fa-bars';
@@ -359,7 +353,13 @@ export function getDecorations(doc: Node, state: EditorState): DecorationSet {
 
       wrapper.appendChild(hamburger);
 
-      decorations.push(Decoration.widget(pos + 1, wrapper, { side: 1 }));
+      decorations.push(
+        Decoration.widget(pos + 1, wrapper, {
+          side: 1,
+          key: `floating-menu-${node.attrs?.objectId ?? pos}`,
+          ignoreSelection: true,
+        })
+      );
       const decoFlags = node.attrs?.isDeco;
       if (!decoFlags) return;
       if (decoFlags.isSlice || decoFlags.isTag || decoFlags.isComment) {
@@ -401,7 +401,13 @@ export function getDecorations(doc: Node, state: EditorState): DecorationSet {
           container.appendChild(CommentMark);
         }
 
-        decorations.push(Decoration.widget(pos + 1, container, { side: -1 }));
+        decorations.push(
+          Decoration.widget(pos + 1, container, {
+            side: -1,
+            key: `floating-menu-flags-${node.attrs?.objectId ?? pos}-${JSON.stringify(decoFlags)}`,
+            ignoreSelection: true,
+          })
+        );
       }
     });
   return DecorationSet.create(state.doc, decorations);
@@ -577,7 +583,40 @@ export function changeAttribute(_view: EditorView): void {
   isDeco.isSlice = true;
   newattrs.isDeco = isDeco;
   tr = tr.setNodeMarkup(from, undefined, newattrs);
+  tr = setForceRescanMeta(tr);
   _view.dispatch(tr);
+}
+
+function setForceRescanMeta(tr: Transaction): Transaction {
+  return typeof tr.setMeta === 'function'
+    ? tr.setMeta(CMPluginKey, { forceRescan: true })
+    : tr;
+}
+
+function shouldRescanDecorations(tr: Transaction): boolean {
+  if (tr.getMeta(CMPluginKey)?.forceRescan) {
+    return true;
+  }
+
+  return tr.steps.some((step) => {
+    const stepJSON = step.toJSON();
+    if (stepJSON.stepType === 'replace') {
+      return true;
+    }
+    if (stepJSON.stepType === 'replaceAround') {
+      return !isMarkupOnlyReplaceAroundStep(stepJSON);
+    }
+    return false;
+  });
+}
+
+function isMarkupOnlyReplaceAroundStep(stepJSON): boolean {
+  return (
+    stepJSON.from + 1 === stepJSON.gapFrom &&
+    stepJSON.to - 1 === stepJSON.gapTo &&
+    stepJSON.insert === 1 &&
+    stepJSON.structure === true
+  );
 }
 
 export function createNewSlice(view: EditorView): void {

@@ -879,6 +879,9 @@ export class ImageNodeView extends CustomNodeView {
 
   // @override
   update(node: Node, decorations: Array<Decoration>): boolean {
+    if (node.type !== this.props.node.type) {
+      return false;
+    }
     super.update(node, decorations);
     this._updateDOM(this.dom);
     return true;

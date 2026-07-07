@@ -15,6 +15,7 @@ import {
   applyStyleForEmptyParagraph,
   applyStyleForNextParagraph,
   CustomstylePlugin,
+  onUpdateAppendTransaction,
   onInitAppendTransaction,
   isDocChanged,
   resetTheDefaultStyleNameToNone,
@@ -209,6 +210,52 @@ describe('index branch coverage', () => {
 
   it('RESERVED_STYLE_NONE constant is available for branch-dependent defaults', () => {
     expect(typeof RESERVED_STYLE_NONE).toBe('string');
+  });
+
+  it('onUpdateAppendTransaction ignores stale view key when no key is pending', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          attrs: { styleName: { default: RESERVED_STYLE_NONE } },
+          toDOM() {
+            return ['p', 0];
+          },
+        },
+        text: { group: 'inline' },
+      },
+    });
+    const state = EditorState.create({
+      schema,
+      doc: schema.node('doc', null, [
+        schema.node('paragraph', { styleName: 'Normal' }, [schema.text('A')]),
+      ]),
+    });
+    const prevState = {
+      selection: {
+        get from() {
+          throw new Error('stale Backspace should not be consumed');
+        },
+      },
+    };
+
+    jest.spyOn(customStyle, 'getCustomStyleByName').mockReturnValue(undefined);
+    jest
+      .spyOn(command, 'applyLatestStyle')
+      .mockImplementation((_styleName, _state, tr) => tr);
+
+    expect(() =>
+      onUpdateAppendTransaction(
+        { firstTime: false, currentKey: null },
+        state.tr,
+        state,
+        prevState as never,
+        { input: { lastKeyCode: 8 } },
+        [],
+        null
+      )
+    ).not.toThrow();
   });
 
   it('CustomstylePlugin view and DOM props handle default branches', () => {

@@ -236,7 +236,9 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
     const node = resPos.node(resPos.depth);
     const pos = this.findNodeIndexPos(doc, node).pos;
     return 0 <= pos
-      ? tr.setNodeMarkup(pos, undefined, this.resetCapco(node))
+      ? this.setForceRescanMeta(
+        tr.setNodeMarkup(pos, undefined, this.resetCapco(node))
+      )
       : tr;
   }
 
@@ -267,6 +269,7 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
         ...currentNode.attrs,
         capco: element.attrs.capco,
       });
+      trx = this.setForceRescanMeta(trx);
     }
 
     return trx;
@@ -366,21 +369,80 @@ export class CapcoPlugin extends Plugin<CapcoPluginState> {
       const parentNode = state.doc.resolve(pos);
       if (parentNode.parent.type.name !== 'enhanced_table_figure_body') {
         decorations.push(
-          Decoration.widget(node.nodeSize + pos, capcoMark, { side: -1 })
+          Decoration.widget(node.nodeSize + pos, capcoMark, {
+            side: -1,
+            key: this.getCapcoDecorationKey(node, pos),
+            ignoreSelection: true,
+          })
         );
       }
     } else if (TABLE_FIGURE === node.type.name) {
       decorations.push(
-        Decoration.widget(node.nodeSize + pos, capcoMark, { side: -1 })
+        Decoration.widget(node.nodeSize + pos, capcoMark, {
+          side: -1,
+          key: this.getCapcoDecorationKey(node, pos),
+          ignoreSelection: true,
+        })
       );
     } else {
-      decorations.push(Decoration.widget(pos + 1, capcoMark, { side: -1 }));
+      decorations.push(
+        Decoration.widget(pos + 1, capcoMark, {
+          side: -1,
+          key: this.getCapcoDecorationKey(node, pos),
+          ignoreSelection: true,
+        })
+      );
     }
     if (TABLE_FIGURE === node.type.name && node.attrs.isValidate) {
       decorations.push(
-        Decoration.widget(node.nodeSize + pos, needValidate, { side: 1 })
+        Decoration.widget(node.nodeSize + pos, needValidate, {
+          side: 1,
+          key: `capco-validation-${node.attrs?.objectId ?? pos}`,
+          ignoreSelection: true,
+        })
       );
     }
+  }
+
+  getCapcoDecorationKey(node: Node, pos: number): string {
+    return [
+      'capco',
+      node.attrs?.objectId ?? pos,
+      node.attrs?.[CAPCOKEY] ?? '',
+      node.attrs?.hangingIndent ?? '',
+    ].join('-');
+  }
+
+  shouldRescanDecorations(tr: Transaction): boolean {
+    if (tr.getMeta(CAPCO_PLUGIN_KEY)?.forceRescan) {
+      return true;
+    }
+
+    return tr.steps.some((step) => {
+      const stepJSON = step.toJSON();
+      if (stepJSON.stepType === 'replace') {
+        return true;
+      }
+      if (stepJSON.stepType === 'replaceAround') {
+        return !this.isMarkupOnlyReplaceAroundStep(stepJSON);
+      }
+      return false;
+    });
+  }
+
+  isMarkupOnlyReplaceAroundStep(stepJSON): boolean {
+    return (
+      stepJSON.from + 1 === stepJSON.gapFrom &&
+      stepJSON.to - 1 === stepJSON.gapTo &&
+      stepJSON.insert === 1 &&
+      stepJSON.structure === true
+    );
+  }
+
+  setForceRescanMeta(tr: Transaction): Transaction {
+    return typeof tr.setMeta === 'function'
+      ? tr.setMeta(CAPCO_PLUGIN_KEY, { forceRescan: true })
+      : tr;
   }
   measureCapcoWidth(capcoMark) {
     const text = capcoMark.textContent;

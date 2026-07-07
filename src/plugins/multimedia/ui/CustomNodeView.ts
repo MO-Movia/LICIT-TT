@@ -174,7 +174,7 @@ export class CustomNodeView implements NodeView {
       }
     }
     // Check if it's a different node entirely
-    if (oldNode !== newNode) {
+    if (!oldNode?.eq?.(newNode)) {
       return true;
     }
     return false;
@@ -254,7 +254,7 @@ export class CustomNodeView implements NodeView {
     const propsChanged =
       this._lastRenderedProps?.selected !== selected ||
       this._lastRenderedProps?.focused !== focused ||
-      this._lastRenderedProps?.node !== this.props.node;
+      !this._lastRenderedProps?.node?.eq?.(this.props.node);
     if (!propsChanged) {
       return; // Skip render if nothing changed
     }
