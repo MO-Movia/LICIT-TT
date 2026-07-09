@@ -16,7 +16,9 @@
 .ProseMirror {
   background: var(--czi-content-body-background-color);
   border-radius: 1px;
-  box-shadow: 0 3px 6px rgb(0 0 0 / 16%), 0 3px 6px rgb(0 0 0 / 23%);
+  box-shadow:
+    0 3px 6px rgb(0 0 0 / 16%),
+    0 3px 6px rgb(0 0 0 / 23%);
   box-sizing: border-box;
   color: var(--czi-content-font-color);
   font-family: var(--czi-content-font-family);
@@ -164,7 +166,7 @@
 }
 
 /* CodeBlock */
-.ProseMirror pre>code {
+.ProseMirror pre > code {
   background-color: #eee;
   border: 1px solid #999;
   display: block;
@@ -173,7 +175,6 @@
 
 /* Spacer */
 .ProseMirror span[data-spacer-size] {
-  display: inline-block;
   letter-spacing: 12px;
 }
 
@@ -219,7 +220,7 @@
   position: relative;
 }
 /* prefix=0 always starts at 0 and has fixed width = hangingIndentMargin
-   capco overlays on top of it — no impact on layout */
+   capco overlays on top of it ï¿½ no impact on layout */
 .ProseMirror p[hangingindent='true'] span[prefix='0'] {
   min-width: var(--hangingIndentMargin);
   flex-shrink: 0;
