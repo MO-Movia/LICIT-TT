@@ -1503,7 +1503,7 @@ export function getStyleLevel(styleName: string) {
       styleLevel = styleProp.styles.styleLevel;
     } else if (styleName.includes(RESERVED_STYLE_NONE_NUMBERING)) {
       const indices = styleName.split(RESERVED_STYLE_NONE_NUMBERING);
-      if (indices && 2 === indices.length) {
+      if (indices?.length === 2) {
         styleLevel = Number.parseInt(indices[1], 10);
       }
     }
@@ -1555,7 +1555,7 @@ export function removeAllMarksExceptLinkForTableColumnCell(
   node: Node,
   tr: Transform
 ) {
-  if (!node || node.type.name !== 'paragraph') {
+  if (node?.type.name !== 'paragraph') {
     return tr;
   }
   let offset = pos + 1;

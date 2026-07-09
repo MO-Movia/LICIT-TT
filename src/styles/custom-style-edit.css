@@ -154,7 +154,7 @@
   border-style: solid;
   border-width: 1px;
   box-sizing: unset !important;
-  color: gray;
+  color: #666;
   cursor: text;
   flex-direction: column;
   font: 400 11px arial, sans-serif;
@@ -587,7 +587,7 @@ div[disabled='disabled'] {
 }
 
 .alert {
-  background-color: #f44336;
+  background-color: #d32f2f;
   box-sizing: border-box;
   color: white;
   padding: 20px;

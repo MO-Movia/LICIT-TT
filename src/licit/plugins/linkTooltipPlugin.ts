@@ -515,7 +515,12 @@ export class LinkTooltipView {
         const nodeSelectionId = this.normalizeSelectionId(
           node.attrs.selectionId
         );
-        if (node.attrs.styleName && nodeSelectionId === targetSelectionId) {
+        const nodeObjectId = this.normalizeSelectionId(node.attrs.objectId);
+        if (
+          node.attrs.styleName &&
+          (nodeSelectionId === targetSelectionId ||
+            nodeObjectId === targetSelectionId)
+        ) {
           tocItemPos = { position: pos, textContent: node.textContent };
         }
       });

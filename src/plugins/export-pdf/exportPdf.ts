@@ -22,7 +22,7 @@ export class ExportPDF {
   public exportPdf(view: EditorView, doc: unknown): boolean {
     const originalState = view.state;
     let newDoc;
-    if (doc && doc['type'] === 'doc') {
+    if (doc?.['type'] === 'doc') {
            newDoc = view.state?.schema?.nodeFromJSON(doc);
         }
         else{

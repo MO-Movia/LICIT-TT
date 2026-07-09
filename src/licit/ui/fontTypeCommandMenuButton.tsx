@@ -41,7 +41,7 @@ class FontTypeCommandMenuButton extends React.PureComponent<PropsType> {
         // [FS] IRAD-1008 2020-07-16
         // Disable font type menu on editor disable state
         commandGroups={COMMAND_GROUPS}
-        disabled={!!(editorView && editorView.disabled)}
+        disabled={!!editorView?.disabled}
         dispatch={dispatch}
         editorState={editorState}
         editorView={editorView}

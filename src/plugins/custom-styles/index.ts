@@ -37,6 +37,8 @@ export * from './StyleRuntime';
 
 const ENTERKEYCODE = 13;
 const BACKSPACEKEYCODE = 8;
+const ENTERKEY = 'Enter';
+const BACKSPACEKEY = 'Backspace';
 const PARA_POSITION_DIFF = 4;
 const ATTR_STYLE_NAME = 'styleName';
 const ZERO_WIDTH_SPACE = '\u200B';
@@ -78,7 +80,16 @@ type LooseView = {
   input?: { lastKeyCode?: number };
 };
 type CSView = CustomStyleView | LooseView | null;
+type KeyInput = string | number | null | undefined;
 let slice1: Slice | null = null;
+
+function isBackspaceKey(key: KeyInput): boolean {
+  return BACKSPACEKEY === key || BACKSPACEKEYCODE === key;
+}
+
+function isEnterKey(key: KeyInput): boolean {
+  return ENTERKEY === key || ENTERKEYCODE === key;
+}
 
 function getSelectionCursor(
   selection: Selection | null | undefined
@@ -104,6 +115,7 @@ const requiredAddAttr = (node: Node | null | undefined): boolean => {
 export class CustomstylePlugin extends Plugin {
   constructor(runtime: StyleRuntime, hideNumbering?: boolean) {
     let csview: CustomStyleView | null = null;
+    let pendingKey: string | null = null;
     let firstTime = true;
     let loaded = false;
     super({
@@ -143,15 +155,24 @@ export class CustomstylePlugin extends Plugin {
           return false;
         },
         handleDOMEvents: {
-          keydown(view) {
+          keydown(view, event) {
             csview = view;
+            pendingKey = event.key;
+          },
+          keyup(_view, event) {
+            if (pendingKey === event.key) {
+              pendingKey = null;
+            }
+          },
+          blur() {
+            pendingKey = null;
           },
         },
         nodeViews: {},
       },
       appendTransaction: (transactions, prevState, nextState) => {
         let tr: TrLike = null;
-        const ref = { firstTime, loaded };
+        const ref = { firstTime, loaded, currentKey: pendingKey };
         if (!loaded) {
           tr = onInitAppendTransaction(ref, tr, nextState);
         } else if (isDocChanged(transactions)) {
@@ -166,6 +187,7 @@ export class CustomstylePlugin extends Plugin {
             transactions,
             slice1
           );
+          pendingKey = null;
         }
         firstTime = ref.firstTime;
         loaded = ref.loaded;
@@ -214,7 +236,7 @@ export function onInitAppendTransaction(
 }
 
 export function onUpdateAppendTransaction(
-  ref: { firstTime?: boolean; loaded?: boolean },
+  ref: { firstTime?: boolean; loaded?: boolean; currentKey?: KeyInput },
   tr: LooseTr,
   nextState: EditorState,
   prevState: EditorState,
@@ -225,7 +247,13 @@ export function onUpdateAppendTransaction(
   tr = applyStyleForEmptyParagraph(nextState, tr);
   ref.firstTime = false;
 
-  tr = handleUpdateKeyStyling(prevState, nextState, tr, csview);
+  tr = handleUpdateKeyStyling(
+    prevState,
+    nextState,
+    tr,
+    csview,
+    ref.currentKey
+  );
 
   const isPaste = transactions.length && transactions[0].getMeta('paste');
   tr = applyLineStyleForBoldPartial(nextState, tr, isPaste);
@@ -245,25 +273,31 @@ function handleUpdateKeyStyling(
   prevState: LooseState,
   nextState: LooseState,
   tr: LooseTr,
-  csview: CSView
+  csview: CSView,
+  currentKey?: KeyInput
 ): LooseTr {
   if (!csview) {
     return tr;
   }
 
-  if (BACKSPACEKEYCODE === csview.input.lastKeyCode) {
+  let lastKey = currentKey ?? csview.input?.lastKeyCode;
+  if (currentKey === null) {
+    lastKey = null;
+  }
+
+  if (isBackspaceKey(lastKey)) {
     const updatedTr = handleBackspaceStyleUpdate(prevState, nextState, tr);
     if (updatedTr) {
       return updatedTr;
     }
   }
 
-  if (ENTERKEYCODE !== csview.input.lastKeyCode) {
+  if (!isEnterKey(lastKey)) {
     return tr;
   }
 
   if (tr.selection.$from.start() === tr.selection.$from.end()) {
-    return applyStyleForNextParagraph(prevState, nextState, tr, csview);
+    return applyStyleForNextParagraph(prevState, nextState, tr, csview, lastKey);
   }
   return tr;
 }
@@ -796,7 +830,8 @@ export function applyStyleForNextParagraph(
   prevState: LooseState,
   nextState: LooseState,
   tr: LooseTr,
-  view: CSView
+  view: CSView,
+  currentKey?: KeyInput
 ): LooseTr {
   tr ??= nextState.tr;
   if (!nextState?.selection) {
@@ -804,7 +839,7 @@ export function applyStyleForNextParagraph(
   }
 
   const { $from } = nextState.selection;
-  if (!view || !isNewParagraph(prevState, nextState, view)) {
+  if (!view || !isNewParagraph(prevState, nextState, view, currentKey)) {
     return null;
   }
 
@@ -1065,10 +1100,12 @@ function resetNodeAttrs(
 function isNewParagraph(
   prevState: LooseState,
   nextState: LooseState,
-  view: CSView
+  view: CSView,
+  currentKey?: KeyInput
 ): boolean {
   let bOk = false;
-  if (ENTERKEYCODE === view.input.lastKeyCode) {
+  const key = currentKey ?? view.input?.lastKeyCode;
+  if (isEnterKey(key)) {
     const delta = nextState.selection.from - prevState.selection.from;
     // Only treat as a new paragraph when selection actually moved (user Enter) and not on repeated plugin reflow.
     if (delta > 0 && delta <= PARA_POSITION_DIFF) {
@@ -1356,7 +1393,7 @@ function getHangingIndentPrefixStartPos(
   pos: number,
   prefix: number
 ): number | null {
-  if (!node || node.type.name !== 'paragraph') {
+  if (node?.type.name !== 'paragraph') {
     return null;
   }
   let offset = 0;
@@ -1443,7 +1480,7 @@ function removeResolvedHangingIndentAnchors(
   }
   const mappedPos = tr.mapping.mapResult(pos, -1).pos;
   const node = tr.doc.nodeAt(mappedPos);
-  if (!node || node.type.name !== 'paragraph') {
+  if (node?.type.name !== 'paragraph') {
     return tr;
   }
 

@@ -198,7 +198,7 @@ export class ImageInlineEditor extends React.PureComponent {
 
     const pos = from;
     const node = state.doc.nodeAt(pos);
-    if (!node || node.type.name !== 'image') return;
+    if (node?.type.name !== 'image') return;
 
     const src = node.attrs.src;
 

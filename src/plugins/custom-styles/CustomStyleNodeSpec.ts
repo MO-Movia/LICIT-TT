@@ -451,7 +451,7 @@ function applyTextFormattingStyle(style: string, styles): string {
 function getReservedStyleLevel(styleName: string): number {
   const indices = styleName.split(RESERVED_STYLE_NONE_NUMBERING);
   const styleLevel = 0;
-  if (indices && 2 === indices.length) {
+  if (indices?.length === 2) {
     const styleLevel = Number.parseInt(indices[1], 10);
     return Number.isNaN(styleLevel) ? 0 : styleLevel;
   }

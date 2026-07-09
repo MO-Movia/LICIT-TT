@@ -121,13 +121,16 @@ class EditorToolbar extends React.PureComponent {
     const pluginCommands = (this.props.editorState?.plugins || [])
       .map((p) =>
         'initButtonCommands' in p
-          ? (p as LicitPlugin).initButtonCommands(theme)
+          ? ((p as LicitPlugin).initButtonCommands(
+              theme
+            ) as unknown as CommandGroup)
           : null
       )
-      .filter((group): group is UICommand => group !== null);
+      .filter((group): group is CommandGroup => group !== null);
 
-    return COMMAND_GROUPS.concat(pluginCommands)
-      .map(this._renderButtonsGroup)
+    return (COMMAND_GROUPS as CommandGroup[])
+      .concat(pluginCommands)
+      .map((group, index) => this._renderButtonsGroup(group, index))
       .filter((element): element is React.ReactElement => element !== null);
   }
 
@@ -145,7 +148,9 @@ class EditorToolbar extends React.PureComponent {
 
     const m = this.processMenuItems(toolbarConfig);
     const k = this.groupMenuItems(m);
-    return k.map(this._renderButtonsGroup_1).filter(Boolean);
+    return k
+      .map((group, index) => this._renderButtonsGroup_1(group, index))
+      .filter(Boolean);
   }
 
   private _extractPluginObjects(

@@ -130,7 +130,7 @@ export class CitationView {
   }
 
   parentNodeType(pNode: Node): boolean {
-    return pNode && pNode.type.name === CITATION_NOTE;
+    return pNode?.type.name === CITATION_NOTE;
   }
 
   getFromValue(e: MouseEvent): number {

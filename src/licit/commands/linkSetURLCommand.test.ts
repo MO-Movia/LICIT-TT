@@ -250,6 +250,83 @@ describe('LinkSetURLCommand', () => {
     });
   });
 
+  it('loads styled inner-link sections from the editor runtime API', async () => {
+    const command = new LinkSetURLCommand();
+    const linkDoc = mySchema.node('doc', null, [
+      mySchema.node(
+        'paragraph',
+        { styleName: 'Normal', objectId: 'paragraph-1' },
+        [mySchema.text('Regular paragraph')]
+      ),
+    ]);
+    const getStylesAsync = jest.fn().mockResolvedValue([
+      {
+        styleName: 'Chapter',
+        styles: { toc: true, styleLevel: 1 },
+      },
+      {
+        styleName: 'Figure Caption',
+        styles: { tof: true, styleLevel: 2, prefixValue: 'FIGURE ' },
+      },
+      {
+        styleName: 'Table Caption',
+        styles: { tot: true, styleLevel: 2, prefixValue: 'TABLE ' },
+      },
+    ]);
+    const fetchInnerLinkSelectionIds = jest.fn().mockResolvedValue([
+      {
+        type: 'paragraph',
+        attrs: { styleName: 'Chapter', objectId: 'chapter-1' },
+        content: [{ type: 'text', text: 'Chapter title' }],
+      },
+      {
+        type: 'paragraph',
+        attrs: { styleName: 'Figure Caption', objectId: 'figure-1' },
+        content: [{ type: 'text', text: 'Figure caption' }],
+      },
+      {
+        type: 'paragraph',
+        attrs: { styleName: 'Table Caption', objectId: 'table-1' },
+        content: [{ type: 'text', text: 'Table caption' }],
+      },
+    ]);
+
+    const result = await command.showTocList({
+      state: { doc: linkDoc },
+      runtime: { getStylesAsync, fetchInnerLinkSelectionIds },
+    } as unknown as EditorViewEx);
+
+    expect(fetchInnerLinkSelectionIds).toHaveBeenCalledWith([
+      'Chapter',
+      'Figure Caption',
+      'Table Caption',
+    ]);
+    expect(result.toc).toEqual([
+      expect.objectContaining({
+        id: '#chapter-1',
+        label: '1 Chapter title',
+      }),
+    ]);
+    expect(result.figures).toEqual([
+      expect.objectContaining({
+        id: '#figure-1',
+        label: 'FIGURE 1.1 Figure caption',
+      }),
+    ]);
+    expect(result.tables).toEqual([
+      expect.objectContaining({
+        id: '#table-1',
+        label: 'TABLE 1.1 Table caption',
+      }),
+    ]);
+    expect(result.paragraphs).toEqual([
+      expect.objectContaining({
+        id: '#paragraph-1',
+        label: 'Regular paragraph',
+      }),
+    ]);
+  });
+
   it('_popup should contain close once it created', async () => {
     lsc._popUp = null;
     RuntimeService.Runtime = {

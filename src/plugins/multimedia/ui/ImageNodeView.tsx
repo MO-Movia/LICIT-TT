@@ -458,7 +458,7 @@ export class ImageViewBody extends React.PureComponent<
 
   _renderInlineEditor(): void {
     const el = document.getElementById(this._id);
-    if (!el || el.dataset.active !== 'true') {
+    if (el?.dataset.active !== 'true') {
       this._closeMenu();
       return;
     }
@@ -879,6 +879,9 @@ export class ImageNodeView extends CustomNodeView {
 
   // @override
   update(node: Node, decorations: Array<Decoration>): boolean {
+    if (node.type !== this.props.node.type) {
+      return false;
+    }
     super.update(node, decorations);
     this._updateDOM(this.dom);
     return true;
