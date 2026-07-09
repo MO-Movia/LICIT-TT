@@ -5,41 +5,88 @@
 }
 
 .ProseMirror p[data-indent='2'] {
-  margin-left: 42pt;
+  margin-left: 36pt;
 }
 
 .ProseMirror p[data-indent='3'] {
-  margin-left: 66pt;
+  margin-left: 54pt;
 }
 
 .ProseMirror p[data-indent='4'] {
-  margin-left: 80pt;
+  margin-left: 72pt;
 }
 
 .ProseMirror p[data-indent='5'] {
-  margin-left: 98pt;
+  margin-left: 90pt;
 }
 
 .ProseMirror p[data-indent='6'] {
-  margin-left: 122pt;
+  margin-left: 108pt;
 }
 
 .ProseMirror p[data-indent='7'] {
-  margin-left: 150pt;
+  margin-left: 126pt;
 }
 
 .ProseMirror p[data-indent='8'] {
-  margin-left: 178pt;
+  margin-left: 144pt;
 }
 
 .ProseMirror p[data-indent='9'] {
-  margin-left: 206pt;
+  margin-left: 162pt;
 }
 
 .ProseMirror p[data-indent='10'] {
+  margin-left: 180pt;
+}
+.ProseMirror p[data-indent='11'] {
+  margin-left: 198pt;
+}
+.ProseMirror p[data-indent='12'] {
+  margin-left: 216pt;
+}
+.ProseMirror p[data-indent='13'] {
   margin-left: 234pt;
 }
-
+.ProseMirror p[data-indent='14'] {
+  margin-left: 252pt;
+}
+.ProseMirror p[data-indent='15'] {
+  margin-left: 270pt;
+}
+.ProseMirror p[data-indent='16'] {
+  margin-left: 288pt;
+}
+.ProseMirror p[data-indent='17'] {
+  margin-left: 306pt;
+}
+.ProseMirror p[data-indent='18'] {
+  margin-left: 324pt;
+}
+.ProseMirror p[data-indent='19'] {
+  margin-left: 342pt;
+}
+.ProseMirror p[data-indent='20'] {
+  margin-left: 360pt;
+}
+.ProseMirror p[data-indent='21'] {
+  margin-left: 378pt;
+}
+.ProseMirror p[data-indent='22'] {
+  margin-left: 396pt;
+}
+.ProseMirror p[data-indent='23'] {
+  margin-left: 414pt;
+}
+.ProseMirror p[data-indent='24'] {
+  margin-left: 432pt;
+}
+.ProseMirror p[data-indent='25'] {
+  margin-left: 450pt;
+}
+.ProseMirror p[data-indent='26'] {
+  margin-left: 468pt;
+}
 /* list item indents */
 
 .ProseMirror ol[type='decimal'][data-indent='1'] {
