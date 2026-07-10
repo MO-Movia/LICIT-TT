@@ -258,6 +258,142 @@ describe('index branch coverage', () => {
     ).not.toThrow();
   });
 
+  it('onUpdateAppendTransaction reapplies paragraph style when Delete joins the next paragraph', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'inline*',
+          attrs: { styleName: { default: RESERVED_STYLE_NONE } },
+          toDOM() {
+            return ['p', 0];
+          },
+        },
+        text: { group: 'inline' },
+      },
+      marks: {
+        strong: {
+          toDOM() {
+            return ['strong', 0];
+          },
+        },
+      },
+    });
+    const strong = schema.marks.strong.create();
+    const prevDoc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: 'Style 1' }, [
+        schema.text('A', [strong]),
+      ]),
+      schema.node('paragraph', { styleName: RESERVED_STYLE_NONE }, [
+        schema.text('B'),
+      ]),
+    ]);
+    const nextDoc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: 'Style 1' }, [
+        schema.text('A', [strong]),
+        schema.text('B'),
+      ]),
+    ]);
+    const prevState = EditorState.create({
+      schema,
+      doc: prevDoc,
+      selection: TextSelection.create(prevDoc, 2),
+    });
+    const nextState = EditorState.create({
+      schema,
+      doc: nextDoc,
+      selection: TextSelection.create(nextDoc, 2),
+    });
+
+    jest.spyOn(customStyle, 'getCustomStyleByName').mockReturnValue(undefined);
+    const applyLatestStyleSpy = jest
+      .spyOn(command, 'applyLatestStyle')
+      .mockImplementation((_styleName, _state, tr) => tr);
+
+    onUpdateAppendTransaction(
+      { firstTime: false, currentKey: 'Delete' },
+      nextState.tr,
+      nextState,
+      prevState,
+      { input: { lastKeyCode: 46 } },
+      [],
+      null
+    );
+
+    expect(applyLatestStyleSpy).toHaveBeenCalledTimes(1);
+    expect(applyLatestStyleSpy).toHaveBeenCalledWith(
+      'Style 1',
+      nextState,
+      expect.anything(),
+      expect.objectContaining({
+        node: nextDoc.firstChild,
+        startPos: 0,
+        endPos: nextDoc.firstChild.nodeSize - 1,
+      })
+    );
+  });
+
+  it('onUpdateAppendTransaction does not reapply paragraph style for Delete inside text', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'inline*',
+          attrs: { styleName: { default: RESERVED_STYLE_NONE } },
+          toDOM() {
+            return ['p', 0];
+          },
+        },
+        text: { group: 'inline' },
+      },
+      marks: {
+        strong: {
+          toDOM() {
+            return ['strong', 0];
+          },
+        },
+      },
+    });
+    const strong = schema.marks.strong.create();
+    const prevDoc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: 'Style 1' }, [
+        schema.text('AB', [strong]),
+      ]),
+    ]);
+    const nextDoc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: 'Style 1' }, [
+        schema.text('A', [strong]),
+      ]),
+    ]);
+    const prevState = EditorState.create({
+      schema,
+      doc: prevDoc,
+      selection: TextSelection.create(prevDoc, 2),
+    });
+    const nextState = EditorState.create({
+      schema,
+      doc: nextDoc,
+      selection: TextSelection.create(nextDoc, 2),
+    });
+
+    jest.spyOn(customStyle, 'getCustomStyleByName').mockReturnValue(undefined);
+    const applyLatestStyleSpy = jest
+      .spyOn(command, 'applyLatestStyle')
+      .mockImplementation((_styleName, _state, tr) => tr);
+
+    onUpdateAppendTransaction(
+      { firstTime: false, currentKey: 'Delete' },
+      nextState.tr,
+      nextState,
+      prevState,
+      { input: { lastKeyCode: 46 } },
+      [],
+      null
+    );
+
+    expect(applyLatestStyleSpy).not.toHaveBeenCalled();
+  });
+
   it('CustomstylePlugin view and DOM props handle default branches', () => {
     const plugin = new CustomstylePlugin({} as never);
     const view = {

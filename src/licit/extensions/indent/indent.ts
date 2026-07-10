@@ -48,7 +48,7 @@ export const Indent = Extension.create<IndentOptions, never>({
       names: ['heading', 'paragraph', BULLET_LIST, 'ordered_list'],
       indentRange: 1,
       minIndentLevel: 0,
-      maxIndentLevel: 7,
+      maxIndentLevel: 26,
       defaultIndentLevel: 0,
       HTMLAttributes: {},
     };
@@ -94,98 +94,98 @@ export const Indent = Extension.create<IndentOptions, never>({
     return {
       indent:
         () =>
-        ({ state, dispatch, editor }) => {
-          if (!(state.selection instanceof TextSelection)) return false;
+          ({ state, dispatch, editor }) => {
+            if (!(state.selection instanceof TextSelection)) return false;
 
-          const { $from } = state.selection;
-          const tr = state.tr;
+            const { $from } = state.selection;
+            const tr = state.tr;
 
-          const { listDepth, listItemDepth } = findListDepths($from);
-          const isInList = listDepth !== -1 && listItemDepth !== -1;
+            const { listDepth, listItemDepth } = findListDepths($from);
+            const isInList = listDepth !== -1 && listItemDepth !== -1;
 
-          if (isInList) {
-            const listNode = $from.node(listDepth);
-            const listPos = $from.before(listDepth);
-            const listItem = $from.node(listItemDepth);
-            const listItemPos = $from.before(listItemDepth);
+            if (isInList) {
+              const listNode = $from.node(listDepth);
+              const listPos = $from.before(listDepth);
+              const listItem = $from.node(listItemDepth);
+              const listItemPos = $from.before(listItemDepth);
 
-            const currentIndent = listNode.attrs.indent || 0;
+              const currentIndent = listNode.attrs.indent || 0;
 
-            if (currentIndent >= this.options.maxIndentLevel) {
+              if (currentIndent >= this.options.maxIndentLevel) {
+                return false;
+              }
+
+              const newIndent = currentIndent + 1;
+              const actualItemIndex = findActualItemIndex(
+                listNode,
+                listPos,
+                listItemPos
+              );
+
+              if (actualItemIndex === -1) return false;
+
+              // Case 1: Only one item
+              if (listNode.childCount === 1) {
+                return handleSingleItemIndent(
+                  tr,
+                  listPos,
+                  listNode,
+                  newIndent,
+                  dispatch
+                );
+              }
+
+              // Case 2: Multiple items - need to split
+              const indentedListPos = createSplitLists(
+                tr,
+                listNode,
+                listPos,
+                actualItemIndex,
+                newIndent,
+                listItem
+              );
+
+              // Set cursor position to the indented item
+              const newCursorPos = indentedListPos + 2;
+              tr.setSelection(TextSelection.create(tr.doc, newCursorPos));
+
+              if (dispatch) {
+                dispatch(tr);
+              }
+              return true;
+            } else {
+              const updatedTr = updateIndentLevel(
+                tr,
+                this.options,
+                editor.extensionManager.extensions,
+                'indent'
+              );
+
+              if (updatedTr.docChanged && dispatch) {
+                dispatch(updatedTr);
+                return true;
+              }
               return false;
             }
-
-            const newIndent = currentIndent + 1;
-            const actualItemIndex = findActualItemIndex(
-              listNode,
-              listPos,
-              listItemPos
-            );
-
-            if (actualItemIndex === -1) return false;
-
-            // Case 1: Only one item
-            if (listNode.childCount === 1) {
-              return handleSingleItemIndent(
-                tr,
-                listPos,
-                listNode,
-                newIndent,
-                dispatch
-              );
-            }
-
-            // Case 2: Multiple items - need to split
-            const indentedListPos = createSplitLists(
-              tr,
-              listNode,
-              listPos,
-              actualItemIndex,
-              newIndent,
-              listItem
-            );
-
-            // Set cursor position to the indented item
-            const newCursorPos = indentedListPos + 2;
-            tr.setSelection(TextSelection.create(tr.doc, newCursorPos));
-
-            if (dispatch) {
-              dispatch(tr);
-            }
-            return true;
-          } else {
-            const updatedTr = updateIndentLevel(
+          },
+      outdent:
+        () =>
+          ({ tr, state, dispatch, editor }: CommandProps) => {
+            const { selection } = state;
+            tr = tr.setSelection(selection);
+            tr = updateIndentLevel(
               tr,
               this.options,
               editor.extensionManager.extensions,
-              'indent'
+              'outdent'
             );
-
-            if (updatedTr.docChanged && dispatch) {
-              dispatch(updatedTr);
+            if (tr.docChanged && dispatch) {
+              dispatch(tr);
               return true;
             }
+            editor.chain().focus().run();
             return false;
-          }
-        },
-      outdent:
-        () =>
-        ({ tr, state, dispatch, editor }: CommandProps) => {
-          const { selection } = state;
-          tr = tr.setSelection(selection);
-          tr = updateIndentLevel(
-            tr,
-            this.options,
-            editor.extensionManager.extensions,
-            'outdent'
-          );
-          if (tr.docChanged && dispatch) {
-            dispatch(tr);
-            return true;
-          }
-          editor.chain().focus().run();
-          return false;
-        },
+          },
     };
   },
 
@@ -297,30 +297,30 @@ const updateIndentLevel = (
 
 const indent: () => KeyboardShortcutCommand =
   () =>
-  ({ editor }) => {
-    if (
-      !isList(editor.state.doc.type.name, editor.extensionManager.extensions)
-    ) {
-      return editor.commands.indent();
-    }
-    return false;
-  };
+    ({ editor }) => {
+      if (
+        !isList(editor.state.doc.type.name, editor.extensionManager.extensions)
+      ) {
+        return editor.commands.indent();
+      }
+      return false;
+    };
 const outdent: (outdentOnlyAtHead: boolean) => KeyboardShortcutCommand =
   (outdentOnlyAtHead) =>
-  ({ editor }) => {
-    if (
-      !(
-        isList(
-          editor.state.doc.type.name,
-          editor.extensionManager.extensions
-        ) ||
-        (outdentOnlyAtHead && editor.state.selection.$head.parentOffset === 0)
-      )
-    ) {
-      return editor.commands.outdent();
-    }
-    return false;
-  };
+    ({ editor }) => {
+      if (
+        !(
+          isList(
+            editor.state.doc.type.name,
+            editor.extensionManager.extensions
+          ) ||
+          (outdentOnlyAtHead && editor.state.selection.$head.parentOffset === 0)
+        )
+      ) {
+        return editor.commands.outdent();
+      }
+      return false;
+    };
 function insertTabSpace(
   _state: EditorState,
   tr: Transaction,
@@ -372,7 +372,7 @@ function insertTabSpace(
 function paragraphHasSpacerMark(node) {
   let found = false;
   node.descendants((child) => {
-    if (child.isText && child.marks.some(m => m.type.name === 'mark-hanging-indent')) {
+    if (child.isText && child.marks.some(m => m.type.name === 'mark-hanging-indent' && m.attrs.prefix === 1)) {
       found = true;
       return false; // stop traversal
     }

@@ -516,7 +516,7 @@ describe('onUpdateAppendTransaction', () => {
   });
 
   it('hooks run without errors', () => {
-    const state = EditorState.create({doc: doc(p('text'))});
+    const state = EditorState.create({ doc: doc(p('text')) });
     const tr = state.tr;
 
     const result = onUpdateAppendTransaction(
@@ -524,7 +524,7 @@ describe('onUpdateAppendTransaction', () => {
       tr,
       state,
       state,
-      {input: {lastKeyCode: 0}},
+      { input: { lastKeyCode: 0 } },
       [],
       null
     );
