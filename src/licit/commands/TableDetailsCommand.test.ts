@@ -11,7 +11,7 @@ import {UICommand} from '../../core';
 import TableInsertCommand from './tableInsertCommand';
 import {Node as ProseMirrorNode, Schema} from 'prosemirror-model';
 import {Editor} from '@tiptap/react';
-import {createPopUp} from '../../commands';
+import {RuntimeService} from '../../commands';
 import TableDetailsCommand from './TableDetailsCommand';
 
 jest.mock('../ui/tableGridSizeEditor', () => {
@@ -21,12 +21,11 @@ jest.mock('../ui/tableGridSizeEditor', () => {
 jest.mock('nullthrows', () => jest.fn(<T>(val: T) => val), {virtual: true});
 
 jest.mock('../../commands', () => {
-  const actual = jest.requireActual<typeof import('../../commands')>(
-    '../../commands'
-  );
-
   return {
-    ...actual,
+    RuntimeService: class RuntimeService {
+      static Runtime = null;
+    },
+    atAnchorRight: jest.fn(),
     createPopUp: jest.fn((
       _component,
       _props,
@@ -301,7 +300,18 @@ const schema = new Schema({
   nodes: {
     doc: {content: 'block+'},
     text: {group: 'inline'},
-    paragraph: {content: 'inline*', group: 'block'},
+    paragraph: {
+      attrs: {
+        align: {default: null},
+        lineSpacing: {default: null},
+        overriddenAlign: {default: null},
+        overriddenAlignValue: {default: null},
+        overriddenLineSpacing: {default: null},
+        overriddenLineSpacingValue: {default: null},
+      },
+      content: 'inline*',
+      group: 'block',
+    },
     table: {
       attrs: {
         noOfColumns: {default: null},
@@ -327,9 +337,26 @@ const schema = new Schema({
         cellWidth: {default: null},
         cellStyle: {default: null},
         fontSize: {default: null},
+        fontName: {default: null},
+        fontWeight: {default: null},
+        fontStyle: {default: null},
+        textDecoration: {default: null},
+        textColor: {default: null},
+        backgroundColor: {default: null},
         letterSpacing: {default: null},
+        lineHeight: {default: null},
+        textAlign: {default: null},
+        verticalAlign: {default: null},
+        paddingTop: {default: null},
+        paddingRight: {default: null},
+        paddingBottom: {default: null},
+        paddingLeft: {default: null},
         marginTop: {default: null},
         MarginBottom: {default: null},
+        borderTop: {default: null},
+        borderTopWidth: {default: null},
+        borderTopStyle: {default: null},
+        borderTopColor: {default: null},
       },
       content: 'paragraph+',
       tableRole: 'cell',
@@ -337,6 +364,70 @@ const schema = new Schema({
     blockquote: {
       content: 'paragraph+',
       group: 'block',
+    },
+  },
+  marks: {
+    strong: {
+      attrs: {overridden: {default: false}},
+      toDOM: (mark) => ['strong', {overridden: mark.attrs.overridden}, 0],
+    },
+    em: {
+      attrs: {overridden: {default: false}},
+      toDOM: (mark) => ['em', {overridden: mark.attrs.overridden}, 0],
+    },
+    underline: {
+      attrs: {overridden: {default: false}},
+      toDOM: (mark) => ['u', {overridden: mark.attrs.overridden}, 0],
+    },
+    'mark-font-size': {
+      attrs: {
+        pt: {default: null},
+        overridden: {default: false},
+      },
+      toDOM: (mark) => [
+        'span',
+        {style: `font-size: ${mark.attrs.pt}pt`, overridden: mark.attrs.overridden},
+        0,
+      ],
+    },
+    'mark-font-type': {
+      attrs: {
+        name: {default: null},
+        overridden: {default: false},
+      },
+      toDOM: (mark) => [
+        'span',
+        {
+          style: `font-family: ${mark.attrs.name}`,
+          overridden: mark.attrs.overridden,
+        },
+        0,
+      ],
+    },
+    'mark-text-color': {
+      attrs: {
+        color: {default: null},
+        overridden: {default: false},
+      },
+      toDOM: (mark) => [
+        'span',
+        {style: `color: ${mark.attrs.color}`, overridden: mark.attrs.overridden},
+        0,
+      ],
+    },
+    'mark-letter-spacing': {
+      attrs: {
+        letterSpacing: {default: null},
+        overridden: {default: false},
+      },
+      toDOM: (mark) => [
+        'span',
+        {
+          style: `letter-spacing: ${mark.attrs.letterSpacing}`,
+          overridden: mark.attrs.overridden,
+        },
+        0,
+      ],
     },
   },
 });
@@ -367,6 +458,22 @@ function findTextPos(doc: ProseMirrorNode, text: string): number {
   return found;
 }
 
+function findFirstNode(doc: ProseMirrorNode, typeName: string): ProseMirrorNode | null {
+  let found: ProseMirrorNode | null = null;
+  doc.descendants((node) => {
+    if (found) {
+      return false;
+    }
+
+    if (node.type.name === typeName) {
+      found = node;
+      return false;
+    }
+    return true;
+  });
+  return found;
+}
+
 function createState(doc = createTableDoc(), text = 'a'): EditorState {
   return EditorState.create({
     doc,
@@ -385,6 +492,7 @@ function createTableDom(): {
   const tr = document.createElement('tr');
   const td = document.createElement('td');
   const text = document.createTextNode('a');
+  td.style.backgroundColor = 'rgb(255, 255, 255)';
   td.appendChild(text);
   tr.appendChild(td);
   tbody.appendChild(tr);
@@ -416,47 +524,152 @@ function createView(state = createState()): MockEditorView {
 describe('TableDetailsCommand', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    RuntimeService.Runtime = null;
   });
 
-  it('opens table details with table, row and cell metadata', () => {
+  it('opens table editor through runtime with table, row and cell metadata', () => {
     const command = new TableDetailsCommand();
     const state = createState();
     const view = createView(state);
+    const openTableEditorDialog = jest.fn();
+    RuntimeService.Runtime = {openTableEditorDialog};
 
     expect(command.execute(state, jest.fn(), view)).toBe(true);
 
-    expect(createPopUp).toHaveBeenCalled();
-    const props = (createPopUp as jest.Mock).mock.calls[0][1];
-    expect(props.table).toEqual({
-      width: 222,
-      height: 111,
-      noOfColumns: 2,
-      tableHeight: '120px',
+    expect(openTableEditorDialog).toHaveBeenCalled();
+    const [data, applyResult, closeEditor] = openTableEditorDialog.mock.calls[0];
+    expect(data.table).toMatchObject({
+      tableWidth: '222',
+      tableHeight: '111',
+      tableWidthPx: 222,
+      tableHeightPx: 111,
+      selectedCellWidth: '55',
+      selectedCellHeight: '44',
     });
-    expect(props.row).toEqual({rowHeight: null, rowWidth: null});
-    expect(props.cell).toMatchObject({
-      width: 55,
-      height: 44,
-      cellWidth: null,
-      cellStyle: null,
-    });
+    expect(data.metadata).toEqual({totalRows: 2, totalColumns: 2});
+    expect(data.selectionMode).toBe('single');
+    expect(data.typography.textColor).toBe('#000000');
+    expect(data.typography.backgroundColor).toBe('transparent');
+    expect(data.fontOptions).toEqual([
+      {label: 'Default Font', value: 'inherit'},
+      {label: 'Aclonica', value: 'Aclonica'},
+      {label: 'Acme', value: 'Acme'},
+      {label: 'Alegreya', value: 'Alegreya'},
+      {label: 'Arial', value: 'Arial'},
+      {label: 'Arial Black', value: 'Arial Black'},
+      {label: 'Georgia', value: 'Georgia'},
+      {label: 'Tahoma', value: 'Tahoma'},
+      {label: 'Times New Roman', value: 'Times New Roman'},
+      {label: 'Times', value: 'Times'},
+      {label: 'Verdana', value: 'Verdana'},
+      {label: 'Courier New', value: 'Courier New'},
+    ]);
 
-    props.close();
-    props.onApply({
-      noOfColumns: '3',
-      tableHeight: '90px',
-      rowHeight: '24px',
-      rowWidth: '100%',
-      cellWidth: '88px',
-      cellStyle: 'highlight',
-      fontSize: '12pt',
-      letterSpacing: '1px',
-      marginTop: '2px',
-      MarginBottom: '3px',
-    });
-
-    expect(view.dispatch).toHaveBeenCalled();
+    closeEditor();
     expect(view.focus).toHaveBeenCalled();
+
+    view.focus.mockClear();
+    applyResult({
+      table: {
+        tableWidth: '222px',
+        tableHeight: '111px',
+        selectedCellWidth: '66px',
+        selectedCellHeight: '33px',
+        pageOrientation: 'portrait',
+      },
+      borders: {
+        targetEdges: ['top'],
+        border: {style: 'solid', width: '2px', color: '#123456'},
+        applyMode: 'cell',
+      },
+      typography: {
+        fontFamily: 'Arial',
+        fontSize: '12px',
+        bold: true,
+        italic: true,
+        underline: true,
+        textColor: '#111111',
+        backgroundColor: '#eeeeee',
+        letterSpacing: '1px',
+        lineHeight: '1.2',
+        textAlign: 'center',
+        verticalAlign: 'top',
+      },
+      layout: {
+        paddingTop: '2px',
+        paddingRight: '3px',
+        paddingBottom: '4px',
+        paddingLeft: '5px',
+        paddingLocked: false,
+      },
+      metadata: {totalRows: 2, totalColumns: 2},
+      selectionMode: 'single',
+    });
+
+    expect(view.dispatch).toHaveBeenCalledTimes(1);
+    const dispatchedTr = view.dispatch.mock.calls[0][0] as Transform;
+    const updatedDoc = dispatchedTr.doc;
+    const updatedTable = findFirstNode(updatedDoc, 'table');
+    const updatedRow = findFirstNode(updatedDoc, 'table_row');
+    const updatedCell = findFirstNode(updatedDoc, 'table_cell');
+    const updatedParagraph = findFirstNode(updatedDoc, 'paragraph');
+    const updatedText = updatedDoc.nodeAt(findTextPos(updatedDoc, 'a'));
+
+    expect(updatedTable?.attrs).toMatchObject({
+      noOfColumns: 2,
+      tableHeight: '111px',
+    });
+    expect(updatedRow?.attrs.rowHeight).toBe('33px');
+    expect(updatedCell?.attrs).toMatchObject({
+      colwidth: [66],
+      cellWidth: '66px',
+      fontName: 'Arial',
+      fontSize: '12px',
+      fontWeight: 'bold',
+      fontStyle: 'italic',
+      textDecoration: 'underline',
+      textColor: '#111111',
+      backgroundColor: '#eeeeee',
+      letterSpacing: '1px',
+      lineHeight: '1.2',
+      textAlign: 'center',
+      verticalAlign: 'top',
+      paddingTop: '2px',
+      paddingRight: '3px',
+      paddingBottom: '4px',
+      paddingLeft: '5px',
+      borderTop: '2px solid #123456',
+      borderTopWidth: '2px',
+      borderTopStyle: 'solid',
+      borderTopColor: '#123456',
+    });
+    expect(updatedParagraph?.attrs).toMatchObject({
+      align: 'center',
+      overriddenAlign: true,
+      overriddenAlignValue: 'center',
+      lineSpacing: '1.2',
+      overriddenLineSpacing: true,
+      overriddenLineSpacingValue: '1.2',
+    });
+    const updatedMarks = updatedText?.marks.map((mark) => ({
+      type: mark.type.name,
+      attrs: mark.attrs,
+    }));
+    expect(updatedMarks).toEqual(
+      expect.arrayContaining([
+        {type: 'mark-font-size', attrs: {pt: 12, overridden: true}},
+        {type: 'mark-font-type', attrs: {name: 'Arial', overridden: true}},
+        {type: 'mark-text-color', attrs: {color: '#111111', overridden: true}},
+        {
+          type: 'mark-letter-spacing',
+          attrs: {letterSpacing: '1px', overridden: true},
+        },
+        {type: 'strong', attrs: {overridden: true}},
+        {type: 'em', attrs: {overridden: true}},
+        {type: 'underline', attrs: {overridden: true}},
+      ])
+    );
+    expect(view.focus).toHaveBeenCalledTimes(1);
   });
 
   it('returns false when execute cannot locate required context', () => {
@@ -613,13 +826,9 @@ describe('TableDetailsCommand', () => {
     expect(view.focus).toHaveBeenCalled();
   });
 
-  it('closes an active popup on cancel', () => {
+  it('keeps cancel as a safe no-op because dialog lifecycle is runtime-owned', () => {
     const command = new TableDetailsCommand();
-    const close = jest.fn();
-    command._popUp = {close};
 
-    command.cancel();
-
-    expect(close).toHaveBeenCalledWith(undefined);
+    expect(() => command.cancel()).not.toThrow();
   });
 });

@@ -37,6 +37,51 @@ export const TableCellEx = TableCell.extend({
           );
         },
       },
+      fontWeight: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.fontWeight
+            ? { style: `font-weight: ${attributes.fontWeight};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.fontWeight || null,
+      },
+      fontStyle: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.fontStyle
+            ? { style: `font-style: ${attributes.fontStyle};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.fontStyle || null,
+      },
+      textDecoration: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.textDecoration
+            ? { style: `text-decoration: ${attributes.textDecoration};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.textDecoration || null,
+      },
+      textColor: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.textColor
+            ? { style: `color: ${attributes.textColor};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.color || null,
+      },
+      textAlign: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.textAlign
+            ? { style: `text-align: ${attributes.textAlign};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.textAlign || null,
+      },
       paddingTop: {
         default: null,
         renderHTML: (attributes) => {

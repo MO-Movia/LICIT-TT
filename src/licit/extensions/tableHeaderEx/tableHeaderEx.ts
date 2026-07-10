@@ -130,6 +130,51 @@ export const TableHeaderEx = TableHeader.extend({
           );
         },
       },
+      fontWeight: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.fontWeight
+            ? { style: `font-weight: ${attributes.fontWeight};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.fontWeight || null,
+      },
+      fontStyle: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.fontStyle
+            ? { style: `font-style: ${attributes.fontStyle};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.fontStyle || null,
+      },
+      textDecoration: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.textDecoration
+            ? { style: `text-decoration: ${attributes.textDecoration};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.textDecoration || null,
+      },
+      textColor: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.textColor
+            ? { style: `color: ${attributes.textColor};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.color || null,
+      },
+      textAlign: {
+        default: null,
+        renderHTML: (attributes) => {
+          return attributes.textAlign
+            ? { style: `text-align: ${attributes.textAlign};` }
+            : {};
+        },
+        parseHTML: (element) => element.style.textAlign || null,
+      },
       letterSpacing: {
         default: DEFAULT_LETTER_SPACING,
         renderHTML: (attributes) => {
@@ -457,7 +502,7 @@ export const TableHeaderEx = TableHeader.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderTopWidth
-            ? { style: `border-top-width: ${3}px` }
+            ? { style: `border-top-width: ${attributes.borderTopWidth}` }
             : {};
         },
         parseHTML: (element) => element.style.borderTopWidth || null,
