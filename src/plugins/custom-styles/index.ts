@@ -37,8 +37,10 @@ export * from './StyleRuntime';
 
 const ENTERKEYCODE = 13;
 const BACKSPACEKEYCODE = 8;
+const DELETEKEYCODE = 46;
 const ENTERKEY = 'Enter';
 const BACKSPACEKEY = 'Backspace';
+const DELETEKEY = 'Delete';
 const PARA_POSITION_DIFF = 4;
 const ATTR_STYLE_NAME = 'styleName';
 const ZERO_WIDTH_SPACE = '\u200B';
@@ -85,6 +87,10 @@ let slice1: Slice | null = null;
 
 function isBackspaceKey(key: KeyInput): boolean {
   return BACKSPACEKEY === key || BACKSPACEKEYCODE === key;
+}
+
+function isDeleteKey(key: KeyInput): boolean {
+  return DELETEKEY === key || DELETEKEYCODE === key;
 }
 
 function isEnterKey(key: KeyInput): boolean {
@@ -292,6 +298,13 @@ function handleUpdateKeyStyling(
     }
   }
 
+  if (isDeleteKey(lastKey)) {
+    const updatedTr = handleDeleteStyleUpdate(prevState, nextState, tr);
+    if (updatedTr) {
+      return updatedTr;
+    }
+  }
+
   if (!isEnterKey(lastKey)) {
     return tr;
   }
@@ -307,14 +320,6 @@ function handleBackspaceStyleUpdate(
   nextState: LooseState,
   tr: LooseTr
 ): LooseTr | null {
-  const selection = nextState.selection;
-  const $from = selection?.$from;
-  if (selection?.empty && $from?.parentOffset === 0 && $from.depth > 0) {
-    const cut = $from.before();
-    if (canJoin(nextState.doc, cut)) {
-      return tr.join(cut).scrollIntoView();
-    }
-  }
 
   const paraPositionDiff = prevState.selection.from - nextState.selection.from;
   if (paraPositionDiff !== 2 && paraPositionDiff !== 0) {
@@ -332,6 +337,54 @@ function handleBackspaceStyleUpdate(
   }
 
   return reapplyParagraphStyle(nextState, tr, para);
+}
+
+function handleDeleteStyleUpdate(
+  prevState: LooseState,
+  nextState: LooseState,
+  tr: LooseTr
+): LooseTr | null {
+  if (!isDeleteParagraphJoin(prevState, nextState)) {
+    return null;
+  }
+
+  const selectionHead = tr?.selection?.$head;
+  if (!selectionHead) {
+    return tr;
+  }
+
+  const para = findCurrentParagraph(selectionHead, nextState.schema);
+  if (!para) {
+    return tr;
+  }
+
+  return reapplyParagraphStyle(nextState, tr, para);
+}
+
+function isDeleteParagraphJoin(
+  prevState: LooseState,
+  nextState: LooseState
+): boolean {
+  const prevSelection = prevState.selection;
+  const nextSelection = nextState.selection;
+  const $from = prevSelection?.$from;
+
+  if (
+    !prevState.doc ||
+    !prevSelection?.empty ||
+    !nextSelection?.empty ||
+    !$from ||
+    $from.depth === 0 ||
+    prevSelection.from !== nextSelection.from
+  ) {
+    return false;
+  }
+
+  if ($from.parentOffset !== $from.parent.content.size) {
+    return false;
+  }
+
+  return canJoin(prevState.doc, $from.after());
 }
 
 function findCurrentParagraph(selectionHead, schema) {
@@ -1305,6 +1358,7 @@ function appendLeadingTabContent(
 ): void {
   const prefix0 = state.schema.marks['mark-hanging-indent'].create({
     prefix: 0,
+    overridden: true
   });
   buildState.newContent.push(
     state.schema.text(' ', [...buildState.existingMarks, prefix0]),
@@ -1341,9 +1395,11 @@ function appendOnlySpacerContent(
   const marks = getContentMarks(buildState.emptyChild);
   const prefix0 = state.schema.marks['mark-hanging-indent'].create({
     prefix: 0,
+    overridden: true
   });
   const prefix1 = state.schema.marks['mark-hanging-indent'].create({
     prefix: 1,
+    overridden: true
   });
   buildState.newContent.push(
     state.schema.text(ZERO_WIDTH_SPACE, [...marks, prefix0]),
@@ -1367,6 +1423,7 @@ function appendTrailingPrefixContent(
       : getContentMarks(buildState.emptyChild);
   const prefix1 = state.schema.marks['mark-hanging-indent'].create({
     prefix: 1,
+    overridden: true
   });
   buildState.newContent.push(
     state.schema.text(`${ZERO_WIDTH_SPACE}${ZERO_WIDTH_SPACE}`, [

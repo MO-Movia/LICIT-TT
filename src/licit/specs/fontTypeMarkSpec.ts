@@ -9,7 +9,6 @@ import { Mark, MarkSpec, Node } from 'prosemirror-model';
 // Now loaded locally, so that it works in closed networks as well.
 
 export const FONT_TYPE_NAMES = [
-  // SERIF
   'Aclonica',
   'Acme',
   'Alegreya',
@@ -20,7 +19,6 @@ export const FONT_TYPE_NAMES = [
   'Times New Roman',
   'Times',
   'Verdana',
-  // MONOSPACE
   'Courier New',
 ];
 

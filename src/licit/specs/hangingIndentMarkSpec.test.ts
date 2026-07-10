@@ -3,15 +3,15 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Mark} from 'prosemirror-model';
+import { Mark } from 'prosemirror-model';
 import HangingIndentMarkSpec from './hangingIndentMarkSpec';
 
 describe('HangingIndentMarkSpec', () => {
   describe('attrs', () => {
     it('should have correct default attributes', () => {
       expect(HangingIndentMarkSpec.attrs).toEqual({
-        prefix: {default: null},
-        overridden: {default: false},
+        prefix: { default: null },
+        overridden: { default: true },
       });
     });
   });
@@ -261,7 +261,7 @@ describe('HangingIndentMarkSpec', () => {
       const parsed = parser.getAttrs(element as HTMLElement & string);
 
       // Convert back to DOM
-      const mark = {attrs: parsed} as unknown as Mark;
+      const mark = { attrs: parsed } as unknown as Mark;
       const domOutput = HangingIndentMarkSpec.toDOM(mark, true);
 
       expect(domOutput).toEqual([
@@ -289,7 +289,7 @@ describe('HangingIndentMarkSpec', () => {
       });
 
       // Convert back to DOM
-      const mark = {attrs: parsed} as unknown as Mark;
+      const mark = { attrs: parsed } as unknown as Mark;
       const domOutput = HangingIndentMarkSpec.toDOM(mark, true);
 
       expect(domOutput).toEqual([
