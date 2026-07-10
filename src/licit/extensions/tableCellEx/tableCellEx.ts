@@ -9,6 +9,24 @@ import { normalizeCssSize, normalizeValue } from '../table.utils';
 const DEFAULT_LINE_HEIGHT = 'normal';
 const DEFAULT_BORDER_WIDTH = '1px';
 
+function createOverrideAttribute(attributeName: string, datasetName: string) {
+  return {
+    default: null,
+    renderHTML: (attributes) => {
+      return attributes[attributeName]
+        ? {[`data-cell-${datasetName}`]: 'true'}
+        : {};
+    },
+    parseHTML: (element) => {
+      return (
+        element.getAttribute(attributeName) === 'true' ||
+        element.getAttribute(`data-cell-${datasetName}`) === 'true' ||
+        null
+      );
+    },
+  };
+}
+
 export const TableCellEx = TableCell.extend({
   addAttributes() {
     return {
@@ -37,6 +55,10 @@ export const TableCellEx = TableCell.extend({
           );
         },
       },
+      fontNameOverridden: createOverrideAttribute(
+        'fontNameOverridden',
+        'font-name-overridden'
+      ),
       fontWeight: {
         default: null,
         renderHTML: (attributes) => {
@@ -46,6 +68,10 @@ export const TableCellEx = TableCell.extend({
         },
         parseHTML: (element) => element.style.fontWeight || null,
       },
+      fontWeightOverridden: createOverrideAttribute(
+        'fontWeightOverridden',
+        'font-weight-overridden'
+      ),
       fontStyle: {
         default: null,
         renderHTML: (attributes) => {
@@ -55,6 +81,10 @@ export const TableCellEx = TableCell.extend({
         },
         parseHTML: (element) => element.style.fontStyle || null,
       },
+      fontStyleOverridden: createOverrideAttribute(
+        'fontStyleOverridden',
+        'font-style-overridden'
+      ),
       textDecoration: {
         default: null,
         renderHTML: (attributes) => {
@@ -64,6 +94,10 @@ export const TableCellEx = TableCell.extend({
         },
         parseHTML: (element) => element.style.textDecoration || null,
       },
+      textDecorationOverridden: createOverrideAttribute(
+        'textDecorationOverridden',
+        'text-decoration-overridden'
+      ),
       textColor: {
         default: null,
         renderHTML: (attributes) => {
@@ -73,6 +107,10 @@ export const TableCellEx = TableCell.extend({
         },
         parseHTML: (element) => element.style.color || null,
       },
+      textColorOverridden: createOverrideAttribute(
+        'textColorOverridden',
+        'text-color-overridden'
+      ),
       textAlign: {
         default: null,
         renderHTML: (attributes) => {
@@ -82,6 +120,10 @@ export const TableCellEx = TableCell.extend({
         },
         parseHTML: (element) => element.style.textAlign || null,
       },
+      textAlignOverridden: createOverrideAttribute(
+        'textAlignOverridden',
+        'text-align-overridden'
+      ),
       paddingTop: {
         default: null,
         renderHTML: (attributes) => {
@@ -174,6 +216,10 @@ export const TableCellEx = TableCell.extend({
           );
         },
       },
+      lineHeightOverridden: createOverrideAttribute(
+        'lineHeightOverridden',
+        'line-height-overridden'
+      ),
       borderWidth: {
         default: DEFAULT_BORDER_WIDTH,
         renderHTML: (attributes) => {
@@ -208,6 +254,10 @@ export const TableCellEx = TableCell.extend({
           return element.style.backgroundColor.replaceAll(/['"]+/g, '');
         },
       },
+      backgroundColorOverridden: createOverrideAttribute(
+        'backgroundColorOverridden',
+        'background-color-overridden'
+      ),
       borderLeft: {
         default: null,
         renderHTML: (attributes) => {
@@ -316,6 +366,10 @@ export const TableCellEx = TableCell.extend({
           );
         },
       },
+      fontSizeOverridden: createOverrideAttribute(
+        'fontSizeOverridden',
+        'font-size-overridden'
+      ),
       letterSpacing: {
         default: null,
         renderHTML: (attributes) => {
@@ -332,6 +386,10 @@ export const TableCellEx = TableCell.extend({
           return normalizeValue(element.style.letterSpacing);
         },
       },
+      letterSpacingOverridden: createOverrideAttribute(
+        'letterSpacingOverridden',
+        'letter-spacing-overridden'
+      ),
       marginTop: {
         default: null,
         renderHTML: (attributes) => {
@@ -499,6 +557,10 @@ export const TableCellEx = TableCell.extend({
           element.getAttribute('vAlign') ||
           null,
       },
+      verticalAlignOverridden: createOverrideAttribute(
+        'verticalAlignOverridden',
+        'vertical-align-overridden'
+      ),
     };
   },
 });

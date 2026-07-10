@@ -76,8 +76,8 @@ type TypographyConfig = {
   backgroundColor: string;
   letterSpacing: string;
   lineHeight: string;
-  textAlign: 'left' | 'center' | 'right' | 'justify';
-  verticalAlign: 'top' | 'middle' | 'bottom';
+  textAlign: '' | 'left' | 'center' | 'right' | 'justify';
+  verticalAlign: '' | 'top' | 'middle' | 'bottom';
 };
 
 type LayoutConfig = {
@@ -120,6 +120,18 @@ type TableEditorDialogData = {
   fontOptions?: FontOption[];
 };
 
+type TableEditorChangedFields = {
+  table?: Partial<Record<keyof TableEditorTableDetails, boolean>>;
+  borders?: {
+    targetEdges?: boolean;
+    border?: Partial<Record<keyof BorderStyle, boolean>>;
+    applyMode?: boolean;
+    edgeStyles?: boolean;
+  };
+  typography?: Partial<Record<keyof TypographyConfig, boolean>>;
+  layout?: Partial<Record<keyof LayoutConfig, boolean>>;
+};
+
 type TableEditorResult = {
   table: TableEditorTableDetails;
   borders: BorderConfig;
@@ -127,6 +139,29 @@ type TableEditorResult = {
   layout: LayoutConfig;
   metadata: TableMetadata;
   selectionMode: SelectionMode;
+  changed?: TableEditorChangedFields;
+};
+
+type TableEditorApplyChanges = {
+  fontFamily: boolean;
+  fontSize: boolean;
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  textColor: boolean;
+  backgroundColor: boolean;
+  letterSpacing: boolean;
+  lineHeight: boolean;
+  textAlign: boolean;
+  verticalAlign: boolean;
+  paddingTop: boolean;
+  paddingRight: boolean;
+  paddingBottom: boolean;
+  paddingLeft: boolean;
+  paddingLocked: boolean;
+  tableHeight: boolean;
+  selectedCellWidth: boolean;
+  selectedCellHeight: boolean;
 };
 
 type TableEditorRuntime = {
@@ -276,18 +311,20 @@ class TableDetailsCommand extends UICommand {
       return false;
     }
 
+    const dialogData = this.buildTableEditorDialogData(
+      {
+        table: tableNode,
+        row: rowNode,
+        cell: cellNode,
+        cells: selectedCells,
+      },
+      tableRect,
+      cellRect,
+      cellDOM
+    );
+
     runtime.openTableEditorDialog(
-      this.buildTableEditorDialogData(
-        {
-          table: tableNode,
-          row: rowNode,
-          cell: cellNode,
-          cells: selectedCells,
-        },
-        tableRect,
-        cellRect,
-        cellDOM
-      ),
+      dialogData,
       (result) => {
         this.applyTableEditorResult(
           view,
@@ -297,7 +334,8 @@ class TableDetailsCommand extends UICommand {
             cell: cellNode,
             cells: selectedCells,
           },
-          result
+          result,
+          dialogData
         );
       },
       () => {
@@ -546,48 +584,49 @@ class TableDetailsCommand extends UICommand {
 
   getTypographyDialogData(
     attrs: Record<string, unknown>,
-    computedStyle: CSSStyleDeclaration | null
+    _computedStyle: CSSStyleDeclaration | null
   ): TypographyConfig {
-    const fontWeight =
-      this.toStringValue(attrs.fontWeight) ?? computedStyle?.fontWeight;
-    const textDecoration =
-      this.toStringValue(attrs.textDecoration) ??
-      computedStyle?.textDecorationLine;
+    const fontWeight = this.toStringValue(attrs.fontWeight);
+    const textDecoration = this.toStringValue(attrs.textDecoration);
 
     return {
-      fontFamily:
-        this.normalizeFontFamily(
-          this.toStringValue(attrs.fontName) ?? computedStyle?.fontFamily
-        ) ?? DEFAULT_TYPOGRAPHY.fontFamily,
-      fontSize:
-        this.toStringValue(attrs.fontSize) ??
-        computedStyle?.fontSize ??
-        DEFAULT_TYPOGRAPHY.fontSize,
-      bold: this.isBold(fontWeight),
+      fontFamily: this.isOverrideAttrSet(attrs, 'fontNameOverridden')
+        ? this.normalizeFontFamily(this.toStringValue(attrs.fontName)) ?? ''
+        : '',
+      fontSize: this.isOverrideAttrSet(attrs, 'fontSizeOverridden')
+        ? this.toStringValue(attrs.fontSize) ?? ''
+        : '',
+      bold:
+        this.isOverrideAttrSet(attrs, 'fontWeightOverridden') &&
+        this.isBold(fontWeight),
       italic:
-        (this.toStringValue(attrs.fontStyle) ?? computedStyle?.fontStyle) ===
-        'italic',
-      underline: textDecoration?.includes('underline') ?? false,
+        this.isOverrideAttrSet(attrs, 'fontStyleOverridden') &&
+        this.toStringValue(attrs.fontStyle) === 'italic',
+      underline:
+        this.isOverrideAttrSet(attrs, 'textDecorationOverridden') &&
+        (textDecoration?.includes('underline') ?? false),
       textColor:
-        this.toStringValue(attrs.textColor) ??
-        DEFAULT_TYPOGRAPHY.textColor,
+        this.isOverrideAttrSet(attrs, 'textColorOverridden')
+          ? this.toStringValue(attrs.textColor) ?? ''
+          : '',
       backgroundColor:
-        this.normalizeTransparentColor(this.toStringValue(attrs.backgroundColor)) ??
-        DEFAULT_TYPOGRAPHY.backgroundColor,
-      letterSpacing:
-        this.toStringValue(attrs.letterSpacing) ??
-        computedStyle?.letterSpacing ??
-        DEFAULT_TYPOGRAPHY.letterSpacing,
-      lineHeight:
-        this.toStringValue(attrs.lineHeight) ??
-        computedStyle?.lineHeight ??
-        DEFAULT_TYPOGRAPHY.lineHeight,
-      textAlign: this.toTextAlign(
-        this.toStringValue(attrs.textAlign) ?? computedStyle?.textAlign
-      ),
-      verticalAlign: this.toVerticalAlign(
-        this.toStringValue(attrs.verticalAlign) ?? computedStyle?.verticalAlign
-      ),
+        this.isOverrideAttrSet(attrs, 'backgroundColorOverridden')
+          ? this.normalizeTransparentColor(
+            this.toStringValue(attrs.backgroundColor)
+          ) ?? 'transparent'
+          : '',
+      letterSpacing: this.isOverrideAttrSet(attrs, 'letterSpacingOverridden')
+        ? this.toStringValue(attrs.letterSpacing) ?? ''
+        : '',
+      lineHeight: this.isOverrideAttrSet(attrs, 'lineHeightOverridden')
+        ? this.toStringValue(attrs.lineHeight) ?? ''
+        : '',
+      textAlign: this.isOverrideAttrSet(attrs, 'textAlignOverridden')
+        ? this.toTextAlign(this.toStringValue(attrs.textAlign), '')
+        : '',
+      verticalAlign: this.isOverrideAttrSet(attrs, 'verticalAlignOverridden')
+        ? this.toVerticalAlign(this.toStringValue(attrs.verticalAlign), '')
+        : '',
     };
   }
 
@@ -652,7 +691,10 @@ class TableDetailsCommand extends UICommand {
     return null;
   }
 
-  toTextAlign(value: string | undefined | null): TypographyConfig['textAlign'] {
+  toTextAlign(
+    value: string | undefined | null,
+    fallback: TypographyConfig['textAlign'] = DEFAULT_TYPOGRAPHY.textAlign
+  ): TypographyConfig['textAlign'] {
     if (
       value === 'center' ||
       value === 'right' ||
@@ -661,16 +703,17 @@ class TableDetailsCommand extends UICommand {
     ) {
       return value;
     }
-    return DEFAULT_TYPOGRAPHY.textAlign;
+    return fallback;
   }
 
   toVerticalAlign(
-    value: string | undefined | null
+    value: string | undefined | null,
+    fallback: TypographyConfig['verticalAlign'] = DEFAULT_TYPOGRAPHY.verticalAlign
   ): TypographyConfig['verticalAlign'] {
     if (value === 'top' || value === 'bottom' || value === 'middle') {
       return value;
     }
-    return DEFAULT_TYPOGRAPHY.verticalAlign;
+    return fallback;
   }
 
   isBold(fontWeight: string | undefined | null): boolean {
@@ -701,6 +744,10 @@ class TableDetailsCommand extends UICommand {
   normalizeString(value: string | null | undefined): string | null {
     const normalized = value?.trim() ?? '';
     return normalized.length ? normalized : null;
+  }
+
+  isOverrideAttrSet(attrs: Record<string, unknown>, attrName: string): boolean {
+    return attrs[attrName] === true || attrs[attrName] === 'true';
   }
 
   normalizeNumber(value: string): number | null {
@@ -824,7 +871,8 @@ class TableDetailsCommand extends UICommand {
   applyTableEditorResult(
     view: EditorView,
     nodes: TableDetailNodeRefs,
-    result: TableEditorResult
+    result: TableEditorResult,
+    initialData?: TableEditorDialogData
   ): void {
     const selectedCells = this.getTargetCells(nodes, result.borders.applyMode);
     if (!selectedCells.length) {
@@ -832,13 +880,20 @@ class TableDetailsCommand extends UICommand {
       return;
     }
 
+    const changes = this.getApplyChanges(result, initialData);
     let tr = view.state.tr;
-    tr = this.applyTableEditorTableAttrs(tr, nodes, selectedCells, result);
+    tr = this.applyTableEditorTableAttrs(tr, nodes, selectedCells, result, changes);
 
     for (const cellRef of selectedCells) {
-      tr = this.applyCellEditorAttrs(tr, cellRef, result);
-      tr = this.applyCellParagraphOverrides(tr, cellRef, result);
-      tr = this.applyCellInlineOverrides(tr, cellRef, result, view.state.schema);
+      tr = this.applyCellEditorAttrs(tr, cellRef, result, changes);
+      tr = this.applyCellParagraphOverrides(tr, cellRef, result, changes);
+      tr = this.applyCellInlineOverrides(
+        tr,
+        cellRef,
+        result,
+        view.state.schema,
+        changes
+      );
     }
 
     tr = this.applyBorderConfig(tr, nodes.table, selectedCells, result.borders);
@@ -857,23 +912,218 @@ class TableDetailsCommand extends UICommand {
     return nodes.cells?.length ? nodes.cells : nodes.cell ? [nodes.cell] : [];
   }
 
+  getApplyChanges(
+    result: TableEditorResult,
+    initialData?: TableEditorDialogData
+  ): TableEditorApplyChanges {
+    const changedTypography = result.changed?.typography;
+    const changedLayout = result.changed?.layout;
+    const changedTable = result.changed?.table;
+    if (result.changed) {
+      return {
+        fontFamily: Boolean(changedTypography?.fontFamily),
+        fontSize: Boolean(changedTypography?.fontSize),
+        bold: Boolean(changedTypography?.bold),
+        italic: Boolean(changedTypography?.italic),
+        underline: Boolean(changedTypography?.underline),
+        textColor: Boolean(changedTypography?.textColor),
+        backgroundColor: Boolean(changedTypography?.backgroundColor),
+        letterSpacing: Boolean(changedTypography?.letterSpacing),
+        lineHeight: Boolean(changedTypography?.lineHeight),
+        textAlign: Boolean(changedTypography?.textAlign),
+        verticalAlign: Boolean(changedTypography?.verticalAlign),
+        paddingTop: Boolean(changedLayout?.paddingTop),
+        paddingRight: Boolean(changedLayout?.paddingRight),
+        paddingBottom: Boolean(changedLayout?.paddingBottom),
+        paddingLeft: Boolean(changedLayout?.paddingLeft),
+        paddingLocked: Boolean(changedLayout?.paddingLocked),
+        tableHeight: Boolean(changedTable?.tableHeight),
+        selectedCellWidth: Boolean(changedTable?.selectedCellWidth),
+        selectedCellHeight: Boolean(changedTable?.selectedCellHeight),
+      };
+    }
+
+    const initialTypography = initialData?.typography;
+    if (!initialTypography) {
+      return {
+        fontFamily: true,
+        fontSize: true,
+        bold: true,
+        italic: true,
+        underline: true,
+        textColor: true,
+        backgroundColor: true,
+        letterSpacing: true,
+        lineHeight: true,
+        textAlign: true,
+        verticalAlign: true,
+        paddingTop: true,
+        paddingRight: true,
+        paddingBottom: true,
+        paddingLeft: true,
+        paddingLocked: true,
+        tableHeight: true,
+        selectedCellWidth: true,
+        selectedCellHeight: true,
+      };
+    }
+
+    return {
+      fontFamily: !this.sameNormalizedString(
+        this.normalizeInheritedValue(result.typography.fontFamily),
+        this.normalizeInheritedValue(initialTypography.fontFamily)
+      ),
+      fontSize: !this.sameCssNumericValue(
+        result.typography.fontSize,
+        initialTypography.fontSize
+      ),
+      bold: result.typography.bold !== initialTypography.bold,
+      italic: result.typography.italic !== initialTypography.italic,
+      underline: result.typography.underline !== initialTypography.underline,
+      textColor: !this.sameColorValue(
+        result.typography.textColor,
+        initialTypography.textColor
+      ),
+      backgroundColor: !this.sameNormalizedString(
+        this.normalizeTransparentResult(result.typography.backgroundColor),
+        this.normalizeTransparentResult(initialTypography.backgroundColor)
+      ),
+      letterSpacing: !this.sameCssNumericValue(
+        result.typography.letterSpacing,
+        initialTypography.letterSpacing
+      ),
+      lineHeight: !this.sameCssNumericValue(
+        result.typography.lineHeight,
+        initialTypography.lineHeight
+      ),
+      textAlign: !this.sameNormalizedString(
+        result.typography.textAlign,
+        initialTypography.textAlign
+      ),
+      verticalAlign: !this.sameNormalizedString(
+        result.typography.verticalAlign,
+        initialTypography.verticalAlign
+      ),
+      paddingTop: true,
+      paddingRight: true,
+      paddingBottom: true,
+      paddingLeft: true,
+      paddingLocked: true,
+      tableHeight: true,
+      selectedCellWidth: true,
+      selectedCellHeight: true,
+    };
+  }
+
+  sameNormalizedString(
+    first: string | null | undefined,
+    second: string | null | undefined
+  ): boolean {
+    return this.normalizeString(first) === this.normalizeString(second);
+  }
+
+  sameColorValue(
+    first: string | null | undefined,
+    second: string | null | undefined
+  ): boolean {
+    return this.normalizeColorValue(first) === this.normalizeColorValue(second);
+  }
+
+  normalizeColorValue(value: string | null | undefined): string | null {
+    const normalized = this.normalizeString(value)?.toLowerCase();
+    if (!normalized) {
+      return null;
+    }
+
+    const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(normalized);
+    if (hex?.[1]) {
+      const color = hex[1];
+      return color.length === 3
+        ? `#${color[0]}${color[0]}${color[1]}${color[1]}${color[2]}${color[2]}`
+        : `#${color}`;
+    }
+
+    const rgb = /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)$/i.exec(
+      normalized
+    );
+    if (rgb) {
+      const [, red, green, blue] = rgb;
+      return `#${this.toHexByte(red)}${this.toHexByte(green)}${this.toHexByte(
+        blue
+      )}`;
+    }
+
+    return normalized;
+  }
+
+  toHexByte(value: string): string {
+    return Math.max(0, Math.min(255, Number.parseInt(value, 10)))
+      .toString(16)
+      .padStart(2, '0');
+  }
+
+  sameCssNumericValue(
+    first: string | null | undefined,
+    second: string | null | undefined
+  ): boolean {
+    const firstValue = this.normalizeCssNumericValue(first);
+    const secondValue = this.normalizeCssNumericValue(second);
+
+    if (firstValue === null || secondValue === null) {
+      return this.normalizeString(first) === this.normalizeString(second);
+    }
+
+    return firstValue === secondValue;
+  }
+
+  sameAttrs(
+    first: Record<string, unknown>,
+    second: Record<string, unknown>
+  ): boolean {
+    const keys = new Set([...Object.keys(first), ...Object.keys(second)]);
+
+    for (const key of keys) {
+      if (first[key] !== second[key]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  normalizeCssNumericValue(value: string | null | undefined): number | null {
+    const normalized = this.normalizeString(value);
+    if (!normalized) {
+      return null;
+    }
+
+    const parsed = Number.parseFloat(normalized.replace(/px|pt/i, ''));
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  toOptionalCssValue(enabled: boolean, value: string): string | null {
+    return enabled ? value : null;
+  }
+
   applyTableEditorTableAttrs(
     tr: Transaction,
     nodes: TableDetailNodeRefs,
     selectedCells: ParentNodeRef[],
-    result: TableEditorResult
+    result: TableEditorResult,
+    changes: TableEditorApplyChanges
   ): Transaction {
     const currentTable = tr.doc.nodeAt(nodes.table.pos) ?? nodes.table.node;
-    tr = tr.setNodeMarkup(nodes.table.pos, undefined, {
-      ...currentTable.attrs,
-      noOfColumns: result.metadata.totalColumns,
-      tableHeight: this.normalizeString(result.table.tableHeight),
-    });
+    if (changes.tableHeight) {
+      tr = tr.setNodeMarkup(nodes.table.pos, undefined, {
+        ...currentTable.attrs,
+        tableHeight: this.normalizeString(result.table.tableHeight),
+      });
+    }
 
     const cellWidth = this.normalizeSizeAsNumber(
       result.table.selectedCellWidth ?? ''
     );
-    if (cellWidth) {
+    if (changes.selectedCellWidth && cellWidth) {
       for (const cellRef of selectedCells) {
         tr = this.applyColumnWidth(tr, nodes.table, cellRef, cellWidth);
       }
@@ -882,7 +1132,7 @@ class TableDetailsCommand extends UICommand {
     const rowHeight = this.normalizeString(
       result.table.selectedCellHeight ?? ''
     );
-    if (rowHeight) {
+    if (changes.selectedCellHeight && rowHeight) {
       if (nodes.row) {
         const currentRow = tr.doc.nodeAt(nodes.row.pos) ?? nodes.row.node;
         tr = tr.setNodeMarkup(nodes.row.pos, undefined, {
@@ -932,36 +1182,98 @@ class TableDetailsCommand extends UICommand {
   applyCellEditorAttrs(
     tr: Transaction,
     cellRef: ParentNodeRef,
-    result: TableEditorResult
+    result: TableEditorResult,
+    changes: TableEditorApplyChanges
   ): Transaction {
     const currentCell = tr.doc.nodeAt(cellRef.pos) ?? cellRef.node;
-    return tr.setNodeMarkup(cellRef.pos, undefined, {
-      ...currentCell.attrs,
-      fontName: this.normalizeInheritedValue(result.typography.fontFamily),
-      fontSize: this.normalizeString(result.typography.fontSize),
-      fontWeight: result.typography.bold ? 'bold' : null,
-      fontStyle: result.typography.italic ? 'italic' : null,
-      textDecoration: result.typography.underline ? 'underline' : null,
-      textColor: this.normalizeString(result.typography.textColor),
-      backgroundColor: this.normalizeTransparentResult(
-        result.typography.backgroundColor
-      ),
-      letterSpacing: this.normalizeString(result.typography.letterSpacing),
-      lineHeight: this.normalizeString(result.typography.lineHeight),
-      textAlign: this.normalizeString(result.typography.textAlign),
-      verticalAlign: this.normalizeString(result.typography.verticalAlign),
-      cellWidth: this.normalizeString(result.table.selectedCellWidth),
-      paddingTop: this.normalizeString(result.layout.paddingTop),
-      paddingRight: this.normalizeString(result.layout.paddingRight),
-      paddingBottom: this.normalizeString(result.layout.paddingBottom),
-      paddingLeft: this.normalizeString(result.layout.paddingLeft),
-    });
+    const nextAttrs = {...currentCell.attrs};
+    const fontName = this.normalizeInheritedValue(result.typography.fontFamily);
+    const fontSize = this.normalizeString(result.typography.fontSize);
+    const fontWeight = this.toOptionalCssValue(result.typography.bold, 'bold');
+    const fontStyle = this.toOptionalCssValue(result.typography.italic, 'italic');
+    const textDecoration = this.toOptionalCssValue(
+      result.typography.underline,
+      'underline'
+    );
+    const textColor = this.normalizeString(result.typography.textColor);
+    const backgroundColor = this.normalizeTransparentResult(
+      result.typography.backgroundColor
+    );
+    const letterSpacing = this.normalizeString(result.typography.letterSpacing);
+    const lineHeight = this.normalizeString(result.typography.lineHeight);
+    const textAlign = this.normalizeString(result.typography.textAlign);
+    const verticalAlign = this.normalizeString(result.typography.verticalAlign);
+
+    if (changes.fontFamily) {
+      nextAttrs.fontName = fontName;
+      nextAttrs.fontNameOverridden = Boolean(fontName);
+    }
+    if (changes.fontSize) {
+      nextAttrs.fontSize = fontSize;
+      nextAttrs.fontSizeOverridden = Boolean(fontSize);
+    }
+    if (changes.bold) {
+      nextAttrs.fontWeight = fontWeight;
+      nextAttrs.fontWeightOverridden = Boolean(fontWeight);
+    }
+    if (changes.italic) {
+      nextAttrs.fontStyle = fontStyle;
+      nextAttrs.fontStyleOverridden = Boolean(fontStyle);
+    }
+    if (changes.underline) {
+      nextAttrs.textDecoration = textDecoration;
+      nextAttrs.textDecorationOverridden = Boolean(textDecoration);
+    }
+    if (changes.textColor) {
+      nextAttrs.textColor = textColor;
+      nextAttrs.textColorOverridden = Boolean(textColor);
+    }
+    if (changes.backgroundColor) {
+      nextAttrs.backgroundColor = backgroundColor;
+      nextAttrs.backgroundColorOverridden = Boolean(backgroundColor);
+    }
+    if (changes.letterSpacing) {
+      nextAttrs.letterSpacing = letterSpacing;
+      nextAttrs.letterSpacingOverridden = Boolean(letterSpacing);
+    }
+    if (changes.lineHeight) {
+      nextAttrs.lineHeight = lineHeight;
+      nextAttrs.lineHeightOverridden = Boolean(lineHeight);
+    }
+    if (changes.textAlign) {
+      nextAttrs.textAlign = textAlign;
+      nextAttrs.textAlignOverridden = Boolean(textAlign);
+    }
+    if (changes.verticalAlign) {
+      nextAttrs.verticalAlign = verticalAlign;
+      nextAttrs.verticalAlignOverridden = Boolean(verticalAlign);
+    }
+    if (changes.selectedCellWidth) {
+      nextAttrs.cellWidth = this.normalizeString(result.table.selectedCellWidth);
+    }
+    if (changes.paddingTop) {
+      nextAttrs.paddingTop = this.normalizeString(result.layout.paddingTop);
+    }
+    if (changes.paddingRight) {
+      nextAttrs.paddingRight = this.normalizeString(result.layout.paddingRight);
+    }
+    if (changes.paddingBottom) {
+      nextAttrs.paddingBottom = this.normalizeString(result.layout.paddingBottom);
+    }
+    if (changes.paddingLeft) {
+      nextAttrs.paddingLeft = this.normalizeString(result.layout.paddingLeft);
+    }
+
+    return this.sameAttrs(currentCell.attrs, nextAttrs)
+      ? tr
+      : tr.setNodeMarkup(cellRef.pos, undefined, nextAttrs);
   }
 
   applyCellParagraphOverrides(
     tr: Transaction,
     cellRef: ParentNodeRef,
-    result: TableEditorResult
+    result: TableEditorResult,
+    changes: TableEditorApplyChanges
   ): Transaction {
     const currentCell = tr.doc.nodeAt(cellRef.pos);
     if (!currentCell) {
@@ -974,24 +1286,32 @@ class TableDetailsCommand extends UICommand {
       }
 
       const attrs = {...node.attrs};
+      let changed = false;
       const textAlign = this.normalizeString(result.typography.textAlign);
       const lineSpacing = this.normalizeLineSpacingValue(
         result.typography.lineHeight
       );
 
-      if (Object.hasOwn(attrs, 'align') && textAlign) {
+      if (changes.textAlign && Object.hasOwn(attrs, 'align')) {
         attrs.align = textAlign;
-        attrs.overriddenAlign = true;
+        attrs.overriddenAlign = Boolean(textAlign);
         attrs.overriddenAlignValue = textAlign;
+        changed = true;
       }
 
-      if (Object.hasOwn(attrs, 'lineSpacing') && lineSpacing) {
+      if (
+        changes.lineHeight &&
+        Object.hasOwn(attrs, 'lineSpacing')
+      ) {
         attrs.lineSpacing = lineSpacing;
-        attrs.overriddenLineSpacing = true;
+        attrs.overriddenLineSpacing = Boolean(lineSpacing);
         attrs.overriddenLineSpacingValue = lineSpacing;
+        changed = true;
       }
 
-      tr = tr.setNodeMarkup(cellRef.start + pos, undefined, attrs);
+      if (changed && !this.sameAttrs(node.attrs, attrs)) {
+        tr = tr.setNodeMarkup(cellRef.start + pos, undefined, attrs);
+      }
       return true;
     });
 
@@ -1002,14 +1322,15 @@ class TableDetailsCommand extends UICommand {
     tr: Transaction,
     cellRef: ParentNodeRef,
     result: TableEditorResult,
-    schema: Schema
+    schema: Schema,
+    changes: TableEditorApplyChanges
   ): Transaction {
     const currentCell = tr.doc.nodeAt(cellRef.pos);
     if (!currentCell) {
       return tr;
     }
 
-    const markUpdates = this.getInlineMarkUpdates(result, schema);
+    const markUpdates = this.getInlineMarkUpdates(result, schema, changes);
     if (!markUpdates.length) {
       return tr;
     }
@@ -1037,43 +1358,58 @@ class TableDetailsCommand extends UICommand {
 
   getInlineMarkUpdates(
     result: TableEditorResult,
-    schema: Schema
+    schema: Schema,
+    changes: TableEditorApplyChanges
   ): {markType: MarkType; attrs: Record<string, unknown> | null}[] {
     const updates: {markType: MarkType; attrs: Record<string, unknown> | null}[] = [];
-    this.addMarkUpdate(updates, schema, MARK_FONT_SIZE, {
-      pt: this.normalizeFontPointSize(result.typography.fontSize),
-      overridden: true,
-    });
-    this.addMarkUpdate(updates, schema, MARK_FONT_TYPE, {
-      name: this.normalizeInheritedValue(result.typography.fontFamily),
-      overridden: true,
-    });
-    this.addMarkUpdate(updates, schema, MARK_TEXT_COLOR, {
-      color: this.normalizeString(result.typography.textColor),
-      overridden: true,
-    });
-    this.addMarkUpdate(updates, schema, MARK_LETTER_SPACING, {
-      letterSpacing: this.normalizeString(result.typography.letterSpacing),
-      overridden: true,
-    });
-    this.addMarkUpdate(
-      updates,
-      schema,
-      MARK_STRONG,
-      result.typography.bold ? {overridden: true} : null
-    );
-    this.addMarkUpdate(
-      updates,
-      schema,
-      MARK_EM,
-      result.typography.italic ? {overridden: true} : null
-    );
-    this.addMarkUpdate(
-      updates,
-      schema,
-      MARK_UNDERLINE,
-      result.typography.underline ? {overridden: true} : null
-    );
+    if (changes.fontSize) {
+      this.addMarkUpdate(updates, schema, MARK_FONT_SIZE, {
+        pt: this.normalizeFontPointSize(result.typography.fontSize),
+        overridden: true,
+      });
+    }
+    if (changes.fontFamily) {
+      this.addMarkUpdate(updates, schema, MARK_FONT_TYPE, {
+        name: this.normalizeInheritedValue(result.typography.fontFamily),
+        overridden: true,
+      });
+    }
+    if (changes.textColor) {
+      this.addMarkUpdate(updates, schema, MARK_TEXT_COLOR, {
+        color: this.normalizeString(result.typography.textColor),
+        overridden: true,
+      });
+    }
+    if (changes.letterSpacing) {
+      this.addMarkUpdate(updates, schema, MARK_LETTER_SPACING, {
+        letterSpacing: this.normalizeString(result.typography.letterSpacing),
+        overridden: true,
+      });
+    }
+    if (changes.bold) {
+      this.addMarkUpdate(
+        updates,
+        schema,
+        MARK_STRONG,
+        result.typography.bold ? {overridden: true} : null
+      );
+    }
+    if (changes.italic) {
+      this.addMarkUpdate(
+        updates,
+        schema,
+        MARK_EM,
+        result.typography.italic ? {overridden: true} : null
+      );
+    }
+    if (changes.underline) {
+      this.addMarkUpdate(
+        updates,
+        schema,
+        MARK_UNDERLINE,
+        result.typography.underline ? {overridden: true} : null
+      );
+    }
 
     return updates;
   }

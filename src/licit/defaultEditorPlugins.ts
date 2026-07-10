@@ -17,6 +17,7 @@ import TableCellMenuPlugin from './plugins/tableCellMenuPlugin';
 import createEditorKeyMap from './createEditorKeyMap';
 import { LandscapePlugin } from './plugins/LandscapePlugin';
 import ListPasteNormalizerPlugin from './plugins/listPasteNormalizerPlugin';
+import TableCellStyleInheritancePlugin from './plugins/tableCellStyleInheritancePlugin';
 
 // Creates the default plugin for the editor.
 export default class DefaultEditorPlugins {
@@ -34,6 +35,7 @@ export default class DefaultEditorPlugins {
       new TableCellMenuPlugin(),
       new LandscapePlugin(),
       new ListPasteNormalizerPlugin(),
+      new TableCellStyleInheritancePlugin(),
     ];
   }
 

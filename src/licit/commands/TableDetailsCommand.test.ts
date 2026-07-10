@@ -337,16 +337,27 @@ const schema = new Schema({
         cellWidth: {default: null},
         cellStyle: {default: null},
         fontSize: {default: null},
+        fontSizeOverridden: {default: null},
         fontName: {default: null},
+        fontNameOverridden: {default: null},
         fontWeight: {default: null},
+        fontWeightOverridden: {default: null},
         fontStyle: {default: null},
+        fontStyleOverridden: {default: null},
         textDecoration: {default: null},
+        textDecorationOverridden: {default: null},
         textColor: {default: null},
+        textColorOverridden: {default: null},
         backgroundColor: {default: null},
+        backgroundColorOverridden: {default: null},
         letterSpacing: {default: null},
+        letterSpacingOverridden: {default: null},
         lineHeight: {default: null},
+        lineHeightOverridden: {default: null},
         textAlign: {default: null},
+        textAlignOverridden: {default: null},
         verticalAlign: {default: null},
+        verticalAlignOverridden: {default: null},
         paddingTop: {default: null},
         paddingRight: {default: null},
         paddingBottom: {default: null},
@@ -493,6 +504,7 @@ function createTableDom(): {
   const td = document.createElement('td');
   const text = document.createTextNode('a');
   td.style.backgroundColor = 'rgb(255, 255, 255)';
+  td.style.fontSize = '15px';
   td.appendChild(text);
   tr.appendChild(td);
   tbody.appendChild(tr);
@@ -548,8 +560,19 @@ describe('TableDetailsCommand', () => {
     });
     expect(data.metadata).toEqual({totalRows: 2, totalColumns: 2});
     expect(data.selectionMode).toBe('single');
-    expect(data.typography.textColor).toBe('#000000');
-    expect(data.typography.backgroundColor).toBe('transparent');
+    expect(data.typography).toMatchObject({
+      fontFamily: '',
+      fontSize: '',
+      bold: false,
+      italic: false,
+      underline: false,
+      textColor: '',
+      backgroundColor: '',
+      letterSpacing: '',
+      lineHeight: '',
+      textAlign: '',
+      verticalAlign: '',
+    });
     expect(data.fontOptions).toEqual([
       {label: 'Default Font', value: 'inherit'},
       {label: 'Aclonica', value: 'Aclonica'},
@@ -604,6 +627,32 @@ describe('TableDetailsCommand', () => {
       },
       metadata: {totalRows: 2, totalColumns: 2},
       selectionMode: 'single',
+      changed: {
+        typography: {
+          fontFamily: true,
+          fontSize: true,
+          bold: true,
+          italic: true,
+          underline: true,
+          textColor: true,
+          backgroundColor: true,
+          letterSpacing: true,
+          lineHeight: true,
+          textAlign: true,
+          verticalAlign: true,
+        },
+        layout: {
+          paddingTop: true,
+          paddingRight: true,
+          paddingBottom: true,
+          paddingLeft: true,
+        },
+        table: {
+          tableHeight: true,
+          selectedCellWidth: true,
+          selectedCellHeight: true,
+        },
+      },
     });
 
     expect(view.dispatch).toHaveBeenCalledTimes(1);
@@ -625,15 +674,26 @@ describe('TableDetailsCommand', () => {
       cellWidth: '66px',
       fontName: 'Arial',
       fontSize: '12px',
+      fontNameOverridden: true,
+      fontSizeOverridden: true,
       fontWeight: 'bold',
+      fontWeightOverridden: true,
       fontStyle: 'italic',
+      fontStyleOverridden: true,
       textDecoration: 'underline',
+      textDecorationOverridden: true,
       textColor: '#111111',
+      textColorOverridden: true,
       backgroundColor: '#eeeeee',
+      backgroundColorOverridden: true,
       letterSpacing: '1px',
+      letterSpacingOverridden: true,
       lineHeight: '1.2',
+      lineHeightOverridden: true,
       textAlign: 'center',
+      textAlignOverridden: true,
       verticalAlign: 'top',
+      verticalAlignOverridden: true,
       paddingTop: '2px',
       paddingRight: '3px',
       paddingBottom: '4px',
@@ -670,6 +730,126 @@ describe('TableDetailsCommand', () => {
       ])
     );
     expect(view.focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not apply font size when the dialog value is unchanged', () => {
+    const command = new TableDetailsCommand();
+    const state = createState();
+    const view = createView(state);
+    const openTableEditorDialog = jest.fn();
+    RuntimeService.Runtime = {openTableEditorDialog};
+
+    expect(command.execute(state, jest.fn(), view)).toBe(true);
+
+    const [data, applyResult] = openTableEditorDialog.mock.calls[0];
+    applyResult({
+      table: {
+        tableWidth: '222px',
+        tableHeight: '111px',
+        selectedCellWidth: '55px',
+        selectedCellHeight: '44px',
+        pageOrientation: 'portrait',
+      },
+      borders: {
+        targetEdges: ['top'],
+        border: {style: 'solid', width: '2px', color: '#123456'},
+        applyMode: 'cell',
+      },
+      typography: data.typography,
+      layout: {
+        paddingTop: '4px',
+        paddingRight: '4px',
+        paddingBottom: '4px',
+        paddingLeft: '4px',
+        paddingLocked: true,
+      },
+      metadata: {totalRows: 2, totalColumns: 2},
+      selectionMode: 'single',
+      changed: {
+        typography: {},
+        layout: {},
+        table: {},
+      },
+    });
+
+    const dispatchedTr = view.dispatch.mock.calls[0][0] as Transform;
+    const updatedDoc = dispatchedTr.doc;
+    const updatedCell = findFirstNode(updatedDoc, 'table_cell');
+    const updatedText = updatedDoc.nodeAt(findTextPos(updatedDoc, 'a'));
+    const updatedMarkTypes = updatedText?.marks.map((mark) => mark.type.name);
+
+    expect(updatedCell?.attrs.borderTop).toBe('2px solid #123456');
+    expect(updatedCell?.attrs.fontSize).toBeNull();
+    expect(updatedCell?.attrs.fontSizeOverridden).toBeNull();
+    expect(updatedCell?.attrs.fontName).toBeNull();
+    expect(updatedCell?.attrs.lineHeight).toBeNull();
+    expect(updatedCell?.attrs.textAlign).toBeNull();
+    expect(updatedMarkTypes).not.toContain('mark-font-size');
+    expect(updatedMarkTypes).not.toContain('mark-font-type');
+    expect(updatedMarkTypes).not.toContain('mark-text-color');
+    expect(updatedMarkTypes).not.toContain('mark-letter-spacing');
+  });
+
+  it('preserves unselected font size without adding an override mark', () => {
+    const command = new TableDetailsCommand();
+    const staleCell = schema.nodes.table_cell.create(
+      {fontSize: '15px'},
+      [schema.nodes.paragraph.create(null, schema.text('stale'))]
+    );
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.table.create(
+        {noOfColumns: 1, tableHeight: '120px'},
+        [schema.nodes.table_row.create(null, [staleCell])]
+      ),
+    ]);
+    const state = createState(doc, 'stale');
+    const view = createView(state);
+    const openTableEditorDialog = jest.fn();
+    RuntimeService.Runtime = {openTableEditorDialog};
+
+    expect(command.execute(state, jest.fn(), view)).toBe(true);
+
+    const [data, applyResult] = openTableEditorDialog.mock.calls[0];
+    applyResult({
+      table: {
+        tableWidth: '222px',
+        tableHeight: '111px',
+        selectedCellWidth: '55px',
+        selectedCellHeight: '44px',
+        pageOrientation: 'portrait',
+      },
+      borders: {
+        targetEdges: ['top'],
+        border: {style: 'solid', width: '2px', color: '#123456'},
+        applyMode: 'cell',
+      },
+      typography: data.typography,
+      layout: {
+        paddingTop: '4px',
+        paddingRight: '4px',
+        paddingBottom: '4px',
+        paddingLeft: '4px',
+        paddingLocked: true,
+      },
+      metadata: {totalRows: 1, totalColumns: 1},
+      selectionMode: 'single',
+      changed: {
+        typography: {},
+        layout: {},
+        table: {},
+      },
+    });
+
+    const dispatchedTr = view.dispatch.mock.calls[0][0] as Transform;
+    const updatedCell = findFirstNode(dispatchedTr.doc, 'table_cell');
+    const updatedText = dispatchedTr.doc.nodeAt(
+      findTextPos(dispatchedTr.doc, 'stale')
+    );
+    const updatedMarkTypes = updatedText?.marks.map((mark) => mark.type.name);
+
+    expect(updatedCell?.attrs.fontSize).toBe('15px');
+    expect(updatedCell?.attrs.fontSizeOverridden).toBeNull();
+    expect(updatedMarkTypes).not.toContain('mark-font-size');
   });
 
   it('returns false when execute cannot locate required context', () => {
