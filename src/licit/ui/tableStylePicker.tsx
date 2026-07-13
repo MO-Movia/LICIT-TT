@@ -62,6 +62,7 @@ type OpenTableStylePickerOptions = {
   anchor: HTMLElement;
   getTablePos: () => number | null;
   onClose?: () => void;
+  onSelect?: () => void;
   view: EditorView;
 };
 
@@ -81,6 +82,7 @@ export function openTableStylePicker({
   anchor,
   getTablePos,
   onClose,
+  onSelect,
   view,
 }: OpenTableStylePickerOptions): PopUpHandle | null {
   const tablePos = getTablePos();
@@ -114,6 +116,7 @@ export function openTableStylePicker({
             style.styleName
           ) as Transaction
         );
+        onSelect?.();
       },
       selectedStyleName:
         table.attrs[TABLE_STYLE_NAME_ATTRIBUTE] || 'Normal',

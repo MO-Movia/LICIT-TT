@@ -208,6 +208,7 @@ export class EnhancedTableFigureView implements NodeView {
         label: 'Apply Style',
         icon: getBlockControlIcon('style', 'Apply Style'),
         action: (anchor) => this.openStylePicker(anchor),
+        onHover: (anchor) => this.openStylePicker(anchor),
         disabled: this.getTablePos() === null,
         hidden: figureType !== 'table',
       },
@@ -290,14 +291,17 @@ export class EnhancedTableFigureView implements NodeView {
       return true;
     }
 
-    this._stylePicker?.close(undefined);
+    if (this._stylePicker) {
+      return false;
+    }
+
     const picker = openTableStylePicker({
       anchor,
       getTablePos: () => this.getTablePos(),
       onClose: () => {
         this._stylePicker = undefined;
-        this.closeMenu();
       },
+      onSelect: () => this.closeMenu(),
       view: this.view,
     });
 

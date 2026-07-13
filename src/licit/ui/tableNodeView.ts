@@ -225,6 +225,7 @@ export class LicitTableNodeView extends TableView {
         label: 'Apply Style',
         icon: getBlockControlIcon('style', 'Apply Style'),
         action: (anchor) => this._openStylePicker(anchor),
+        onHover: (anchor) => this._openStylePicker(anchor),
       },
       {
         id: 'delete',
@@ -253,14 +254,17 @@ export class LicitTableNodeView extends TableView {
       return true;
     }
 
-    this._stylePicker?.close(undefined);
+    if (this._stylePicker) {
+      return false;
+    }
+
     const picker = openTableStylePicker({
       anchor,
       getTablePos: () => this._getCurrentTablePos(),
       onClose: () => {
         this._stylePicker = undefined;
-        this._closeMenu();
       },
+      onSelect: () => this._closeMenu(),
       view: this._view,
     });
 

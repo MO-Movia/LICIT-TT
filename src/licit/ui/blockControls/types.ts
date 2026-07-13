@@ -10,6 +10,7 @@ export type BlockControlMenuItem = {
   label: string;
   icon?: React.ReactNode;
   action: (anchor?: HTMLElement) => void | boolean;
+  onHover?: (anchor: HTMLElement) => void | boolean;
   active?: boolean;
   disabled?: boolean;
   hidden?: boolean;
