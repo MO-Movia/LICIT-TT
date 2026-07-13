@@ -22,6 +22,7 @@ import {
   getBlockControlIcon,
 } from '../../licit/ui/blockControls';
 import { CropDataPropValue, CropImagePopup } from './ui/CropImagePopup';
+import { openTableStylePicker } from '../../licit/ui/tableStylePicker';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const PORTRAIT_WIDTH_PX = 6.5 * 96;
@@ -34,6 +35,7 @@ export class EnhancedTableFigureView implements NodeView {
   contentScrollDOM: HTMLElement;
   selectHandle: HTMLElement;
   _menu?: PopUpHandle;
+  _stylePicker?: PopUpHandle;
   _cropEditor?: PopUpHandle;
   _id = uuid();
 
@@ -202,6 +204,14 @@ export class EnhancedTableFigureView implements NodeView {
         action: () => this.insertParagraphBelow(),
       },
       {
+        id: 'apply-style',
+        label: 'Apply Style',
+        icon: getBlockControlIcon('style', 'Apply Style'),
+        action: (anchor) => this.openStylePicker(anchor),
+        disabled: this.getTablePos() === null,
+        hidden: figureType !== 'table',
+      },
+      {
         id: 'add-notes',
         label: 'Add Notes',
         icon: getBlockControlIcon('addNotes', 'Add Notes'),
@@ -251,9 +261,53 @@ export class EnhancedTableFigureView implements NodeView {
 
   private readonly closeMenu = (): void => {
     const menu = this._menu;
+    const stylePicker = this._stylePicker;
     this._menu = undefined;
+    this._stylePicker = undefined;
+    stylePicker?.close?.(undefined);
     menu?.close?.(undefined);
   };
+
+  private getTablePos(): number | null {
+    if (typeof this.node.descendants !== 'function') {
+      return null;
+    }
+
+    let tableOffset: number | null = null;
+    this.node.descendants((node, pos) => {
+      if (node.type.spec.tableRole === 'table') {
+        tableOffset = pos;
+        return false;
+      }
+      return tableOffset === null;
+    });
+
+    return tableOffset === null ? null : this.getPos() + 1 + tableOffset;
+  }
+
+  private openStylePicker(anchor?: HTMLElement): boolean {
+    if (!anchor) {
+      return true;
+    }
+
+    this._stylePicker?.close(undefined);
+    const picker = openTableStylePicker({
+      anchor,
+      getTablePos: () => this.getTablePos(),
+      onClose: () => {
+        this._stylePicker = undefined;
+        this.closeMenu();
+      },
+      view: this.view,
+    });
+
+    if (!picker) {
+      return true;
+    }
+
+    this._stylePicker = picker;
+    return false;
+  }
 
   private insertParagraphAbove(): void {
     const { state, dispatch } = this.view;

@@ -16,6 +16,7 @@ import {
   getBlockControlIcon,
 } from './blockControls';
 import {normalizeCssSize, normalizeValue} from '../extensions/table.utils';
+import {openTableStylePicker} from './tableStylePicker';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const ENHANCED_TABLE_FIGURE = 'enhanced_table_figure';
@@ -25,6 +26,7 @@ export class LicitTableNodeView extends TableView {
   private readonly _view?: EditorView;
   private readonly _menuButton: HTMLElement;
   private _menu?: PopUpHandle;
+  private _stylePicker?: PopUpHandle;
   private _tablePos: number | null = null;
   private _node: ProseMirrorNode;
 
@@ -197,7 +199,10 @@ export class LicitTableNodeView extends TableView {
 
   private readonly _closeMenu = (): void => {
     const menu = this._menu;
+    const stylePicker = this._stylePicker;
     this._menu = undefined;
+    this._stylePicker = undefined;
+    stylePicker?.close?.(undefined);
     menu?.close?.(undefined);
   };
 
@@ -214,6 +219,12 @@ export class LicitTableNodeView extends TableView {
         label: 'Insert Paragraph Below',
         icon: getBlockControlIcon('insertBelow', 'Insert Paragraph Below'),
         action: () => this._insertParagraph('below'),
+      },
+      {
+        id: 'apply-style',
+        label: 'Apply Style',
+        icon: getBlockControlIcon('style', 'Apply Style'),
+        action: (anchor) => this._openStylePicker(anchor),
       },
       {
         id: 'delete',
@@ -235,6 +246,30 @@ export class LicitTableNodeView extends TableView {
     }
 
     return {node: table, pos: this._tablePos};
+  }
+
+  private _openStylePicker(anchor?: HTMLElement): boolean {
+    if (!anchor || !this._view) {
+      return true;
+    }
+
+    this._stylePicker?.close(undefined);
+    const picker = openTableStylePicker({
+      anchor,
+      getTablePos: () => this._getCurrentTablePos(),
+      onClose: () => {
+        this._stylePicker = undefined;
+        this._closeMenu();
+      },
+      view: this._view,
+    });
+
+    if (!picker) {
+      return true;
+    }
+
+    this._stylePicker = picker;
+    return false;
   }
 
   private _insertParagraph(placement: 'above' | 'below'): void {

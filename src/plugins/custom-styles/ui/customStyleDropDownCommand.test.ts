@@ -469,10 +469,26 @@ describe('customstyledropdowncommand', () => {
       customstyledropdowncommand.isAllowedNode(node as unknown as Node)
     ).toBe(true);
   });
-    it('should handle isAllowedNode (case 3)', () => {
+  it('should handle isAllowedNode (case 3)', () => {
     const node = { type: { name: 'enhanced_table_figure_notes' } };
     expect(
       customstyledropdowncommand.isAllowedNode(node as unknown as Node)
+    ).toBe(true);
+  });
+  it('identifies a selection inside a table cell', () => {
+    const cellPosition = {
+      depth: 1,
+      node: () => ({ type: { spec: { tableRole: 'cell' } } }),
+    };
+    const tableState = {
+      selection: {
+        $from: cellPosition,
+        $to: cellPosition,
+      },
+    } as unknown as EditorState;
+
+    expect(
+      customstyledropdowncommand.isSelectionInsideTableCell(tableState)
     ).toBe(true);
   });
   it('should handle render when styleName null', () => {
@@ -590,8 +606,7 @@ describe('customstyledropdowncommand', () => {
             {
               tag: 'p',
               getAttrs(dom) {
-                const style =
-                  (dom).getAttribute('style') || '';
+                const style = dom.getAttribute('style') || '';
                 const attrs: { align?: string; color?: string } = {};
                 if (style.includes('text-align: left')) attrs.align = 'left';
                 if (style.includes('text-align: center'))
@@ -625,8 +640,7 @@ describe('customstyledropdowncommand', () => {
             {
               tag: 'h1', // Adjust the heading tag based on the desired level
               getAttrs(dom) {
-                const style =
-                  (dom).getAttribute('style') || '';
+                const style = dom.getAttribute('style') || '';
                 const attrs: { align?: string; color?: string } = {};
                 if (style.includes('text-align: left')) attrs.align = 'left';
                 if (style.includes('text-align: center'))
@@ -953,8 +967,7 @@ describe('customstyledropdowncommand 1', () => {
             {
               tag: 'p',
               getAttrs(dom) {
-                const style =
-                  (dom).getAttribute('style') || '';
+                const style = dom.getAttribute('style') || '';
                 const attrs: { align?: string; color?: string } = {};
                 if (style.includes('text-align: left')) attrs.align = 'left';
                 if (style.includes('text-align: center'))
@@ -988,8 +1001,7 @@ describe('customstyledropdowncommand 1', () => {
             {
               tag: 'h1', // Adjust the heading tag based on the desired level
               getAttrs(dom) {
-                const style =
-                  (dom).getAttribute('style') || '';
+                const style = dom.getAttribute('style') || '';
                 const attrs: { align?: string; color?: string } = {};
                 if (style.includes('text-align: left')) attrs.align = 'left';
                 if (style.includes('text-align: center'))

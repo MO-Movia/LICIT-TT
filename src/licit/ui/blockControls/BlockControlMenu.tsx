@@ -28,8 +28,10 @@ export class BlockControlMenu extends React.PureComponent<BlockControlMenuProps>
               event.preventDefault();
               event.stopPropagation();
               if (!item.disabled) {
-                item.action();
-                this.props.close?.();
+                const shouldClose = item.action(event.currentTarget) !== false;
+                if (shouldClose) {
+                  this.props.close?.();
+                }
               }
             }}
             role="menuitem"

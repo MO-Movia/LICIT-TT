@@ -426,6 +426,7 @@ describe('EnhancedTableFigureView', () => {
       expect(ids).toEqual([
         'insert-above',
         'insert-below',
+        'apply-style',
         'add-notes',
         'delete',
       ]);

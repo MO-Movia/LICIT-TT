@@ -92,6 +92,12 @@ describe('LicitTableNodeView', () => {
     expect(
       tableView.dom.querySelector('[aria-label="Table options"]')
     ).not.toBeNull();
+    expect(tableView['_getMenuItems']().map((item) => item.id)).toEqual([
+      'insert-above',
+      'insert-below',
+      'apply-style',
+      'delete',
+    ]);
   });
 
   function createTableNode(): ProseMirrorNode {

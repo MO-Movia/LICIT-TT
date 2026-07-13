@@ -9,6 +9,11 @@ import { EditorView } from 'prosemirror-view';
 import { UICommand } from '../../core';
 import { Transform } from 'prosemirror-transform';
 import { PARAGRAPH, TABLE, TABLE_CELL, TABLE_ROW, ENHANCED_TABLE_FIGURE_BODY, ENHANCED_TABLE_FIGURE_NOTES, ENHANCED_TABLE_FIGURE } from './Constants';
+import {
+  applyTableStyle,
+  DEFAULT_TABLE_STYLE_NAME,
+  TABLE_STYLE_NAME_ATTRIBUTE,
+} from '../../licit/extensions/tableEx/tableStyle';
 
 export class EnhancedTableCommands extends UICommand {
   // image,table
@@ -39,7 +44,7 @@ export class EnhancedTableCommands extends UICommand {
       const { schema } = state;
       let { tr } = state;
       if (this._nodeType === 'table') {
-        tr = this.insertEnhancedTableFigure(tr, schema);
+        tr = this.insertEnhancedTableFigure(tr, schema, state);
 
       }
 
@@ -77,7 +82,11 @@ export class EnhancedTableCommands extends UICommand {
   };
 
   // Command to insert the entire Enhanced Table/Figure node
-  insertEnhancedTableFigure(tr: Transaction, schema: Schema): Transaction {
+  insertEnhancedTableFigure(
+    tr: Transaction,
+    schema: Schema,
+    state?: EditorState
+  ): Transaction {
     const { selection } = tr;
     const { from, to } = selection;
     if (from !== to) {
@@ -107,6 +116,14 @@ export class EnhancedTableCommands extends UICommand {
 
     // Insert the figure node at the current selection.
     tr = tr.insert(from, figureNode);
+    if (state) {
+      applyTableStyle(
+        state,
+        tr,
+        from + 2,
+        DEFAULT_TABLE_STYLE_NAME
+      );
+    }
 
 
     const para = schema.nodes.paragraph.createAndFill();
@@ -138,14 +155,19 @@ export class EnhancedTableCommands extends UICommand {
         const attrs = rr === 0 && cc < 3 ? { background: '#abdbe3' } : undefined;
         const cellNode = cell.create(
           attrs,
-          Fragment.fromArray([paragraph.create()])
+          Fragment.fromArray([
+            paragraph.create({ styleName: DEFAULT_TABLE_STYLE_NAME }),
+          ])
         );
         cellNodes.push(cellNode);
       }
       const rowNode = row.create({}, Fragment.from(cellNodes));
       rowNodes.push(rowNode);
     }
-    const tableNode = table.create({}, Fragment.from(rowNodes));
+    const tableNode = table.create(
+      { [TABLE_STYLE_NAME_ATTRIBUTE]: DEFAULT_TABLE_STYLE_NAME },
+      Fragment.from(rowNodes)
+    );
     return tableNode;
   }
 

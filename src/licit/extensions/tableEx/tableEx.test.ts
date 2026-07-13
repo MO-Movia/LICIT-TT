@@ -3,14 +3,19 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Editor, Extension} from '@tiptap/core';
-import {StarterKit} from '@tiptap/starter-kit';
-import {TableEx} from './tableEx';
-import {createTable} from '@tiptap/extension-table';
-import {TableHeader} from '@tiptap/extension-table-header';
-import {TableCell} from '@tiptap/extension-table-cell';
-import {TableRowEx} from '../tableRowEx';
-import type {Node as PMNode} from 'prosemirror-model';
+import { Editor, Extension } from '@tiptap/core';
+import { StarterKit } from '@tiptap/starter-kit';
+import { TableEx } from './tableEx';
+import { createTable } from '@tiptap/extension-table';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableRowEx } from '../tableRowEx';
+import { TableHeaderEx } from '../tableHeaderEx';
+import { TableCellEx } from '../tableCellEx';
+import ParagraphNodeSpec from '../../specs/paragraphNodeSpec';
+import { setStyles } from '../../../plugins/custom-styles/customStyle';
+import { applyTableStyle, TABLE_STYLE_NAME_ATTRIBUTE } from './tableStyle';
+import type { Node as PMNode } from 'prosemirror-model';
 
 describe('TableEx Extension', () => {
   let editor: Editor;
@@ -74,6 +79,10 @@ describe('TableEx Extension', () => {
 
     expect(tableNode.spec.attrs).toHaveProperty('noOfColumns');
     expect(tableNode.spec.attrs).toHaveProperty('tableHeight');
+    expect(tableNode.spec.attrs).toHaveProperty(TABLE_STYLE_NAME_ATTRIBUTE);
+    expect(
+      tableNode.spec.attrs[TABLE_STYLE_NAME_ATTRIBUTE].default
+    ).toBe('Normal');
   });
 
   test('should configure Licit table node view', () => {
@@ -97,7 +106,7 @@ describe('TableEx Extension', () => {
     );
 
     // Get the first table cell position and set selection there
-    const {state} = editor;
+    const { state } = editor;
     let cellPos = 0;
     state.doc.descendants((node: PMNode, pos: number) => {
       if (node.type.name === 'tableCell' && cellPos === 0) {
@@ -106,7 +115,7 @@ describe('TableEx Extension', () => {
     });
 
     editor.commands.setTextSelection(cellPos);
-    const tabEvent = new KeyboardEvent('keydown', {key: 'Tab'});
+    const tabEvent = new KeyboardEvent('keydown', { key: 'Tab' });
     editor.view.dom.dispatchEvent(tabEvent);
     expect(editor.commands.goToNextCell).toBeDefined();
   });
@@ -117,7 +126,7 @@ describe('TableEx Extension', () => {
     );
 
     // Get the second table cell position and set selection there
-    const {state} = editor;
+    const { state } = editor;
     let cellCount = 0;
     let cellPos = 0;
     state.doc.descendants((node: PMNode, pos: number) => {
@@ -145,7 +154,7 @@ describe('TableEx Extension', () => {
       </table>
     `);
 
-    const {state} = editor;
+    const { state } = editor;
     let lastCellPos = 0;
 
     state.doc.descendants((node: PMNode, pos: number) => {
@@ -155,7 +164,7 @@ describe('TableEx Extension', () => {
     });
 
     editor.commands.setTextSelection(lastCellPos + 2);
-    editor.commands.updateAttributes('tableCell', {vignette: false});
+    editor.commands.updateAttributes('tableCell', { vignette: false });
 
     const countRows = () => {
       let rows = 0;
@@ -166,7 +175,7 @@ describe('TableEx Extension', () => {
     };
 
     const initialRows = countRows();
-    const tabEvent = new KeyboardEvent('keydown', {key: 'Tab'});
+    const tabEvent = new KeyboardEvent('keydown', { key: 'Tab' });
     editor.view.dom.dispatchEvent(tabEvent);
 
     const finalRows = countRows();
@@ -174,165 +183,292 @@ describe('TableEx Extension', () => {
   });
 
   test('should insert table without header row', () => {
-  editor.commands.insertTable({rows: 2, cols: 2});
+    editor.commands.insertTable({ rows: 2, cols: 2 });
 
-  let hasHeaderCell = false;
-  editor.state.doc.descendants((node: PMNode) => {
-    if (node.type.name === 'tableHeader') {
-      hasHeaderCell = true;
-    }
+    let hasHeaderCell = false;
+    editor.state.doc.descendants((node: PMNode) => {
+      if (node.type.name === 'tableHeader') {
+        hasHeaderCell = true;
+      }
+    });
+
+    expect(hasHeaderCell).toBe(false);
   });
 
-  expect(hasHeaderCell).toBe(false);
-});
+  describe('TableEx Extension - table styles', () => {
+    let editor: Editor;
 
-test('should insert table with custom rows and cols', () => {
-  editor.commands.insertTable({rows: 3, cols: 4});
+    beforeEach(() => {
+      const StyledParagraph = ParagraphNodeSpec.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            styleName: {
+              default: null,
+            },
+          };
+        },
+      });
 
-  let rowCount = 0;
-  let maxCols = 0;
-  let currentCols = 0;
+      setStyles([
+        { styleName: 'Normal', styles: {} },
+        { styleName: 'Table body', styles: {} },
+      ]);
+      editor = new Editor({
+        extensions: [
+          StarterKit.configure({ paragraph: false }),
+          StyledParagraph,
+          TableEx,
+          TableRowEx,
+          TableHeaderEx,
+          TableCellEx,
+        ],
+        content:
+          '<table><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Cell 3</td><td>Cell 4</td></tr></table>',
+      });
+    });
 
-  editor.state.doc.descendants((node: PMNode) => {
-    if (node.type.name === 'tableRow') {
-      rowCount++;
-      currentCols = 0;
-    }
-    if (node.type.name === 'tableCell') {
-      currentCols++;
-      maxCols = Math.max(maxCols, currentCols);
-    }
+    afterEach(() => {
+      editor.destroy();
+    });
+
+    test('applies the selected style to every cell and preserves it for new rows and columns', () => {
+      let tablePos = 0;
+      let firstCellContentPos = 0;
+
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'table') {
+          tablePos = pos;
+        }
+        if (node.type.name === 'tableCell' && firstCellContentPos === 0) {
+          firstCellContentPos = pos + 2;
+        }
+      });
+
+      editor.commands.setTextSelection(firstCellContentPos);
+      editor.view.dispatch(
+        applyTableStyle(editor.state, editor.state.tr, tablePos, 'Table body')
+      );
+
+      editor.commands.addRowAfter();
+      editor.commands.addColumnAfter();
+
+      const paragraphStyleNames: string[] = [];
+      let appliedTableStyleName: string | null = null;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === 'table') {
+          appliedTableStyleName = node.attrs[TABLE_STYLE_NAME_ATTRIBUTE];
+        }
+        if (node.type.name === 'paragraph') {
+          paragraphStyleNames.push(node.attrs.styleName);
+        }
+      });
+
+      expect(appliedTableStyleName).toBe('Table body');
+      expect(paragraphStyleNames).toHaveLength(9);
+      expect(paragraphStyleNames).toEqual(
+        Array(paragraphStyleNames.length).fill('Table body')
+      );
+    });
+
+    test('applies Normal to every cell when a table is inserted', () => {
+      editor.commands.setContent('<p></p>');
+      editor.commands.setTextSelection(1);
+      editor.commands.insertTable({ rows: 2, cols: 2 });
+
+      const table = editor.state.doc.firstChild;
+      const paragraphStyleNames: string[] = [];
+      table.descendants((node) => {
+        if (node.type.name === 'paragraph') {
+          paragraphStyleNames.push(node.attrs.styleName);
+        }
+      });
+
+      expect(table.attrs[TABLE_STYLE_NAME_ATTRIBUTE]).toBe('Normal');
+      expect(paragraphStyleNames).toEqual([
+        'Normal',
+        'Normal',
+        'Normal',
+        'Normal',
+      ]);
+    });
+
+    test('applies a table style to both empty and populated cells', () => {
+      editor.commands.setContent(
+        '<table><tr><td></td><td>Populated</td></tr></table>'
+      );
+
+      let tablePos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'table') {
+          tablePos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      editor.view.dispatch(
+        applyTableStyle(editor.state, editor.state.tr, tablePos, 'Table body')
+      );
+
+      const paragraphStyleNames: string[] = [];
+      editor.state.doc.nodeAt(tablePos).descendants((node) => {
+        if (node.type.name === 'paragraph') {
+          paragraphStyleNames.push(node.attrs.styleName);
+        }
+      });
+
+      expect(paragraphStyleNames).toEqual(['Table body', 'Table body']);
+    });
   });
 
-  expect(rowCount).toBe(5);
-  expect(maxCols).toBe(5);
-});
+  test('should insert table with custom rows and cols', () => {
+    editor.commands.insertTable({ rows: 3, cols: 4 });
 
-test('should insert table with default dimensions', () => {
-  editor.commands.insertTable();
+    let rowCount = 0;
+    let maxCols = 0;
+    let currentCols = 0;
 
-  let rowCount = 0;
-  editor.state.doc.descendants((node) => {
-    if (node.type.name === 'tableRow') {
-      rowCount++;
-    }
+    editor.state.doc.descendants((node: PMNode) => {
+      if (node.type.name === 'tableRow') {
+        rowCount++;
+        currentCols = 0;
+      }
+      if (node.type.name === 'tableCell') {
+        currentCols++;
+        maxCols = Math.max(maxCols, currentCols);
+      }
+    });
+
+    expect(rowCount).toBe(5);
+    expect(maxCols).toBe(5);
   });
 
-  expect(rowCount).toBe(5);
-});
+  test('should insert table with default dimensions', () => {
+    editor.commands.insertTable();
 
-test('should not add row when Tab pressed in last cell and vignette is true', () => {
-  editor.commands.setContent(`
+    let rowCount = 0;
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'tableRow') {
+        rowCount++;
+      }
+    });
+
+    expect(rowCount).toBe(5);
+  });
+
+  test('should not add row when Tab pressed in last cell and vignette is true', () => {
+    editor.commands.setContent(`
     <table>
       <tr><td>Cell 1</td><td>Cell 2</td></tr>
     </table>
   `);
 
-  const {state} = editor;
-  let lastCellPos = 0;
+    const { state } = editor;
+    let lastCellPos = 0;
 
-  state.doc.descendants((node: PMNode, pos: number) => {
-    if (node.type.name === 'tableCell') {
-      lastCellPos = pos;
-    }
+    state.doc.descendants((node: PMNode, pos: number) => {
+      if (node.type.name === 'tableCell') {
+        lastCellPos = pos;
+      }
+    });
+
+    editor.commands.setTextSelection(lastCellPos + 2);
+    editor.commands.updateAttributes('tableCell', { vignette: true });
+
+    editor.state.doc.descendants((node: PMNode) => {
+      return node.type.name === 'tableRow';
+    });
+
+    const tabEvent = new KeyboardEvent('keydown', { key: 'Tab' });
+    editor.view.dom.dispatchEvent(tabEvent);
+
+    let finalRows = 0;
+    editor.state.doc.descendants((node: PMNode) => {
+      if (node.type.name === 'tableRow') finalRows++;
+    });
+
+    expect(finalRows).toBe(1);
   });
 
-  editor.commands.setTextSelection(lastCellPos + 2);
-  editor.commands.updateAttributes('tableCell', {vignette: true});
-
-  editor.state.doc.descendants((node: PMNode) => {
-    return node.type.name === 'tableRow';
-  });
-
-  const tabEvent = new KeyboardEvent('keydown', {key: 'Tab'});
-  editor.view.dom.dispatchEvent(tabEvent);
-
-  let finalRows = 0;
-  editor.state.doc.descendants((node: PMNode) => {
-    if (node.type.name === 'tableRow') finalRows++;
-  });
-
-  expect(finalRows).toBe(1);
-});
-
-test('should add row and move to it when Tab pressed in last cell without vignette', () => {
-  editor.commands.setContent(`
+  test('should add row and move to it when Tab pressed in last cell without vignette', () => {
+    editor.commands.setContent(`
     <table>
       <tr><td>Cell 1</td><td>Cell 2</td></tr>
     </table>
   `);
 
-  const {state} = editor;
-  let lastCellPos = 0;
+    const { state } = editor;
+    let lastCellPos = 0;
 
-  state.doc.descendants((node: PMNode, pos: number) => {
-    if (node.type.name === 'tableCell') {
-      lastCellPos = pos;
-    }
+    state.doc.descendants((node: PMNode, pos: number) => {
+      if (node.type.name === 'tableCell') {
+        lastCellPos = pos;
+      }
+    });
+
+    editor.commands.setTextSelection(lastCellPos + 2);
+
+    const spy = jest.spyOn(editor.commands, 'addRowAfter');
+    const tabEvent = new KeyboardEvent('keydown', { key: 'Tab' });
+    editor.view.dom.dispatchEvent(tabEvent);
+
+    expect(spy).not.toHaveBeenCalled();
   });
 
-  editor.commands.setTextSelection(lastCellPos + 2);
+  test('should maintain selection after inserting table', () => {
+    editor.commands.setContent('<p>Test</p>');
+    editor.commands.insertTable({ rows: 2, cols: 2 });
 
-  const spy = jest.spyOn(editor.commands, 'addRowAfter');
-  const tabEvent = new KeyboardEvent('keydown', {key: 'Tab'});
-  editor.view.dom.dispatchEvent(tabEvent);
+    const { selection } = editor.state;
+    expect(selection).toBeDefined();
+    expect(selection.from).toBeGreaterThan(0);
+  });
 
-  expect(spy).not.toHaveBeenCalled();
-});
-
-test('should maintain selection after inserting table', () => {
-  editor.commands.setContent('<p>Test</p>');
-  editor.commands.insertTable({rows: 2, cols: 2});
-
-  const {selection} = editor.state;
-  expect(selection).toBeDefined();
-  expect(selection.from).toBeGreaterThan(0);
-});
-
-test('should handle header_cell role in Tab navigation', () => {
-  editor.commands.setContent(`
+  test('should handle header_cell role in Tab navigation', () => {
+    editor.commands.setContent(`
     <table>
       <tr><th>Header 1</th><th>Header 2</th></tr>
       <tr><td>Cell 1</td><td>Cell 2</td></tr>
     </table>
   `);
 
-  const {state} = editor;
-  let headerPos = 0;
+    const { state } = editor;
+    let headerPos = 0;
 
-  state.doc.descendants((node, pos) => {
-    if (node.type.name === 'tableHeader' && headerPos === 0) {
-      headerPos = pos + 2;
-    }
+    state.doc.descendants((node, pos) => {
+      if (node.type.name === 'tableHeader' && headerPos === 0) {
+        headerPos = pos + 2;
+      }
+    });
+
+    editor.commands.setTextSelection(headerPos);
+    const tabEvent = new KeyboardEvent('keydown', { key: 'Tab' });
+    editor.view.dom.dispatchEvent(tabEvent);
+
+    expect(editor.commands.goToNextCell).toBeDefined();
   });
 
-  editor.commands.setTextSelection(headerPos);
-  const tabEvent = new KeyboardEvent('keydown', {key: 'Tab'});
-  editor.view.dom.dispatchEvent(tabEvent);
-  
-  expect(editor.commands.goToNextCell).toBeDefined();
-});
+  test('should apply tableHeight to table DOM when attributes are updated', () => {
+    editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
 
-test('should apply tableHeight to table DOM when attributes are updated', () => {
-  editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
+    let cellPos = 0;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'tableCell' && cellPos === 0) {
+        cellPos = pos + 2;
+      }
+    });
 
-  let cellPos = 0;
-  editor.state.doc.descendants((node, pos) => {
-    if (node.type.name === 'tableCell' && cellPos === 0) {
-      cellPos = pos + 2;
-    }
+    editor.commands.setTextSelection(cellPos);
+    editor.commands.updateAttributes('table', { tableHeight: '280' });
+
+    const tableElement = editor.view.dom.querySelector('table');
+    expect(tableElement.style.height).toBe('280px');
   });
-
-  editor.commands.setTextSelection(cellPos);
-  editor.commands.updateAttributes('table', {tableHeight: '280'});
-
-  const tableElement = editor.view.dom.querySelector('table');
-  expect(tableElement.style.height).toBe('280px');
-});
 
   test('should return true when insertTable is called without dispatch', () => {
     const insertTableCommand = editor.extensionManager.commands.insertTable;
-    const command = insertTableCommand({rows: 2, cols: 2});
+    const command = insertTableCommand({ rows: 2, cols: 2 });
 
     const result = command({
       tr: editor.state.tr,
@@ -388,7 +524,7 @@ describe('TableEx Extension - attributes', () => {
     const ViewCtor = tableExtension.options.View as unknown as new (
       node: unknown,
       cellMinWidth: number
-    ) => {table: HTMLTableElement};
+    ) => { table: HTMLTableElement };
 
     const view = new ViewCtor(tableNode, 25);
 
@@ -398,7 +534,10 @@ describe('TableEx Extension - attributes', () => {
   });
 
   test('TableViewEx update should apply table attributes when updated', () => {
-    editor.commands.updateAttributes('table', {tableHeight: '120', noOfColumns: 3});
+    editor.commands.updateAttributes('table', {
+      tableHeight: '120',
+      noOfColumns: 3,
+    });
     const tableNode = editor.state.doc.firstChild;
     const tableExtension = editor.extensionManager.extensions.find(
       (ext) => ext.name === 'table'
@@ -407,7 +546,7 @@ describe('TableEx Extension - attributes', () => {
     const ViewCtor = tableExtension.options.View as unknown as new (
       node: unknown,
       cellMinWidth: number
-    ) => {update: (node: unknown) => boolean; table: HTMLTableElement};
+    ) => { update: (node: unknown) => boolean; table: HTMLTableElement };
 
     const view = new ViewCtor(tableNode, 25);
     const result = view.update(tableNode);

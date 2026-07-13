@@ -92,6 +92,22 @@ describe('BlockControlMenu', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the menu open when an item opens a child menu', () => {
+    const action = jest.fn().mockReturnValue(false);
+    const close = renderMenu([
+      {
+        id: 'child-menu',
+        label: 'Child menu',
+        action,
+      },
+    ]);
+
+    clickButton('child-menu');
+
+    expect(action).toHaveBeenCalledWith(expect.any(HTMLButtonElement));
+    expect(close).not.toHaveBeenCalled();
+  });
+
   it('does not run disabled item action or close the menu', () => {
     const action = jest.fn();
     const close = renderMenu([
