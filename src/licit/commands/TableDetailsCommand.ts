@@ -909,7 +909,15 @@ class TableDetailsCommand extends UICommand {
       return [nodes.cell];
     }
 
-    return nodes.cells?.length ? nodes.cells : nodes.cell ? [nodes.cell] : [];
+    if (nodes.cells?.length) {
+      return nodes.cells;
+    }
+
+    if (nodes.cell) {
+      return [nodes.cell];
+    }
+
+    return [];
   }
 
   getApplyChanges(
@@ -1153,7 +1161,7 @@ class TableDetailsCommand extends UICommand {
     rowHeight: string
   ): Transaction {
     const tableNode = tr.doc.nodeAt(tableRef.pos);
-    if (!tableNode || tableNode.type.spec.tableRole !== 'table') {
+    if (tableNode?.type.spec.tableRole !== 'table') {
       return tr;
     }
 
@@ -1186,68 +1194,88 @@ class TableDetailsCommand extends UICommand {
     changes: TableEditorApplyChanges
   ): Transaction {
     const currentCell = tr.doc.nodeAt(cellRef.pos) ?? cellRef.node;
-    const nextAttrs = {...currentCell.attrs};
-    const fontName = this.normalizeInheritedValue(result.typography.fontFamily);
-    const fontSize = this.normalizeString(result.typography.fontSize);
-    const fontWeight = this.toOptionalCssValue(result.typography.bold, 'bold');
-    const fontStyle = this.toOptionalCssValue(result.typography.italic, 'italic');
-    const textDecoration = this.toOptionalCssValue(
-      result.typography.underline,
-      'underline'
-    );
-    const textColor = this.normalizeString(result.typography.textColor);
-    const backgroundColor = this.normalizeTransparentResult(
-      result.typography.backgroundColor
-    );
-    const letterSpacing = this.normalizeString(result.typography.letterSpacing);
-    const lineHeight = this.normalizeString(result.typography.lineHeight);
-    const textAlign = this.normalizeString(result.typography.textAlign);
-    const verticalAlign = this.normalizeString(result.typography.verticalAlign);
+    const nextAttrs: Record<string, unknown> = {...currentCell.attrs};
 
+    this.applyChangedCellTypographyAttrs(nextAttrs, result, changes);
+    this.applyChangedCellLayoutAttrs(nextAttrs, result, changes);
+
+    return this.sameAttrs(currentCell.attrs, nextAttrs)
+      ? tr
+      : tr.setNodeMarkup(cellRef.pos, undefined, nextAttrs);
+  }
+
+  applyChangedCellTypographyAttrs(
+    nextAttrs: Record<string, unknown>,
+    result: TableEditorResult,
+    changes: TableEditorApplyChanges
+  ): void {
     if (changes.fontFamily) {
+      const fontName = this.normalizeInheritedValue(result.typography.fontFamily);
       nextAttrs.fontName = fontName;
       nextAttrs.fontNameOverridden = Boolean(fontName);
     }
     if (changes.fontSize) {
+      const fontSize = this.normalizeString(result.typography.fontSize);
       nextAttrs.fontSize = fontSize;
       nextAttrs.fontSizeOverridden = Boolean(fontSize);
     }
     if (changes.bold) {
+      const fontWeight = this.toOptionalCssValue(result.typography.bold, 'bold');
       nextAttrs.fontWeight = fontWeight;
       nextAttrs.fontWeightOverridden = Boolean(fontWeight);
     }
     if (changes.italic) {
+      const fontStyle = this.toOptionalCssValue(result.typography.italic, 'italic');
       nextAttrs.fontStyle = fontStyle;
       nextAttrs.fontStyleOverridden = Boolean(fontStyle);
     }
     if (changes.underline) {
+      const textDecoration = this.toOptionalCssValue(
+        result.typography.underline,
+        'underline'
+      );
       nextAttrs.textDecoration = textDecoration;
       nextAttrs.textDecorationOverridden = Boolean(textDecoration);
     }
     if (changes.textColor) {
+      const textColor = this.normalizeString(result.typography.textColor);
       nextAttrs.textColor = textColor;
       nextAttrs.textColorOverridden = Boolean(textColor);
     }
     if (changes.backgroundColor) {
+      const backgroundColor = this.normalizeTransparentResult(
+        result.typography.backgroundColor
+      );
       nextAttrs.backgroundColor = backgroundColor;
       nextAttrs.backgroundColorOverridden = Boolean(backgroundColor);
     }
     if (changes.letterSpacing) {
+      const letterSpacing = this.normalizeString(result.typography.letterSpacing);
       nextAttrs.letterSpacing = letterSpacing;
       nextAttrs.letterSpacingOverridden = Boolean(letterSpacing);
     }
     if (changes.lineHeight) {
+      const lineHeight = this.normalizeString(result.typography.lineHeight);
       nextAttrs.lineHeight = lineHeight;
       nextAttrs.lineHeightOverridden = Boolean(lineHeight);
     }
     if (changes.textAlign) {
+      const textAlign = this.normalizeString(result.typography.textAlign);
       nextAttrs.textAlign = textAlign;
       nextAttrs.textAlignOverridden = Boolean(textAlign);
     }
     if (changes.verticalAlign) {
+      const verticalAlign = this.normalizeString(result.typography.verticalAlign);
       nextAttrs.verticalAlign = verticalAlign;
       nextAttrs.verticalAlignOverridden = Boolean(verticalAlign);
     }
+  }
+
+  applyChangedCellLayoutAttrs(
+    nextAttrs: Record<string, unknown>,
+    result: TableEditorResult,
+    changes: TableEditorApplyChanges
+  ): void {
     if (changes.selectedCellWidth) {
       nextAttrs.cellWidth = this.normalizeString(result.table.selectedCellWidth);
     }
@@ -1263,10 +1291,6 @@ class TableDetailsCommand extends UICommand {
     if (changes.paddingLeft) {
       nextAttrs.paddingLeft = this.normalizeString(result.layout.paddingLeft);
     }
-
-    return this.sameAttrs(currentCell.attrs, nextAttrs)
-      ? tr
-      : tr.setNodeMarkup(cellRef.pos, undefined, nextAttrs);
   }
 
   applyCellParagraphOverrides(
@@ -1282,7 +1306,7 @@ class TableDetailsCommand extends UICommand {
 
     currentCell.descendants((node, pos) => {
       if (node.type.name !== 'paragraph') {
-        return true;
+        return;
       }
 
       const attrs = {...node.attrs};
@@ -1312,7 +1336,7 @@ class TableDetailsCommand extends UICommand {
       if (changed && !this.sameAttrs(node.attrs, attrs)) {
         tr = tr.setNodeMarkup(cellRef.start + pos, undefined, attrs);
       }
-      return true;
+      return false;
     });
 
     return tr;
@@ -1337,7 +1361,7 @@ class TableDetailsCommand extends UICommand {
 
     currentCell.descendants((node, pos) => {
       if (!node.isText) {
-        return true;
+        return;
       }
 
       const from = cellRef.start + pos;
@@ -1350,7 +1374,7 @@ class TableDetailsCommand extends UICommand {
         }
       }
 
-      return true;
+      return false;
     });
 
     return tr;
@@ -1450,7 +1474,7 @@ class TableDetailsCommand extends UICommand {
     }
 
     const tableNode = tr.doc.nodeAt(tableRef.pos);
-    if (!tableNode || tableNode.type.spec.tableRole !== 'table') {
+    if (tableNode?.type.spec.tableRole !== 'table') {
       return tr;
     }
 

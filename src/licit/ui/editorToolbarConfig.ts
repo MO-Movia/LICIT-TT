@@ -1,4 +1,4 @@
- 
+
 /**
  * @license MIT
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
@@ -93,7 +93,7 @@ export const TABLE_COMMANDS_GROUP = [
     'Delete Table': TABLE_DELETE_TABLE,
   },
   {
-    'Container Dimensions': TABLE_DETAILS,
+    'Table Details': TABLE_DETAILS,
   },
 ];
 

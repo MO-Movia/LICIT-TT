@@ -24,16 +24,16 @@ jest.mock('./plugins/linkTooltipPlugin', () => jest.fn(() => new Plugin({})));
 jest.mock('./plugins/selectionPlaceholderPlugin', () => jest.fn(() => new Plugin({})));
 jest.mock('./plugins/tableCellMenuPlugin', () => jest.fn(() => new Plugin({})));
 jest.mock('./plugins/LandscapePlugin', () => ({
-  LandscapePlugin: jest.fn(() => new Plugin({})),
+    LandscapePlugin: jest.fn(() => new Plugin({})),
 }));
 jest.mock('./plugins/listPasteNormalizerPlugin', () =>
-  jest.fn(() => new Plugin({}))
+    jest.fn(() => new Plugin({}))
 );
 jest.mock('./buildInputRules', () => jest.fn(() => new Plugin({})));
 jest.mock('./createEditorKeyMap', () => jest.fn(() => ({})));
 jest.mock('../core', () => ({
-  setPluginKey: jest.fn((plugin: Plugin, _key: string): Plugin => plugin),
-  UICommand: class UICommand {},
+    setPluginKey: jest.fn((plugin: Plugin, _key: string): Plugin => plugin),
+    UICommand: class UICommand { },
 }));
 
 describe('DefaultEditorPlugins', () => {
@@ -54,7 +54,7 @@ describe('DefaultEditorPlugins', () => {
         const editorPlugins = new DefaultEditorPlugins(schema);
         const plugins = editorPlugins.get();
 
-        expect(plugins).toHaveLength(10);
+        expect(plugins).toHaveLength(11);
         expect(ContentPlaceholderPlugin).toHaveBeenCalledTimes(1);
         expect(CursorPlaceholderPlugin).toHaveBeenCalledTimes(1);
         expect(EditorPageLayoutPlugin).toHaveBeenCalledTimes(1);

@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { TableHeader } from '@tiptap/extension-table-header';
+import {TableHeader} from '@tiptap/extension-table-header';
 
 const DEFAULT_CELL_WIDTH = '25px';
 const DEFAULT_FONT_SIZE = '16px';
@@ -12,7 +12,27 @@ const DEFAULT_LINE_HEIGHT = 'normal';
 const DEFAULT_BORDER_WIDTH = '1px';
 const DEFAULT_CELL_STYLE = '';
 
-const normalizeCssSize = (value: unknown, fallback: string): string => {
+type AttributeSet = Record<string, unknown>;
+type AttributeConfig = {
+  default: unknown;
+  renderHTML: (attributes: AttributeSet) => AttributeSet;
+  parseHTML: (element: HTMLElement) => unknown;
+};
+
+type SizeAttributeOptions = {
+  attributeName: string;
+  cssProperty: string;
+  defaultValue: string | null;
+  styleProperty: keyof CSSStyleDeclaration;
+  attributeNames?: string[];
+  datasetNames?: string[];
+  styleTemplate?: (value: string | null) => string;
+};
+
+const normalizeCssSize = (
+  value: unknown,
+  fallback: string | null
+): string | null => {
   if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
     return `${value}px`;
   }
@@ -33,7 +53,28 @@ const normalizeCssSize = (value: unknown, fallback: string): string => {
   return trimmed;
 };
 
-function createOverrideAttribute(attributeName: string, datasetName: string) {
+const readFirstValue = (...values: unknown[]): unknown => {
+  return values.find((value) => value !== null && value !== undefined);
+};
+
+const readDatasetValue = (
+  element: HTMLElement,
+  datasetNames: string[]
+): string | undefined => {
+  for (const datasetName of datasetNames) {
+    const value = element.dataset[datasetName];
+    if (value !== undefined) {
+      return value;
+    }
+  }
+
+  return undefined;
+};
+
+function createOverrideAttribute(
+  attributeName: string,
+  datasetName: string
+): AttributeConfig {
   return {
     default: null,
     renderHTML: (attributes) => {
@@ -51,31 +92,228 @@ function createOverrideAttribute(attributeName: string, datasetName: string) {
   };
 }
 
+function createSizeStyleAttribute(
+  options: SizeAttributeOptions
+): AttributeConfig {
+  const {
+    attributeName,
+    cssProperty,
+    defaultValue,
+    styleProperty,
+    attributeNames = [attributeName],
+    datasetNames = [attributeName],
+    styleTemplate = (value) => `${cssProperty}: ${value};`,
+  } = options;
+
+  return {
+    default: defaultValue,
+    renderHTML: (attributes) => {
+      const value = normalizeCssSize(attributes[attributeName], defaultValue);
+      return {
+        [attributeName]: value,
+        style: styleTemplate(value),
+      };
+    },
+    parseHTML: (element) => {
+      const attributeValue = readFirstValue(
+        ...attributeNames.map((name) => element.getAttribute(name)),
+        readDatasetValue(element, datasetNames),
+        element.style[styleProperty]
+      );
+      return normalizeCssSize(attributeValue, defaultValue);
+    },
+  };
+}
+
+function createInlineStyleAttribute(
+  attributeName: string,
+  cssProperty: string,
+  styleProperty: keyof CSSStyleDeclaration,
+  suffix = ';'
+): AttributeConfig {
+  return {
+    default: null,
+    renderHTML: (attributes) => {
+      const value = attributes[attributeName];
+      if (typeof value !== 'string' && typeof value !== 'number') {
+        return {};
+      }
+
+      return {style: `${cssProperty}: ${value}${suffix}`};
+    },
+    parseHTML: (element) => element.style[styleProperty] || null,
+  };
+}
+
+function createBorderAttributes(): Record<string, AttributeConfig> {
+  const borderAttributes = {};
+  const sides = ['Left', 'Right', 'Top', 'Bottom'];
+  const parts = [
+    ['', 'border'],
+    ['Width', 'border-width'],
+    ['Color', 'border-color'],
+    ['Style', 'border-style'],
+  ];
+
+  for (const side of sides) {
+    for (const [suffix, cssBase] of parts) {
+      const attributeName = `border${side}${suffix}`;
+      const cssProperty = `${cssBase.replace('border', 'border-' + side.toLowerCase())}`;
+      const styleProperty = attributeName as keyof CSSStyleDeclaration;
+      borderAttributes[attributeName] = createInlineStyleAttribute(
+        attributeName,
+        cssProperty,
+        styleProperty,
+        ''
+      );
+    }
+  }
+
+  return borderAttributes;
+}
+
+const cellWidthAttribute = createSizeStyleAttribute({
+  attributeName: 'cellWidth',
+  cssProperty: 'width',
+  defaultValue: DEFAULT_CELL_WIDTH,
+  styleProperty: 'width',
+  styleTemplate: (value) => `width: ${value}; min-width: ${value};`,
+});
+
+const fontSizeAttribute = createSizeStyleAttribute({
+  attributeName: 'fontSize',
+  cssProperty: 'font-size',
+  defaultValue: DEFAULT_FONT_SIZE,
+  styleProperty: 'fontSize',
+});
+
+const letterSpacingAttribute = createSizeStyleAttribute({
+  attributeName: 'letterSpacing',
+  cssProperty: 'letter-spacing',
+  defaultValue: DEFAULT_LETTER_SPACING,
+  styleProperty: 'letterSpacing',
+});
+
+const lineHeightAttribute = createSizeStyleAttribute({
+  attributeName: 'lineHeight',
+  cssProperty: 'line-height',
+  defaultValue: DEFAULT_LINE_HEIGHT,
+  styleProperty: 'lineHeight',
+});
+
+const borderWidthAttribute = createSizeStyleAttribute({
+  attributeName: 'borderWidth',
+  cssProperty: 'border-width',
+  defaultValue: DEFAULT_BORDER_WIDTH,
+  styleProperty: 'borderWidth',
+});
+
+const spacingAttributes = {
+  marginTop: createSizeStyleAttribute({
+    attributeName: 'marginTop',
+    cssProperty: 'margin-top',
+    defaultValue: null,
+    styleProperty: 'marginTop',
+  }),
+  marginBottom: createSizeStyleAttribute({
+    attributeName: 'marginBottom',
+    cssProperty: 'margin-bottom',
+    defaultValue: null,
+    styleProperty: 'marginBottom',
+    attributeNames: ['marginBottom', 'MarginBottom'],
+  }),
+  marginLeft: createSizeStyleAttribute({
+    attributeName: 'marginLeft',
+    cssProperty: 'margin-left',
+    defaultValue: null,
+    styleProperty: 'marginLeft',
+  }),
+  marginRight: createSizeStyleAttribute({
+    attributeName: 'marginRight',
+    cssProperty: 'margin-right',
+    defaultValue: null,
+    styleProperty: 'marginRight',
+    attributeNames: ['marginRight', 'MarginRight'],
+  }),
+  paddingTop: createSizeStyleAttribute({
+    attributeName: 'paddingTop',
+    cssProperty: 'padding-top',
+    defaultValue: null,
+    styleProperty: 'paddingTop',
+    attributeNames: ['PaddingTop', 'paddingTop'],
+  }),
+  paddingBottom: createSizeStyleAttribute({
+    attributeName: 'paddingBottom',
+    cssProperty: 'padding-bottom',
+    defaultValue: null,
+    styleProperty: 'paddingBottom',
+  }),
+  paddingRight: createSizeStyleAttribute({
+    attributeName: 'paddingRight',
+    cssProperty: 'padding-right',
+    defaultValue: null,
+    styleProperty: 'paddingRight',
+  }),
+  paddingLeft: createSizeStyleAttribute({
+    attributeName: 'paddingLeft',
+    cssProperty: 'padding-left',
+    defaultValue: null,
+    styleProperty: 'paddingLeft',
+  }),
+};
+
+const overrideAttributes = {
+  fontSizeOverridden: createOverrideAttribute(
+    'fontSizeOverridden',
+    'font-size-overridden'
+  ),
+  fontNameOverridden: createOverrideAttribute(
+    'fontNameOverridden',
+    'font-name-overridden'
+  ),
+  fontWeightOverridden: createOverrideAttribute(
+    'fontWeightOverridden',
+    'font-weight-overridden'
+  ),
+  fontStyleOverridden: createOverrideAttribute(
+    'fontStyleOverridden',
+    'font-style-overridden'
+  ),
+  textDecorationOverridden: createOverrideAttribute(
+    'textDecorationOverridden',
+    'text-decoration-overridden'
+  ),
+  textColorOverridden: createOverrideAttribute(
+    'textColorOverridden',
+    'text-color-overridden'
+  ),
+  textAlignOverridden: createOverrideAttribute(
+    'textAlignOverridden',
+    'text-align-overridden'
+  ),
+  letterSpacingOverridden: createOverrideAttribute(
+    'letterSpacingOverridden',
+    'letter-spacing-overridden'
+  ),
+  lineHeightOverridden: createOverrideAttribute(
+    'lineHeightOverridden',
+    'line-height-overridden'
+  ),
+  backgroundColorOverridden: createOverrideAttribute(
+    'backgroundColorOverridden',
+    'background-color-overridden'
+  ),
+  verticalAlignOverridden: createOverrideAttribute(
+    'verticalAlignOverridden',
+    'vertical-align-overridden'
+  ),
+};
+
 export const TableHeaderEx = TableHeader.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      cellWidth: {
-        default: DEFAULT_CELL_WIDTH,
-        renderHTML: (attributes) => {
-          const cellWidth = normalizeCssSize(
-            attributes.cellWidth,
-            DEFAULT_CELL_WIDTH
-          );
-          return {
-            cellWidth,
-            style: `width: ${cellWidth}; min-width: ${cellWidth};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('cellWidth') ??
-            element.dataset.cellWidth ??
-            element.style.width,
-            DEFAULT_CELL_WIDTH
-          );
-        },
-      },
+      cellWidth: cellWidthAttribute,
       cellStyle: {
         default: DEFAULT_CELL_STYLE,
         renderHTML: (attributes) => {
@@ -101,31 +339,7 @@ export const TableHeaderEx = TableHeader.extend({
           );
         },
       },
-      fontSize: {
-        default: DEFAULT_FONT_SIZE,
-        renderHTML: (attributes) => {
-          const fontSize = normalizeCssSize(
-            attributes.fontSize,
-            DEFAULT_FONT_SIZE
-          );
-          return {
-            fontSize,
-            style: `font-size: ${fontSize};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('fontSize') ??
-            element.dataset.fontSize ??
-            element.style.fontSize,
-            DEFAULT_FONT_SIZE
-          );
-        },
-      },
-      fontSizeOverridden: createOverrideAttribute(
-        'fontSizeOverridden',
-        'font-size-overridden'
-      ),
+      fontSize: fontSizeAttribute,
       fontName: {
         default: null,
         renderHTML: (attributes) => {
@@ -133,11 +347,7 @@ export const TableHeaderEx = TableHeader.extend({
             return {};
           }
 
-          const fontName = normalizeCssSize(
-            attributes.fontName,
-            null
-          );
-
+          const fontName = normalizeCssSize(attributes.fontName, null);
           return {
             fontName,
             style: `font-family: ${fontName};`,
@@ -146,329 +356,37 @@ export const TableHeaderEx = TableHeader.extend({
         parseHTML: (element) => {
           return normalizeCssSize(
             element.getAttribute('fontName') ??
-            element.dataset.fontName ??
-            element.style.fontFamily,
+              element.dataset.fontName ??
+              element.style.fontFamily,
             null
           );
         },
       },
-      fontNameOverridden: createOverrideAttribute(
-        'fontNameOverridden',
-        'font-name-overridden'
+      fontWeight: createInlineStyleAttribute(
+        'fontWeight',
+        'font-weight',
+        'fontWeight'
       ),
-      fontWeight: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.fontWeight
-            ? { style: `font-weight: ${attributes.fontWeight};` }
-            : {};
-        },
-        parseHTML: (element) => element.style.fontWeight || null,
-      },
-      fontWeightOverridden: createOverrideAttribute(
-        'fontWeightOverridden',
-        'font-weight-overridden'
+      fontStyle: createInlineStyleAttribute(
+        'fontStyle',
+        'font-style',
+        'fontStyle'
       ),
-      fontStyle: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.fontStyle
-            ? { style: `font-style: ${attributes.fontStyle};` }
-            : {};
-        },
-        parseHTML: (element) => element.style.fontStyle || null,
-      },
-      fontStyleOverridden: createOverrideAttribute(
-        'fontStyleOverridden',
-        'font-style-overridden'
+      textDecoration: createInlineStyleAttribute(
+        'textDecoration',
+        'text-decoration',
+        'textDecoration'
       ),
-      textDecoration: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.textDecoration
-            ? { style: `text-decoration: ${attributes.textDecoration};` }
-            : {};
-        },
-        parseHTML: (element) => element.style.textDecoration || null,
-      },
-      textDecorationOverridden: createOverrideAttribute(
-        'textDecorationOverridden',
-        'text-decoration-overridden'
+      textColor: createInlineStyleAttribute('textColor', 'color', 'color'),
+      textAlign: createInlineStyleAttribute(
+        'textAlign',
+        'text-align',
+        'textAlign'
       ),
-      textColor: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.textColor
-            ? { style: `color: ${attributes.textColor};` }
-            : {};
-        },
-        parseHTML: (element) => element.style.color || null,
-      },
-      textColorOverridden: createOverrideAttribute(
-        'textColorOverridden',
-        'text-color-overridden'
-      ),
-      textAlign: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.textAlign
-            ? { style: `text-align: ${attributes.textAlign};` }
-            : {};
-        },
-        parseHTML: (element) => element.style.textAlign || null,
-      },
-      textAlignOverridden: createOverrideAttribute(
-        'textAlignOverridden',
-        'text-align-overridden'
-      ),
-      letterSpacing: {
-        default: DEFAULT_LETTER_SPACING,
-        renderHTML: (attributes) => {
-          const letterSpacing = normalizeCssSize(
-            attributes.letterSpacing,
-            DEFAULT_LETTER_SPACING
-          );
-          return {
-            letterSpacing,
-            style: `letter-spacing: ${letterSpacing};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('letterSpacing') ??
-            element.dataset.letterSpacing ??
-            element.style.letterSpacing,
-            DEFAULT_LETTER_SPACING
-          );
-        },
-      },
-      letterSpacingOverridden: createOverrideAttribute(
-        'letterSpacingOverridden',
-        'letter-spacing-overridden'
-      ),
-      marginTop: {
-        default: null,
-        renderHTML: (attributes) => {
-          const marginTop = normalizeCssSize(
-            attributes.marginTop,
-            null
-          );
-          return {
-            marginTop,
-            style: `margin-top: ${marginTop};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('marginTop') ??
-            element.dataset.marginTop ??
-            element.style.marginTop,
-            null
-          );
-        },
-      },
-      marginBottom: {
-        default: null,
-        renderHTML: (attributes) => {
-          const marginBottom = normalizeCssSize(
-            attributes.marginBottom,
-            null
-          );
-          return {
-            marginBottom,
-            style: `margin-bottom: ${marginBottom};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('marginBottom') ??
-            element.getAttribute('MarginBottom') ??
-            element.dataset.marginBottom ??
-            element.style.marginBottom,
-            null
-          );
-        },
-      },
-      marginLeft: {
-        default: null,
-        renderHTML: (attributes) => {
-          const marginLeft = normalizeCssSize(
-            attributes.marginLeft,
-            null
-          );
-          return {
-            marginLeft,
-            style: `margin-left: ${marginLeft};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('marginLeft') ??
-            element.dataset.marginLeft ??
-            element.style.marginLeft,
-            null
-          );
-        },
-      },
-      marginRight: {
-        default: null,
-        renderHTML: (attributes) => {
-          const marginRight = normalizeCssSize(
-            attributes.marginRight,
-            null
-          );
-          return {
-            marginRight,
-            style: `margin-right: ${marginRight};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('marginRight') ??
-            element.getAttribute('MarginRight') ??
-            element.dataset.marginRight ??
-            element.style.marginRight,
-            null
-          );
-        },
-      },
-      paddingTop: {
-        default: null,
-        renderHTML: (attributes) => {
-          const paddingTop = normalizeCssSize(
-            attributes.paddingTop,
-            null
-          );
-          return {
-            paddingTop: paddingTop,
-            style: `padding-top: ${paddingTop};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('PaddingTop') ??
-            element.getAttribute('paddingTop') ??
-            element.dataset.paddingTop ??
-            element.style.paddingTop,
-            null
-          );
-        },
-      },
-      paddingBottom: {
-        default: null,
-        renderHTML: (attributes) => {
-          const paddingBottom = normalizeCssSize(
-            attributes.paddingBottom,
-            null
-          );
-          return {
-            paddingBottom: paddingBottom,
-            style: `padding-bottom: ${paddingBottom};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('paddingBottom') ??
-            element.dataset.paddingBottom ??
-            element.style.paddingBottom,
-            null
-          );
-        },
-      },
-
-      paddingRight: {
-        default: null,
-        renderHTML: (attributes) => {
-          const paddingRight = normalizeCssSize(
-            attributes.paddingRight,
-            null
-          );
-          return {
-            paddingRight: paddingRight,
-            style: `padding-right: ${paddingRight};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('paddingRight') ??
-            element.getAttribute('paddingRight') ??
-            element.dataset.paddingRight ??
-            element.style.paddingRight,
-            null
-          );
-        },
-      },
-
-      paddingLeft: {
-        default: null,
-        renderHTML: (attributes) => {
-          const paddingLeft = normalizeCssSize(
-            attributes.paddingLeft,
-            null
-          );
-          return {
-            paddingLeft: paddingLeft,
-            style: `padding-left: ${paddingLeft};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('paddingLeft') ??
-            element.getAttribute('paddingLeft') ??
-            element.dataset.paddingLeft ??
-            element.style.paddingLeft,
-            null
-          );
-        },
-      },
-
-      lineHeight: {
-        default: DEFAULT_LINE_HEIGHT,
-        renderHTML: (attributes) => {
-          const lineHeight = normalizeCssSize(
-            attributes.lineHeight,
-            DEFAULT_LINE_HEIGHT
-          );
-          return {
-            lineHeight: lineHeight,
-            style: `line-height: ${lineHeight};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('lineHeight') ??
-            element.dataset.lineHeight ??
-            element.style.lineHeight,
-            DEFAULT_LINE_HEIGHT
-          );
-        },
-      },
-      lineHeightOverridden: createOverrideAttribute(
-        'lineHeightOverridden',
-        'line-height-overridden'
-      ),
-      borderWidth: {
-        default: DEFAULT_BORDER_WIDTH,
-        renderHTML: (attributes) => {
-          const borderWidth = normalizeCssSize(
-            attributes.borderWidth,
-            DEFAULT_BORDER_WIDTH
-          );
-          return {
-            borderWidth: borderWidth,
-            style: `border-width: ${borderWidth};`,
-          };
-        },
-        parseHTML: (element) => {
-          return normalizeCssSize(
-            element.getAttribute('borderWidth') ??
-            element.getAttribute('borderWidth') ??
-            element.dataset.borderWidth ??
-            element.style.borderWidth,
-            DEFAULT_BORDER_WIDTH
-          );
-        },
-      },
+      letterSpacing: letterSpacingAttribute,
+      ...spacingAttributes,
+      lineHeight: lineHeightAttribute,
+      borderWidth: borderWidthAttribute,
       backgroundColor: {
         default: null,
         renderHTML: (attributes) => {
@@ -476,53 +394,16 @@ export const TableHeaderEx = TableHeader.extend({
             return {};
           }
           return {
-            style: `background-color:  ${attributes.backgroundColor?.color || attributes.backgroundColor};`,
+            style: `background-color:  ${
+              attributes.backgroundColor?.color || attributes.backgroundColor
+            };`,
           };
         },
         parseHTML: (element) => {
           return element.style.backgroundColor.replaceAll(/['"]/g, '');
         },
       },
-      backgroundColorOverridden: createOverrideAttribute(
-        'backgroundColorOverridden',
-        'background-color-overridden'
-      ),
-      borderLeft: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderLeft
-            ? { style: `border-left: ${attributes.borderLeft}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderLeft || null,
-      },
-      borderRight: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderRight
-            ? { style: `border-right: ${attributes.borderRight}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderRight || null,
-      },
-      borderTop: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderTop
-            ? { style: `border-top: ${attributes.borderTop}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderTop || null,
-      },
-      borderBottom: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderBottom
-            ? { style: `border-bottom: ${attributes.borderBottom}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderBottom || null,
-      },
+      ...createBorderAttributes(),
       borderColor: {
         default: null,
         renderHTML: (attributes) => {
@@ -537,114 +418,6 @@ export const TableHeaderEx = TableHeader.extend({
         parseHTML: (element) => {
           return element.style.borderColor.replaceAll(/['"]/g, '');
         },
-      },
-      borderLeftWidth: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderLeftWidth
-            ? { style: `border-left-width: ${attributes.borderLeftWidth}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderLeftWidth || null,
-      },
-      borderRightWidth: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderRightWidth
-            ? { style: `border-right-width: ${attributes.borderRightWidth}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderRightWidth || null,
-      },
-      borderTopWidth: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderTopWidth
-            ? { style: `border-top-width: ${attributes.borderTopWidth}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderTopWidth || null,
-      },
-      borderBottomWidth: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderBottomWidth
-            ? { style: `border-bottom-width: ${attributes.borderBottomWidth}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderBottomWidth || null,
-      },
-      borderLeftColor: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderLeftColor
-            ? { style: `border-left-color: ${attributes.borderLeftColor}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderLeftColor || null,
-      },
-      borderRightColor: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderRightColor
-            ? { style: `border-right-color: ${attributes.borderRightColor}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderRightColor || null,
-      },
-      borderTopColor: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderTopColor
-            ? { style: `border-top-color: ${attributes.borderTopColor}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderTopColor || null,
-      },
-      borderBottomColor: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderBottomColor
-            ? { style: `border-bottom-color: ${attributes.borderBottomColor}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderBottomColor || null,
-      },
-      borderBottomStyle: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderBottomStyle
-            ? { style: `border-bottom-style: ${attributes.borderBottomStyle}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderBottomStyle || null,
-      },
-      borderTopStyle: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderTopStyle
-            ? { style: `border-top-style: ${attributes.borderTopStyle}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderTopStyle || null,
-      },
-      borderLeftStyle: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderLeftStyle
-            ? { style: `border-left-style: ${attributes.borderLeftStyle}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderLeftStyle || null,
-      },
-      borderRightStyle: {
-        default: null,
-        renderHTML: (attributes) => {
-          return attributes.borderRightStyle
-            ? { style: `border-right-style: ${attributes.borderRightStyle}` }
-            : {};
-        },
-        parseHTML: (element) => element.style.borderRightStyle || null,
       },
       verticalAlign: {
         default: null,
@@ -663,10 +436,7 @@ export const TableHeaderEx = TableHeader.extend({
           element.getAttribute('vAlign') ||
           null,
       },
-      verticalAlignOverridden: createOverrideAttribute(
-        'verticalAlignOverridden',
-        'vertical-align-overridden'
-      ),
+      ...overrideAttributes,
     };
   },
 });
