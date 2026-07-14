@@ -491,6 +491,25 @@ describe('customstyledropdowncommand', () => {
       customstyledropdowncommand.isSelectionInsideTableCell(tableState)
     ).toBe(true);
   });
+  it('allows toolbar styles inside a vignette cell', () => {
+    const cellPosition = {
+      depth: 1,
+      node: () => ({
+        attrs: { vignette: true },
+        type: { spec: { tableRole: 'cell' } },
+      }),
+    };
+    const vignetteState = {
+      selection: {
+        $from: cellPosition,
+        $to: cellPosition,
+      },
+    } as unknown as EditorState;
+
+    expect(
+      customstyledropdowncommand.isSelectionInsideTableCell(vignetteState)
+    ).toBe(false);
+  });
   it('should handle render when styleName null', () => {
     const spy = jest.spyOn(cusstyles, 'getStylesAsync').mockResolvedValue([
       {

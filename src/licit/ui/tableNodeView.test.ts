@@ -37,6 +37,7 @@ describe('LicitTableNodeView', () => {
       text: {group: 'inline'},
       paragraph: {content: 'inline*', group: 'block'},
       table: {
+        attrs: {vignette: {default: false}},
         content: 'table_row+',
         group: 'block',
         tableRole: 'table',
@@ -100,8 +101,24 @@ describe('LicitTableNodeView', () => {
     ]);
   });
 
-  function createTableNode(): ProseMirrorNode {
-    return schema.nodes.table.create(null, [
+  it('does not offer Apply Style for a vignette', () => {
+    const tableNode = createTableNode(true);
+    const doc = schema.nodes.doc.create(null, [tableNode]);
+    const tableView = new LicitTableNodeView(
+      tableNode,
+      100,
+      createEditorView(doc)
+    );
+
+    expect(tableView['_getMenuItems']().map((item) => item.id)).toEqual([
+      'insert-above',
+      'insert-below',
+      'delete',
+    ]);
+  });
+
+  function createTableNode(vignette = false): ProseMirrorNode {
+    return schema.nodes.table.create({vignette}, [
       schema.nodes.table_row.create(null, [
         schema.nodes.table_cell.create(null, [schema.nodes.paragraph.create()]),
       ]),

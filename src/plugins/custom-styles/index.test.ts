@@ -4784,6 +4784,103 @@ describe('isDocChanged', () => {
 });
 
 describe('applyStyleForNextParagraph', () => {
+  it.each([
+    ['Table', false],
+    ['EIC Table', true],
+  ])(
+    'continues the stored table style after Enter in a %s',
+    (_label, isEicTable) => {
+      const previousParagraph = {
+        type: { name: 'paragraph' },
+        isBlock: true,
+        attrs: { styleName: 'Table body' },
+      };
+      const nextParagraph = {
+        type: { name: 'paragraph' },
+        isBlock: true,
+        attrs: { styleName: 'Normal' },
+        content: { size: 0 },
+        descendants: jest.fn(),
+      };
+      const cell = {
+        type: { name: 'tableCell' },
+        isBlock: true,
+        child: jest.fn(() => previousParagraph),
+      };
+      const row = { type: { name: 'tableRow' }, isBlock: true };
+      const table = {
+        type: { name: 'table' },
+        isBlock: true,
+        attrs: { tableStyleName: 'Table body' },
+      };
+      const docNode = { type: { name: 'doc' }, isBlock: true };
+      const ancestors = isEicTable
+        ? [
+          docNode,
+          { type: { name: 'enhanced_table_figure' }, isBlock: true },
+          { type: { name: 'enhanced_table_figure_body' }, isBlock: true },
+          table,
+          row,
+          cell,
+          nextParagraph,
+        ]
+        : [docNode, table, row, cell, nextParagraph];
+      const paragraphDepth = ancestors.length - 1;
+      const cellDepth = paragraphDepth - 1;
+      const mockFrom = {
+        depth: paragraphDepth,
+        node(depth: number) {
+          return ancestors[depth < 0 ? paragraphDepth + depth : depth];
+        },
+        index(depth: number) {
+          return depth === cellDepth ? 1 : 0;
+        },
+      };
+      const setNodeMarkup = jest.fn();
+      const transaction = {
+        setNodeMarkup,
+      };
+      setNodeMarkup.mockReturnValue(transaction);
+      const styleSpy = jest
+        .spyOn(CustStyl, 'getCustomStyleByName')
+        .mockReturnValue({
+          styleName: 'Table body',
+          styles: {
+            align: 'center',
+            nextLineStyleName: 'Normal',
+          },
+        });
+      const marksSpy = jest
+        .spyOn(ccommand, 'getMarkByStyleName')
+        .mockReturnValue([]);
+
+      const previousState = {
+        selection: { from: 5 },
+      };
+      const nextState = {
+        doc: { nodeAt: () => nextParagraph },
+        selection: { $from: mockFrom, from: 7 },
+        schema: {},
+      };
+
+      applyStyleForNextParagraph(
+        previousState,
+        nextState,
+        transaction as unknown as ApplyNextTr,
+        { input: { lastKeyCode: 13 } }
+      );
+
+      expect(setNodeMarkup).toHaveBeenCalledWith(
+        6,
+        undefined,
+        expect.objectContaining({ styleName: 'Table body' })
+      );
+
+      styleSpy.mockRestore();
+      marksSpy.mockRestore();
+    }
+  );
+
   it('should handle applyStyleForNextParagraph (case 3)', () => {
     const paragraph1 = {
       type: { name: 'paragraph' },

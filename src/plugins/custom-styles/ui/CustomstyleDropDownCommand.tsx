@@ -122,13 +122,23 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
     const positions = [editorState.selection.$from, editorState.selection.$to];
 
     return positions.some(($pos) => {
+      let isInsideCell = false;
+      let isVignette = false;
+
       for (let depth = $pos.depth; depth > 0; depth--) {
-        const tableRole = $pos.node(depth).type.spec.tableRole;
+        const node = $pos.node(depth);
+        const tableRole = node.type.spec.tableRole;
         if (tableRole === 'cell' || tableRole === 'header_cell') {
-          return true;
+          isInsideCell = true;
+        }
+        if (node.attrs?.vignette === true || node.attrs?.vignette === 'true') {
+          isVignette = true;
         }
       }
-      return false;
+
+      // Ordinary and EIC tables are single-style containers, so their cells
+      // cannot use the toolbar. Vignettes intentionally keep per-cell styling.
+      return isInsideCell && !isVignette;
     });
   }
 

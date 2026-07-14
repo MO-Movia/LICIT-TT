@@ -207,7 +207,7 @@ export class LicitTableNodeView extends TableView {
   };
 
   private _getMenuItems(): BlockControlMenuItem[] {
-    return [
+    const items: BlockControlMenuItem[] = [
       {
         id: 'insert-above',
         label: 'Insert Paragraph Above',
@@ -221,19 +221,29 @@ export class LicitTableNodeView extends TableView {
         action: () => this._insertParagraph('below'),
       },
       {
-        id: 'apply-style',
-        label: 'Apply Style',
-        icon: getBlockControlIcon('style', 'Apply Style'),
-        action: (anchor) => this._openStylePicker(anchor),
-        onHover: (anchor) => this._openStylePicker(anchor),
-      },
-      {
         id: 'delete',
         label: 'Delete',
         icon: getBlockControlIcon('delete', 'Delete'),
         action: () => this._deleteTable(),
       },
     ];
+
+    if (!this._isVignette()) {
+      items.splice(2, 0, {
+        id: 'apply-style',
+        label: 'Apply Style',
+        icon: getBlockControlIcon('style', 'Apply Style'),
+        action: (anchor) => this._openStylePicker(anchor),
+        onHover: (anchor) => this._openStylePicker(anchor),
+      });
+    }
+
+    return items;
+  }
+
+  private _isVignette(): boolean {
+    const vignette = this._node.attrs?.vignette;
+    return vignette === true || vignette === 'true';
   }
 
   private _getTableInfo(): {node: ProseMirrorNode; pos: number} | null {
@@ -250,7 +260,7 @@ export class LicitTableNodeView extends TableView {
   }
 
   private _openStylePicker(anchor?: HTMLElement): boolean {
-    if (!anchor || !this._view) {
+    if (this._isVignette() || !anchor || !this._view) {
       return true;
     }
 
