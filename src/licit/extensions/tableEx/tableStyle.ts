@@ -26,6 +26,10 @@ function isStylableNode(node: Node): boolean {
   );
 }
 
+function isVignetteTable(node: Node): boolean {
+  return node.attrs?.vignette === true || node.attrs?.vignette === 'true';
+}
+
 export function normalizeTableStyleName(styleName: string): string {
   return styleName === 'Default' ? RESERVED_STYLE_NONE : styleName;
 }
@@ -98,6 +102,30 @@ export function applyTableStyle(
 }
 
 /**
+ * Reapplies the selected table style after content-changing operations such as
+ * paste. Vignettes are excluded because they intentionally support per-cell
+ * toolbar styles.
+ */
+export function applyStoredTableStyleAtSelection(
+  state: EditorState,
+  tr: Transform
+): Transform {
+  const table = findTableAtSelection(state);
+  const styleName = table?.node.attrs?.[TABLE_STYLE_NAME_ATTRIBUTE];
+
+  if (
+    !table ||
+    isVignetteTable(table.node) ||
+    typeof styleName !== 'string' ||
+    !styleName
+  ) {
+    return tr;
+  }
+
+  return applyTableStyle(state, tr, table.pos, styleName);
+}
+
+/**
  * Restores the table's selected style after a structural table command creates
  * new cells. Existing cells are deliberately included so a table remains one
  * coherent style after row and column operations.
@@ -112,6 +140,7 @@ export function applyStoredTableStyles(
     const styleName = node.attrs?.[TABLE_STYLE_NAME_ATTRIBUTE];
     if (
       node.type.name === 'table' &&
+      !isVignetteTable(node) &&
       typeof styleName === 'string' &&
       styleName
     ) {

@@ -33,6 +33,9 @@ import { Fragment, Mark, Node, Schema, Slice } from 'prosemirror-model';
 import { CustomstyleDropDownCommand } from './ui/CustomstyleDropDownCommand';
 import { applyEffectiveSchema } from './EditorSchema';
 import type { StyleRuntime } from './StyleRuntime';
+import {
+  applyStoredTableStyleAtSelection,
+} from '../../licit/extensions/tableEx/tableStyle';
 export * from './StyleRuntime';
 
 const ENTERKEYCODE = 13;
@@ -272,6 +275,12 @@ export function onUpdateAppendTransaction(
     csview,
     tr
   );
+  if (isPaste) {
+    tr = applyStoredTableStyleAtSelection(
+      nextState,
+      tr ?? nextState.tr
+    ) as Transaction;
+  }
 
   return tr;
 }

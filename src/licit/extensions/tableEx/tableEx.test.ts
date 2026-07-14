@@ -14,7 +14,11 @@ import { TableHeaderEx } from '../tableHeaderEx';
 import { TableCellEx } from '../tableCellEx';
 import ParagraphNodeSpec from '../../specs/paragraphNodeSpec';
 import { setStyles } from '../../../plugins/custom-styles/customStyle';
-import { applyTableStyle, TABLE_STYLE_NAME_ATTRIBUTE } from './tableStyle';
+import {
+  applyStoredTableStyleAtSelection,
+  applyTableStyle,
+  TABLE_STYLE_NAME_ATTRIBUTE,
+} from './tableStyle';
 import type { Node as PMNode } from 'prosemirror-model';
 
 describe('TableEx Extension', () => {
@@ -319,6 +323,51 @@ describe('TableEx Extension', () => {
       });
 
       expect(paragraphStyleNames).toEqual(['Table body', 'Table body']);
+    });
+
+    test('reapplies the table style to pasted paragraphs', () => {
+      let tablePos = 0;
+      let firstParagraphPos = 0;
+
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'table') {
+          tablePos = pos;
+        }
+        if (node.type.name === 'paragraph' && firstParagraphPos === 0) {
+          firstParagraphPos = pos;
+        }
+      });
+
+      editor.commands.setTextSelection(firstParagraphPos + 1);
+      editor.view.dispatch(
+        applyTableStyle(editor.state, editor.state.tr, tablePos, 'Table body')
+      );
+
+      const firstParagraph = editor.state.doc.nodeAt(firstParagraphPos);
+      const pastedParagraph = editor.schema.nodes.paragraph.create(
+        { styleName: 'Pasted style' },
+        editor.schema.text('Pasted content')
+      );
+      const pasteTr = editor.state.tr.insert(
+        firstParagraphPos + firstParagraph.nodeSize,
+        pastedParagraph
+      );
+      const pastedState = editor.state.apply(pasteTr);
+      const restoredTr = applyStoredTableStyleAtSelection(
+        pastedState,
+        pastedState.tr
+      );
+      const paragraphStyleNames: string[] = [];
+
+      restoredTr.doc.nodeAt(tablePos).descendants((node) => {
+        if (node.type.name === 'paragraph') {
+          paragraphStyleNames.push(node.attrs.styleName);
+        }
+      });
+
+      expect(paragraphStyleNames).toEqual(
+        Array(paragraphStyleNames.length).fill('Table body')
+      );
     });
   });
 
