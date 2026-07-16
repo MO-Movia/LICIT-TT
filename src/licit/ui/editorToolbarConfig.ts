@@ -93,7 +93,7 @@ export const TABLE_COMMANDS_GROUP = [
     'Delete Table': TABLE_DELETE_TABLE,
   },
   {
-    'Table Details': TABLE_DETAILS,
+    'Table Settings': TABLE_DETAILS,
   },
 ];
 
