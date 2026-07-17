@@ -119,13 +119,7 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   hasNotes(): boolean {
-    for (let index = 0; index < this.node.childCount; index++) {
-      const child = this.node.child(index);
-      if (child.type.name === 'enhanced_table_figure_notes') {
-        return true;
-      }
-    }
-    return false;
+    return this.findNotes() !== null;
   }
 
   updateNotesTrigger(): void {
@@ -185,8 +179,9 @@ export class EnhancedTableFigureView implements NodeView {
   private getMenuItems(): BlockControlMenuItem[] {
     const figureType = this.node.attrs.figureType;
     const hasImage = this.findImagePath(this.getPos()) !== null;
+    const hasNotes = this.hasNotes();
     const canAddNotes =
-      !this.hasNotes() && (figureType === 'table' || figureType === 'figure');
+      !hasNotes && (figureType === 'table' || figureType === 'figure');
 
     return [
       {
@@ -207,6 +202,13 @@ export class EnhancedTableFigureView implements NodeView {
         icon: getBlockControlIcon('addNotes', 'Add Notes'),
         action: () => this.addNotes(),
         hidden: !canAddNotes,
+      },
+      {
+        id: 'delete-notes',
+        label: 'Delete Notes',
+        icon: getBlockControlIcon('deleteNotes', 'Delete Notes'),
+        action: () => this.deleteNotes(),
+        hidden: !hasNotes,
       },
       {
         id: 'crop',
@@ -278,6 +280,16 @@ export class EnhancedTableFigureView implements NodeView {
     dispatch(
       addNotesCommand(state.tr, state.schema, this.getPos()) as Transaction
     );
+  }
+
+  private deleteNotes(): void {
+    const notes = this.findNotes();
+    if (notes === null) {
+      return;
+    }
+
+    const { state, dispatch } = this.view;
+    dispatch(state.tr.delete(notes.pos, notes.pos + notes.node.nodeSize));
   }
 
   private deleteFigure(): void {
@@ -406,6 +418,22 @@ export class EnhancedTableFigureView implements NodeView {
       const imagePath = this.findNestedImageInNode(child, figurePos + 1 + offset);
       if (imagePath !== null) {
         return imagePath;
+      }
+      offset += child.nodeSize;
+    }
+
+    return null;
+  }
+
+  private findNotes(): { node: ProseMirrorNode; pos: number } | null {
+    let offset = 0;
+    for (let index = 0; index < this.node.childCount; index++) {
+      const child = this.node.child(index);
+      if (child.type.name === 'enhanced_table_figure_notes') {
+        return {
+          node: child,
+          pos: this.getPos() + 1 + offset,
+        };
       }
       offset += child.nodeSize;
     }

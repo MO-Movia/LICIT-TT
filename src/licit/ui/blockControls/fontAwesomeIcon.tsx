@@ -13,6 +13,7 @@ const ICON_CLASS_NAMES = {
   clipboard: 'fa-clipboard',
   crop: 'fa-crop',
   delete: 'fa-trash',
+  deleteNotes: 'fa-window-close',
   file: 'fa-folder-o',
   floatLeft: 'fa-indent',
   floatRight: 'fa-outdent',
