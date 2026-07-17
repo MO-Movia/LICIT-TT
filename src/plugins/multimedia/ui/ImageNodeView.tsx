@@ -213,7 +213,12 @@ export class ImageViewBody extends React.PureComponent<
     const {attrs} = node;
     const {align, crop, rotate} = attrs;
 
-    const retVal = this.assignVal(focused, readOnly, attrs.src);
+    const retVal = this.assignVal(
+      originalSize,
+      focused,
+      readOnly,
+      attrs.src
+    );
     const loading = retVal.loading;
     const active = retVal.active;
     const src = retVal.src;
@@ -349,12 +354,19 @@ export class ImageViewBody extends React.PureComponent<
     );
   }
 
-  assignVal(focused: boolean, readOnly: boolean, src = '') {
-    // It's only active when the image's fully loaded.
+  assignVal(
+    originalSize: OriginalSize,
+    focused: boolean,
+    readOnly: boolean,
+    currentSrc = ''
+  ) {
+    // Keep the image and its controls available while dimensions resolve.
     const loading = false;
     const active = focused && !readOnly;
-    // Keep displaying current src while original size resolves.
-    const aspectRatio = 1;
+    const src = currentSrc || '';
+    const aspectRatio = originalSize.height
+      ? originalSize.width / originalSize.height
+      : 1;
     const error = false;
     return { loading, active, src, aspectRatio, error };
   }
