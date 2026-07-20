@@ -16,6 +16,7 @@ import { setPluginKey } from '../core';
 import TableCellMenuPlugin from './plugins/tableCellMenuPlugin';
 import { LandscapePlugin } from './plugins/LandscapePlugin';
 import ListPasteNormalizerPlugin from './plugins/listPasteNormalizerPlugin';
+import createTableRowResizingPlugin from './plugins/createTableRowResizingPlugin';
 
 jest.mock('./plugins/contentPlaceholderPlugin', () => jest.fn(() => new Plugin({})));
 jest.mock('./plugins/cursorPlaceholderPlugin', () => jest.fn(() => new Plugin({})));
@@ -23,6 +24,9 @@ jest.mock('./plugins/editorPageLayoutPlugin', () => jest.fn(() => new Plugin({})
 jest.mock('./plugins/linkTooltipPlugin', () => jest.fn(() => new Plugin({})));
 jest.mock('./plugins/selectionPlaceholderPlugin', () => jest.fn(() => new Plugin({})));
 jest.mock('./plugins/tableCellMenuPlugin', () => jest.fn(() => new Plugin({})));
+jest.mock('./plugins/createTableRowResizingPlugin', () =>
+  jest.fn(() => new Plugin({}))
+);
 jest.mock('./plugins/LandscapePlugin', () => ({
     LandscapePlugin: jest.fn(() => new Plugin({})),
 }));
@@ -61,6 +65,7 @@ describe('DefaultEditorPlugins', () => {
         expect(LinkTooltipPlugin).toHaveBeenCalledTimes(1);
         expect(SelectionPlaceholderPlugin).toHaveBeenCalledTimes(1);
         expect(TableCellMenuPlugin).toHaveBeenCalledTimes(1);
+        expect(createTableRowResizingPlugin).toHaveBeenCalledTimes(1);
         expect(LandscapePlugin).toHaveBeenCalledTimes(1);
         expect(ListPasteNormalizerPlugin).toHaveBeenCalledTimes(1);
         expect(buildInputRules).toHaveBeenCalledWith(schema);

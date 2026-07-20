@@ -8,7 +8,7 @@ import { MarkSpec } from 'prosemirror-model';
 const HangingIndentMarkSpec: MarkSpec = {
   attrs: {
     prefix: { default: null },
-    overridden: { default: false },
+    overridden: { default: true },
   },
   inline: true,
   group: 'inline',

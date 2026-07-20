@@ -164,7 +164,7 @@
 }
 
 /* CodeBlock */
-.ProseMirror pre>code {
+.ProseMirror pre > code {
   background-color: #eee;
   border: 1px solid #999;
   display: block;
@@ -173,7 +173,6 @@
 
 /* Spacer */
 .ProseMirror span[data-spacer-size] {
-  display: inline-block;
   letter-spacing: 12px;
 }
 
