@@ -4855,12 +4855,12 @@ describe('applyStyleForNextParagraph', () => {
         .mockReturnValue([]);
 
       const previousState = {
-        selection: { from: 5 },
+        selection: asSelection({ from: 5 }),
       };
       const nextState = {
-        doc: { nodeAt: () => nextParagraph },
-        selection: { $from: mockFrom, from: 7 },
-        schema: {},
+        doc: asNode({ nodeAt: () => nextParagraph }),
+        selection: asSelection({ $from: mockFrom, from: 7 }),
+        schema: {} as Schema,
       };
 
       applyStyleForNextParagraph(

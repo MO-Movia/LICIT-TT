@@ -902,16 +902,26 @@ function executeStyleCommand(
     : (returnVal as Transaction | Transform);
 }
 
+type TableColumnCellStyleContext = {
+  node: Node;
+  opt?: number;
+  restoreSelection?: boolean;
+  startPos: number;
+};
+
 export function applyStyleForTableColumnCell(
   styleProp: Style,
   styleName: string,
   state: EditorState,
   tr: Transaction | Transform,
-  node: Node,
-  startPos: number,
-  opt?: number,
-  restoreSelection = true
+  context: TableColumnCellStyleContext
 ): Transaction | Transform {
+  const {
+    node,
+    opt,
+    restoreSelection = true,
+    startPos,
+  } = context;
   const loading = !styleProp;
   tr = removeAllMarksExceptLinkForTableColumnCell(startPos, node, tr);
 
@@ -1701,8 +1711,10 @@ export function applyStyleToEachNode(
             styleName,
             state,
             tr,
-            paraNode,
-            paraPos
+            {
+              node: paraNode,
+              startPos: paraPos,
+            }
           );
         }
       });

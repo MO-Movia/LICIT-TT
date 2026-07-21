@@ -12,7 +12,9 @@ import { getCustomStyleByName } from '../../../plugins/custom-styles/customStyle
 import { RESERVED_STYLE_NONE } from '../../../plugins/custom-styles/CustomStyleNodeSpec';
 
 export const TABLE_STYLE_NAME_ATTRIBUTE = 'tableStyleName';
-export const DEFAULT_TABLE_STYLE_NAME = RESERVED_STYLE_NONE;
+export {
+  RESERVED_STYLE_NONE as DEFAULT_TABLE_STYLE_NAME,
+} from '../../../plugins/custom-styles/CustomStyleNodeSpec';
 
 type TableAtPosition = {
   node: Node;
@@ -66,7 +68,7 @@ export function applyTableStyle(
   const normalizedStyleName = normalizeTableStyleName(styleName);
   const table = tr.doc.nodeAt(tablePos);
 
-  if (!table || table.type.name !== 'table') {
+  if (table?.type.name !== 'table') {
     return tr;
   }
 
@@ -90,10 +92,11 @@ export function applyTableStyle(
         normalizedStyleName,
         state,
         tr,
-        styledNode,
-        pos,
-        undefined,
-        false
+        {
+          node: styledNode,
+          restoreSelection: false,
+          startPos: pos,
+        }
       );
     }
   });

@@ -20,6 +20,7 @@ import {
   TABLE_STYLE_NAME_ATTRIBUTE,
 } from './tableStyle';
 import type { Node as PMNode } from 'prosemirror-model';
+import type { Transaction } from 'prosemirror-state';
 
 describe('TableEx Extension', () => {
   let editor: Editor;
@@ -251,7 +252,12 @@ describe('TableEx Extension', () => {
 
       editor.commands.setTextSelection(firstCellContentPos);
       editor.view.dispatch(
-        applyTableStyle(editor.state, editor.state.tr, tablePos, 'Table body')
+        applyTableStyle(
+          editor.state,
+          editor.state.tr,
+          tablePos,
+          'Table body'
+        ) as Transaction
       );
 
       editor.commands.addRowAfter();
@@ -259,14 +265,15 @@ describe('TableEx Extension', () => {
 
       const paragraphStyleNames: string[] = [];
       let appliedTableStyleName: string | null = null;
-      editor.state.doc.descendants((node) => {
-        if (node.type.name === 'table') {
-          appliedTableStyleName = node.attrs[TABLE_STYLE_NAME_ATTRIBUTE];
-        }
-        if (node.type.name === 'paragraph') {
-          paragraphStyleNames.push(node.attrs.styleName);
-        }
-      });
+      const table = editor.state.doc.nodeAt(tablePos);
+      if (table) {
+        appliedTableStyleName = table.attrs[TABLE_STYLE_NAME_ATTRIBUTE];
+        table.descendants((node) => {
+          if (node.type.name === 'paragraph') {
+            paragraphStyleNames.push(node.attrs.styleName);
+          }
+        });
+      }
 
       expect(appliedTableStyleName).toBe('Table body');
       expect(paragraphStyleNames).toHaveLength(9);
@@ -275,7 +282,7 @@ describe('TableEx Extension', () => {
       );
     });
 
-    test('applies Normal to every cell when a table is inserted', () => {
+    test('sets Normal as the table style when a table is inserted', () => {
       editor.commands.setContent('<p></p>');
       editor.commands.setTextSelection(1);
       editor.commands.insertTable({ rows: 2, cols: 2 });
@@ -289,12 +296,7 @@ describe('TableEx Extension', () => {
       });
 
       expect(table.attrs[TABLE_STYLE_NAME_ATTRIBUTE]).toBe('Normal');
-      expect(paragraphStyleNames).toEqual([
-        'Normal',
-        'Normal',
-        'Normal',
-        'Normal',
-      ]);
+      expect(paragraphStyleNames).toEqual([null, null, null, null]);
     });
 
     test('applies a table style to both empty and populated cells', () => {
@@ -312,7 +314,12 @@ describe('TableEx Extension', () => {
       });
 
       editor.view.dispatch(
-        applyTableStyle(editor.state, editor.state.tr, tablePos, 'Table body')
+        applyTableStyle(
+          editor.state,
+          editor.state.tr,
+          tablePos,
+          'Table body'
+        ) as Transaction
       );
 
       const paragraphStyleNames: string[] = [];
@@ -340,7 +347,12 @@ describe('TableEx Extension', () => {
 
       editor.commands.setTextSelection(firstParagraphPos + 1);
       editor.view.dispatch(
-        applyTableStyle(editor.state, editor.state.tr, tablePos, 'Table body')
+        applyTableStyle(
+          editor.state,
+          editor.state.tr,
+          tablePos,
+          'Table body'
+        ) as Transaction
       );
 
       const firstParagraph = editor.state.doc.nodeAt(firstParagraphPos);

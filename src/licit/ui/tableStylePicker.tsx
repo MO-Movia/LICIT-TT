@@ -87,7 +87,7 @@ export function openTableStylePicker({
 }: OpenTableStylePickerOptions): PopUpHandle | null {
   const tablePos = getTablePos();
   const table = tablePos === null ? null : view.state.doc.nodeAt(tablePos);
-  if (!table || table.type.spec.tableRole !== 'table') {
+  if (table?.type.spec.tableRole !== 'table') {
     return null;
   }
 
@@ -104,7 +104,7 @@ export function openTableStylePicker({
           currentTablePos === null
             ? null
             : view.state.doc.nodeAt(currentTablePos);
-        if (!currentTable || currentTable.type.spec.tableRole !== 'table') {
+        if (currentTable?.type.spec.tableRole !== 'table') {
           return;
         }
 
@@ -212,17 +212,19 @@ export class TableStylePicker extends React.PureComponent<
     );
   }
 
-  private _onSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
+  private readonly _onSearchChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ): void => {
     this.setState({ searchTerm: event.target.value });
   };
 
-  private _stopPropagation = (
+  private readonly _stopPropagation = (
     event: SyntheticEvent<HTMLInputElement>
   ): void => {
     event.stopPropagation();
   };
 
-  private _onCommand = (
+  private readonly _onCommand = (
     command: TableStyleItemCommand,
     event: SyntheticEvent<Element>
   ): void => {
@@ -231,7 +233,7 @@ export class TableStylePicker extends React.PureComponent<
     }
   };
 
-  private _onSelectStyle = (style: Style): void => {
+  private readonly _onSelectStyle = (style: Style): void => {
     this.props.onSelectStyle(style);
     this.props.onClose?.();
   };
