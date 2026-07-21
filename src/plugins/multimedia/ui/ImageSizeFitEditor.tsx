@@ -125,6 +125,18 @@ export function ImageSizeFitEditor({
   const widthValid = isValidDraft(widthDraft);
   const heightValid = isValidDraft(heightDraft);
   const valid = widthValid && heightValid;
+  const widthInputClassName = widthValid
+    ? 'czi-image-size-fit-input'
+    : 'czi-image-size-fit-input invalid';
+  const heightInputClassName = heightValid
+    ? 'czi-image-size-fit-input'
+    : 'czi-image-size-fit-input invalid';
+  const validationDescription = valid ? undefined : validationId;
+  const validationMessage = valid ? null : (
+    <p className="czi-image-size-fit-validation" id={validationId}>
+      Enter whole-pixel dimensions from 20 to 10,000 px.
+    </p>
+  );
 
   useEffect(() => {
     widthInputRef.current?.focus();
@@ -243,14 +255,10 @@ export function ImageSizeFitEditor({
         <div className="czi-image-size-fit-dimensions">
           <label className="czi-image-size-fit-field">
             <span>WIDTH (X)</span>
-            <span
-              className={
-                'czi-image-size-fit-input' + (!widthValid ? ' invalid' : '')
-              }
-            >
+            <span className={widthInputClassName}>
               <input
-                aria-describedby={!valid ? validationId : undefined}
-                aria-invalid={!widthValid}
+                aria-describedby={validationDescription}
+                aria-invalid={widthValid === false}
                 autoFocus={true}
                 inputMode="numeric"
                 max={MAX_DIMENSION}
@@ -283,14 +291,10 @@ export function ImageSizeFitEditor({
 
           <label className="czi-image-size-fit-field">
             <span>HEIGHT (Y)</span>
-            <span
-              className={
-                'czi-image-size-fit-input' + (!heightValid ? ' invalid' : '')
-              }
-            >
+            <span className={heightInputClassName}>
               <input
-                aria-describedby={!valid ? validationId : undefined}
-                aria-invalid={!heightValid}
+                aria-describedby={validationDescription}
+                aria-invalid={heightValid === false}
                 inputMode="numeric"
                 max={MAX_DIMENSION}
                 min={MIN_DIMENSION}
@@ -304,18 +308,14 @@ export function ImageSizeFitEditor({
           </label>
         </div>
 
-        {!valid ? (
-          <p className="czi-image-size-fit-validation" id={validationId}>
-            Enter whole-pixel dimensions from 20 to 10,000 px.
-          </p>
-        ) : null}
+        {validationMessage}
 
         <div className="czi-image-size-fit-actions">
           <button onClick={fitWidth} type="button">
             <i aria-hidden="true" className="fa fa-arrows-h" />
-            Fit Width
+            <span>Fit Width</span>
           </button>
-          <button disabled={!canReset} onClick={resetImage} type="button">
+          <button disabled={canReset === false} onClick={resetImage} type="button">
             Reset Image
           </button>
         </div>
@@ -333,7 +333,7 @@ export function ImageSizeFitEditor({
         <button onClick={cancel} type="button">
           Cancel
         </button>
-        <button className="primary" disabled={!valid} type="submit">
+        <button className="primary" disabled={valid === false} type="submit">
           Apply
         </button>
       </footer>

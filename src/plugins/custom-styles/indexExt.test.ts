@@ -15,9 +15,12 @@ import {
   applyStyleForEmptyParagraph,
   applyStyleForNextParagraph,
   CustomstylePlugin,
+  applyHangingIndentTransform,
+  applyNormalIfNoStyle,
   onUpdateAppendTransaction,
   onInitAppendTransaction,
   isDocChanged,
+  remapCounterFlags,
   resetTheDefaultStyleNameToNone,
   setNodeAttrs,
 } from './index';
@@ -571,5 +574,152 @@ describe('index branch coverage', () => {
     expect(
       (result as unknown as { storedMarks: unknown[] }).storedMarks
     ).toContain(mark);
+  });
+
+  it('remapCounterFlags exposes document counter flags on window', () => {
+    remapCounterFlags({
+      doc: {
+        attrs: {
+          counterFlags: {
+            customCounterFlag: true,
+          },
+        },
+      },
+    } as never);
+
+    const windowFlags = window as unknown as Record<string, unknown>;
+    expect(windowFlags.customCounterFlag).toBe(true);
+    delete windowFlags.customCounterFlag;
+  });
+
+  it('applyNormalIfNoStyle applies paragraph styles to eligible descendants', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          attrs: { styleName: { default: null } },
+          toDOM: () => ['p', 0],
+        },
+        text: { group: 'inline' },
+      },
+    });
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: null }, [schema.text('abc')]),
+    ]);
+    const state = EditorState.create({ doc, schema });
+    const applyLatestStyleSpy = jest
+      .spyOn(command, 'applyLatestStyle')
+      .mockImplementation((_styleName, _state, tr) => tr);
+
+    const result = applyNormalIfNoStyle(state, null, doc);
+
+    expect(result).toBeDefined();
+    expect(applyLatestStyleSpy).toHaveBeenCalledWith(
+      RESERVED_STYLE_NONE,
+      state,
+      expect.anything(),
+      expect.objectContaining({
+        node: doc.firstChild,
+        opt: undefined,
+        startPos: 0,
+      }),
+      null
+    );
+  });
+
+  it('applyHangingIndentTransform converts spacer marks into hanging indent anchors', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          attrs: { styleName: { default: RESERVED_STYLE_NONE } },
+          toDOM: () => ['p', 0],
+        },
+        text: { group: 'inline' },
+      },
+      marks: {
+        spacer: { toDOM: () => ['span', 0] },
+        'mark-hanging-indent': {
+          attrs: { prefix: { default: 0 }, overridden: { default: false } },
+          toDOM: () => ['span', 0],
+        },
+      },
+    });
+    const spacer = schema.marks.spacer.create();
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: RESERVED_STYLE_NONE }, [
+        schema.text(' ', [spacer]),
+        schema.text('Body'),
+      ]),
+    ]);
+    const state = EditorState.create({
+      doc,
+      schema,
+      selection: TextSelection.create(doc, 2),
+    });
+    const tr = state.tr;
+
+    const result = applyHangingIndentTransform(
+      tr,
+      state,
+      doc.firstChild,
+      0,
+      false
+    );
+
+    expect(result.steps.length).toBeGreaterThan(0);
+    expect(result.selection.from).toBeGreaterThan(0);
+  });
+
+  it('applyHangingIndentTransform returns early for existing hanging indents and non-paragraph nodes', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'paragraph+' },
+        paragraph: {
+          content: 'text*',
+          attrs: { styleName: { default: RESERVED_STYLE_NONE } },
+          toDOM: () => ['p', 0],
+        },
+        text: { group: 'inline' },
+      },
+      marks: {
+        spacer: { toDOM: () => ['span', 0] },
+        'mark-hanging-indent': {
+          attrs: { prefix: { default: 0 }, overridden: { default: false } },
+          toDOM: () => ['span', 0],
+        },
+      },
+    });
+    const spacer = schema.marks.spacer.create();
+    const hanging = schema.marks['mark-hanging-indent'].create({ prefix: 1 });
+    const doc = schema.node('doc', null, [
+      schema.node('paragraph', { styleName: RESERVED_STYLE_NONE }, [
+        schema.text(' ', [spacer]),
+        schema.text('Body', [hanging]),
+      ]),
+    ]);
+    const state = EditorState.create({
+      doc,
+      schema,
+      selection: TextSelection.create(doc, 2),
+    });
+
+    const nonParagraphTr = state.tr;
+    expect(
+      applyHangingIndentTransform(nonParagraphTr, state, doc, 0, false)
+    ).toBe(nonParagraphTr);
+
+    const existingIndentTr = state.tr;
+    expect(
+      applyHangingIndentTransform(
+        existingIndentTr,
+        state,
+        doc.firstChild,
+        0,
+        false
+      )
+    ).toBe(existingIndentTr);
   });
 });

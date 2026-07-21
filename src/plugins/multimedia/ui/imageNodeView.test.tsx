@@ -10,12 +10,16 @@ jest.mock('./Icon', () => ({
   },
 }));
 
-import {ImageNodeView, ImageViewBody} from './ImageNodeView';
+import {
+  getMaxResizeWidth,
+  ImageNodeView,
+  ImageViewBody,
+} from './ImageNodeView';
 import {Schema, Node} from 'prosemirror-model';
 import {EditorState} from 'prosemirror-state';
 import {EditorFocused, NodeViewProps} from './CustomNodeView';
 import * as ResizeObserver from './ResizeObserver';
-import { PopUpHandle } from '../../../commands';
+import {PopUpHandle} from '../../../commands';
 
 describe('ImageNodeView', () => {
   const mockSchema = new Schema({
@@ -119,6 +123,14 @@ function hasImageOptionsButton(node): boolean {
     .concat(children)
     .some((child) => hasImageOptionsButton(child));
 }
+
+function setNodeAttrs(node: Node, attrs: Record<string, unknown>): void {
+  Object.defineProperty(node, 'attrs', {
+    configurable: true,
+    value: attrs,
+  });
+}
+
 describe('Image view body', () => {
   const mockSchema = new Schema({
     nodes: {
@@ -279,6 +291,7 @@ describe('Image view body', () => {
         height: 10000,
         width: 10000,
       },
+      originalSizeSource: '',
     };
     imageviewbody.props = {
       decorations: [],
@@ -314,6 +327,7 @@ describe('Image view body', () => {
         height: 10000,
         width: 10000,
       },
+      originalSizeSource: '',
     };
     imageviewbody.props = {
       decorations: [],
@@ -481,6 +495,7 @@ describe('Image view body', () => {
         height: 100,
         width: 100,
       },
+      originalSizeSource: '/path/to/image.jpg',
     };
     imageViewBody.props = {
       decorations: [],
@@ -828,6 +843,7 @@ describe('Image view body', () => {
         height: 1,
         width: 2,
       },
+      originalSizeSource: 'test',
     };
     expect(imageviewbody._resolveOriginalSize()).toBeDefined();
   });
@@ -860,6 +876,7 @@ describe('Image view body', () => {
         height: 1,
         width: 2,
       },
+      originalSizeSource: 'tes',
     };
     expect(imageviewbody._resolveOriginalSize()).toBeDefined();
     editorfocused.runtime = {};
@@ -894,6 +911,7 @@ describe('Image view body', () => {
         height: 1,
         width: 2,
       },
+      originalSizeSource: 'tes',
     };
     expect(imageviewbody._resolveOriginalSize()).toBeDefined();
     editorfocused.runtime = {};
@@ -922,5 +940,231 @@ describe('Image view body', () => {
         }
       )
     ).toBeDefined();
+  });
+
+  it('should measure max resize width and restore wrapper margins', () => {
+    const offsetParent = document.createElement('div');
+    const wrapper = document.createElement('span');
+    const body = document.createElement('span');
+    offsetParent.style.paddingLeft = '10px';
+    offsetParent.style.paddingRight = '5px';
+    wrapper.style.setProperty('margin', '8px', 'important');
+    offsetParent.appendChild(wrapper);
+    wrapper.appendChild(body);
+    Object.defineProperty(offsetParent, 'offsetWidth', {
+      configurable: true,
+      value: 300,
+    });
+    Object.defineProperty(offsetParent, 'clientWidth', {
+      configurable: true,
+      value: 260,
+    });
+    Object.defineProperty(wrapper, 'offsetParent', {
+      configurable: true,
+      value: offsetParent,
+    });
+
+    expect(getMaxResizeWidth(body, true)).toBe(245);
+    expect(wrapper.style.getPropertyValue('margin')).toBe('8px');
+    expect(wrapper.style.getPropertyPriority('margin')).toBe('important');
+
+    expect(getMaxResizeWidth(document.createElement('span'))).toBe(100000);
+  });
+
+  it('should resolve aspect ratio and current size fallbacks', () => {
+    imageviewbody.state = {
+      maxSize: {complete: true, height: 10000, width: 10000},
+      originalSize: {complete: true, height: 200, src: 'src', width: 400},
+      originalSizeSource: 'src',
+    };
+    imageviewbody.props = {
+      decorations: [],
+      editorView: editorfocused,
+      focused: true,
+      getPos: () => 1,
+      node: {
+        attrs: {fitToParent: false, height: 50, src: 'src', width: 100},
+      } as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+    };
+
+    expect(imageviewbody._getCurrentAspectRatio()).toBe(2);
+    expect(imageviewbody._getCurrentImageSize()).toEqual({
+      height: 50,
+      width: 100,
+    });
+
+    setNodeAttrs(imageviewbody.props.node, {
+      fitToParent: false,
+      height: 100,
+      src: 'src',
+      width: 0,
+    });
+    expect(imageviewbody._getCurrentImageSize()).toEqual({
+      height: 100,
+      width: 200,
+    });
+
+    setNodeAttrs(imageviewbody.props.node, {
+      fitToParent: false,
+      height: 0,
+      src: 'src',
+      width: 300,
+    });
+    expect(imageviewbody._getCurrentImageSize()).toEqual({
+      height: 150,
+      width: 300,
+    });
+
+    setNodeAttrs(imageviewbody.props.node, {
+      fitToParent: false,
+      height: 0,
+      src: 'other',
+      width: 0,
+    });
+    imageviewbody.state.originalSize = {
+      complete: false,
+      height: 0,
+      src: '',
+      width: 0,
+    };
+    expect(imageviewbody._getCurrentAspectRatio()).toBe(1);
+    expect(imageviewbody._getCurrentImageSize()).toEqual({
+      height: 24,
+      width: 24,
+    });
+  });
+
+  it('should derive fit width from rendered body or current attrs', () => {
+    const body = document.createElement('span');
+    Object.defineProperty(body, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({width: 320}),
+    });
+    imageviewbody._bodyEl = body;
+    imageviewbody.props = {
+      decorations: [],
+      editorView: editorfocused,
+      focused: true,
+      getPos: () => 1,
+      node: {
+        attrs: {fitToParent: true, height: 100, src: 'src', width: 100},
+      } as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+    };
+    imageviewbody.state = {
+      maxSize: {complete: true, height: 10000, width: 10000},
+      originalSize: {complete: true, height: 150, src: 'src', width: 300},
+      originalSizeSource: 'src',
+    };
+
+    expect(imageviewbody._getCurrentImageSize()).toEqual({
+      height: 100,
+      width: 320,
+    });
+
+    imageviewbody._bodyEl = null;
+    setNodeAttrs(imageviewbody.props.node, {
+      fitToParent: false,
+      height: 100,
+      src: 'src',
+      width: 275,
+    });
+    expect(imageviewbody._getFitWidth()).toBe(275);
+  });
+
+  it('should apply bounded image sizes and ignore invalid dimensions', () => {
+    const setNodeMarkup = jest.fn().mockReturnValue('tr');
+    const dispatch = jest.fn();
+    imageviewbody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        dispatch,
+        focus: jest.fn(),
+        state: {tr: {setNodeMarkup}},
+      } as unknown as EditorFocused,
+      focused: true,
+      getPos: () => 4,
+      node: {
+        attrs: {fitToParent: true, height: 10, src: 'src', width: 10},
+      } as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+    };
+
+    imageviewbody._applyImageSize(Number.NaN, 100);
+    expect(dispatch).not.toHaveBeenCalled();
+
+    imageviewbody._applyImageSize(20000, 10000);
+
+    expect(setNodeMarkup).toHaveBeenCalledWith(4, null, {
+      fitToParent: 0,
+      height: 5000,
+      src: 'src',
+      width: 10000,
+    });
+    expect(dispatch).toHaveBeenCalledWith('tr');
+  });
+
+  it('should skip opening an existing size-fit editor and close it', () => {
+    const focus = jest.fn();
+    const popupHandle = {close: jest.fn()};
+    imageviewbody.state = {
+      maxSize: {complete: true, height: 10000, width: 10000},
+      originalSize: {complete: true, height: 200, src: 'src', width: 400},
+      originalSizeSource: 'src',
+    };
+    imageviewbody.props = {
+      decorations: [],
+      editorView: {...editorfocused, focus} as unknown as EditorFocused,
+      focused: true,
+      getPos: () => 1,
+      node: {
+        attrs: {fitToParent: false, height: 200, src: 'src', width: 400},
+      } as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+    };
+    imageviewbody._sizeEditor = popupHandle as unknown as PopUpHandle;
+
+    imageviewbody._onSizeFit();
+    expect(popupHandle.close).not.toHaveBeenCalled();
+
+    imageviewbody._closeSizeEditor();
+
+    expect(popupHandle.close).toHaveBeenCalledWith(undefined);
+    expect(focus).toHaveBeenCalled();
+    expect(imageviewbody._sizeEditor).toBeUndefined();
+  });
+
+  it('should cover crop and menu early-return paths', () => {
+    const dispatch = jest.fn();
+    imageviewbody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        dispatch,
+        state: {tr: {delete: jest.fn()}},
+      } as unknown as EditorFocused,
+      focused: true,
+      getPos: () => undefined,
+      node: {attrs: {src: ''}, nodeSize: 2} as unknown as Node,
+      dom: document.createElement('img'),
+      selected: true,
+    };
+
+    imageviewbody._insertParagraph('above');
+    imageviewbody._onRemove();
+    imageviewbody._onCrop();
+    imageviewbody._updateImageAttrs({src: 'ignored'});
+    imageviewbody._onMenuClick({
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    } as unknown as React.MouseEvent<HTMLButtonElement>);
+
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });

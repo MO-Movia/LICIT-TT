@@ -219,6 +219,16 @@ function chooseAxisPosition({
   return clampAxisPosition(position, size, minimum, maximum);
 }
 
+function getHorizontalPlacement(direction: string): AxisPlacement {
+  if (/left/.test(direction)) {
+    return 'before';
+  }
+  if (/right/.test(direction)) {
+    return 'after';
+  }
+  return 'center';
+}
+
 function ResizeAspectIcon({locked}: {locked: boolean}): React.ReactElement {
   return locked ? (
     <svg
@@ -379,11 +389,7 @@ export class ImageResizeBoxControl extends React.PureComponent<
 
     const bounds = getVisibleBounds(status);
     const {direction} = this.props;
-    const horizontalPlacement: AxisPlacement = /left/.test(direction)
-      ? 'before'
-      : /right/.test(direction)
-        ? 'after'
-        : 'center';
+    const horizontalPlacement = getHorizontalPlacement(direction);
     const verticalPlacement: AxisPlacement = /top/.test(direction)
       ? 'before'
       : 'after';
