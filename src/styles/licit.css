@@ -51,7 +51,10 @@ body {
     }
   }
 
-  img {
+  img:not(
+      .molm-czi-image-view-body-img,
+      .molm-czi-image-resize-box-image
+    ) {
     max-width: 100%;
     height: auto;
   }

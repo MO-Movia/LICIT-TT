@@ -22,12 +22,18 @@ type Props = {
 export const MIN_SIZE = 20;
 export const MAX_SIZE = 10000;
 
-function setWidth(el: HTMLElement, width: number, fitToParent: boolean): void {
+function setWidth(
+  el: HTMLElement,
+  width: number,
+  _height: number,
+  fitToParent: boolean
+): void {
   el.style.width = fitToParent ? FP_WIDTH : width + 'px';
 }
 
 function setHeight(
   el: HTMLElement,
+  _width: number,
   height: number,
   _fitToParent: boolean
 ): void {
@@ -108,6 +114,7 @@ export class ImageResizeBoxControl extends React.PureComponent {
     if (!this._active) {
       return;
     }
+    this._rafID = 0;
     const {direction, width, height} = this.props;
 
     const dx = (this._x2 - this._x1) * (/left/.test(direction) ? -1 : 1);
@@ -122,16 +129,22 @@ export class ImageResizeBoxControl extends React.PureComponent {
     if (!fn) {
       throw new Error(`Invalid resize direction: ${direction}`);
     }
-    const aspect = width / height;
-    let ww = clamp(MIN_SIZE, width + Math.round(dx), MAX_SIZE);
-    let hh = clamp(MIN_SIZE, height + Math.round(dy), MAX_SIZE);
-
-    if (fn === setSize) {
+    let ww = width;
+    let hh = height;
+    if (fn === setWidth) {
+      ww = clamp(MIN_SIZE, width + Math.round(dx), MAX_SIZE);
+    } else if (fn === setHeight) {
+      hh = clamp(MIN_SIZE, height + Math.round(dy), MAX_SIZE);
+    } else {
+      const aspect = width / height;
+      ww = clamp(MIN_SIZE, width + Math.round(dx), MAX_SIZE);
       hh = Math.max(ww / aspect, MIN_SIZE);
       ww = hh * aspect;
     }
 
-    fn(el, Math.round(ww), Math.round(hh), this.props.fitToParent);
+    ww = Math.round(ww);
+    hh = Math.round(hh);
+    fn(el, ww, hh, this.props.fitToParent);
     this._ww = ww;
     this._hh = hh;
   };
@@ -199,6 +212,9 @@ export class ImageResizeBoxControl extends React.PureComponent {
     e.stopPropagation();
     this._x2 = e.clientX;
     this._y2 = e.clientY;
+    if (this._rafID) {
+      cancelAnimationFrame(this._rafID);
+    }
     this._rafID = requestAnimationFrame(this._syncSize);
   };
 
@@ -207,6 +223,12 @@ export class ImageResizeBoxControl extends React.PureComponent {
     e.stopPropagation();
     this._x2 = e.clientX;
     this._y2 = e.clientY;
+    if (this._rafID) {
+      cancelAnimationFrame(this._rafID);
+      this._rafID = 0;
+    }
+    // Apply the release position before _end() restores the preview box.
+    this._syncSize();
 
     const {direction} = this.props;
     const el = this._el;
@@ -258,7 +280,12 @@ export class ImageResizeBox extends React.PureComponent {
     return (
       <span className="molm-czi-image-resize-box" id={boxID} style={style}>
         {controls}
-        <img alt='unavailable' className="molm-czi-image-resize-box-image" src={src} />
+        <img
+          alt="unavailable"
+          className="molm-czi-image-resize-box-image"
+          src={src}
+          style={{height: '100%', width: '100%'}}
+        />
       </span>
     );
   }

@@ -167,4 +167,41 @@ describe('createSliceManager', () => {
 
     setNodeMarkupSpy.mockRestore();
   });
+
+  it('should leave nodes unchanged when no slice source node matches', () => {
+    const mockDispatch = jest.fn();
+    const mockTr = {
+      setNodeMarkup: jest.fn().mockReturnThis(),
+    } as unknown as Transaction;
+    const mockNode = {
+      attrs: { objectId: 'node-2' },
+    } as unknown as Node;
+    const mockView = {
+      state: {
+        tr: mockTr,
+        doc: {
+          descendants: (callback: (node: Node, pos: number) => void) => {
+            callback(mockNode, 42);
+          },
+        },
+      },
+      dispatch: mockDispatch,
+    } as unknown as EditorView;
+
+    manager.addSliceToList({
+      id: '1',
+      source: 'doc-1',
+      from: 'node-1',
+      to: 'node-1-end',
+      name: 'Test Slice',
+      description: 'Mock slice',
+      referenceType: 'mock',
+      ids: ['node-1'],
+    });
+
+    manager.setSliceAttrs(mockView);
+
+    expect(mockTr.setNodeMarkup).not.toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledWith(mockTr);
+  });
 });
