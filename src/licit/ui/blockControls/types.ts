@@ -8,10 +8,12 @@ import type * as React from 'react';
 export type BlockControlMenuItem = {
   id: string;
   label: string;
+  hint?: string;
   icon?: React.ReactNode;
   action: () => void;
   active?: boolean;
   disabled?: boolean;
+  dividerBefore?: boolean;
   hidden?: boolean;
 };
 

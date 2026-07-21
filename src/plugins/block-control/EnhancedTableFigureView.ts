@@ -22,9 +22,54 @@ import {
   getBlockControlIcon,
 } from '../../licit/ui/blockControls';
 import { CropDataPropValue, CropImagePopup } from './ui/CropImagePopup';
+import { ImageSizeFitEditor } from '../multimedia/ui/ImageSizeFitEditor';
+import {
+  MAX_SIZE as MAX_IMAGE_SIZE,
+  MIN_SIZE as MIN_IMAGE_SIZE,
+} from '../multimedia/ui/ImageResizeBox';
+import {
+  getMaxResizeWidth,
+  MAX_IMAGE_LAYOUT_SIZE,
+} from '../multimedia/ui/ImageNodeView';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
+const FRAMESET_CLASSNAME = 'czi-editor-frameset';
+const IMAGE_MARGIN_PX = 2;
 const PORTRAIT_WIDTH_PX = 6.5 * 96;
+
+type ImageSize = {
+  width: number;
+  height: number;
+};
+
+type NestedImage = {
+  node: ProseMirrorNode;
+  path: number;
+};
+
+function isPositiveFinite(value: number): boolean {
+  return Number.isFinite(value) && value > 0;
+}
+
+function toBoundedImageSize(width: number, height: number): ImageSize | null {
+  if (!isPositiveFinite(width) || !isPositiveFinite(height)) {
+    return null;
+  }
+  const scale = Math.min(
+    1,
+    MAX_IMAGE_SIZE / width,
+    MAX_IMAGE_SIZE / height
+  );
+  return {
+    width: Math.round(
+      Math.max(MIN_IMAGE_SIZE, Math.min(MAX_IMAGE_SIZE, width * scale))
+    ),
+    height: Math.round(
+      Math.max(MIN_IMAGE_SIZE, Math.min(MAX_IMAGE_SIZE, height * scale))
+    ),
+  };
+}
+
 export class EnhancedTableFigureView implements NodeView {
   node: ProseMirrorNode;
   view: EditorView;
@@ -35,6 +80,8 @@ export class EnhancedTableFigureView implements NodeView {
   selectHandle: HTMLElement;
   _menu?: PopUpHandle;
   _cropEditor?: PopUpHandle;
+  _sizeEditor?: PopUpHandle;
+  _originalImageSize?: ImageSize & {src: string};
   _id = uuid();
 
   constructor(node: ProseMirrorNode, view: EditorView, getPos: () => number) {
@@ -146,6 +193,9 @@ export class EnhancedTableFigureView implements NodeView {
   destroy(): void {
     this.closeMenu();
     this._cropEditor?.close?.(undefined);
+    this._sizeEditor?.close?.(undefined);
+    this._cropEditor = undefined;
+    this._sizeEditor = undefined;
     this.selectHandle.remove();
   }
 
@@ -184,16 +234,56 @@ export class EnhancedTableFigureView implements NodeView {
 
   private getMenuItems(): BlockControlMenuItem[] {
     const figureType = this.node.attrs.figureType;
-    const hasImage = this.findImagePath(this.getPos()) !== null;
+    const image = this.getNestedImage();
+    const hasImage = image !== null;
+    const sizingDisabled = image
+      ? !!(
+          image.node.attrs.crop ||
+          image.node.attrs.cropData ||
+          image.node.attrs.rotate
+        )
+      : true;
+    const canResetImage = image
+      ? this.getOriginalImageSize(image.node) !== null
+      : false;
     const canAddNotes =
       !this.hasNotes() && (figureType === 'table' || figureType === 'figure');
 
     return [
       {
+        id: 'reset-image',
+        label: 'Reset Image',
+        hint: 'Original',
+        icon: getBlockControlIcon('resetImage', 'Reset image'),
+        action: () => this.handleResetImage(),
+        disabled: sizingDisabled || !canResetImage,
+        hidden: figureType === 'table',
+      },
+      {
+        id: 'fit-to-width',
+        label: 'Fit To Width',
+        hint: 'Keep ratio',
+        icon: getBlockControlIcon('fitWidth', 'Fit to width'),
+        action: () => this.handleFitToWidth(),
+        disabled: sizingDisabled,
+        hidden: figureType === 'table',
+      },
+      {
+        id: 'size-fit',
+        label: 'Size & Fit...',
+        hint: 'Exact values',
+        icon: getBlockControlIcon('sizeFit', 'Size & fit'),
+        action: () => this.handleSizeFit(),
+        disabled: sizingDisabled,
+        dividerBefore: true,
+        hidden: figureType === 'table',
+      },
+      {
         id: 'insert-above',
         label: 'Insert Paragraph Above',
         icon: getBlockControlIcon('insertAbove', 'Insert Paragraph Above'),
         action: () => this.insertParagraphAbove(),
+        dividerBefore: figureType !== 'table',
       },
       {
         id: 'insert-below',
@@ -328,6 +418,210 @@ export class EnhancedTableFigureView implements NodeView {
     }
   }
 
+  private handleResetImage(): void {
+    const image = this.getNestedImage();
+    if (!image || this.isImageSizingDisabled(image.node)) {
+      return;
+    }
+    const originalSize = this.getOriginalImageSize(image.node);
+    if (originalSize) {
+      this.applyImageSize(originalSize.width, originalSize.height);
+    }
+  }
+
+  private handleFitToWidth(): void {
+    const image = this.getNestedImage();
+    if (!image || this.isImageSizingDisabled(image.node)) {
+      return;
+    }
+    const currentSize = this.getCurrentImageSize(image.node);
+    const ratio = currentSize.width / currentSize.height;
+    const width = this.getFitWidth(image.node);
+    this.applyImageSize(width, width / ratio);
+  }
+
+  private handleSizeFit(): void {
+    if (this._sizeEditor) {
+      return;
+    }
+    const image = this.getNestedImage();
+    if (!image || this.isImageSizingDisabled(image.node)) {
+      return;
+    }
+
+    const currentSize = this.getCurrentImageSize(image.node);
+    const resolvedOriginalSize = this.getOriginalImageSize(image.node);
+    const originalSize = resolvedOriginalSize || currentSize;
+    this._sizeEditor = createPopUp(
+      ImageSizeFitEditor,
+      {
+        canReset: resolvedOriginalSize !== null,
+        height: currentSize.height,
+        maxWidth: this.getFitWidth(image.node),
+        onApply: (width: number, height: number) => {
+          this.applyImageSize(width, height);
+          this.closeSizeEditor();
+        },
+        onCancel: this.closeSizeEditor,
+        originalHeight: originalSize.height,
+        originalWidth: originalSize.width,
+        width: currentSize.width,
+      },
+      {
+        autoDismiss: false,
+        container:
+          this.dom.closest(`.${FRAMESET_CLASSNAME}`) || undefined,
+        modal: true,
+        onClose: () => {
+          this._sizeEditor = undefined;
+        },
+      }
+    );
+  }
+
+  private readonly closeSizeEditor = (): void => {
+    const editor = this._sizeEditor;
+    this._sizeEditor = undefined;
+    editor?.close?.(undefined);
+    this.view.focus();
+  };
+
+  private applyImageSize(width: number, height: number): void {
+    const size = toBoundedImageSize(width, height);
+    const image = this.getNestedImage();
+    if (!size || !image || this.isImageSizingDisabled(image.node)) {
+      return;
+    }
+    this.view.focus();
+    this.updateImageAttrs(image.path, {
+      fitToParent: 0,
+      height: size.height,
+      width: size.width,
+    });
+  }
+
+  private getCurrentImageSize(imageNode: ProseMirrorNode): ImageSize {
+    const attrs = imageNode.attrs;
+    const originalSize = this.getOriginalImageSize(imageNode);
+    const renderedImage = this.getRenderedImageElement(imageNode);
+    const renderedWidth = renderedImage?.clientWidth || 0;
+    const renderedHeight = renderedImage?.clientHeight || 0;
+    let width = Number(attrs.width);
+    let height = Number(attrs.height);
+
+    if (!isPositiveFinite(width)) {
+      width = 0;
+    }
+    if (!isPositiveFinite(height)) {
+      height = 0;
+    }
+
+    let ratio = 1;
+    if (width > 0 && height > 0) {
+      ratio = width / height;
+    } else if (originalSize) {
+      ratio = originalSize.width / originalSize.height;
+    } else if (renderedWidth > 0 && renderedHeight > 0) {
+      ratio = renderedWidth / renderedHeight;
+    }
+
+    if (width > 0 && height === 0) {
+      height = width / ratio;
+    } else if (height > 0 && width === 0) {
+      width = height * ratio;
+    } else if (width === 0 && height === 0) {
+      width = originalSize?.width || renderedWidth || MIN_IMAGE_SIZE;
+      height = originalSize?.height || renderedHeight || MIN_IMAGE_SIZE;
+    }
+
+    if (attrs.fitToParent) {
+      width = this.getFitWidth(imageNode);
+      height = width / ratio;
+    }
+
+    return {
+      width: Math.round(Math.max(MIN_IMAGE_SIZE, width)),
+      height: Math.round(Math.max(MIN_IMAGE_SIZE, height)),
+    };
+  }
+
+  private getFitWidth(imageNode: ProseMirrorNode): number {
+    const imageBody = this.getRenderedImageBody(imageNode);
+    let width = imageBody
+      ? getMaxResizeWidth(imageBody, !!imageNode.attrs.fitToParent)
+      : 0;
+    if (
+      !isPositiveFinite(width) ||
+      width >= MAX_IMAGE_LAYOUT_SIZE
+    ) {
+      width = Math.max(
+        MIN_IMAGE_SIZE,
+        this.contentDOM.clientWidth - IMAGE_MARGIN_PX * 2
+      );
+    }
+    return Math.floor(
+      Math.max(MIN_IMAGE_SIZE, Math.min(width, MAX_IMAGE_SIZE))
+    );
+  }
+
+  private getOriginalImageSize(imageNode: ProseMirrorNode): ImageSize | null {
+    const src = String(imageNode.attrs.src || '');
+    if (this._originalImageSize?.src === src) {
+      return {
+        width: this._originalImageSize.width,
+        height: this._originalImageSize.height,
+      };
+    }
+
+    this._originalImageSize = undefined;
+    const renderedImage = this.getRenderedImageElement(imageNode);
+    const width = renderedImage?.naturalWidth || 0;
+    const height = renderedImage?.naturalHeight || 0;
+    if (!isPositiveFinite(width) || !isPositiveFinite(height)) {
+      return null;
+    }
+
+    this._originalImageSize = {height, src, width};
+    return {height, width};
+  }
+
+  private getRenderedImageBody(
+    imageNode: ProseMirrorNode
+  ): HTMLElement | null {
+    const src = String(imageNode.attrs.src || '');
+    const bodies = this.contentDOM.querySelectorAll<HTMLElement>(
+      '.molm-czi-image-view-body'
+    );
+    for (const body of bodies) {
+      if (body.dataset.originalSrc === src) {
+        return body;
+      }
+    }
+    return null;
+  }
+
+  private getRenderedImageElement(
+    imageNode: ProseMirrorNode
+  ): HTMLImageElement | null {
+    return this.getRenderedImageBody(imageNode)?.querySelector(
+      'img.molm-czi-image-view-body-img'
+    ) || null;
+  }
+
+  private getNestedImage(): NestedImage | null {
+    const path = this.findImagePath(this.getPos());
+    if (path === null) {
+      return null;
+    }
+    const node = this.view.state.doc.nodeAt(path);
+    return node?.type.name === 'image' ? {node, path} : null;
+  }
+
+  private isImageSizingDisabled(imageNode: ProseMirrorNode): boolean {
+    const {crop, cropData, rotate} = imageNode.attrs;
+    return !!(crop || cropData || rotate);
+  }
+
   private handleChooseFile(): void {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -378,6 +672,7 @@ export class EnhancedTableFigureView implements NodeView {
   private updateImageSource(src: string): void {
     const imagePath = this.findImagePath(this.getPos());
     if (imagePath !== null) {
+      this._originalImageSize = undefined;
       this.updateImageAttrs(imagePath, { crop: null, cropData: null, src });
     }
   }

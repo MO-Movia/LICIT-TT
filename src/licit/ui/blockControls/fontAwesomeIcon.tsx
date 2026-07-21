@@ -19,6 +19,9 @@ const ICON_CLASS_NAMES = {
   insertAbove: 'fa-arrow-up',
   insertBelow: 'fa-arrow-down',
   resetCrop: 'fa-history',
+  resetImage: 'fa-refresh',
+  fitWidth: 'fa-arrows-h',
+  sizeFit: 'fa-arrows-alt',
 } as const;
 
 export function getBlockControlIcon(
