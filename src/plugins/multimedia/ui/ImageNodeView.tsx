@@ -54,6 +54,17 @@ const IMAGE_PLACEHOLDER_SIZE = 24;
 const ENHANCED_TABLE_FIGURE = 'enhanced_table_figure';
 const ENHANCED_TABLE_FIGURE_BODY = 'enhanced_table_figure_body';
 
+const EIC_PARAGRAPH_LAYOUT_ATTRS = [
+  'indent',
+  'lineSpacing',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+  'marginTop',
+  'paddingBottom',
+  'paddingTop',
+] as const;
+
 const DEFAULT_ORIGINAL_SIZE = {
   src: '',
   complete: false,
@@ -607,13 +618,59 @@ export class ImageViewBody extends React.PureComponent<
       width,
       height,
     };
-    let tr = editorView.state.tr;
-    const {selection} = editorView.state;
-    tr = tr.setNodeMarkup(pos, null, attrs);
+    const {state} = editorView;
+    let tr = state.tr;
+    const {selection} = state;
+    let selectionPos = selection.from;
+    const $pos = state.doc.resolve(pos);
+    const parent = $pos.parent;
+    const paragraphType = state.schema.nodes.paragraph;
+    const parentContainer =
+      $pos.depth > 0 ? $pos.node($pos.depth - 1) : null;
+    const isImageParagraphInEIC =
+      parent.type === paragraphType &&
+      parentContainer?.type.name === ENHANCED_TABLE_FIGURE_BODY &&
+      parent.childCount === 1 &&
+      parent.firstChild?.type === node.type;
+
+    if (
+      parent.type.name === ENHANCED_TABLE_FIGURE_BODY &&
+      paragraphType
+    ) {
+      // Older EIC documents stored the inline image directly in a body that
+      // accepts block nodes. Migrate that shape while resizing so ProseMirror
+      // cannot recreate an inline baseline below the image.
+      const resizedImage = node.type.create(attrs, node.content);
+      const imageParagraph = paragraphType.create(null, resizedImage);
+      tr = tr.replaceWith(pos, pos + node.nodeSize, imageParagraph);
+      selectionPos = pos + 1;
+    } else if (isImageParagraphInEIC) {
+      // Custom paragraph styles may add inline font marks and an important
+      // bottom margin when the resize transaction selects the image. Rebuild
+      // this image-only paragraph without text marks or paragraph spacing.
+      const paragraphAttrs = {...parent.attrs};
+      for (const attr of EIC_PARAGRAPH_LAYOUT_ATTRS) {
+        paragraphAttrs[attr] = null;
+      }
+      const resizedImage = node.type.create(attrs, node.content);
+      const imageParagraph = paragraphType.create(
+        paragraphAttrs,
+        resizedImage
+      );
+      const paragraphPos = $pos.before($pos.depth);
+      tr = tr.replaceWith(
+        paragraphPos,
+        paragraphPos + parent.nodeSize,
+        imageParagraph
+      );
+      selectionPos = paragraphPos + 1;
+    } else {
+      tr = tr.setNodeMarkup(pos, null, attrs);
+    }
     // Upgrade outdated packages.
     // reset selection to original using the latest doc.
     try {
-      const origSelection = NodeSelection.create(tr.doc, selection.from);
+      const origSelection = NodeSelection.create(tr.doc, selectionPos);
       tr = tr.setSelection(origSelection);
     } catch {
       // Ignore if can't select

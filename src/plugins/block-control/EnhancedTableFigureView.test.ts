@@ -124,17 +124,19 @@ describe('EnhancedTableFigureView', () => {
       );
     });
 
-    it('should set correct styles for portrait orientation', () => {
-      expect(view.dom.style.width).toBe('624px');
-      expect(view.dom.style.maxWidth).toBe('624px');
-      expect(view.contentDOM.style.width).toBe('100%');
+    it('should leave layout sizing to the figure-type CSS', () => {
+      expect(view.dom.style.width).toBe('');
+      expect(view.dom.style.maxWidth).toBe('');
+      expect(view.contentDOM.style.width).toBe('');
+      expect(view.dom.dataset.figureType).toBe('table');
     });
 
-    it('should set correct styles for landscape orientation', () => {
+    it('should identify image figures for figure-specific spacing', () => {
       const landscapeNode = {
         ...mockNode,
         attrs: {
           ...mockNode.attrs,
+          figureType: 'figure',
           orientation: 'landscape',
         },
       };
@@ -144,9 +146,10 @@ describe('EnhancedTableFigureView', () => {
         mockGetPos
       );
 
-      expect(landscapeView.dom.style.width).toBe('624px');
-      expect(landscapeView.dom.style.maxWidth).toBe('624px');
-      expect(landscapeView.contentDOM.style.width).toBe('100%');
+      expect(landscapeView.dom.style.width).toBe('');
+      expect(landscapeView.dom.style.maxWidth).toBe('');
+      expect(landscapeView.contentDOM.style.width).toBe('');
+      expect(landscapeView.dom.dataset.figureType).toBe('figure');
     });
   });
 
@@ -178,16 +181,18 @@ describe('EnhancedTableFigureView', () => {
       expect(view.dom.getAttribute('data-figure-type')).toBe('figure');
     });
 
-    it('should update styles for landscape orientation', () => {
+    it('should update the figure type used by layout CSS', () => {
       const landscapeNode = {
         ...mockNode,
         attrs: {
           ...mockNode.attrs,
+          figureType: 'figure',
           orientation: 'landscape',
         },
       };
       view.update(landscapeNode as unknown as ProseMirrorNode);
-      expect(view.contentDOM.style.width).toBe('100%');
+      expect(view.dom.dataset.figureType).toBe('figure');
+      expect(view.contentDOM.style.width).toBe('');
     });
 
     it('should include maximized and selected classes during update', () => {

@@ -118,6 +118,70 @@ describe('index branch coverage', () => {
     expect(applyLatestStyleSpy).not.toHaveBeenCalled();
   });
 
+  it('applyStyleForEmptyParagraph skips an EIC image paragraph', () => {
+    const tr = {} as unknown as import('prosemirror-state').Transaction;
+    const nextState = {
+      selection: {
+        $from: {
+          depth: 3,
+          node: (depth: number) =>
+            depth === 2
+              ? {type: {name: 'enhanced_table_figure_body'}}
+              : {
+                  type: {name: 'paragraph'},
+                  childCount: 1,
+                  firstChild: {type: {name: 'image'}},
+                },
+        },
+      },
+    };
+    const applyLatestStyleSpy = jest.spyOn(command, 'applyLatestStyle');
+
+    const result = applyStyleForEmptyParagraph(nextState as never, tr);
+
+    expect(result).toBe(tr);
+    expect(applyLatestStyleSpy).not.toHaveBeenCalled();
+  });
+
+  it('applyStyleForEmptyParagraph still styles EIC text paragraphs', () => {
+    const tr = {} as unknown as import('prosemirror-state').Transaction;
+    const paragraph = {
+      type: {name: 'paragraph'},
+      childCount: 1,
+      firstChild: {type: {name: 'text'}},
+    };
+    const styleNode = {
+      attrs: {styleName: 'MyStyle'},
+      content: {content: [{marks: []}]},
+    };
+    const nextState = {
+      selection: {
+        $from: {
+          before: () => 2,
+          depth: 3,
+          node: (depth: number) =>
+            depth === 2
+              ? {type: {name: 'enhanced_table_figure_body'}}
+              : paragraph,
+          parent: paragraph,
+        },
+        $to: {end: () => 5},
+      },
+      tr: {doc: {nodeAt: () => styleNode}},
+    };
+    jest
+      .spyOn(customStyle, 'getCustomStyleByName')
+      .mockReturnValue({styles: {}} as never);
+    const applyLatestStyleSpy = jest
+      .spyOn(command, 'applyLatestStyle')
+      .mockReturnValue({changed: true} as never);
+
+    const result = applyStyleForEmptyParagraph(nextState as never, tr);
+
+    expect(applyLatestStyleSpy).toHaveBeenCalled();
+    expect(result).toEqual({changed: true});
+  });
+
   it('applyStyleForNextParagraph returns null when not a new paragraph', () => {
     const prevState = { selection: { from: 10 } };
     const nextState = {
