@@ -41,7 +41,8 @@ export function insertEnhancedImageFigure(
   // Create the body that contains an image.
   const bodyType = schema.nodes.enhanced_table_figure_body;
   const imageNodeType = schema.nodes['image'];
-  if (!imageNodeType) {
+  const paragraphType = schema.nodes.paragraph;
+  if (!bodyType || !imageNodeType || !paragraphType) {
     return tr;
   }
   const imageAttrs: Record<string, unknown> = {
@@ -55,7 +56,11 @@ export function insertEnhancedImageFigure(
     imageAttrs.height = height;
   }
   const imageNode = imageNodeType.create(imageAttrs, null);
-  const bodyNode = bodyType.create({}, imageNode);
+  // The EIC body accepts block nodes, while an image is inline. Keeping the
+  // schema valid prevents ProseMirror from rebuilding the image line
+  // differently after a resize.
+  const imageParagraph = paragraphType.create(null, imageNode);
+  const bodyNode = bodyType.create({}, imageParagraph);
 
   // No notes by default.
   // Create a blank CAPCO (footer) node.
@@ -71,7 +76,7 @@ export function insertEnhancedImageFigure(
   tr = tr.insert(from, figureNode);
 
   // Insert a new paragraph after the figure.
-  const paragraphNode = schema.nodes.paragraph.createAndFill();
+  const paragraphNode = paragraphType.createAndFill();
   if (paragraphNode) {
     const after = from + figureNode.nodeSize;
     tr = tr.insert(after, paragraphNode);

@@ -12,7 +12,7 @@ jest.mock('./Icon', () => ({
 
 import {ImageNodeView, ImageViewBody} from './ImageNodeView';
 import {Schema, Node} from 'prosemirror-model';
-import {EditorState} from 'prosemirror-state';
+import {EditorState, NodeSelection} from 'prosemirror-state';
 import {EditorFocused, NodeViewProps} from './CustomNodeView';
 import * as ResizeObserver from './ResizeObserver';
 import { PopUpHandle } from '../../../commands';
@@ -656,6 +656,111 @@ describe('Image view body', () => {
     };
     imageviewbody._menu = mockPopupHandle;
     expect(imageviewbody._onResizeEnd(10, 20)).toBeUndefined();
+  });
+
+  it('normalizes an EIC image paragraph when resizing', () => {
+    const schema = new Schema({
+      nodes: {
+        doc: {content: 'enhanced_table_figure'},
+        text: {group: 'inline'},
+        enhanced_table_figure: {
+          content: 'enhanced_table_figure_body',
+          group: 'block',
+        },
+        enhanced_table_figure_body: {
+          content: 'paragraph',
+          group: 'block',
+        },
+        paragraph: {
+          attrs: {
+            marginBottom: {default: null},
+            marginTop: {default: null},
+            styleName: {default: 'Normal'},
+          },
+          content: 'inline*',
+          group: 'block',
+        },
+        image: {
+          inline: true,
+          attrs: {
+            crop: {default: null},
+            height: {default: null},
+            src: {default: null},
+            width: {default: null},
+          },
+          group: 'inline',
+        },
+      },
+      marks: {
+        font_size: {toDOM: () => ['span', 0]},
+      },
+    });
+    const doc = schema.nodeFromJSON({
+      type: 'doc',
+      content: [
+        {
+          type: 'enhanced_table_figure',
+          content: [
+            {
+              type: 'enhanced_table_figure_body',
+              content: [
+                {
+                  type: 'paragraph',
+                  attrs: {
+                    marginBottom: '3pt !important',
+                    marginTop: '2pt !important',
+                    styleName: 'Normal',
+                  },
+                  content: [
+                    {
+                      type: 'image',
+                      attrs: {height: 180, src: '/image.png', width: 320},
+                      marks: [{type: 'font_size'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const state = EditorState.create({
+      doc,
+      schema,
+      selection: NodeSelection.create(doc, 3),
+    });
+    const dispatch = jest.fn();
+    const imageNode = doc.nodeAt(3);
+    const imageViewBody = new ImageViewBody(
+      imageNode as unknown as NodeViewProps
+    );
+    imageViewBody.props = {
+      decorations: [],
+      editorView: {
+        ...editorfocused,
+        state,
+        dispatch,
+      } as unknown as EditorFocused,
+      getPos: () => 3,
+      node: imageNode,
+      dom: document.createElement('span'),
+      selected: true,
+      focused: true,
+    };
+
+    imageViewBody._onResizeEnd(220, 124);
+
+    const transaction = dispatch.mock.calls[0][0];
+    const paragraph = transaction.doc.nodeAt(2);
+    const resizedImage = transaction.doc.nodeAt(3);
+    expect(paragraph.attrs.marginBottom).toBeNull();
+    expect(paragraph.attrs.marginTop).toBeNull();
+    expect(paragraph.attrs.styleName).toBe('Normal');
+    expect(resizedImage.attrs).toEqual(
+      expect.objectContaining({height: 124, width: 220})
+    );
+    expect(resizedImage.marks).toHaveLength(0);
   });
 
   it('should handle _onChange', () => {

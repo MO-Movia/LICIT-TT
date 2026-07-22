@@ -24,7 +24,6 @@ import {
 import { CropDataPropValue, CropImagePopup } from './ui/CropImagePopup';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
-const PORTRAIT_WIDTH_PX = 6.5 * 96;
 export class EnhancedTableFigureView implements NodeView {
   node: ProseMirrorNode;
   view: EditorView;
@@ -48,20 +47,12 @@ export class EnhancedTableFigureView implements NodeView {
     this.dom.dataset.type = 'enhanced-table-figure';
     this.dom.dataset.id = String(node.attrs.id);
     this.dom.dataset.figureType = String(node.attrs.figureType);
-    this.dom.style.position = 'relative';
-    this.dom.style.overflow = 'visible';
-    this.dom.style.width = `${PORTRAIT_WIDTH_PX}px`;
-    this.dom.style.maxWidth = `${PORTRAIT_WIDTH_PX}px`;
 
     this.contentScrollDOM = document.createElement('div');
     this.contentScrollDOM.className = 'enhanced-table-figure-scroll';
-    this.contentScrollDOM.style.overflowX = 'auto';
-    this.contentScrollDOM.style.overflowY = 'visible';
-    this.contentScrollDOM.style.width = '100%';
 
     this.contentDOM = document.createElement('div');
     this.contentDOM.className = 'enhanced-table-figure-content';
-    this.contentDOM.style.width = '100%';
     this.contentScrollDOM.appendChild(this.contentDOM);
     this.dom.appendChild(this.contentScrollDOM);
 
@@ -90,13 +81,6 @@ export class EnhancedTableFigureView implements NodeView {
     }
 
     this.node = node;
-    this.dom.style.overflow = 'visible';
-    this.dom.style.width = `${PORTRAIT_WIDTH_PX}px`;
-    this.dom.style.maxWidth = `${PORTRAIT_WIDTH_PX}px`;
-    this.contentScrollDOM.style.overflowX = 'auto';
-    this.contentScrollDOM.style.overflowY = 'visible';
-    this.contentScrollDOM.style.width = '100%';
-    this.contentDOM.style.width = '100%';
 
     this.dom.dataset.id = String(node.attrs.id);
     this.dom.dataset.figureType = String(node.attrs.figureType);

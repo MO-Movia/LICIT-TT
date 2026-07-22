@@ -41,11 +41,30 @@ function processNodeContent(this: void, node: LicitNode): void {
     case 'horizontal_rule':
       node.type = 'horizontalRule'; // czi to tiptap type
       break;
+    case 'enhanced_table_figure_body':
+      repairEnhancedTableFigureBody(node);
+      break;
   }
   for (const child of node.content ?? []) {
     processNodeContent(child);
   }
 }
+
+/**
+ * Older importers stored an inline image directly in the EIC body even though
+ * that body accepts block nodes. Once a transaction touches such a document,
+ * ProseMirror can pull following blocks into the invalid body while repairing
+ * the structure. Wrap only those legacy direct images before editor creation.
+ */
+function repairEnhancedTableFigureBody(node: LicitNode): void {
+  if (!node.content?.some((child) => child.type === 'image')) {
+    return;
+  }
+  node.content = node.content.map((child) =>
+    child.type === 'image' ? blankNode('paragraph', child) : child
+  );
+}
+
 function repairTextNode(content: LicitNode): void {
   content.text ??= ' ';
 }

@@ -44,6 +44,7 @@ const DELETEKEY = 'Delete';
 const PARA_POSITION_DIFF = 4;
 const ATTR_STYLE_NAME = 'styleName';
 const ZERO_WIDTH_SPACE = '\u200B';
+const ENHANCED_TABLE_FIGURE_BODY = 'enhanced_table_figure_body';
 type CustomStyleView = Plugin['spec']['view'] extends (view: infer T) => unknown
   ? T & { input?: { lastKeyCode?: number } }
   : { state: EditorState; input?: { lastKeyCode?: number } };
@@ -95,6 +96,35 @@ function isDeleteKey(key: KeyInput): boolean {
 
 function isEnterKey(key: KeyInput): boolean {
   return ENTERKEY === key || ENTERKEYCODE === key;
+}
+
+function isEnhancedTableFigureBody(node?: Node | null): boolean {
+  return node?.type?.name === ENHANCED_TABLE_FIGURE_BODY;
+}
+
+function isEnhancedTableFigureImageParagraph(
+  paragraph?: Node | null,
+  parentContainer?: Node | null
+): boolean {
+  return (
+    paragraph?.type?.name === 'paragraph' &&
+    paragraph.childCount === 1 &&
+    paragraph.firstChild?.type?.name === 'image' &&
+    isEnhancedTableFigureBody(parentContainer)
+  );
+}
+
+function isSelectionInEnhancedTableFigureImageParagraph(
+  selection?: EditorState['selection']
+): boolean {
+  const $from = selection?.$from;
+  if (!$from || typeof $from.node !== 'function') {
+    return false;
+  }
+  const paragraph = $from.parent ?? $from.node($from.depth);
+  const parentContainer =
+    $from.depth > 0 ? $from.node($from.depth - 1) : null;
+  return isEnhancedTableFigureImageParagraph(paragraph, parentContainer);
 }
 
 function getSelectionCursor(
@@ -758,9 +788,12 @@ export function remapCounterFlags(tr: LooseTr): void {
 
 export function applyStyles(state: LooseState, tr?: LooseTr): LooseTr {
   tr ??= state.tr;
-  tr?.doc?.descendants((child, pos) => {
+  tr?.doc?.descendants((child, pos, parent) => {
     const contentLen = child.content.size;
-    if (haveEligibleChildren(child, contentLen)) {
+    if (
+      !isEnhancedTableFigureImageParagraph(child, parent) &&
+      haveEligibleChildren(child, contentLen)
+    ) {
       const docLen = tr.doc.content.size;
       // Validate end position.
       const end = Math.min(pos + contentLen, docLen);
@@ -844,13 +877,16 @@ export function applyStyleForEmptyParagraph(
   tr: LooseTr
 ): LooseTr {
   const opt = 1;
+  tr ??= nextState.tr;
+  if (isSelectionInEnhancedTableFigureImageParagraph(nextState.selection)) {
+    return tr;
+  }
   const startPos = nextState.selection?.$from.before(
     nextState.selection?.$from.depth === 0
       ? 1
       : nextState.selection?.$from.depth
   );
   const endPos = nextState.selection?.$to?.end();
-  tr ??= nextState.tr;
 
   const node = nextState.tr?.doc?.nodeAt(startPos);
   const style = getCustomStyleByName(node?.attrs?.styleName);
@@ -1179,9 +1215,13 @@ export function applyNormalIfNoStyle(
   opt?: number | boolean
 ): LooseTr {
   tr ??= nextState.tr;
-  node.descendants((child, pos) => {
+  node.descendants((child, pos, parent) => {
     const contentLen = child.content.size;
-    if (tr && haveEligibleChildren(child, contentLen)) {
+    if (
+      tr &&
+      !isEnhancedTableFigureImageParagraph(child, parent) &&
+      haveEligibleChildren(child, contentLen)
+    ) {
       const docLen = tr.doc.content.size;
       // Validate end position.
       const end = Math.min(pos + contentLen, docLen);
