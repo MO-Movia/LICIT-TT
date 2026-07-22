@@ -35,7 +35,6 @@ import {
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const FRAMESET_CLASSNAME = 'czi-editor-frameset';
 const IMAGE_MARGIN_PX = 2;
-const PORTRAIT_WIDTH_PX = 6.5 * 96;
 
 type ImageSize = {
   width: number;
@@ -81,7 +80,7 @@ export class EnhancedTableFigureView implements NodeView {
   _menu?: PopUpHandle;
   _cropEditor?: PopUpHandle;
   _sizeEditor?: PopUpHandle;
-  _originalImageSize?: ImageSize & {src: string};
+  _originalImageSize?: ImageSize & { src: string };
   _id = uuid();
 
   constructor(node: ProseMirrorNode, view: EditorView, getPos: () => number) {
@@ -223,10 +222,10 @@ export class EnhancedTableFigureView implements NodeView {
     const hasImage = image !== null;
     const sizingDisabled = image
       ? !!(
-          image.node.attrs.crop ||
-          image.node.attrs.cropData ||
-          image.node.attrs.rotate
-        )
+        image.node.attrs.crop ||
+        image.node.attrs.cropData ||
+        image.node.attrs.rotate
+      )
       : true;
     const canResetImage = image
       ? this.getOriginalImageSize(image.node) !== null
@@ -566,8 +565,8 @@ export class EnhancedTableFigureView implements NodeView {
       return null;
     }
 
-    this._originalImageSize = {height, src, width};
-    return {height, width};
+    this._originalImageSize = { height, src, width };
+    return { height, width };
   }
 
   private getRenderedImageBody(
@@ -599,11 +598,11 @@ export class EnhancedTableFigureView implements NodeView {
       return null;
     }
     const node = this.view.state.doc.nodeAt(path);
-    return node?.type.name === 'image' ? {node, path} : null;
+    return node?.type.name === 'image' ? { node, path } : null;
   }
 
   private isImageSizingDisabled(imageNode: ProseMirrorNode): boolean {
-    const {crop, cropData, rotate} = imageNode.attrs;
+    const { crop, cropData, rotate } = imageNode.attrs;
     return !!(crop || cropData || rotate);
   }
 
