@@ -292,6 +292,47 @@ describe('EnhancedTableFigureView', () => {
       expect(mockView.dispatch).toHaveBeenCalledWith('notes-tr');
       expect(mockView.dispatch).toHaveBeenCalledWith('delete-tr');
     });
+
+    it('should delete the notes child when notes exist', () => {
+      const body = createNode('enhanced_table_figure_body');
+      const notes = createNode('enhanced_table_figure_notes');
+      const capco = createNode('enhanced_table_figure_capco');
+      const tr = {
+        delete: jest.fn().mockReturnValue('delete-notes-tr'),
+      };
+      view.node = createFigureNode({ figureType: 'figure' }, [
+        body,
+        notes,
+        capco,
+      ]);
+      mockView.state = {
+        ...mockView.state,
+        tr,
+      } as unknown as EditorView['state'];
+
+      getMenuItem('delete-notes')?.action();
+
+      expect(tr.delete).toHaveBeenCalledWith(13, 15);
+      expect(mockView.dispatch).toHaveBeenCalledWith('delete-notes-tr');
+    });
+
+    it('should skip deleting notes when no notes child exists', () => {
+      const tr = {
+        delete: jest.fn().mockReturnValue('delete-notes-tr'),
+      };
+      view.node = createFigureNode({ figureType: 'figure' }, [
+        createNode('enhanced_table_figure_body'),
+      ]);
+      mockView.state = {
+        ...mockView.state,
+        tr,
+      } as unknown as EditorView['state'];
+
+      getMenuItem('delete-notes')?.action();
+
+      expect(tr.delete).not.toHaveBeenCalled();
+      expect(mockView.dispatch).not.toHaveBeenCalled();
+    });
   });
 
   describe('updateNotesTrigger', () => {
@@ -455,6 +496,20 @@ describe('EnhancedTableFigureView', () => {
       ]);
 
       expect(getMenuItem('add-notes')?.hidden).toBe(true);
+    });
+
+    it('should show delete notes only when notes exist', () => {
+      view.node = createFigureNode({ figureType: 'figure' }, [
+        createNode('paragraph'),
+      ]);
+
+      expect(getMenuItem('delete-notes')?.hidden).toBe(true);
+
+      view.node = createFigureNode({ figureType: 'figure' }, [
+        createNode('enhanced_table_figure_notes'),
+      ]);
+
+      expect(getMenuItem('delete-notes')?.hidden).toBe(false);
     });
 
     it('should disable image actions when figure has no image', () => {

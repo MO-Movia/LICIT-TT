@@ -15,11 +15,21 @@ const LetterSpacingMarkSpec: MarkSpec = {
   parseDOM: [
     {
       tag: 'span[style*=letter-spacing]',
-      getAttrs: value => ({ letterSpacing: value }),
+      getAttrs: (dom: HTMLElement) => ({
+        letterSpacing: dom.style.letterSpacing || null,
+        overridden: dom.getAttribute('overridden') === 'true',
+      }),
     },
   ],
   toDOM(mark) {
-    return ['span', { style: `letter-spacing: ${mark.attrs.letterSpacing}` }, 0];
+    return [
+      'span',
+      {
+        overridden: mark.attrs.overridden,
+        style: `letter-spacing: ${mark.attrs.letterSpacing}`,
+      },
+      0,
+    ];
   },
 };
 
