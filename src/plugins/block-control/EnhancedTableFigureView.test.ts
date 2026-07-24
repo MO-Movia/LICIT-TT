@@ -9,6 +9,7 @@ import { TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import * as EnhancedTableCommands from './EnhancedTableCommands';
 import * as commandHelpers from '../../commands';
+import { ImageViewer } from './ui/ImageViewer';
 
 // Mock dependencies
 jest.mock('prosemirror-model');
@@ -122,6 +123,15 @@ describe('EnhancedTableFigureView', () => {
       expect(view.selectHandle.getAttribute('aria-label')).toBe(
         'Enhanced content options'
       );
+      expect(view.maximizeButton.getAttribute('aria-label')).toBe(
+        'View full-size EIC content'
+      );
+      expect(
+        view.maximizeButton.classList.contains(
+          'enhanced-table-figure-maximize-button'
+        )
+      ).toBe(true);
+      expect(view.maximizeButton.parentElement).toBe(view.dom);
     });
 
     it('should leave layout sizing to the figure-type CSS', () => {
@@ -339,16 +349,20 @@ describe('EnhancedTableFigureView', () => {
   });
 
   describe('destroy', () => {
-    it('should close open menu and crop editor on destroy', () => {
+    it('should close open popups on destroy', () => {
       const menu = { close: jest.fn() };
       const cropEditor = { close: jest.fn() };
+      const viewer = { close: jest.fn() };
       view._menu = menu as unknown as EnhancedTableFigureView['_menu'];
       view._cropEditor =
         cropEditor as unknown as EnhancedTableFigureView['_cropEditor'];
+      view._viewer = viewer as unknown as EnhancedTableFigureView['_viewer'];
 
       view.destroy();
       expect(menu.close).toHaveBeenCalled();
       expect(cropEditor.close).toHaveBeenCalled();
+      expect(viewer.close).toHaveBeenCalled();
+      expect(view.maximizeButton.isConnected).toBe(false);
     });
   });
 
@@ -369,6 +383,15 @@ describe('EnhancedTableFigureView', () => {
       });
 
       expect(view.stopEvent(event)).toBe(false);
+    });
+
+    it('should stop events from the maximize handle', () => {
+      const event = new Event('click');
+      Object.defineProperty(event, 'target', {
+        value: view.maximizeButton,
+      });
+
+      expect(view.stopEvent(event)).toBe(true);
     });
 
     it('should allow events without a DOM node target through', () => {
@@ -420,6 +443,158 @@ describe('EnhancedTableFigureView', () => {
 
       expect(close).toHaveBeenCalledWith(undefined);
       expect(view._menu).toBeUndefined();
+    });
+  });
+
+  describe('full-size viewer', () => {
+    it('should proportionally fit wide table columns without changing their original widths', () => {
+      const firstCell = createNode('table_cell', {
+        colspan: 1,
+        colwidth: [500],
+      });
+      const secondCell = createNode('table_cell', {
+        colspan: 1,
+        colwidth: [300],
+      });
+      const tableNode = createNode('table', {}, [
+        createNode('table_row', {}, [firstCell, secondCell]),
+      ]);
+      view.node = createFigureNode({ figureType: 'table' }, [tableNode]);
+
+      const table = document.createElement('table');
+      const colgroup = document.createElement('colgroup');
+      const firstColumn = document.createElement('col');
+      const secondColumn = document.createElement('col');
+      firstColumn.style.width = '500px';
+      secondColumn.style.width = '300px';
+      colgroup.append(firstColumn, secondColumn);
+      table.appendChild(colgroup);
+      view.contentDOM.appendChild(table);
+
+      view['fitTableToWidth']();
+
+      expect(table.dataset.eicOriginalWidth).toBe('800');
+      expect(firstColumn.dataset.eicOriginalWidth).toBe('500');
+      expect(secondColumn.dataset.eicOriginalWidth).toBe('300');
+      expect(firstColumn.style.width).toBe('390px');
+      expect(secondColumn.style.width).toBe('234px');
+      expect(table.style.width).toBe('624px');
+      expect(view['getOriginalTableWidth']()).toBe(800);
+    });
+
+    it('should open EIC tables using their original column width', () => {
+      const table = document.createElement('table');
+      const colgroup = document.createElement('colgroup');
+      const firstColumn = document.createElement('col');
+      const secondColumn = document.createElement('col');
+      firstColumn.style.width = '400px';
+      secondColumn.style.width = '300px';
+      colgroup.append(firstColumn, secondColumn);
+      table.appendChild(colgroup);
+      const body = document.createElement('div');
+      body.className = 'enhanced-table-figure-body';
+      body.appendChild(table);
+      const notes = document.createElement('div');
+      notes.className = 'enhanced-table-figure-notes';
+      const capco = document.createElement('div');
+      capco.className = 'enhanced-table-figure-capco';
+      view.contentDOM.append(body, notes, capco);
+
+      const viewer = { close: jest.fn() };
+      const createPopUp = jest
+        .spyOn(commandHelpers, 'createPopUp')
+        .mockReturnValue(viewer as never);
+
+      view.maximizeButton.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      );
+
+      expect(createPopUp).toHaveBeenCalledWith(
+        ImageViewer,
+        expect.objectContaining({
+          figureType: 'table',
+          nodeViewDom: expect.any(HTMLElement),
+          originalWidth: 700,
+        }),
+        expect.objectContaining({
+          autoDismiss: false,
+          modal: true,
+          position: commandHelpers.atViewportCenter,
+        })
+      );
+
+      const props = createPopUp.mock.calls[0][1] as {
+        nodeViewDom: HTMLElement;
+        onClose: () => void;
+      };
+      expect(props.nodeViewDom.querySelector('table')).not.toBeNull();
+      expect(
+        props.nodeViewDom.querySelector('.enhanced-table-figure-notes')
+      ).toBeNull();
+      expect(
+        props.nodeViewDom.querySelector('.enhanced-table-figure-capco')
+      ).toBeNull();
+      props.onClose();
+      expect(viewer.close).toHaveBeenCalledWith(undefined);
+
+      const options = createPopUp.mock.calls[0][2] as { onClose: () => void };
+      options.onClose();
+      expect(view._viewer).toBeUndefined();
+    });
+
+    it('should restore stored image dimensions in the viewer', () => {
+      const imageNode = createNode('image', {
+        height: 600,
+        src: 'image.png',
+        width: 900,
+      });
+      view.node = createFigureNode({ figureType: 'figure' }, [
+        createNode('paragraph', {}, [imageNode]),
+      ]);
+      view.dom.dataset.figureType = 'figure';
+
+      const body = document.createElement('div');
+      body.className = 'enhanced-table-figure-body';
+      const image = document.createElement('img');
+      image.className = 'molm-czi-image-view-body-img';
+      image.width = 624;
+      image.height = 416;
+      body.appendChild(image);
+      view.contentDOM.appendChild(body);
+      mockView.state.doc = {
+        nodeAt: jest.fn().mockReturnValue({attrs: imageNode.attrs}),
+      } as unknown as EditorView['state']['doc'];
+
+      const createPopUp = jest
+        .spyOn(commandHelpers, 'createPopUp')
+        .mockReturnValue({close: jest.fn()} as never);
+
+      view.maximizeButton.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      );
+
+      expect(createPopUp).toHaveBeenCalledWith(
+        ImageViewer,
+        expect.objectContaining({
+          figureType: 'figure',
+          originalHeight: 600,
+          originalWidth: 900,
+        }),
+        expect.objectContaining({modal: true})
+      );
+    });
+
+    it('should close an already open viewer instead of opening another', () => {
+      const close = jest.fn();
+      view._viewer = {close} as unknown as EnhancedTableFigureView['_viewer'];
+      const createPopUp = jest.spyOn(commandHelpers, 'createPopUp');
+
+      view.maximizeButton.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      );
+
+      expect(close).toHaveBeenCalledWith(undefined);
+      expect(createPopUp).not.toHaveBeenCalled();
     });
   });
 

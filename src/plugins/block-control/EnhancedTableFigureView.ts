@@ -11,6 +11,7 @@ import { addNotesCommand } from './EnhancedTableCommands';
 import {
   atAnchorBottomLeft,
   atAnchorTopCenter,
+  atViewportCenter,
   createPopUp,
   PopUpHandle,
   uuid,
@@ -22,8 +23,28 @@ import {
   getBlockControlIcon,
 } from '../../licit/ui/blockControls';
 import { CropDataPropValue, CropImagePopup } from './ui/CropImagePopup';
+import { ImageViewer } from './ui/ImageViewer';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
+const EIC_FIT_WIDTH = 624;
+
+type ViewerDimensions = {
+  height?: number;
+  width?: number;
+};
+
+function toPositiveNumber(value: unknown): number | undefined {
+  const numberValue =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number.parseFloat(value)
+        : Number.NaN;
+  return Number.isFinite(numberValue) && numberValue > 0
+    ? numberValue
+    : undefined;
+}
+
 export class EnhancedTableFigureView implements NodeView {
   node: ProseMirrorNode;
   view: EditorView;
@@ -32,9 +53,13 @@ export class EnhancedTableFigureView implements NodeView {
   contentDOM: HTMLElement;
   contentScrollDOM: HTMLElement;
   selectHandle: HTMLElement;
+  maximizeButton: HTMLElement;
   _menu?: PopUpHandle;
   _cropEditor?: PopUpHandle;
+  _viewer?: PopUpHandle;
   _id = uuid();
+  _fitScheduled = false;
+  _destroyed = false;
 
   constructor(node: ProseMirrorNode, view: EditorView, getPos: () => number) {
     this.node = node;
@@ -61,6 +86,17 @@ export class EnhancedTableFigureView implements NodeView {
       onClick: this.handleMenuClick,
     });
     this.dom.appendChild(this.selectHandle);
+
+    this.maximizeButton = createBlockControlHandle({
+      label: 'View full-size EIC content',
+      onClick: this.handleMaximizeClick,
+    });
+    this.maximizeButton.classList.add(
+      'enhanced-table-figure-maximize-button'
+    );
+    this.maximizeButton.textContent = '\u26F6';
+    this.dom.appendChild(this.maximizeButton);
+    this.scheduleFitToWidth();
   }
 
   onResizeEnd = (newWidth: number, newHeight: number): void => {
@@ -98,6 +134,7 @@ export class EnhancedTableFigureView implements NodeView {
       baseClasses.push('ProseMirror-selectednode');
     }
     this.dom.className = baseClasses.join(' ');
+    this.scheduleFitToWidth();
 
     return true;
   }
@@ -128,14 +165,21 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   destroy(): void {
+    this._destroyed = true;
     this.closeMenu();
     this._cropEditor?.close?.(undefined);
+    this._viewer?.close?.(undefined);
     this.selectHandle.remove();
+    this.maximizeButton.remove();
   }
 
   stopEvent(event: Event): boolean {
     const target = event.target;
-    return target instanceof globalThis.Node && this.selectHandle.contains(target);
+    return (
+      target instanceof globalThis.Node &&
+      (this.selectHandle.contains(target) ||
+        this.maximizeButton.contains(target))
+    );
   }
 
   private readonly handleMenuClick = (event: Event): void => {
@@ -161,6 +205,40 @@ export class EnhancedTableFigureView implements NodeView {
         position: atAnchorBottomLeft,
         onClose: () => {
           this._menu = undefined;
+        },
+      }
+    );
+  };
+
+  private readonly handleMaximizeClick = (event: Event): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    this.closeMenu();
+
+    if (this._viewer) {
+      this._viewer.close(undefined);
+      return;
+    }
+
+    const figureType = String(this.node.attrs.figureType || 'figure');
+    const nodeViewDom = this.createViewerDom(figureType);
+    const dimensions = this.getViewerDimensions(figureType);
+
+    this._viewer = createPopUp(
+      ImageViewer,
+      {
+        figureType,
+        nodeViewDom,
+        onClose: () => this._viewer?.close?.(undefined),
+        originalHeight: dimensions.height,
+        originalWidth: dimensions.width,
+      },
+      {
+        autoDismiss: false,
+        modal: true,
+        position: atViewportCenter,
+        onClose: () => {
+          this._viewer = undefined;
         },
       }
     );
@@ -381,6 +459,229 @@ export class EnhancedTableFigureView implements NodeView {
         ...attrs,
       })
     );
+  }
+
+  private createViewerDom(figureType: string): HTMLElement {
+    const wrapper = document.createElement('div');
+    wrapper.className =
+      'enhanced-table-figure enhanced-table-figure-viewer-source';
+    wrapper.dataset.figureType = figureType;
+
+    const figureBody = this.contentDOM.querySelector<HTMLElement>(
+      '.enhanced-table-figure-body'
+    );
+    const primaryContent =
+      figureType === 'table'
+        ? this.contentDOM
+            .querySelector('table')
+            ?.closest<HTMLElement>('.tableWrapper') ||
+          this.contentDOM.querySelector<HTMLElement>('table')
+        : this.contentDOM
+            .querySelector('.molm-czi-image-view')
+            ?.closest<HTMLElement>('p') ||
+          this.contentDOM.querySelector<HTMLElement>('.molm-czi-image-view');
+    const contentClone = (
+      figureBody ||
+      primaryContent ||
+      document.createElement('div')
+    ).cloneNode(true) as HTMLElement;
+    contentClone.removeAttribute('contenteditable');
+    wrapper.appendChild(contentClone);
+
+    const transientSelectors = [
+      '.enhanced-table-figure-capco',
+      '.enhanced-table-figure-notes',
+      '.licit-block-control-handle',
+      '.molm-czi-image-resize-box',
+      '.ProseMirror-separator',
+      '.ProseMirror-trailingBreak',
+      '.column-resize-handle',
+      '.czi-table-row-resize-handle',
+    ];
+    for (const element of wrapper.querySelectorAll(
+      transientSelectors.join(',')
+    )) {
+      element.remove();
+    }
+
+    for (const element of wrapper.querySelectorAll(
+      '.ProseMirror-selectednode, .selectedCell'
+    )) {
+      element.classList.remove('ProseMirror-selectednode', 'selectedCell');
+    }
+    for (const element of wrapper.querySelectorAll(
+      '.molm-czi-image-view-body.active, .molm-czi-image-view-body.selected'
+    )) {
+      element.classList.remove('active', 'focused', 'selected');
+      element.removeAttribute('data-active');
+    }
+
+    return wrapper;
+  }
+
+  private getViewerDimensions(figureType: string): ViewerDimensions {
+    if (figureType === 'table') {
+      return {width: this.getOriginalTableWidth()};
+    }
+
+    const imageElement = this.contentDOM.querySelector<HTMLImageElement>(
+      '.molm-czi-image-view-body-img'
+    );
+    const imagePath = this.findImagePath(this.getPos());
+    const imageNode =
+      imagePath === null ? null : this.view.state.doc.nodeAt(imagePath);
+    return {
+      height:
+        toPositiveNumber(imageNode?.attrs?.height) ||
+        toPositiveNumber(imageElement?.naturalHeight) ||
+        toPositiveNumber(imageElement?.height),
+      width:
+        toPositiveNumber(imageNode?.attrs?.width) ||
+        toPositiveNumber(imageElement?.naturalWidth) ||
+        toPositiveNumber(imageElement?.width),
+    };
+  }
+
+  private getOriginalTableWidth(): number {
+    const table = this.contentDOM.querySelector<HTMLTableElement>('table');
+    if (!table) {
+      return EIC_FIT_WIDTH;
+    }
+
+    const savedWidth = toPositiveNumber(table.dataset.eicOriginalWidth);
+    const columnWidth = Array.from(table.querySelectorAll('col')).reduce(
+      (total, column) => {
+        const savedColumnWidth = toPositiveNumber(
+          column.dataset.eicOriginalWidth
+        );
+        const styleWidth = column.style.width;
+        const width =
+          savedColumnWidth ||
+          (styleWidth && !styleWidth.includes('%')
+            ? toPositiveNumber(styleWidth)
+            : toPositiveNumber(column.getAttribute('width')));
+        return total + (width || 0);
+      },
+      0
+    );
+    const styleWidth =
+      table.style.width && !table.style.width.includes('%')
+        ? toPositiveNumber(table.style.width)
+        : undefined;
+
+    return Math.max(
+      EIC_FIT_WIDTH,
+      savedWidth || 0,
+      columnWidth,
+      styleWidth || 0,
+      toPositiveNumber(table.getAttribute('width')) || 0,
+      table.scrollWidth,
+      table.getBoundingClientRect().width
+    );
+  }
+
+  private scheduleFitToWidth(): void {
+    if (this._fitScheduled) {
+      return;
+    }
+    this._fitScheduled = true;
+    queueMicrotask(() => {
+      this._fitScheduled = false;
+      if (!this._destroyed) {
+        this.fitTableToWidth();
+      }
+    });
+  }
+
+  private fitTableToWidth(): void {
+    if (this.node.attrs.figureType !== 'table') {
+      return;
+    }
+
+    const table = this.contentDOM.querySelector<HTMLTableElement>('table');
+    if (!table) {
+      return;
+    }
+
+    const columns = Array.from(table.querySelectorAll('col'));
+    if (!columns.length) {
+      table.style.width = `${EIC_FIT_WIDTH}px`;
+      table.style.maxWidth = `${EIC_FIT_WIDTH}px`;
+      return;
+    }
+
+    const nodeWidths = this.getTableNodeColumnWidths();
+    const originalWidths = columns.map((column, index) => {
+      return (
+        nodeWidths[index] ||
+        toPositiveNumber(column.dataset.eicOriginalWidth) ||
+        toPositiveNumber(column.style.width) ||
+        toPositiveNumber(column.getAttribute('width')) ||
+        0
+      );
+    });
+    const originalWidth = originalWidths.reduce(
+      (total, width) => total + width,
+      0
+    );
+    if (!originalWidth || originalWidths.some((width) => !width)) {
+      return;
+    }
+
+    table.dataset.eicOriginalWidth = String(originalWidth);
+    const availableWidth =
+      this.contentScrollDOM.clientWidth > 0
+        ? Math.min(EIC_FIT_WIDTH, this.contentScrollDOM.clientWidth)
+        : EIC_FIT_WIDTH;
+    const scale = Math.min(1, availableWidth / originalWidth);
+
+    columns.forEach((column, index) => {
+      const originalColumnWidth = originalWidths[index];
+      column.dataset.eicOriginalWidth = String(originalColumnWidth);
+      column.style.width = `${originalColumnWidth * scale}px`;
+    });
+
+    const fittedWidth = originalWidth * scale;
+    table.style.width = `${fittedWidth}px`;
+    table.style.minWidth = `${fittedWidth}px`;
+    table.style.maxWidth = `${availableWidth}px`;
+  }
+
+  private getTableNodeColumnWidths(): number[] {
+    const tableNode = this.findDescendantNode(this.node, 'table');
+    if (!tableNode?.childCount) {
+      return [];
+    }
+
+    const firstRow = tableNode.child(0);
+    const widths: number[] = [];
+    for (let index = 0; index < firstRow.childCount; index++) {
+      const cell = firstRow.child(index);
+      const colspan = toPositiveNumber(cell.attrs?.colspan) || 1;
+      const colwidth = Array.isArray(cell.attrs?.colwidth)
+        ? cell.attrs.colwidth
+        : [];
+      for (let columnIndex = 0; columnIndex < colspan; columnIndex++) {
+        widths.push(toPositiveNumber(colwidth[columnIndex]) || 0);
+      }
+    }
+    return widths;
+  }
+
+  private findDescendantNode(
+    node: ProseMirrorNode,
+    typeName: string
+  ): ProseMirrorNode | null {
+    if (node.type.name === typeName) {
+      return node;
+    }
+    for (let index = 0; index < node.childCount; index++) {
+      const found = this.findDescendantNode(node.child(index), typeName);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
   }
 
   private findImagePath(figurePos: number): number | null {
