@@ -1980,8 +1980,10 @@ describe('applyStyleForTableColumnCell', () => {
       'Missing',
       state,
       state.tr,
-      node,
-      0
+      {
+        node,
+        startPos: 0,
+      }
     );
     expect(result).toBeDefined();
   });
@@ -1998,9 +2000,11 @@ describe('applyStyleForTableColumnCell', () => {
       'X',
       state,
       state.tr,
-      node,
-      0,
-      1
+      {
+        node,
+        opt: 1,
+        startPos: 0,
+      }
     );
     expect(result).toBeDefined();
   });
@@ -2042,9 +2046,11 @@ describe('applyStyleForTableColumnCell', () => {
       'OverrideStyle',
       state,
       tr,
-      node,
-      1,
-      1
+      {
+        node,
+        opt: 1,
+        startPos: 1,
+      }
     );
 
     expect(setNodeMarkup).toHaveBeenCalledWith(
@@ -2089,9 +2095,11 @@ describe('applyStyleForTableColumnCell', () => {
       'LevelStyle',
       state,
       tr,
-      node,
-      1,
-      1
+      {
+        node,
+        opt: 1,
+        startPos: 1,
+      }
     );
 
     expect(setNodeMarkup).toHaveBeenCalledWith(

@@ -26,8 +26,22 @@ type StyleRuntimeLike = Partial<StyleRuntime> & {
   saveStyleSet?: (styles: Style[]) => MaybePromise<Style[] | null | undefined>;
 };
 
-let customStyles: Style[] = [];
-let styleRuntime: StyleRuntimeLike | null = null;
+type SharedCustomStyleState = {
+  customStyles: Style[];
+  styleRuntime: StyleRuntimeLike | null;
+};
+
+const CUSTOM_STYLE_STATE_KEY = Symbol.for(
+  '@modusoperandi/licit-tiptap/custom-style-state'
+);
+const sharedStates = globalThis as unknown as Record<
+  symbol,
+  SharedCustomStyleState
+>;
+const sharedState = (sharedStates[CUSTOM_STYLE_STATE_KEY] ??= {
+  customStyles: [],
+  styleRuntime: null,
+});
 let hideNumbering = false;
 let _view: EditorView | null = null;
 let hasdocTypechanged = false;
@@ -38,7 +52,7 @@ function isValidStyleName(styleName?: string) {
   return (
     styleName &&
     !styleName.includes(RESERVED_STYLE_NONE_NUMBERING) &&
-    customStyles?.length > 0
+    sharedState.customStyles?.length > 0
   );
 }
 
@@ -55,6 +69,7 @@ function shouldFallbackToNormalStyle(styleName?: string): boolean {
 }
 
 export function addStyleToList(style: Style): Style[] {
+  const customStyles = sharedState.customStyles;
   if (0 < customStyles.length && style?.styleName) {
     const index = customStyles.findIndex(
       (item) => item?.styleName === style?.styleName
@@ -72,7 +87,7 @@ export function addStyleToList(style: Style): Style[] {
 export function isCustomStyleExists(styleName: string) {
   let bOK = false;
   if (isValidStyleName(styleName)) {
-    for (const style of customStyles) {
+    for (const style of sharedState.customStyles) {
       // Able to add same style name
       if (styleName.toUpperCase() === style?.styleName?.toUpperCase()) {
         bOK = true;
@@ -88,6 +103,7 @@ export function getCustomStyleByName(name: string): Style {
   let style: Style = { styleName: name };
   let has = false;
   if (isValidStyleName(name)) {
+    const customStyles = sharedState.customStyles;
     // break the loop if find any matches
     for (let i = 0; !has && i < customStyles.length; i++) {
       if (name === customStyles[i].styleName) {
@@ -116,7 +132,7 @@ export function setView(csview: EditorView) {
 
 // store styles in cache
 export function setStyles(style: Style[]) {
-  customStyles = style;
+  sharedState.customStyles = style;
   setCustomStyles(style);
   let documentType;
   if (style && Array.isArray(style)) {
@@ -148,12 +164,17 @@ export function getHidenumberingFlag(): boolean {
 }
 
 export function setStyleRuntime(runtime: StyleRuntimeLike | null): void {
-  styleRuntime = runtime;
+  sharedState.styleRuntime = runtime;
 }
 
 export function getStyleRuntime(): StyleRuntimeLike | null {
-  return styleRuntime;
+  return sharedState.styleRuntime;
 }
+
+export function getCachedStyles(): Style[] {
+  return [...sharedState.customStyles];
+}
+
 export function setCustomStylesOnLoad(): void {
   getStylesAsync()
     .then((result) => {
@@ -169,17 +190,17 @@ function saveDefaultStyle(): void {
 }
 
 export function isStylesLoaded(): boolean {
-  return customStyles?.length > 0 && hasdocTypechanged;
+  return sharedState.customStyles?.length > 0 && hasdocTypechanged;
 }
 
 export function hasStyleRuntime(): boolean {
-  return !!styleRuntime;
+  return !!sharedState.styleRuntime;
 }
 // get a style by Level
 export function getCustomStyleByLevel(level: number): Style | null {
   let style: Style | null = null;
-  if (customStyles.length > 0) {
-    for (const obj of customStyles) {
+  if (sharedState.customStyles.length > 0) {
+    for (const obj of sharedState.customStyles) {
       if (
         obj.styles?.hasNumbering &&
         obj.styles.styleLevel &&
@@ -198,8 +219,8 @@ export function getCustomStyleByLevel(level: number): Style | null {
 // To find the custom style exists with the given  level.
 export function isPreviousLevelExists(previousLevel: number) {
   let isLevelExists = true;
-  if (customStyles.length > 0 && 0 < previousLevel) {
-    const value = customStyles.find((u) => {
+  if (sharedState.customStyles.length > 0 && 0 < previousLevel) {
+    const value = sharedState.customStyles.find((u) => {
       let retVal = false;
       if (u?.styles) {
         retVal = Number(u.styles.styleLevel) === previousLevel;
@@ -309,10 +330,10 @@ function applyConditionalStyle(
 export function saveStyle(
   styleProps: Style
 ): Promise<Style[] | Style | null | undefined> {
-  return Promise.resolve(styleRuntime?.saveStyle?.(styleProps));
+  return Promise.resolve(sharedState.styleRuntime?.saveStyle?.(styleProps));
 }
 export function getStylesAsync(): Promise<Style[]> {
-  return Promise.resolve(styleRuntime?.getStylesAsync?.()).then(
+  return Promise.resolve(sharedState.styleRuntime?.getStylesAsync?.()).then(
     (result) => result ?? []
   );
 }
@@ -320,17 +341,19 @@ export function renameStyle(
   oldName: string,
   newName: string
 ): Promise<Style[]> {
-  return Promise.resolve(styleRuntime?.renameStyle?.(oldName, newName)).then(
+  return Promise.resolve(
+    sharedState.styleRuntime?.renameStyle?.(oldName, newName)
+  ).then(
     (result) => result ?? []
   );
 }
 export function removeStyle(styleName: string): Promise<Style[]> {
-  return Promise.resolve(styleRuntime?.removeStyle?.(styleName)).then(
+  return Promise.resolve(sharedState.styleRuntime?.removeStyle?.(styleName)).then(
     (result) => result ?? []
   );
 }
 export function saveStyleSet(styles: Style[]): Promise<Style[]> {
-  return Promise.resolve(styleRuntime?.saveStyleSet?.(styles)).then(
+  return Promise.resolve(sharedState.styleRuntime?.saveStyleSet?.(styles)).then(
     (result) => result ?? []
   );
 }

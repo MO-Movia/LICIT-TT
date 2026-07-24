@@ -31,6 +31,7 @@ import {
   getMaxResizeWidth,
   MAX_IMAGE_LAYOUT_SIZE,
 } from '../multimedia/ui/ImageNodeView';
+import { openTableStylePicker } from '../../licit/ui/tableStylePicker';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const FRAMESET_CLASSNAME = 'czi-editor-frameset';
@@ -78,6 +79,7 @@ export class EnhancedTableFigureView implements NodeView {
   contentScrollDOM: HTMLElement;
   selectHandle: HTMLElement;
   _menu?: PopUpHandle;
+  _stylePicker?: PopUpHandle;
   _cropEditor?: PopUpHandle;
   _sizeEditor?: PopUpHandle;
   _originalImageSize?: ImageSize & { src: string };
@@ -150,13 +152,7 @@ export class EnhancedTableFigureView implements NodeView {
   }
 
   hasNotes(): boolean {
-    for (let index = 0; index < this.node.childCount; index++) {
-      const child = this.node.child(index);
-      if (child.type.name === 'enhanced_table_figure_notes') {
-        return true;
-      }
-    }
-    return false;
+    return this.findNotes() !== null;
   }
 
   updateNotesTrigger(): void {
@@ -219,7 +215,6 @@ export class EnhancedTableFigureView implements NodeView {
   private getMenuItems(): BlockControlMenuItem[] {
     const figureType = this.node.attrs.figureType;
     const image = this.getNestedImage();
-    const hasImage = image !== null;
     const sizingDisabled = image
       ? !!(
         image.node.attrs.crop ||
@@ -230,8 +225,10 @@ export class EnhancedTableFigureView implements NodeView {
     const canResetImage = image
       ? this.getOriginalImageSize(image.node) !== null
       : false;
+    const hasImage = this.findImagePath(this.getPos()) !== null;
+    const hasNotes = this.hasNotes();
     const canAddNotes =
-      !this.hasNotes() && (figureType === 'table' || figureType === 'figure');
+      !hasNotes && (figureType === 'table' || figureType === 'figure');
 
     return [
       {
@@ -276,11 +273,27 @@ export class EnhancedTableFigureView implements NodeView {
         action: () => this.insertParagraphBelow(),
       },
       {
+        id: 'apply-style',
+        label: 'Apply Style',
+        icon: getBlockControlIcon('style', 'Apply Style'),
+        action: (anchor) => this.openStylePicker(anchor),
+        onHover: (anchor) => this.openStylePicker(anchor),
+        disabled: this.getTablePos() === null,
+        hidden: figureType !== 'table',
+      },
+      {
         id: 'add-notes',
         label: 'Add Notes',
         icon: getBlockControlIcon('addNotes', 'Add Notes'),
         action: () => this.addNotes(),
         hidden: !canAddNotes,
+      },
+      {
+        id: 'delete-notes',
+        label: 'Delete Notes',
+        icon: getBlockControlIcon('deleteNotes', 'Delete Notes'),
+        action: () => this.deleteNotes(),
+        hidden: !hasNotes,
       },
       {
         id: 'crop',
@@ -325,9 +338,56 @@ export class EnhancedTableFigureView implements NodeView {
 
   private readonly closeMenu = (): void => {
     const menu = this._menu;
+    const stylePicker = this._stylePicker;
     this._menu = undefined;
+    this._stylePicker = undefined;
+    stylePicker?.close?.(undefined);
     menu?.close?.(undefined);
   };
+
+  private getTablePos(): number | null {
+    if (typeof this.node.descendants !== 'function') {
+      return null;
+    }
+
+    let tableOffset: number | null = null;
+    this.node.descendants((node, pos) => {
+      if (node.type.spec.tableRole === 'table') {
+        tableOffset = pos;
+        return false;
+      }
+      return tableOffset === null;
+    });
+
+    return tableOffset === null ? null : this.getPos() + 1 + tableOffset;
+  }
+
+  private openStylePicker(anchor?: HTMLElement): boolean {
+    if (!anchor) {
+      return true;
+    }
+
+    if (this._stylePicker) {
+      return false;
+    }
+
+    const picker = openTableStylePicker({
+      anchor,
+      getTablePos: () => this.getTablePos(),
+      onClose: () => {
+        this._stylePicker = undefined;
+      },
+      onSelect: () => this.closeMenu(),
+      view: this.view,
+    });
+
+    if (!picker) {
+      return true;
+    }
+
+    this._stylePicker = picker;
+    return false;
+  }
 
   private insertParagraphAbove(): void {
     const { state, dispatch } = this.view;
@@ -352,6 +412,16 @@ export class EnhancedTableFigureView implements NodeView {
     dispatch(
       addNotesCommand(state.tr, state.schema, this.getPos()) as Transaction
     );
+  }
+
+  private deleteNotes(): void {
+    const notes = this.findNotes();
+    if (notes === null) {
+      return;
+    }
+
+    const { state, dispatch } = this.view;
+    dispatch(state.tr.delete(notes.pos, notes.pos + notes.node.nodeSize));
   }
 
   private deleteFigure(): void {
@@ -685,6 +755,22 @@ export class EnhancedTableFigureView implements NodeView {
       const imagePath = this.findNestedImageInNode(child, figurePos + 1 + offset);
       if (imagePath !== null) {
         return imagePath;
+      }
+      offset += child.nodeSize;
+    }
+
+    return null;
+  }
+
+  private findNotes(): { node: ProseMirrorNode; pos: number } | null {
+    let offset = 0;
+    for (let index = 0; index < this.node.childCount; index++) {
+      const child = this.node.child(index);
+      if (child.type.name === 'enhanced_table_figure_notes') {
+        return {
+          node: child,
+          pos: this.getPos() + 1 + offset,
+        };
       }
       offset += child.nodeSize;
     }

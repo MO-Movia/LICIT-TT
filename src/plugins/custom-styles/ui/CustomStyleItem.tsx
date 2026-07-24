@@ -7,7 +7,11 @@ import React from 'react';
 import { EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
-import { getCustomStyleByName, getCustomStyle, getStyleRuntime } from '../customStyle';
+import {
+  getCustomStyleByName,
+  getCustomStyle,
+  getStyleRuntime,
+} from '../customStyle';
 import { getDetailsBullet } from '../CustomStyleNodeSpec';
 import { PointerSurface } from '../../../commands';
 import type { PointerSurfaceProps } from '../../../commands';
@@ -28,11 +32,12 @@ export class CustomStyleItem extends React.PureComponent<
     hasText?: boolean;
     onCommand?: () => void; //Function changed to ()=>void
     selectionClassName?: string;
+    showStyleEditAction?: boolean;
     // [Keyboard navigation] Position of this row in the menu's single index
     // space; exposed on the DOM as data-index so hover can map back to it.
     index?: number;
   }
-  > {
+> {
   render(): React.ReactElement {
     const { label, hasText, index, ...pointerProps } = this.props;
     let text = '';
@@ -101,8 +106,8 @@ export class CustomStyleItem extends React.PureComponent<
               : 'none',
             color: pointerProps.command._customStyle.styles?.bulletLevel
               ? getDetailsBullet(
-                pointerProps.command._customStyle.styles.bulletLevel
-              ).color
+                  pointerProps.command._customStyle.styles.bulletLevel
+                ).color
               : '',
             marginTop: '-4px',
           }}
@@ -110,8 +115,8 @@ export class CustomStyleItem extends React.PureComponent<
           <PointerSurface {...pointerProps} className={klass}>
             {pointerProps.command._customStyle.styles?.bulletLevel
               ? getDetailsBullet(
-                pointerProps.command._customStyle.styles.bulletLevel
-              ).symbol
+                  pointerProps.command._customStyle.styles.bulletLevel
+                ).symbol
               : ''}
           </PointerSurface>
         </div>
@@ -146,7 +151,15 @@ export class CustomStyleItem extends React.PureComponent<
         <div
           className="molsp-arrow-right"
           data-cy="cyStyleEdit"
-          style={{ width: '50px', display: (hasText && getStyleRuntime()?.canEditStyle) ? 'block' : 'none' }}
+          style={{
+            width: '50px',
+            display:
+              hasText &&
+              this.props.showStyleEditAction !== false &&
+              getStyleRuntime()?.canEditStyle
+                ? 'block'
+                : 'none',
+          }}
         >
           {/* Need to change the below icon to downarroe */}
           <PointerSurface {...pointerProps} className={klass + ' edit-icon'}>

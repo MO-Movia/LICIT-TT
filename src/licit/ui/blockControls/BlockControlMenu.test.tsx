@@ -44,6 +44,15 @@ describe('BlockControlMenu', () => {
     });
   };
 
+  const hoverButton = (id: string) => {
+    const button = container.querySelector<HTMLButtonElement>(
+      `[data-id="${id}"]`
+    );
+    act(() => {
+      button?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    });
+  };
+
   afterEach(() => {
     act(() => {
       root?.unmount();
@@ -90,6 +99,39 @@ describe('BlockControlMenu', () => {
 
     expect(action).toHaveBeenCalledTimes(1);
     expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the menu open when an item opens a child menu', () => {
+    const action = jest.fn().mockReturnValue(false);
+    const close = renderMenu([
+      {
+        id: 'child-menu',
+        label: 'Child menu',
+        action,
+      },
+    ]);
+
+    clickButton('child-menu');
+
+    expect(action).toHaveBeenCalledWith(expect.any(HTMLButtonElement));
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('opens a child menu when its parent item is hovered', () => {
+    const onHover = jest.fn().mockReturnValue(false);
+    const close = renderMenu([
+      {
+        id: 'hover-child-menu',
+        label: 'Hover child menu',
+        action: jest.fn(),
+        onHover,
+      },
+    ]);
+
+    hoverButton('hover-child-menu');
+
+    expect(onHover).toHaveBeenCalledWith(expect.any(HTMLButtonElement));
+    expect(close).not.toHaveBeenCalled();
   });
 
   it('does not run disabled item action or close the menu', () => {
