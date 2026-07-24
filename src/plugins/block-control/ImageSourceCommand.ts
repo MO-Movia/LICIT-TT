@@ -55,7 +55,15 @@ export function insertEnhancedImageFigure(
     imageAttrs.height = height;
   }
   const imageNode = imageNodeType.create(imageAttrs, null);
-  const bodyNode = bodyType.create({}, imageNode);
+  // Wrap the inline image in a paragraph so the body (content: 'block+')
+  // receives a valid block child.  Mirrors how EnhancedTableCommands wraps
+  // its table node and matches the structure the load-time repair
+  // (wrapInlineChildren) produces for legacy documents.
+  const paragraphType = schema.nodes.paragraph;
+  const imageWrapper = paragraphType
+    ? paragraphType.create({}, imageNode)
+    : imageNode;
+  const bodyNode = bodyType.create({}, imageWrapper);
 
   // No notes by default.
   // Create a blank CAPCO (footer) node.

@@ -58,7 +58,7 @@ describe('DefaultEditorPlugins', () => {
         const editorPlugins = new DefaultEditorPlugins(schema);
         const plugins = editorPlugins.get();
 
-        expect(plugins).toHaveLength(11);
+        expect(plugins).toHaveLength(12);
         expect(ContentPlaceholderPlugin).toHaveBeenCalledTimes(1);
         expect(CursorPlaceholderPlugin).toHaveBeenCalledTimes(1);
         expect(EditorPageLayoutPlugin).toHaveBeenCalledTimes(1);

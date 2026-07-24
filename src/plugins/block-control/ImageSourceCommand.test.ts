@@ -25,12 +25,13 @@ jest.mock('../../commands');
 describe('insertEnhancedImageFigure', () => {
   let mockTr: Transaction;
   type MockSchema = {
+    text: jest.Mock;
     nodes: {
       enhanced_table_figure?: { create: jest.Mock };
       enhanced_table_figure_body?: { create: jest.Mock };
-      simple_image?: { create: jest.Mock };
+      image?: { create: jest.Mock };
       enhanced_table_figure_capco?: { create: jest.Mock };
-      paragraph?: { createAndFill: jest.Mock };
+      paragraph?: { create: jest.Mock; createAndFill: jest.Mock };
       text?: jest.Mock;
     };
   };
@@ -49,6 +50,7 @@ describe('insertEnhancedImageFigure', () => {
     } as unknown as Transaction;
 
     mockSchema = {
+      text: jest.fn().mockReturnValue({}),
       nodes: {
         enhanced_table_figure: {
           create: jest.fn().mockReturnValue({
@@ -58,13 +60,14 @@ describe('insertEnhancedImageFigure', () => {
         enhanced_table_figure_body: {
           create: jest.fn(),
         },
-        simple_image: {
-          create: jest.fn(),
+        image: {
+          create: jest.fn().mockReturnValue({ type: { name: 'image' } }),
         },
         enhanced_table_figure_capco: {
           create: jest.fn(),
         },
         paragraph: {
+          create: jest.fn().mockReturnValue({ type: { name: 'paragraph' } }),
           createAndFill: jest.fn().mockReturnValue({}),
         },
         text: jest.fn(),
@@ -102,7 +105,7 @@ describe('insertEnhancedImageFigure', () => {
   });
 
   it('should return unchanged transaction if image node type not found', () => {
-    delete mockSchema.nodes.simple_image;
+    delete mockSchema.nodes.image;
     const result = insertEnhancedImageFigure(
       mockTr,
       mockSchema as unknown as Schema,
@@ -110,6 +113,33 @@ describe('insertEnhancedImageFigure', () => {
       altText
     );
     expect(result).toBe(mockTr);
+  });
+
+  it('should wrap the image in a paragraph before passing it to the body', () => {
+    insertEnhancedImageFigure(
+      mockTr,
+      mockSchema as unknown as Schema,
+      imageUrl,
+      altText
+    );
+
+    // image.create should be called with the image attrs
+    expect(mockSchema.nodes.image?.create).toHaveBeenCalledWith(
+      expect.objectContaining({ src: imageUrl, alt: altText }),
+      null
+    );
+
+    // paragraph.create should be called with the image node as content
+    expect(mockSchema.nodes.paragraph?.create).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ type: { name: 'image' } })
+    );
+
+    // body.create should receive the paragraph (block child), not the bare image
+    expect(mockSchema.nodes.enhanced_table_figure_body?.create).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ type: { name: 'paragraph' } })
+    );
   });
 });
 
