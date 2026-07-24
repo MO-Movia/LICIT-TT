@@ -24,12 +24,19 @@ export class BlockControlMenu extends React.PureComponent<BlockControlMenuProps>
             data-id={item.id}
             disabled={item.disabled}
             key={item.id}
+            onMouseEnter={(event) => {
+              if (!item.disabled) {
+                item.onHover?.(event.currentTarget);
+              }
+            }}
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
               if (!item.disabled) {
-                item.action();
-                this.props.close?.();
+                const shouldClose = item.action(event.currentTarget) !== false;
+                if (shouldClose) {
+                  this.props.close?.();
+                }
               }
             }}
             role="menuitem"

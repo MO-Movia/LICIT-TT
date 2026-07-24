@@ -33,6 +33,9 @@ import { Fragment, Mark, Node, Schema, Slice } from 'prosemirror-model';
 import { CustomstyleDropDownCommand } from './ui/CustomstyleDropDownCommand';
 import { applyEffectiveSchema } from './EditorSchema';
 import type { StyleRuntime } from './StyleRuntime';
+import {
+  applyStoredTableStyleAtSelection,
+} from '../../licit/extensions/tableEx/tableStyle';
 export * from './StyleRuntime';
 
 const ENTERKEYCODE = 13;
@@ -43,6 +46,7 @@ const BACKSPACEKEY = 'Backspace';
 const DELETEKEY = 'Delete';
 const PARA_POSITION_DIFF = 4;
 const ATTR_STYLE_NAME = 'styleName';
+const TABLE_STYLE_NAME_ATTRIBUTE = 'tableStyleName';
 const ZERO_WIDTH_SPACE = '\u200B';
 type CustomStyleView = Plugin['spec']['view'] extends (view: infer T) => unknown
   ? T & { input?: { lastKeyCode?: number } }
@@ -271,6 +275,12 @@ export function onUpdateAppendTransaction(
     csview,
     tr
   );
+  if (isPaste) {
+    tr = applyStoredTableStyleAtSelection(
+      nextState,
+      tr ?? nextState.tr
+    ) as Transaction;
+  }
 
   return tr;
 }
@@ -928,14 +938,56 @@ function getNextParagraphStyleContext(
     return null;
   }
 
-  const style = getCustomStyleByName(prevParagraph.attrs.styleName);
+  const tableStyleName = getEnclosingTableStyleName($from);
+  const style = tableStyleName
+    ? getTableContinuationStyle(tableStyleName)
+    : getCustomStyleByName(prevParagraph.attrs.styleName);
   if (!style?.styles?.nextLineStyleName) {
     return null;
   }
 
   const attrs = getNextParagraphAttrs(prevParagraph, style, prevState, $from);
-  const styleName = getNextParagraphStyleName(style, $from);
+  const styleName =
+    tableStyleName ?? getNextParagraphStyleName(style, $from);
+  if (tableStyleName) {
+    attrs.styleName = tableStyleName;
+  }
   return { attrs, nextNode, nextNodePos, styleName };
+}
+
+function getEnclosingTableStyleName(
+  $from: EditorState['selection']['$from']
+): string | null {
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth);
+    if (node.type.name !== 'table') {
+      continue;
+    }
+
+    if (node.attrs?.vignette === true || node.attrs?.vignette === 'true') {
+      return null;
+    }
+
+    const styleName = node.attrs?.[TABLE_STYLE_NAME_ATTRIBUTE];
+    return typeof styleName === 'string' && styleName
+      ? resetTheDefaultStyleNameToNone(styleName)
+      : null;
+  }
+
+  return null;
+}
+
+function getTableContinuationStyle(styleName: string): StyleWithNextLine {
+  const style = getCustomStyleByName(styleName) as StyleWithNextLine | null;
+
+  return {
+    ...style,
+    styleName,
+    styles: {
+      ...style?.styles,
+      nextLineStyleName: styleName,
+    },
+  };
 }
 
 function isActiveNextParagraph(

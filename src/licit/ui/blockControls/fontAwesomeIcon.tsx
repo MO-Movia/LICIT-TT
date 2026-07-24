@@ -20,6 +20,7 @@ const ICON_CLASS_NAMES = {
   insertAbove: 'fa-arrow-up',
   insertBelow: 'fa-arrow-down',
   resetCrop: 'fa-history',
+  style: 'fa-paint-brush',
 } as const;
 
 export function getBlockControlIcon(

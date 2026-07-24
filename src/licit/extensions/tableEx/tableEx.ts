@@ -3,11 +3,24 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {findParentNodeClosestToPos} from '@tiptap/core';
-import {Table, createTable} from '@tiptap/extension-table';
-import {TextSelection} from 'prosemirror-state';
-import {normalizeCssSize, normalizeValue} from '../table.utils';
-import {LicitTableNodeView} from '../../ui/tableNodeView';
+import { findParentNodeClosestToPos } from '@tiptap/core';
+import { Table, createTable } from '@tiptap/extension-table';
+import { TextSelection } from 'prosemirror-state';
+import {
+  addColumnAfter,
+  addColumnBefore,
+  addRowAfter,
+  addRowBefore,
+  splitCell,
+} from '@tiptap/pm/tables';
+import { normalizeCssSize, normalizeValue } from '../table.utils';
+import { LicitTableNodeView } from '../../ui/tableNodeView';
+import {
+  applyTableStyle,
+  applyStoredTableStyles,
+  DEFAULT_TABLE_STYLE_NAME,
+  TABLE_STYLE_NAME_ATTRIBUTE,
+} from './tableStyle';
 
 export const TableEx = Table.extend({
   addOptions() {
@@ -58,14 +71,26 @@ export const TableEx = Table.extend({
           return normalizeValue(element.style.height);
         },
       },
+      [TABLE_STYLE_NAME_ATTRIBUTE]: {
+        default: DEFAULT_TABLE_STYLE_NAME,
+        renderHTML: (attributes) => {
+          const styleName = normalizeValue(
+            attributes[TABLE_STYLE_NAME_ATTRIBUTE]
+          );
+          return styleName ? { 'data-table-style-name': styleName } : {};
+        },
+        parseHTML: (element) => {
+          return normalizeValue(element.dataset.tableStyleName);
+        },
+      },
     };
   },
 
   addKeyboardShortcuts() {
     return {
       Tab: () => {
-        const {state} = this.editor;
-        const {selection} = state;
+        const { state } = this.editor;
+        const { selection } = state;
 
         const parentCell = findParentNodeClosestToPos(
           selection.$from,
@@ -89,16 +114,82 @@ export const TableEx = Table.extend({
     return {
       ...this.parent?.(),
 
+      addColumnBefore:
+        () =>
+        ({ state, dispatch }) => {
+          return addColumnBefore(
+            state,
+            dispatch &&
+              ((tr) => {
+                dispatch(applyStoredTableStyles(state, tr));
+              })
+          );
+        },
+
+      addColumnAfter:
+        () =>
+        ({ state, dispatch }) => {
+          return addColumnAfter(
+            state,
+            dispatch &&
+              ((tr) => {
+                dispatch(applyStoredTableStyles(state, tr));
+              })
+          );
+        },
+
+      addRowBefore:
+        () =>
+        ({ state, dispatch }) => {
+          return addRowBefore(
+            state,
+            dispatch &&
+              ((tr) => {
+                dispatch(applyStoredTableStyles(state, tr));
+              })
+          );
+        },
+
+      addRowAfter:
+        () =>
+        ({ state, dispatch }) => {
+          return addRowAfter(
+            state,
+            dispatch &&
+              ((tr) => {
+                dispatch(applyStoredTableStyles(state, tr));
+              })
+          );
+        },
+
+      splitCell:
+        () =>
+        ({ state, dispatch }) => {
+          return splitCell(
+            state,
+            dispatch &&
+              ((tr) => {
+                dispatch(applyStoredTableStyles(state, tr));
+              })
+          );
+        },
+
       // override only insertTable to remove header row
       insertTable:
-        ({rows = 3, cols = 3} = {}) =>
-        ({tr, dispatch, editor}) => {
+        ({ rows = 3, cols = 3 } = {}) =>
+        ({ tr, dispatch, editor, state }) => {
           const withHeaderRow = false;
-          const tableNode = createTable(editor.schema, rows, cols, withHeaderRow);
+          const tableNode = createTable(
+            editor.schema,
+            rows,
+            cols,
+            withHeaderRow
+          );
           const node = tableNode.type.createChecked(
             {
               ...tableNode.attrs,
               noOfColumns: cols,
+              [TABLE_STYLE_NAME_ATTRIBUTE]: DEFAULT_TABLE_STYLE_NAME,
             },
             tableNode.content,
             tableNode.marks
@@ -108,8 +199,14 @@ export const TableEx = Table.extend({
             const offset = tr.selection.from + 1;
 
             tr.replaceSelectionWith(node)
-              .scrollIntoView()
-              .setSelection(TextSelection.near(tr.doc.resolve(offset)));
+              .scrollIntoView();
+            applyTableStyle(
+              state,
+              tr,
+              offset - 1,
+              DEFAULT_TABLE_STYLE_NAME
+            );
+            tr.setSelection(TextSelection.near(tr.doc.resolve(offset)));
           }
 
           return true;

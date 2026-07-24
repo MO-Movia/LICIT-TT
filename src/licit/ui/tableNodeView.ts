@@ -16,6 +16,7 @@ import {
   getBlockControlIcon,
 } from './blockControls';
 import {normalizeCssSize, normalizeValue} from '../extensions/table.utils';
+import {openTableStylePicker} from './tableStylePicker';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const ENHANCED_TABLE_FIGURE = 'enhanced_table_figure';
@@ -25,6 +26,7 @@ export class LicitTableNodeView extends TableView {
   private readonly _view?: EditorView;
   private readonly _menuButton: HTMLElement;
   private _menu?: PopUpHandle;
+  private _stylePicker?: PopUpHandle;
   private _tablePos: number | null = null;
   private _node: ProseMirrorNode;
 
@@ -197,12 +199,15 @@ export class LicitTableNodeView extends TableView {
 
   private readonly _closeMenu = (): void => {
     const menu = this._menu;
+    const stylePicker = this._stylePicker;
     this._menu = undefined;
+    this._stylePicker = undefined;
+    stylePicker?.close?.(undefined);
     menu?.close?.(undefined);
   };
 
   private _getMenuItems(): BlockControlMenuItem[] {
-    return [
+    const items: BlockControlMenuItem[] = [
       {
         id: 'insert-above',
         label: 'Insert Paragraph Above',
@@ -222,6 +227,23 @@ export class LicitTableNodeView extends TableView {
         action: () => this._deleteTable(),
       },
     ];
+
+    if (!this._isVignette()) {
+      items.splice(2, 0, {
+        id: 'apply-style',
+        label: 'Apply Style',
+        icon: getBlockControlIcon('style', 'Apply Style'),
+        action: (anchor) => this._openStylePicker(anchor),
+        onHover: (anchor) => this._openStylePicker(anchor),
+      });
+    }
+
+    return items;
+  }
+
+  private _isVignette(): boolean {
+    const vignette = this._node.attrs?.vignette;
+    return vignette === true || vignette === 'true';
   }
 
   private _getTableInfo(): {node: ProseMirrorNode; pos: number} | null {
@@ -235,6 +257,33 @@ export class LicitTableNodeView extends TableView {
     }
 
     return {node: table, pos: this._tablePos};
+  }
+
+  private _openStylePicker(anchor?: HTMLElement): boolean {
+    if (this._isVignette() || !anchor || !this._view) {
+      return true;
+    }
+
+    if (this._stylePicker) {
+      return false;
+    }
+
+    const picker = openTableStylePicker({
+      anchor,
+      getTablePos: () => this._getCurrentTablePos(),
+      onClose: () => {
+        this._stylePicker = undefined;
+      },
+      onSelect: () => this._closeMenu(),
+      view: this._view,
+    });
+
+    if (!picker) {
+      return true;
+    }
+
+    this._stylePicker = picker;
+    return false;
   }
 
   private _insertParagraph(placement: 'above' | 'below'): void {

@@ -21,7 +21,7 @@ import {
   getStylesAsync,
   hasStyleRuntime,
   isCustomStyleExists,
-  getStyleRuntime
+  getStyleRuntime,
 } from '../customStyle';
 
 // [FS] IRAD-1042 2020-09-09
@@ -54,31 +54,31 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
     if (this.hasRuntime) {
       getStylesAsync()
         .then((result) => {
-        if (result) {
-          setStyles(result);
-          HEADING_NAMES = result;
-          if (null != HEADING_NAMES) {
-            const foundNormal = result.find(
-              (obj) => obj.styleName === RESERVED_STYLE_NONE
-            );
-            if (foundNormal) {
-              HEADING_COMMANDS[RESERVED_STYLE_NONE] = new CustomStyleCommand(
-                foundNormal,
-                foundNormal.styleName
+          if (result) {
+            setStyles(result);
+            HEADING_NAMES = result;
+            if (null != HEADING_NAMES) {
+              const foundNormal = result.find(
+                (obj) => obj.styleName === RESERVED_STYLE_NONE
               );
-            }
-
-            for (const obj of HEADING_NAMES) {
-              if (RESERVED_STYLE_NONE != obj.styleName)
-                HEADING_COMMANDS[obj.styleName] = new CustomStyleCommand(
-                  obj,
-                  obj.styleName
+              if (foundNormal) {
+                HEADING_COMMANDS[RESERVED_STYLE_NONE] = new CustomStyleCommand(
+                  foundNormal,
+                  foundNormal.styleName
                 );
-            };
+              }
+
+              for (const obj of HEADING_NAMES) {
+                if (RESERVED_STYLE_NONE != obj.styleName)
+                  HEADING_COMMANDS[obj.styleName] = new CustomStyleCommand(
+                    obj,
+                    obj.styleName
+                  );
+              }
+            }
           }
-        }
-        return [HEADING_COMMANDS];
-      })
+          return [HEADING_COMMANDS];
+        })
         .catch(console.warn);
     }
     return [HEADING_COMMANDS];
@@ -95,10 +95,7 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
         customStyleName
       );
 
-      MENU_COMMANDS['editall'] = new CustomStyleCommand(
-        'editall',
-        'Edit All'
-      );
+      MENU_COMMANDS['editall'] = new CustomStyleCommand('editall', 'Edit All');
     }
 
     MENU_COMMANDS['clearstyle'] = new CustomStyleCommand(
@@ -114,7 +111,35 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
     return [MENU_COMMANDS];
   }
   isAllowedNode(node: Node) {
-    return node.type.name === 'paragraph' || node.type.name === 'ordered_list' || node.type.name === 'enhanced_table_figure_notes';
+    return (
+      node.type.name === 'paragraph' ||
+      node.type.name === 'ordered_list' ||
+      node.type.name === 'enhanced_table_figure_notes'
+    );
+  }
+
+  isSelectionInsideTableCell(editorState: EditorState): boolean {
+    const positions = [editorState.selection.$from, editorState.selection.$to];
+
+    return positions.some(($pos) => {
+      let isInsideCell = false;
+      let isVignette = false;
+
+      for (let depth = $pos.depth; depth > 0; depth--) {
+        const node = $pos.node(depth);
+        const tableRole = node.type.spec.tableRole;
+        if (tableRole === 'cell' || tableRole === 'header_cell') {
+          isInsideCell = true;
+        }
+        if (node.attrs?.vignette === true || node.attrs?.vignette === 'true') {
+          isVignette = true;
+        }
+      }
+
+      // Ordinary and EIC tables are single-style containers, so their cells
+      // cannot use the toolbar. Vignettes intentionally keep per-cell styling.
+      return isInsideCell && !isVignette;
+    });
   }
 
   render(): React.ReactElement {
@@ -168,7 +193,9 @@ export class CustomstyleDropDownCommand extends React.PureComponent<{
         <CustomMenuButton
           className={backgroundColorClass}
           commandGroups={this.getCommandGroups()}
-          disabled={!this.hasRuntime}
+          disabled={
+            !this.hasRuntime || this.isSelectionInsideTableCell(editorState)
+          }
           dispatch={dispatch}
           editorState={editorState}
           editorView={editorView}
