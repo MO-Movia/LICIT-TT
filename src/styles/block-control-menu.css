@@ -108,6 +108,12 @@
   border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+.licit-block-control-menu-item.has-divider {
+  border-top-color: rgb(0 0 0 / 14%);
+  margin-top: 3px;
+  padding-top: 10px;
+}
+
 .licit-block-control-menu-icon {
   align-items: center;
   display: inline-flex;
@@ -124,6 +130,14 @@
 
 .licit-block-control-menu-label {
   flex: 1 1 auto;
+}
+
+.licit-block-control-menu-hint {
+  color: #737b85;
+  flex: 0 0 auto;
+  font-size: 11px;
+  margin-left: 12px;
+  white-space: nowrap;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -148,5 +162,13 @@
 
   .licit-block-control-menu-item + .licit-block-control-menu-item {
     border-top-color: rgba(255, 255, 255, 0.09);
+  }
+
+  .licit-block-control-menu-item.has-divider {
+    border-top-color: rgb(255 255 255 / 18%);
+  }
+
+  .licit-block-control-menu-hint {
+    color: #9aa4af;
   }
 }

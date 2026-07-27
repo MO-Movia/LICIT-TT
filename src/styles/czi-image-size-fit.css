@@ -1,0 +1,272 @@
+@import url('./czi-vars.css');
+
+.czi-image-size-fit {
+  --image-size-fit-accent: #f5a623;
+  --image-size-fit-background: #1a202c;
+  --image-size-fit-border: #333c4a;
+  --image-size-fit-button: #121820;
+  --image-size-fit-button-hover: #2d3748;
+  --image-size-fit-muted: #aaa;
+  --image-size-fit-text: #f0f0f0;
+
+  background: var(--image-size-fit-background);
+  border: 1px solid var(--image-size-fit-accent);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 70%);
+  color-scheme: dark;
+  color: var(--image-size-fit-text);
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+  width: min(390px, calc(100vw - 32px));
+}
+
+.czi-image-size-fit-header {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--image-size-fit-border);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.czi-image-size-fit-header h2 {
+  color: var(--image-size-fit-text);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
+  margin: 0 0 4px;
+}
+
+.czi-image-size-fit-header p {
+  color: var(--image-size-fit-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.czi-image-size-fit button {
+  color: inherit;
+  font: inherit;
+}
+
+.czi-image-size-fit-close {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: var(--image-size-fit-muted);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 28px;
+  font-size: 22px;
+  height: 28px;
+  justify-content: center;
+  line-height: 1;
+  margin: -4px -4px 0 0;
+  padding: 0;
+}
+
+.czi-image-size-fit-close:hover {
+  background: transparent;
+  color: var(--image-size-fit-text);
+}
+
+.czi-image-size-fit-content {
+  padding: 20px;
+}
+
+.czi-image-size-fit-dimensions {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr);
+}
+
+.czi-image-size-fit-field {
+  display: block;
+  min-width: 0;
+}
+
+.czi-image-size-fit-field > span:first-child {
+  color: var(--image-size-fit-muted);
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.czi-image-size-fit-input {
+  align-items: center;
+  background: var(--image-size-fit-button);
+  border: 1px solid var(--image-size-fit-border);
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  height: 36px;
+  overflow: hidden;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.czi-image-size-fit-input:focus-within {
+  border-color: var(--image-size-fit-accent);
+  box-shadow: 0 0 0 1px rgb(245 166 35 / 28%);
+}
+
+.czi-image-size-fit-input.invalid {
+  border-color: #d64045;
+}
+
+.czi-image-size-fit-input input {
+  appearance: textfield;
+  background: transparent;
+  border: 0;
+  box-sizing: border-box;
+  color: var(--image-size-fit-text);
+  flex: 1 1 auto;
+  font: inherit;
+  height: 100%;
+  min-width: 0;
+  outline: 0;
+  padding: 0 4px 0 12px;
+  width: 100%;
+}
+
+.czi-image-size-fit-input input::-webkit-inner-spin-button,
+.czi-image-size-fit-input input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.czi-image-size-fit-input > span {
+  color: var(--image-size-fit-muted);
+  flex: 0 0 auto;
+  font-size: 11px;
+  padding-right: 10px;
+}
+
+.czi-image-size-fit-lock {
+  align-items: center;
+  background: var(--image-size-fit-button);
+  border: 1px solid var(--image-size-fit-border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+}
+
+.czi-image-size-fit-lock.locked {
+  background: var(--image-size-fit-button-hover);
+  border-color: var(--image-size-fit-accent);
+  color: var(--image-size-fit-accent);
+}
+
+.czi-image-size-fit-validation {
+  color: #c83339;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 7px 0 0;
+}
+
+.czi-image-size-fit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.czi-image-size-fit-actions button,
+.czi-image-size-fit-footer button {
+  align-items: center;
+  background: var(--image-size-fit-button);
+  border: 1px solid var(--image-size-fit-border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 600;
+  gap: 7px;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 16px;
+}
+
+.czi-image-size-fit-actions button:hover,
+.czi-image-size-fit-footer button:hover:not(:disabled),
+.czi-image-size-fit-lock:hover {
+  background: var(--image-size-fit-button-hover);
+}
+
+.czi-image-size-fit button:focus-visible {
+  box-shadow: 0 0 0 2px rgb(245 166 35 / 32%);
+  outline: 1px solid var(--image-size-fit-accent);
+  outline-offset: 1px;
+}
+
+.czi-image-size-fit-info {
+  align-items: flex-start;
+  background: var(--image-size-fit-button);
+  border: 1px solid var(--image-size-fit-border);
+  border-radius: 4px;
+  color: var(--image-size-fit-muted);
+  display: flex;
+  gap: 9px;
+  line-height: 1.35;
+  margin-top: 14px;
+  padding: 10px 11px;
+}
+
+.czi-image-size-fit-info .fa {
+  color: var(--image-size-fit-accent);
+  margin-top: 2px;
+}
+
+.czi-image-size-fit-footer {
+  background: var(--image-size-fit-button);
+  border-top: 1px solid var(--image-size-fit-border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 16px 20px;
+}
+
+.czi-image-size-fit-footer button.primary {
+  background: var(--image-size-fit-accent);
+  border-color: var(--image-size-fit-accent);
+  color: #111;
+}
+
+.czi-image-size-fit-footer button.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.czi-image-size-fit-footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.czi-image-size-fit-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (width <= 420px) {
+  .czi-image-size-fit {
+    width: calc(100vw - 20px);
+  }
+
+  .czi-image-size-fit-header,
+  .czi-image-size-fit-content {
+    padding: 14px;
+  }
+
+  .czi-image-size-fit-dimensions {
+    gap: 7px;
+    grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
+  }
+
+  .czi-image-size-fit-lock {
+    width: 36px;
+  }
+}

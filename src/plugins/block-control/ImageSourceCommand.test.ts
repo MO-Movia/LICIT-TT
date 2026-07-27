@@ -28,11 +28,11 @@ describe('insertEnhancedImageFigure', () => {
     nodes: {
       enhanced_table_figure?: { create: jest.Mock };
       enhanced_table_figure_body?: { create: jest.Mock };
-      simple_image?: { create: jest.Mock };
+      image?: { create: jest.Mock };
       enhanced_table_figure_capco?: { create: jest.Mock };
-      paragraph?: { createAndFill: jest.Mock };
-      text?: jest.Mock;
+      paragraph?: { create: jest.Mock; createAndFill: jest.Mock };
     };
+    text: jest.Mock;
   };
   let mockSchema: MockSchema;
   const imageUrl = 'https://example.com/image.jpg';
@@ -56,20 +56,53 @@ describe('insertEnhancedImageFigure', () => {
           }),
         },
         enhanced_table_figure_body: {
-          create: jest.fn(),
+          create: jest.fn().mockReturnValue({ type: 'body' }),
         },
-        simple_image: {
-          create: jest.fn(),
+        image: {
+          create: jest.fn().mockReturnValue({ type: 'image' }),
         },
         enhanced_table_figure_capco: {
-          create: jest.fn(),
+          create: jest.fn().mockReturnValue({ type: 'capco' }),
         },
         paragraph: {
+          create: jest.fn().mockReturnValue({ type: 'image-paragraph' }),
           createAndFill: jest.fn().mockReturnValue({}),
         },
-        text: jest.fn(),
       },
+      text: jest.fn().mockReturnValue({ type: 'text' }),
     };
+  });
+
+  it('should wrap the inline image in a paragraph before creating the body', () => {
+    insertEnhancedImageFigure(
+      mockTr,
+      mockSchema as unknown as Schema,
+      imageUrl,
+      altText,
+      320,
+      180
+    );
+
+    const imageNode = mockSchema.nodes.image.create.mock.results[0].value;
+    const imageParagraph = mockSchema.nodes.paragraph.create.mock.results[0].value;
+
+    expect(mockSchema.nodes.image.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        src: imageUrl,
+        alt: altText,
+        width: 320,
+        height: 180,
+      }),
+      null
+    );
+    expect(mockSchema.nodes.paragraph.create).toHaveBeenCalledWith(
+      null,
+      imageNode
+    );
+    expect(mockSchema.nodes.enhanced_table_figure_body.create).toHaveBeenCalledWith(
+      {},
+      imageParagraph
+    );
   });
 
   it('should return unchanged transaction if selection is not collapsed', () => {
@@ -102,7 +135,7 @@ describe('insertEnhancedImageFigure', () => {
   });
 
   it('should return unchanged transaction if image node type not found', () => {
-    delete mockSchema.nodes.simple_image;
+    delete mockSchema.nodes.image;
     const result = insertEnhancedImageFigure(
       mockTr,
       mockSchema as unknown as Schema,

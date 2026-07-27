@@ -10,7 +10,11 @@ import {NodeSelection, TextSelection} from 'prosemirror-state';
 import React from 'react';
 import {CustomNodeView} from './CustomNodeView';
 import {Icon} from './Icon';
-import {ImageResizeBox, MIN_SIZE} from './ImageResizeBox';
+import {
+  ImageResizeBox,
+  MAX_SIZE as MAX_RESIZE_SIZE,
+  MIN_SIZE,
+} from './ImageResizeBox';
 import {
   atAnchorBottomLeft,
   createPopUp,
@@ -33,8 +37,10 @@ import {
   getBlockControlIcon,
 } from '../../../licit/ui/blockControls';
 import {CropDataPropValue, CropImagePopup} from './CropImagePopup';
+import {ImageSizeFitEditor} from './ImageSizeFitEditor';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
+const FRAMESET_CLASSNAME = 'czi-editor-frameset';
 const EMPTY_SRC =
   'data:image/gif;base64,' +
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -42,10 +48,22 @@ const EMPTY_SRC =
 /* This value must be synced with the margin defined at .czi-image-view */
 const IMAGE_MARGIN = 2;
 
-const MAX_SIZE = 100000;
+export const MAX_IMAGE_LAYOUT_SIZE = 100000;
+const MAX_SIZE = MAX_IMAGE_LAYOUT_SIZE;
 const IMAGE_PLACEHOLDER_SIZE = 24;
 const ENHANCED_TABLE_FIGURE = 'enhanced_table_figure';
 const ENHANCED_TABLE_FIGURE_BODY = 'enhanced_table_figure_body';
+
+const EIC_PARAGRAPH_LAYOUT_ATTRS = [
+  'indent',
+  'lineSpacing',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+  'marginTop',
+  'paddingBottom',
+  'paddingTop',
+] as const;
 
 const DEFAULT_ORIGINAL_SIZE = {
   src: '',
@@ -67,6 +85,7 @@ type OriginalSize = MaxSize & {
 type ImageState = {
   maxSize: MaxSize;
   originalSize: OriginalSize;
+  originalSizeSource: string;
 };
 
 type ImageRenderStyles = {
@@ -77,25 +96,60 @@ type ImageRenderStyles = {
 };
 
 // Get the maxWidth that the image could be resized to.
-function getMaxResizeWidth(el): number {
-  // Ideally, the image should bot be wider then its containing element.
-  let node = el.parentElement;
-  while (node && !node.offsetParent) {
-    node = node.parentElement;
+export function getMaxResizeWidth(
+  el: HTMLElement,
+  useNaturalWrapperMargins = false
+): number {
+  const wrapper = el.parentElement;
+  const inlineMargin = wrapper?.style.getPropertyValue('margin') || '';
+  const inlineMarginPriority =
+    wrapper?.style.getPropertyPriority('margin') || '';
+
+  // fitToParent temporarily removes the wrapper margin. A numeric Fit to
+  // width clears fitToParent, so measure the natural margins that will return.
+  if (useNaturalWrapperMargins) {
+    wrapper?.style.removeProperty('margin');
   }
-  if ((node?.offsetParent?.offsetWidth || 0) > 0) {
-    const {offsetParent} = node;
-    const style = el.ownerDocument.defaultView.getComputedStyle(offsetParent);
-    let width = offsetParent.clientWidth - IMAGE_MARGIN * 2;
-    if (style.boxSizing === 'border-box') {
-      const pl = Number.parseInt(style.paddingLeft, 10);
-      const pr = Number.parseInt(style.paddingRight, 10);
-      width -= pl + pr;
+
+  try {
+    // Ideally, the image should not be wider than its containing element.
+    let node = wrapper;
+    while (node && !node.offsetParent) {
+      node = node.parentElement;
     }
-    return Math.max(width, MIN_SIZE);
+    const offsetParent = node?.offsetParent as HTMLElement | null;
+    if ((offsetParent?.offsetWidth || 0) > 0) {
+      const style = el.ownerDocument.defaultView.getComputedStyle(offsetParent);
+      const wrapperStyle = wrapper
+        ? el.ownerDocument.defaultView.getComputedStyle(wrapper)
+        : null;
+      const ml = wrapperStyle
+        ? Number.parseFloat(wrapperStyle.marginLeft) || 0
+        : IMAGE_MARGIN;
+      const mr = wrapperStyle
+        ? Number.parseFloat(wrapperStyle.marginRight) || 0
+        : IMAGE_MARGIN;
+      let width = offsetParent.clientWidth - ml - mr;
+      const pl = Number.parseFloat(style.paddingLeft) || 0;
+      const pr = Number.parseFloat(style.paddingRight) || 0;
+      width -= pl + pr;
+      return Math.max(width, MIN_SIZE);
+    }
+    // Let the image resize freely.
+    return MAX_SIZE;
+  } finally {
+    if (useNaturalWrapperMargins && wrapper) {
+      if (inlineMargin) {
+        wrapper.style.setProperty(
+          'margin',
+          inlineMargin,
+          inlineMarginPriority
+        );
+      } else {
+        wrapper.style.removeProperty('margin');
+      }
+    }
   }
-  // Let the image resize freely.
-  return MAX_SIZE;
 }
 
 function resolveURL(
@@ -153,18 +207,20 @@ export class ImageViewBody extends React.PureComponent<
   _body?: HTMLElement | React.ReactInstance;
   _id = uuid();
   _cropEditor?: PopUpHandle;
+  _sizeEditor?: PopUpHandle;
   _menu?: PopUpHandle;
   _menuButton?: HTMLButtonElement;
   _mounted = false;
   _resizeLoopCount = 0;
   _lastResizeTime = 0;
-  state = {
+  state: ImageState = {
     maxSize: {
       width: MAX_SIZE,
       height: MAX_SIZE,
       complete: false,
     },
     originalSize: DEFAULT_ORIGINAL_SIZE,
+    originalSizeSource: '',
   };
 
   componentDidMount(): void {
@@ -175,8 +231,10 @@ export class ImageViewBody extends React.PureComponent<
   componentWillUnmount(): void {
     this._mounted = false;
     this._cropEditor?.close(undefined);
+    this._sizeEditor?.close(undefined);
     this._menu?.close(undefined);
     this._cropEditor = undefined;
+    this._sizeEditor = undefined;
     this._menu = undefined;
   }
 
@@ -198,8 +256,13 @@ export class ImageViewBody extends React.PureComponent<
     const completionChanged =
       prevState?.originalSize?.complete !==
       this.state.originalSize?.complete;
+    const resolvedSourceChanged =
+      prevState?.originalSizeSource !== this.state.originalSizeSource;
 
-    if (prevActive !== currentActive || (completionChanged && currentActive)) {
+    if (
+      prevActive !== currentActive ||
+      ((completionChanged || resolvedSourceChanged) && currentActive)
+    ) {
       this._renderInlineEditor();
     }
   }
@@ -225,6 +288,28 @@ export class ImageViewBody extends React.PureComponent<
     const aspectRatio = retVal.aspectRatio;
     const error = retVal.error;
 
+    // maxSize is populated by observing the image itself, so it can lag behind
+    // when the editor's available width changes. Read the current containing
+    // width for this render so actions such as Fit to width are not immediately
+    // clamped back to the previous image width.
+    const measuredMaxWidth = this._bodyEl
+      ? getMaxResizeWidth(this._bodyEl)
+      : 0;
+    const renderMaxSize =
+      Number.isFinite(measuredMaxWidth) &&
+      measuredMaxWidth > 0 &&
+      measuredMaxWidth < MAX_SIZE
+        ? {
+            ...maxSize,
+            width: Math.floor(
+              Math.max(
+                MIN_SIZE,
+                Math.min(measuredMaxWidth, MAX_RESIZE_SIZE)
+              )
+            ),
+          }
+        : maxSize;
+
     let {width, height} = attrs;
     const dimensions = this.calcWidthAndHeight(
       width,
@@ -235,12 +320,15 @@ export class ImageViewBody extends React.PureComponent<
     width = dimensions.width;
     height = dimensions.height;
     let scale = 1;
-    if (width > maxSize.width && (!crop || crop.width > maxSize.width)) {
+    if (
+      width > renderMaxSize.width &&
+      (!crop || crop.width > renderMaxSize.width)
+    ) {
       // Scale image to fit its containing space.
       // If the image is not cropped.
-      width = maxSize.width;
-      height = width / aspectRatio;
-      scale = maxSize.width / width;
+      scale = renderMaxSize.width / width;
+      width = renderMaxSize.width;
+      height *= scale;
     }
 
     const className = cx('molm-czi-image-view-body', {
@@ -270,7 +358,7 @@ export class ImageViewBody extends React.PureComponent<
         fitToParent,
         height,
         loading,
-        maxSize,
+        maxSize: renderMaxSize,
         rotate,
         scale,
         width,
@@ -488,8 +576,13 @@ export class ImageViewBody extends React.PureComponent<
     }
 
     const src = this.props.node.attrs.src;
-    if (src === this.state.originalSize?.src) {
+    if (src === this.state.originalSizeSource) {
       return; // already resolved
+    }
+    if (this.state.originalSizeSource) {
+      // Keep the last dimensions for rendering while preventing Reset from
+      // applying dimensions that belong to the previous image source.
+      this.setState({originalSizeSource: ''});
     }
     const url = await resolveURL(
       this.props.editorView.runtime,
@@ -509,7 +602,7 @@ export class ImageViewBody extends React.PureComponent<
       originalSize.width = MIN_SIZE;
       originalSize.height = MIN_SIZE;
     }
-    this.setState({originalSize});
+    this.setState({originalSize, originalSizeSource: src});
   };
 
   _onResizeEnd = (width: number, height: number): void => {
@@ -521,21 +614,250 @@ export class ImageViewBody extends React.PureComponent<
     const attrs = {
       ...node.attrs,
       crop: null,
+      fitToParent: 0,
       width,
       height,
     };
-    let tr = editorView.state.tr;
-    const {selection} = editorView.state;
-    tr = tr.setNodeMarkup(pos, null, attrs);
+    const {state} = editorView;
+    let tr = state.tr;
+    const {selection} = state;
+    let selectionPos = selection.from;
+    const $pos = state.doc.resolve(pos);
+    const parent = $pos.parent;
+    const paragraphType = state.schema.nodes.paragraph;
+    const parentContainer =
+      $pos.depth > 0 ? $pos.node($pos.depth - 1) : null;
+    const isImageParagraphInEIC =
+      parent.type === paragraphType &&
+      parentContainer?.type.name === ENHANCED_TABLE_FIGURE_BODY &&
+      parent.childCount === 1 &&
+      parent.firstChild?.type === node.type;
+
+    if (
+      parent.type.name === ENHANCED_TABLE_FIGURE_BODY &&
+      paragraphType
+    ) {
+      // Older EIC documents stored the inline image directly in a body that
+      // accepts block nodes. Migrate that shape while resizing so ProseMirror
+      // cannot recreate an inline baseline below the image.
+      const resizedImage = node.type.create(attrs, node.content);
+      const imageParagraph = paragraphType.create(null, resizedImage);
+      tr = tr.replaceWith(pos, pos + node.nodeSize, imageParagraph);
+      selectionPos = pos + 1;
+    } else if (isImageParagraphInEIC) {
+      // Custom paragraph styles may add inline font marks and an important
+      // bottom margin when the resize transaction selects the image. Rebuild
+      // this image-only paragraph without text marks or paragraph spacing.
+      const paragraphAttrs = {...parent.attrs};
+      for (const attr of EIC_PARAGRAPH_LAYOUT_ATTRS) {
+        paragraphAttrs[attr] = null;
+      }
+      const resizedImage = node.type.create(attrs, node.content);
+      const imageParagraph = paragraphType.create(
+        paragraphAttrs,
+        resizedImage
+      );
+      const paragraphPos = $pos.before($pos.depth);
+      tr = tr.replaceWith(
+        paragraphPos,
+        paragraphPos + parent.nodeSize,
+        imageParagraph
+      );
+      selectionPos = paragraphPos + 1;
+    } else {
+      tr = tr.setNodeMarkup(pos, null, attrs);
+    }
     // Upgrade outdated packages.
     // reset selection to original using the latest doc.
     try {
-      const origSelection = NodeSelection.create(tr.doc, selection.from);
+      const origSelection = NodeSelection.create(tr.doc, selectionPos);
       tr = tr.setSelection(origSelection);
     } catch {
       // Ignore if can't select
     }
     editorView.dispatch(tr);
+  };
+
+  _getCurrentAspectRatio(): number {
+    const {width, height} = this.props.node.attrs;
+    const numericWidth = Number(width);
+    const numericHeight = Number(height);
+    if (
+      Number.isFinite(numericWidth) &&
+      numericWidth > 0 &&
+      Number.isFinite(numericHeight) &&
+      numericHeight > 0
+    ) {
+      return numericWidth / numericHeight;
+    }
+
+    const {originalSize} = this.state;
+    if (originalSize.width > 0 && originalSize.height > 0) {
+      return originalSize.width / originalSize.height;
+    }
+    return 1;
+  }
+
+  _getFitWidth(): number {
+    let measuredWidth = this._bodyEl
+      ? getMaxResizeWidth(
+          this._bodyEl,
+          !!this.props.node.attrs.fitToParent
+        )
+      : 0;
+    if (
+      !Number.isFinite(measuredWidth) ||
+      measuredWidth <= 0 ||
+      measuredWidth >= MAX_SIZE
+    ) {
+      const currentWidth = Number(this.props.node.attrs.width);
+      measuredWidth =
+        Number.isFinite(currentWidth) && currentWidth > 0
+          ? currentWidth
+          : this.state.originalSize.width || MIN_SIZE;
+    }
+    return Math.floor(
+      Math.max(MIN_SIZE, Math.min(measuredWidth, MAX_RESIZE_SIZE))
+    );
+  }
+
+  _getCurrentImageSize(): {width: number; height: number} {
+    const attrs = this.props.node.attrs;
+    const ratio = this._getCurrentAspectRatio();
+    let width = Number(attrs.width);
+    let height = Number(attrs.height);
+
+    if (!Number.isFinite(width) || width <= 0) {
+      width = 0;
+    }
+    if (!Number.isFinite(height) || height <= 0) {
+      height = 0;
+    }
+    if (width > 0 && height === 0) {
+      height = width / ratio;
+    } else if (height > 0 && width === 0) {
+      width = height * ratio;
+    } else if (width === 0 && height === 0) {
+      width = this.state.originalSize.width || IMAGE_PLACEHOLDER_SIZE;
+      height = this.state.originalSize.height || IMAGE_PLACEHOLDER_SIZE;
+    }
+
+    if (attrs.fitToParent) {
+      const renderedWidth = this._bodyEl?.getBoundingClientRect().width || 0;
+      width = renderedWidth > 0 ? renderedWidth : this._getFitWidth();
+    }
+
+    return {
+      width: Math.round(Math.max(MIN_SIZE, width)),
+      height: Math.round(Math.max(MIN_SIZE, height)),
+    };
+  }
+
+  _getOriginalImageSize(): {width: number; height: number} {
+    const {originalSize} = this.state;
+    if (
+      this._hasResolvedOriginalSize() &&
+      originalSize.width > 0 &&
+      originalSize.height > 0
+    ) {
+      return {
+        width: Math.round(originalSize.width),
+        height: Math.round(originalSize.height),
+      };
+    }
+    return this._getCurrentImageSize();
+  }
+
+  _hasResolvedOriginalSize(): boolean {
+    return (
+      this.state.originalSize.complete &&
+      this.state.originalSizeSource === this.props.node.attrs.src
+    );
+  }
+
+  _applyImageSize(width: number, height: number): void {
+    if (
+      !Number.isFinite(width) ||
+      width <= 0 ||
+      !Number.isFinite(height) ||
+      height <= 0
+    ) {
+      return;
+    }
+    const scale = Math.min(
+      1,
+      MAX_RESIZE_SIZE / width,
+      MAX_RESIZE_SIZE / height
+    );
+    const nextWidth = Math.round(
+      Math.max(MIN_SIZE, Math.min(MAX_RESIZE_SIZE, width * scale))
+    );
+    const nextHeight = Math.round(
+      Math.max(MIN_SIZE, Math.min(MAX_RESIZE_SIZE, height * scale))
+    );
+    this.props.editorView.focus();
+    this._updateImageAttrs({
+      fitToParent: 0,
+      height: nextHeight,
+      width: nextWidth,
+    });
+  }
+
+  _onResetImage = (): void => {
+    if (!this._hasResolvedOriginalSize()) {
+      return;
+    }
+    const {width, height} = this._getOriginalImageSize();
+    this._applyImageSize(width, height);
+  };
+
+  _onFitToWidth = (): void => {
+    const current = this._getCurrentImageSize();
+    const ratio = current.width / current.height;
+    const width = this._getFitWidth();
+    const height = width / ratio;
+    this._applyImageSize(width, height);
+  };
+
+  _onSizeFit = (): void => {
+    if (this._sizeEditor) {
+      return;
+    }
+
+    const current = this._getCurrentImageSize();
+    const original = this._getOriginalImageSize();
+    this._sizeEditor = createPopUp(
+      ImageSizeFitEditor,
+      {
+        canReset: this._hasResolvedOriginalSize(),
+        height: current.height,
+        maxWidth: this._getFitWidth(),
+        onApply: (width: number, height: number) => {
+          this._applyImageSize(width, height);
+          this._closeSizeEditor();
+        },
+        onCancel: this._closeSizeEditor,
+        originalHeight: original.height,
+        originalWidth: original.width,
+        width: current.width,
+      },
+      {
+        autoDismiss: false,
+        container:
+          this._bodyEl?.closest(`.${FRAMESET_CLASSNAME}`) || undefined,
+        modal: true,
+        onClose: () => {
+          this._sizeEditor = undefined;
+        },
+      }
+    );
+  };
+
+  _closeSizeEditor = (): void => {
+    const editor = this._sizeEditor;
+    this._sizeEditor = undefined;
+    editor?.close(undefined);
+    this.props.editorView.focus();
   };
 
   _onChange = (value?: {align: string}): void => {
@@ -581,14 +903,41 @@ export class ImageViewBody extends React.PureComponent<
   };
 
   _getMenuItems(): BlockControlMenuItem[] {
-    const {align} = this.props.node.attrs;
+    const {align, crop, cropData, rotate} = this.props.node.attrs;
+    const sizingDisabled = !!(crop || cropData || rotate);
 
     return [
+      {
+        id: 'reset-image',
+        label: 'Reset Image',
+        hint: 'Original',
+        icon: getBlockControlIcon('resetImage', 'Reset image'),
+        action: this._onResetImage,
+        disabled: sizingDisabled || !this._hasResolvedOriginalSize(),
+      },
+      {
+        id: 'fit-to-width',
+        label: 'Fit To Width',
+        hint: 'Keep ratio',
+        icon: getBlockControlIcon('fitWidth', 'Fit to width'),
+        action: this._onFitToWidth,
+        disabled: sizingDisabled,
+      },
+      {
+        id: 'size-fit',
+        label: 'Size & Fit...',
+        hint: 'Exact values',
+        icon: getBlockControlIcon('sizeFit', 'Size & fit'),
+        action: this._onSizeFit,
+        disabled: sizingDisabled,
+        dividerBefore: true,
+      },
       {
         id: 'insert-above',
         label: 'Insert Paragraph Above',
         icon: getBlockControlIcon('insertAbove', 'Insert Paragraph Above'),
         action: () => this._insertParagraph('above'),
+        dividerBefore: true,
       },
       {
         id: 'insert-below',
@@ -916,6 +1265,10 @@ export class ImageNodeView extends CustomNodeView {
       el.style.width = FP_WIDTH;
       el.style.padding = '0';
       el.style.margin = '0';
+    } else {
+      el.style.removeProperty('width');
+      el.style.removeProperty('padding');
+      el.style.removeProperty('margin');
     }
   }
   ignoreMutation(): boolean {
