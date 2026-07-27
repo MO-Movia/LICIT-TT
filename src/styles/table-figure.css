@@ -81,7 +81,9 @@
   pointer-events: auto;
 }
 
-.ProseMirror[contenteditable='false'] .enhanced-table-figure-capco {
+.ProseMirror[contenteditable='false']
+  .enhanced-table-figure[data-figure-type='figure']
+  .enhanced-table-figure-capco {
   display: none !important;
 }
 
