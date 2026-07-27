@@ -157,4 +157,57 @@ describe('Doc Repair', () => {
     expect(cell.attrs?.background).toBeUndefined();
     expect(cell.content?.length).toBe(1);
   });
+
+  it('wraps a legacy direct EIC image in a paragraph', () => {
+    const image = {
+      ...blankNode('image'),
+      attrs: {
+        alt: 'Imported figure',
+        height: 180,
+        src: '/figure.png',
+        width: 320,
+      },
+    };
+    const inputDoc = blankDocument(
+      {
+        ...blankNode('enhanced_table_figure'),
+        content: [
+          {
+            ...blankNode('enhanced_table_figure_body'),
+            content: [image],
+          },
+          blankNode('enhanced_table_figure_capco', textNode(' ')),
+        ],
+      },
+      blankNode('paragraph', textNode('Following content'))
+    );
+
+    const result = repairDoc(inputDoc);
+    const body = result.content[0].content?.[0];
+
+    expect(body?.content).toEqual([blankNode('paragraph', image)]);
+    expect(result.content[1]).toEqual(
+      blankNode('paragraph', textNode('Following content'))
+    );
+    expect(inputDoc.content[0].content?.[0].content).toEqual([image]);
+  });
+
+  it('does not wrap an EIC image paragraph twice', () => {
+    const image = blankNode('image');
+    const inputDoc = blankDocument(
+      blankNode(
+        'enhanced_table_figure',
+        blankNode(
+          'enhanced_table_figure_body',
+          blankNode('paragraph', image)
+        ),
+        blankNode('enhanced_table_figure_capco', textNode(' '))
+      )
+    );
+
+    const result = repairDoc(inputDoc);
+    const body = result.content[0].content?.[0];
+
+    expect(body?.content).toEqual([blankNode('paragraph', image)]);
+  });
 });

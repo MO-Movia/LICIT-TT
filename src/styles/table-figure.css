@@ -3,16 +3,20 @@
 }
 
 .enhanced-table-figure-notes {
+  box-sizing: border-box;
+  width: 100%;
   padding: 5px;
   border: 1px solid #333;
 }
 
 .enhanced-table-figure-capco {
+  box-sizing: border-box;
+  width: 100%;
   padding: 5px;
   font-size: 18px;
   color: green;
   border: 1px solid black;
-  margin-right: 2px;
+  margin: 0;
 }
 
 /* Style for the Add Notes button inside the control */
@@ -27,8 +31,8 @@
 
 /* Enhanced Table Figure Container */
 .enhanced-table-figure {
+  box-sizing: content-box;
   padding: 0;
-  border: 2px solid black;
   position: relative;
   overflow: visible;
   width: 624px;
@@ -38,14 +42,116 @@
 
 /* When maximized, span the full viewport width */
 .enhanced-table-figure.maximized {
+  box-sizing: border-box;
   width: 100vw;
+  max-width: 100%;
   margin: 0;
 }
 
 /* Remove spacing inside the content area */
 .enhanced-table-figure-content {
+  box-sizing: border-box;
   padding: 0;
   margin: 0;
+  width: 100%;
+}
+
+.enhanced-table-figure-body {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Image EICs store the inline image in a paragraph. Remove the paragraph line
+ * box and ProseMirror cursor helpers so a resize cannot add baseline space.
+ * ProseMirror injects display:inline!important for its separator image, so the
+ * EIC-scoped override below must use the same priority. */
+.enhanced-table-figure-body > p:has(.molm-czi-image-view) {
+  font-size: 0;
+  line-height: 0;
+  margin: 0 !important;
+  padding: 0;
+}
+
+.enhanced-table-figure-body
+  > p:has(.molm-czi-image-view)
+  :is(img.ProseMirror-separator, br.ProseMirror-trailingBreak) {
+  display: none !important;
+}
+
+/* Support both schema-valid figures and older documents that stored the image
+ * directly in the body. A block root has no inline baseline to leave behind. */
+.enhanced-table-figure-body > .molm-czi-image-view,
+.enhanced-table-figure-body > p .molm-czi-image-view {
+  display: block;
+  line-height: 0;
+  margin: 0 !important;
+  vertical-align: top;
+}
+
+.enhanced-table-figure-body
+  > .molm-czi-image-view
+  :is(
+    .molm-czi-image-view-body,
+    .molm-czi-image-view-body-img-clip,
+    .molm-czi-image-view-body-img-clip > span
+  ),
+.enhanced-table-figure-body
+  > p
+  .molm-czi-image-view
+  :is(
+    .molm-czi-image-view-body,
+    .molm-czi-image-view-body-img-clip,
+    .molm-czi-image-view-body-img-clip > span
+  ) {
+  display: block !important;
+  line-height: 0;
+  vertical-align: top;
+}
+
+.enhanced-table-figure-body
+  > .molm-czi-image-view
+  :is(.molm-czi-image-view-body, .molm-czi-image-view-body-img-clip),
+.enhanced-table-figure-body
+  > p
+  .molm-czi-image-view
+  :is(.molm-czi-image-view-body, .molm-czi-image-view-body-img-clip) {
+  width: fit-content;
+}
+
+.enhanced-table-figure-body
+  > .molm-czi-image-view
+  .molm-czi-image-view-body-img,
+.enhanced-table-figure-body
+  > p
+  .molm-czi-image-view
+  .molm-czi-image-view-body-img {
+  display: block;
+  margin: 0;
+  vertical-align: top;
+}
+
+/* Keep resize/selection feedback inside the image. The default outer shadows
+ * extend below a resized image and look like spacing before the CAPCO row. */
+.enhanced-table-figure-body
+  > .molm-czi-image-view
+  .molm-czi-image-view-body.active,
+.enhanced-table-figure-body
+  > p
+  .molm-czi-image-view
+  .molm-czi-image-view-body.active {
+  box-shadow: inset 0 0 0 2px var(--czi-selection-highlight-color-dark);
+}
+
+.enhanced-table-figure-body
+  > .molm-czi-image-view
+  .molm-czi-image-resize-box,
+.enhanced-table-figure-body
+  > p
+  .molm-czi-image-view
+  .molm-czi-image-resize-box {
+  box-shadow: inset 0 0 0 1px var(--czi-selection-highlight-color-dark);
 }
 
 /* Style for the selection handle */
@@ -90,6 +196,7 @@
 .ProseMirror[contenteditable='false'] .enhanced-table-figure-select-handle {
   display: none;
 }
+
 .export-pdf-mode .enhanced-table-figure-select-handle,
 .export-pdf-mode .enhanced-table-figure-maximize-button,
 .export-pdf-mode

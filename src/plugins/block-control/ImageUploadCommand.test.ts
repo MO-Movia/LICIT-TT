@@ -48,14 +48,14 @@ describe('ImageSourceCommand', () => {
       nodes: {
         doc: {content: 'block+'},
         paragraph: {
-          content: 'text*',
+          content: 'inline*',
           group: 'block',
           toDOM: () => ['p', 0],
           parseDOM: [{tag: 'p'}],
         },
         text: {group: 'inline'},
         image: {
-          inline: false,
+          inline: true,
           attrs: {
             src: {default: ''},
             alt: {default: ''},
@@ -64,7 +64,7 @@ describe('ImageSourceCommand', () => {
             width: {default: null},
             height: {default: null},
           },
-          group: 'block',
+          group: 'inline',
           draggable: true,
           toDOM: (node) => ['img', node.attrs],
           parseDOM: [{tag: 'img'}],
@@ -80,7 +80,7 @@ describe('ImageSourceCommand', () => {
           parseDOM: [{tag: 'div.enhanced-figure'}],
         },
         enhanced_table_figure_body: {
-          content: 'image',
+          content: 'paragraph',
           toDOM: () => ['div', {class: 'figure-body'}, 0],
           parseDOM: [{tag: 'div.figure-body'}],
         },
@@ -481,7 +481,7 @@ describe('ImageSourceCommand', () => {
         nodes: {
           doc: {content: 'block+'},
           paragraph: {
-            content: 'text*',
+            content: 'inline*',
             group: 'block',
             toDOM: () => ['p', 0],
             parseDOM: [{tag: 'p'}],
@@ -541,14 +541,14 @@ describe('ImageSourceCommand', () => {
           },
           text: {group: 'inline'},
           image: {
-            inline: false,
+            inline: true,
             attrs: {
               src: {default: ''},
               alt: {default: ''},
               simpleImg: {default: 'false'},
               cropData: {default: null},
             },
-            group: 'block',
+            group: 'inline',
             toDOM: (node) => ['img', node.attrs],
             parseDOM: [{tag: 'img'}],
           },
@@ -563,7 +563,7 @@ describe('ImageSourceCommand', () => {
             parseDOM: [{tag: 'div'}],
           },
           enhanced_table_figure_body: {
-            content: 'image',
+            content: 'paragraph',
             toDOM: () => ['div', 0],
             parseDOM: [{tag: 'div'}],
           },
