@@ -61,9 +61,7 @@ export function insertEnhancedImageFigure(
   // its table node and matches the structure the load-time repair
   // (wrapInlineChildren) produces for legacy documents.
   const paragraphType = schema.nodes.paragraph;
-  const imageWrapper = paragraphType
-    ? paragraphType.create({}, imageNode)
-    : imageNode;
+  const imageWrapper = paragraphType.create({}, imageNode)
   const bodyNode = bodyType.create({}, imageWrapper);
 
   // No notes by default.
