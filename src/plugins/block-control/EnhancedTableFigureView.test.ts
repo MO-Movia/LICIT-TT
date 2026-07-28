@@ -124,17 +124,19 @@ describe('EnhancedTableFigureView', () => {
       );
     });
 
-    it('should set correct styles for portrait orientation', () => {
-      expect(view.dom.style.width).toBe('624px');
-      expect(view.dom.style.maxWidth).toBe('624px');
-      expect(view.contentDOM.style.width).toBe('100%');
+    it('should leave layout sizing to the figure-type CSS', () => {
+      expect(view.dom.style.width).toBe('');
+      expect(view.dom.style.maxWidth).toBe('');
+      expect(view.contentDOM.style.width).toBe('');
+      expect(view.dom.dataset.figureType).toBe('table');
     });
 
-    it('should set correct styles for landscape orientation', () => {
+    it('should identify image figures for figure-specific spacing', () => {
       const landscapeNode = {
         ...mockNode,
         attrs: {
           ...mockNode.attrs,
+          figureType: 'figure',
           orientation: 'landscape',
         },
       };
@@ -144,9 +146,10 @@ describe('EnhancedTableFigureView', () => {
         mockGetPos
       );
 
-      expect(landscapeView.dom.style.width).toBe('624px');
-      expect(landscapeView.dom.style.maxWidth).toBe('624px');
-      expect(landscapeView.contentDOM.style.width).toBe('100%');
+      expect(landscapeView.dom.style.width).toBe('');
+      expect(landscapeView.dom.style.maxWidth).toBe('');
+      expect(landscapeView.contentDOM.style.width).toBe('');
+      expect(landscapeView.dom.dataset.figureType).toBe('figure');
     });
   });
 
@@ -178,16 +181,18 @@ describe('EnhancedTableFigureView', () => {
       expect(view.dom.getAttribute('data-figure-type')).toBe('figure');
     });
 
-    it('should update styles for landscape orientation', () => {
+    it('should update the figure type used by layout CSS', () => {
       const landscapeNode = {
         ...mockNode,
         attrs: {
           ...mockNode.attrs,
+          figureType: 'figure',
           orientation: 'landscape',
         },
       };
       view.update(landscapeNode as unknown as ProseMirrorNode);
-      expect(view.contentDOM.style.width).toBe('100%');
+      expect(view.dom.dataset.figureType).toBe('figure');
+      expect(view.contentDOM.style.width).toBe('');
     });
 
     it('should include maximized and selected classes during update', () => {
@@ -477,6 +482,9 @@ describe('EnhancedTableFigureView', () => {
       const image = createNode('image', { src: 'data:image/png;base64,a' });
       const wrapper = createNode('paragraph', {}, [image]);
       view.node = createFigureNode({ figureType: 'figure' }, [wrapper]);
+      mockView.state.doc = {
+        nodeAt: jest.fn().mockReturnValue(image),
+      } as unknown as EditorView['state']['doc'];
       Object.defineProperty(navigator, 'clipboard', {
         configurable: true,
         value: { read: jest.fn() },
@@ -537,6 +545,9 @@ describe('EnhancedTableFigureView', () => {
       const image = createNode('image', imageAttrs);
       const wrapper = createNode('paragraph', {}, [image]);
       view.node = createFigureNode({ figureType: 'figure' }, [wrapper]);
+      mockView.state.doc = {
+        nodeAt: jest.fn().mockReturnValue(image),
+      } as unknown as EditorView['state']['doc'];
       return { image };
     };
 
@@ -558,6 +569,7 @@ describe('EnhancedTableFigureView', () => {
       mockView.state.doc = {
         nodeAt: jest.fn().mockReturnValue({
           attrs: { src: 'data:image/png;base64,a', crop: 'old' },
+          type: { name: 'image' },
         }),
       } as unknown as EditorView['state']['doc'];
 
@@ -591,7 +603,7 @@ describe('EnhancedTableFigureView', () => {
       setupImageFigure({});
       const createPopUp = jest.spyOn(commandHelpers, 'createPopUp');
       mockView.state.doc = {
-        nodeAt: jest.fn().mockReturnValue({ attrs: {} }),
+        nodeAt: jest.fn().mockReturnValue({ attrs: {}, type: { name: 'image' } }),
       } as unknown as EditorView['state']['doc'];
 
       getMenuItem('crop')?.action();
@@ -615,6 +627,7 @@ describe('EnhancedTableFigureView', () => {
       mockView.state.doc = {
         nodeAt: jest.fn().mockReturnValue({
           attrs: { src: 'data:image/png;base64,a', cropData: { left: 1 } },
+          type: { name: 'image' },
         }),
       } as unknown as EditorView['state']['doc'];
 
@@ -673,7 +686,10 @@ describe('EnhancedTableFigureView', () => {
         return createElement(tagName);
       });
       mockView.state.doc = {
-        nodeAt: jest.fn().mockReturnValue({ attrs: { src: 'old-src' } }),
+        nodeAt: jest.fn().mockReturnValue({
+          attrs: { src: 'old-src' },
+          type: { name: 'image' },
+        }),
       } as unknown as EditorView['state']['doc'];
       const readAsDataURL = jest.fn(function (this: FileReader) {
         Object.defineProperty(this, 'result', {
@@ -765,7 +781,10 @@ describe('EnhancedTableFigureView', () => {
     it('should paste the first image item from the clipboard', async () => {
       setupImageFigure({ src: 'old-src' });
       mockView.state.doc = {
-        nodeAt: jest.fn().mockReturnValue({ attrs: { src: 'old-src' } }),
+        nodeAt: jest.fn().mockReturnValue({
+          attrs: { src: 'old-src' },
+          type: { name: 'image' },
+        }),
       } as unknown as EditorView['state']['doc'];
       const blob = new Blob(['image'], { type: 'image/png' });
       Object.defineProperty(navigator, 'clipboard', {
@@ -859,6 +878,179 @@ describe('EnhancedTableFigureView', () => {
       getMenuItem('paste-clipboard')?.action();
 
       expect(mockView.state.tr.setNodeMarkup).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('image sizing helpers', () => {
+    const setupSizingImage = (imageAttrs: Record<string, unknown> = {}) => {
+      const image = createNode('image', {
+        src: 'sizing-src',
+        ...imageAttrs,
+      });
+      const wrapper = createNode('paragraph', {}, [image]);
+      view.node = createFigureNode({ figureType: 'figure' }, [wrapper]);
+      mockView.state.doc = {
+        nodeAt: jest.fn().mockReturnValue(image),
+      } as unknown as EditorView['state']['doc'];
+      return image;
+    };
+
+    const appendRenderedImage = (
+      src = 'sizing-src',
+      dimensions = {
+        clientHeight: 120,
+        clientWidth: 240,
+        naturalHeight: 300,
+        naturalWidth: 600,
+      }
+    ) => {
+      const body = document.createElement('span');
+      const image = document.createElement('img');
+      body.className = 'molm-czi-image-view-body';
+      body.dataset.originalSrc = src;
+      image.className = 'molm-czi-image-view-body-img';
+      Object.entries(dimensions).forEach(([key, value]) => {
+        Object.defineProperty(image, key, {
+          configurable: true,
+          value,
+        });
+      });
+      body.appendChild(image);
+      view.contentDOM.appendChild(body);
+      return { body, image };
+    };
+
+    beforeEach(() => {
+      mockView.state = {
+        ...mockView.state,
+        tr: {
+          setNodeMarkup: jest.fn().mockReturnValue('size-tr'),
+        },
+      } as unknown as EditorView['state'];
+      (mockView as unknown as { focus: jest.Mock }).focus = jest.fn();
+      Object.defineProperty(view.contentDOM, 'clientWidth', {
+        configurable: true,
+        value: 404,
+      });
+    });
+
+    it('should resolve original image size from cache, rendered image, or null', () => {
+      const image = setupSizingImage();
+      appendRenderedImage();
+
+      expect(view['getOriginalImageSize'](image)).toEqual({
+        height: 300,
+        width: 600,
+      });
+      expect(view._originalImageSize).toEqual({
+        height: 300,
+        src: 'sizing-src',
+        width: 600,
+      });
+      expect(view['getOriginalImageSize'](image)).toEqual({
+        height: 300,
+        width: 600,
+      });
+
+      const missing = createNode('image', { src: 'missing-src' });
+      expect(view['getOriginalImageSize'](missing)).toBeNull();
+    });
+
+    it('should calculate current image sizes from attrs, originals, rendered size, and fit width', () => {
+      const widthOnly = setupSizingImage({ height: 0, width: 300 });
+      appendRenderedImage();
+      expect(view['getCurrentImageSize'](widthOnly)).toEqual({
+        height: 150,
+        width: 300,
+      });
+
+      const heightOnly = setupSizingImage({ height: 150, width: 0 });
+      expect(view['getCurrentImageSize'](heightOnly)).toEqual({
+        height: 150,
+        width: 300,
+      });
+
+      const renderedOnly = setupSizingImage({
+        height: Number.NaN,
+        src: 'rendered-src',
+        width: Number.NaN,
+      });
+      appendRenderedImage('rendered-src', {
+        clientHeight: 80,
+        clientWidth: 160,
+        naturalHeight: 0,
+        naturalWidth: 0,
+      });
+      expect(view['getCurrentImageSize'](renderedOnly)).toEqual({
+        height: 80,
+        width: 160,
+      });
+
+      const fitToParent = setupSizingImage({
+        fitToParent: true,
+        height: 200,
+        src: 'fit-src',
+        width: 400,
+      });
+      expect(view['getCurrentImageSize'](fitToParent)).toEqual({
+        height: 200,
+        width: 400,
+      });
+    });
+
+    it('should fall back and clamp fit width', () => {
+      const image = setupSizingImage({ fitToParent: false, src: 'missing-src' });
+
+      expect(view['getFitWidth'](image)).toBe(400);
+
+      Object.defineProperty(view.contentDOM, 'clientWidth', {
+        configurable: true,
+        value: 10,
+      });
+      expect(view['getFitWidth'](image)).toBe(20);
+    });
+
+    it('should apply bounded image sizes and skip invalid or disabled images', () => {
+      const image = setupSizingImage({ height: 100, width: 200 });
+
+      view['applyImageSize'](Number.NaN, 100);
+      expect(mockView.state.tr.setNodeMarkup).not.toHaveBeenCalled();
+
+      view['applyImageSize'](20000, 10000);
+      expect(mockView.state.tr.setNodeMarkup).toHaveBeenCalledWith(
+        12,
+        undefined,
+        {
+          fitToParent: 0,
+          height: 5000,
+          src: 'sizing-src',
+          width: 10000,
+        }
+      );
+      expect(mockView.dispatch).toHaveBeenCalledWith('size-tr');
+
+      (mockView.state.tr.setNodeMarkup as jest.Mock).mockClear();
+      Object.defineProperty(image, 'attrs', {
+        configurable: true,
+        value: { cropData: { left: 1 }, src: 'sizing-src' },
+      });
+      view['applyImageSize'](200, 100);
+      expect(mockView.state.tr.setNodeMarkup).not.toHaveBeenCalled();
+    });
+
+    it('should close or skip an existing size editor', () => {
+      const close = jest.fn();
+      view._sizeEditor = {
+        close,
+      } as unknown as EnhancedTableFigureView['_sizeEditor'];
+
+      view['handleSizeFit']();
+      expect(close).not.toHaveBeenCalled();
+
+      view['closeSizeEditor']();
+      expect(close).toHaveBeenCalledWith(undefined);
+      expect(mockView.focus).toHaveBeenCalled();
+      expect(view._sizeEditor).toBeUndefined();
     });
   });
 });

@@ -41,7 +41,8 @@ export function insertEnhancedImageFigure(
   // Create the body that contains an image.
   const bodyType = schema.nodes.enhanced_table_figure_body;
   const imageNodeType = schema.nodes['image'];
-  if (!imageNodeType) {
+  const paragraphType = schema.nodes.paragraph;
+  if (!bodyType || !imageNodeType || !paragraphType) {
     return tr;
   }
   const imageAttrs: Record<string, unknown> = {
@@ -79,7 +80,7 @@ export function insertEnhancedImageFigure(
   tr = tr.insert(from, figureNode);
 
   // Insert a new paragraph after the figure.
-  const paragraphNode = schema.nodes.paragraph.createAndFill();
+  const paragraphNode = paragraphType.createAndFill();
   if (paragraphNode) {
     const after = from + figureNode.nodeSize;
     tr = tr.insert(after, paragraphNode);

@@ -19,7 +19,8 @@ export class BlockControlMenu extends React.PureComponent<BlockControlMenuProps>
           <button
             className={
               'licit-block-control-menu-item' +
-              (item.active ? ' active' : '')
+              (item.active ? ' active' : '') +
+              (item.dividerBefore ? ' has-divider' : '')
             }
             data-id={item.id}
             disabled={item.disabled}
@@ -46,6 +47,9 @@ export class BlockControlMenu extends React.PureComponent<BlockControlMenuProps>
               <span className="licit-block-control-menu-icon">{item.icon}</span>
             ) : null}
             <span className="licit-block-control-menu-label">{item.label}</span>
+            {item.hint ? (
+              <span className="licit-block-control-menu-hint">{item.hint}</span>
+            ) : null}
           </button>
         ))}
       </div>
