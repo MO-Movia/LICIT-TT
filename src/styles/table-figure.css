@@ -33,6 +33,7 @@
 .enhanced-table-figure {
   box-sizing: content-box;
   padding: 0;
+  border: 2px solid black;
   position: relative;
   overflow: visible;
   width: 624px;
@@ -194,6 +195,11 @@
 }
 
 .ProseMirror[contenteditable='false'] .enhanced-table-figure-select-handle {
+  display: none;
+}
+
+.ProseMirror[contenteditable='false']
+  .molm-czi-image-view-body.selected::after {
   display: none;
 }
 

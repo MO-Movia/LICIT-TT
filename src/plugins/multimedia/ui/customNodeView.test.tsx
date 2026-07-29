@@ -87,6 +87,25 @@ describe('CustomNodeView', () => {
     expect(testNodeView).toBeDefined();
     expect(testNodeView.dom).toBeInstanceOf(HTMLElement);
   });
+
+  it('mounts its React content even while the editor DOM is detached', async () => {
+    const renderSpy = jest.spyOn(testNodeView, '__renderReactComponent');
+
+    await Promise.resolve();
+
+    expect(renderSpy).toHaveBeenCalled();
+    expect(testNodeView.reactRoot).not.toBeNull();
+    CustomNodeView.prototype.cleanup.call(testNodeView);
+  });
+
+  it('does not mount after being destroyed', async () => {
+    const renderSpy = jest.spyOn(testNodeView, '__renderReactComponent');
+
+    testNodeView.destroy();
+    await Promise.resolve();
+
+    expect(renderSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe('CustomNodeView - Additional Coverage', () => {

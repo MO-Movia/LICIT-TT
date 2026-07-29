@@ -585,6 +585,13 @@ const LicitComponent = (
     editable: !finalReadOnly,
   });
 
+  if (editor?.view) {
+    const eView: EditorViewEx = editor.view;
+    eView.runtime = finalRuntime;
+    eView.readOnly = finalReadOnly;
+    eView.disabled = finalDisabled;
+  }
+
   // Public methods
   const goToEnd = useCallback((): void => {
     if (editor) {
@@ -746,19 +753,18 @@ const LicitComponent = (
     finalOnChange,
   ]);
 
-  // Set runtime on editor view when available
+  // TipTap keeps the initial editable option when the prop changes, so keep the
+  // live editor state synchronized with the current read-only value.
   useEffect(() => {
-    if (editor?.view) {
-      const eView: EditorViewEx = editor.view;
-      eView.runtime = finalRuntime;
-    }
-  }, [editor, finalRuntime]);
+    editor?.setEditable(!finalReadOnly);
+  }, [editor, finalReadOnly]);
 
   if (editor) {
     const eView: EditorViewEx = editor.view;
     const wrapperClass = 'prosemirror-editor-wrapper' + ' ' + finalTheme;
     const mainClassName = cx(wrapperClass, {
       embedded: finalEmbedded,
+      readOnly: finalReadOnly,
     });
     return (
       <ThemeProvider theme={finalTheme}>
