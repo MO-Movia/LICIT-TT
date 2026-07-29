@@ -60,7 +60,6 @@ export function insertEnhancedImageFigure(
   // receives a valid block child.  Mirrors how EnhancedTableCommands wraps
   // its table node and matches the structure the load-time repair
   // (wrapInlineChildren) produces for legacy documents.
-  const paragraphType = schema.nodes.paragraph;
   const imageWrapper = paragraphType.create({}, imageNode)
   const bodyNode = bodyType.create({}, imageWrapper);
 
