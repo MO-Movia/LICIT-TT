@@ -56,11 +56,12 @@ export function insertEnhancedImageFigure(
     imageAttrs.height = height;
   }
   const imageNode = imageNodeType.create(imageAttrs, null);
-  // The EIC body accepts block nodes, while an image is inline. Keeping the
-  // schema valid prevents ProseMirror from rebuilding the image line
-  // differently after a resize.
-  const imageParagraph = paragraphType.create(null, imageNode);
-  const bodyNode = bodyType.create({}, imageParagraph);
+  // Wrap the inline image in a paragraph so the body (content: 'block+')
+  // receives a valid block child.  Mirrors how EnhancedTableCommands wraps
+  // its table node and matches the structure the load-time repair
+  // (wrapInlineChildren) produces for legacy documents.
+  const imageWrapper = paragraphType.create({}, imageNode)
+  const bodyNode = bodyType.create({}, imageWrapper);
 
   // No notes by default.
   // Create a blank CAPCO (footer) node.
