@@ -97,7 +97,7 @@ describe('insertEnhancedImageFigure', () => {
       null
     );
     expect(mockSchema.nodes.paragraph.create).toHaveBeenCalledWith(
-      null,
+      {},
       imageNode
     );
     expect(mockSchema.nodes.enhanced_table_figure_body.create).toHaveBeenCalledWith(
