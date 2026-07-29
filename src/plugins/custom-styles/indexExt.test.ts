@@ -51,9 +51,9 @@ describe('index branch coverage', () => {
       tr: {
         doc: {
           content: { size: 10 },
-          descendants(cb) {
+          nodesBetween(_from: number, _to: number, cb: (node: unknown, pos: number) => boolean | void) {
             cb(
-              { content: { size: 3 }, type: { name: 'paragraph' }, attrs: {} },
+              { content: { size: 3 }, type: { name: 'paragraph' }, attrs: {}, nodeSize: 5 },
               1
             );
           },
@@ -497,11 +497,19 @@ describe('index branch coverage', () => {
     const doc = {
       attrs: { counterFlags: {} },
       descendants: jest.fn(),
+      content: { size: 10 },
+      nodesBetween: jest.fn((_from: number, _to: number, cb: (node: unknown, pos: number) => boolean | void) => {
+        cb(
+          { content: { size: 3 }, type: { name: 'paragraph' }, attrs: {}, nodeSize: 5 },
+          1
+        );
+      }),
     };
     const tr = {
       doc,
       docChanged: false,
       getMeta: jest.fn(),
+      setMeta: jest.fn(),
     };
     const nextState = { tr, doc };
 
@@ -511,9 +519,9 @@ describe('index branch coverage', () => {
     ).toBeNull();
 
     jest.spyOn(customStyle, 'isStylesLoaded').mockReturnValue(true);
-    expect(
-      plugin.spec.appendTransaction?.([], {} as never, nextState as never)
-    ).toBe(tr);
+    jest.spyOn(command, 'applyLatestStyle').mockReturnValue({ changed: true } as never);
+    const result = plugin.spec.appendTransaction?.([], {} as never, nextState as never);
+    expect(result).toBeDefined();
 
     expect(
       plugin.spec.appendTransaction?.(

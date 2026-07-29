@@ -17,7 +17,9 @@ import {
   removeStyle,
   addStyleToList,
   setView,
-  saveStyleSet
+  saveStyleSet,
+  invalidateStyleCache,
+  registerStyleCacheInvalidator,
 } from './customStyle';
 import type { Style } from './StyleRuntime';
 
@@ -137,5 +139,57 @@ describe('customstyle', () => {
     const style = getCustomStyleByName('CellHeading');
     expect(style.styleName).toBe('CellHeading');
     expect(style.styles).toEqual({});
+  });
+
+  it('should return cached style from getCustomStyleByName', () => {
+    setStyles([
+      { styleName: 'MyStyle', docType: 'doc', styles: { strong: true } },
+    ]);
+    const style = getCustomStyleByName('MyStyle');
+    expect(style.styleName).toBe('MyStyle');
+    expect(style.styles).toEqual({ strong: true });
+  });
+
+  it('should return DEFAULT_NORMAL_STYLE for valid name not in map', () => {
+    setStyles([
+      { styleName: 'Normal', docType: 'doc', styles: {} },
+    ]);
+    const style = getCustomStyleByName('NonExistent');
+    expect(style.styleName).toBe('NonExistent');
+    expect(style.styles).toEqual({});
+  });
+
+  it('should update an existing style in addStyleToList', () => {
+    setStyles([
+      { styleName: 'Normal', docType: 'doc', styles: { strong: false } },
+    ]);
+    addStyleToList({
+      styleName: 'Normal',
+      docType: 'doc',
+      styles: { strong: true },
+    });
+    const style = getCustomStyleByName('Normal');
+    expect(style.styles).toEqual({ strong: true });
+  });
+
+  it('should register and invoke cache invalidator callbacks', () => {
+    const fn = jest.fn();
+    const unsubscribe = registerStyleCacheInvalidator(fn);
+    setStyles([
+      { styleName: 'Normal', docType: 'doc', styles: {} },
+    ]);
+    expect(fn).toHaveBeenCalledTimes(1);
+    unsubscribe();
+    setStyles([
+      { styleName: 'Normal', docType: 'doc', styles: {} },
+    ]);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it('should invoke invalidateStyleCache directly', () => {
+    const fn = jest.fn();
+    registerStyleCacheInvalidator(fn);
+    invalidateStyleCache();
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 });
