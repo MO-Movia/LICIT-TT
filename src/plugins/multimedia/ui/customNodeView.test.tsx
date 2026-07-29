@@ -12,7 +12,7 @@ import {
 import {SelectionObserver} from './SelectionObserver';
 import React from 'react';
 import {EditorVideoRuntime} from '../Types';
-import { Root } from 'react-dom/client';
+import {Root} from 'react-dom/client';
 
 describe('onSelection', () => {
   it('should handle onselection', () => {
@@ -89,13 +89,29 @@ describe('CustomNodeView', () => {
   });
 
   it('mounts its React content even while the editor DOM is detached', async () => {
-    const renderSpy = jest.spyOn(testNodeView, '__renderReactComponent');
+    testNodeView.destroy();
+    const renderSpy = jest.spyOn(
+      CustomNodeView.prototype,
+      '__renderReactComponent'
+    );
+
+    testNodeView = new TestNodeView(
+      null,
+      {
+        dom: document.createElement('div'),
+        focused: true,
+        runtime: {} as EditorVideoRuntime,
+      } as unknown as EditorFocused,
+      () => 1,
+      []
+    );
 
     await Promise.resolve();
 
     expect(renderSpy).toHaveBeenCalled();
     expect(testNodeView.reactRoot).not.toBeNull();
     CustomNodeView.prototype.cleanup.call(testNodeView);
+    renderSpy.mockRestore();
   });
 
   it('does not mount after being destroyed', async () => {
@@ -244,6 +260,7 @@ describe('renderReactComponent error handling', () => {
     );
 
     expect(() => partialView.renderReactComponent()).toThrow('not implemented');
+    partialView.destroy();
   });
 });
 });
