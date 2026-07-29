@@ -34,7 +34,6 @@ describe('insertEnhancedImageFigure', () => {
       paragraph?: { create: jest.Mock; createAndFill: jest.Mock };
       text?: jest.Mock;
     };
-    text: jest.Mock;
   };
   let mockSchema: MockSchema;
   const imageUrl = 'https://example.com/image.jpg';
@@ -51,7 +50,6 @@ describe('insertEnhancedImageFigure', () => {
     } as unknown as Transaction;
 
     mockSchema = {
-      text: jest.fn().mockReturnValue({}),
       nodes: {
         enhanced_table_figure: {
           create: jest.fn().mockReturnValue({
