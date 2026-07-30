@@ -11,6 +11,8 @@ import {Extension} from '@tiptap/core';
 import {createRoot} from 'react-dom/client';
 import prosemirrorDevTools from 'prosemirror-dev-tools';
 import {WebrtcProvider} from 'y-webrtc';
+import {Plugin} from 'prosemirror-state';
+import type {EditorViewEx} from '../constants';
 
 // Mock prosemirror-dev-tools
 jest.mock('prosemirror-dev-tools', () => ({
@@ -143,6 +145,71 @@ describe('Licit Editor Component', () => {
       );
       await new Promise((resolve) => setTimeout(resolve, 200));
       expect(container.firstChild).toBeDefined();
+    });
+
+    it('provides runtime and read-only state before node views mount', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const root = createRoot(container);
+      const runtime = {
+        canProxyImageSrc: () => true,
+        getProxyImageSrc: (src: string) => Promise.resolve(src),
+      };
+      const nodeViewContexts: Array<{
+        runtime: unknown;
+        readOnly: boolean;
+        disabled: boolean;
+      }> = [];
+      const nodeViewPlugin = new Plugin({
+        props: {
+          nodeViews: {
+            paragraph: (_node, view) => {
+              const editorView = view as EditorViewEx;
+              nodeViewContexts.push({
+                runtime: editorView.runtime,
+                readOnly: !!editorView.readOnly,
+                disabled: !!editorView.disabled,
+              });
+              const dom = document.createElement('p');
+              return {dom, contentDOM: dom};
+            },
+          },
+        },
+      });
+
+      root.render(
+        <Licit
+          data={{
+            type: 'doc',
+            content: [{type: 'paragraph'}],
+          }}
+          disabled={true}
+          plugins={[nodeViewPlugin]}
+          readOnly={true}
+          runtime={runtime}
+        />
+      );
+
+      await waitForValue(
+        () =>
+          nodeViewContexts.find(
+            (context) =>
+              context.runtime === runtime &&
+              context.readOnly &&
+              context.disabled
+          ),
+        10000
+      );
+
+      const wrapper = container.querySelector(
+        '.prosemirror-editor-wrapper'
+      );
+      const editor = container.querySelector('.ProseMirror');
+      expect(wrapper?.classList.contains('readOnly')).toBe(true);
+      expect(editor?.getAttribute('contenteditable')).toBe('false');
+
+      root.unmount();
+      container.remove();
     });
   });
 });
