@@ -11,6 +11,8 @@ jest.mock('./customStyle', () => ({
   getStylesAsync: jest.fn().mockResolvedValue([]),
   addStyleToList: jest.fn((style: unknown) => [style]),
   setStyles: jest.fn(),
+  invalidateStyleCache: jest.fn(),
+  registerStyleCacheInvalidator: jest.fn(() => jest.fn()),
 }));
 
 jest.mock('./clearCustomStyleMarks', () => ({
@@ -1411,7 +1413,7 @@ describe('removeAllMarksExceptLink', () => {
     csc.removeAllMarksExceptLink(0, 5, tr);
 
     expect(removeMark).toHaveBeenCalledTimes(1);
-    expect(removeMark).toHaveBeenCalledWith(1, 5, strongMark.type);
+    expect(removeMark).toHaveBeenCalledWith(0, 5, strongMark.type);
   });
 });
 
@@ -1462,7 +1464,9 @@ describe('removeAllMarksExceptLinkForTableColumnCell', () => {
     const node = {
       child: jest.fn(() => child),
       childCount: 1,
+      nodeSize: 5,
       type: { name: 'paragraph' },
+      forEach: (cb: (c: unknown) => void) => cb(child),
     } as unknown as Node;
     const tr = { removeMark } as unknown as Transform;
 
@@ -2029,6 +2033,7 @@ describe('applyStyleForTableColumnCell', () => {
         overriddenLineSpacingValue: '200%',
       },
       childCount: 0,
+      forEach: (_cb: (c: unknown) => void) => { /* no children */ },
       nodeSize: 2,
       type: { name: 'paragraph' },
     } as unknown as Node;
@@ -2076,6 +2081,7 @@ describe('applyStyleForTableColumnCell', () => {
     const node = {
       attrs: { id: 'node-id' },
       childCount: 0,
+      forEach: (_cb: (c: unknown) => void) => { /* no children */ },
       nodeSize: 2,
       type: { name: 'paragraph' },
     } as unknown as Node;

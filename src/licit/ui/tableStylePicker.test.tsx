@@ -24,6 +24,7 @@ jest.mock('../../plugins/custom-styles/customStyle', () => ({
   getCachedStyles: jest.fn(() => []),
   getStylesAsync: jest.fn(),
   setStyles: jest.fn(),
+  registerStyleCacheInvalidator: jest.fn(() => jest.fn()),
 }));
 
 jest.mock('../../plugins/custom-styles/ui/CustomStyleItem', () => ({

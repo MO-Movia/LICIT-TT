@@ -49,6 +49,14 @@ const ATTR_STYLE_NAME = 'styleName';
 const TABLE_STYLE_NAME_ATTRIBUTE = 'tableStyleName';
 const ZERO_WIDTH_SPACE = '\u200B';
 const ENHANCED_TABLE_FIGURE_BODY = 'enhanced_table_figure_body';
+const DEFAULT_CHUNK_BUDGET_MS = 100;
+const DEFAULT_CHUNK_IDLE_MS = 50;
+
+export type CustomstylePluginOptions = {
+  chunkBudgetMs?: number;
+  chunkIdleMs?: number;
+};
+
 type CustomStyleView = Plugin['spec']['view'] extends (view: infer T) => unknown
   ? T & { input?: { lastKeyCode?: number } }
   : { state: EditorState; input?: { lastKeyCode?: number } };
@@ -89,6 +97,8 @@ type LooseView = {
 type CSView = CustomStyleView | LooseView | null;
 type KeyInput = string | number | null | undefined;
 let slice1: Slice | null = null;
+let styleChunkTimer: ReturnType<typeof setTimeout> | null = null;
+let styleChunkLastInteractionAt = 0;
 
 function isBackspaceKey(key: KeyInput): boolean {
   return BACKSPACEKEY === key || BACKSPACEKEYCODE === key;
@@ -153,11 +163,71 @@ const requiredAddAttr = (node: Node | null | undefined): boolean => {
 };
 
 export class CustomstylePlugin extends Plugin {
-  constructor(runtime: StyleRuntime, hideNumbering?: boolean) {
+  constructor(
+    runtime: StyleRuntime,
+    hideNumbering?: boolean,
+    options?: CustomstylePluginOptions
+  ) {
     let csview: CustomStyleView | null = null;
     let pendingKey: string | null = null;
     let firstTime = true;
     let loaded = false;
+    const chunkBudgetMs = options?.chunkBudgetMs ?? DEFAULT_CHUNK_BUDGET_MS;
+    const chunkIdleMs = options?.chunkIdleMs ?? DEFAULT_CHUNK_IDLE_MS;
+    // Internal continuation position for time-based batched style application.
+    // When non-null, appendTransaction knows it should resume from this pos.
+    let resumePos: number | null = null;
+
+    // Schedule the next time-based style batch. Uses setTimeout(0) to yield
+    // to the browser (pending user input is processed first). During initial
+    // load (no user interaction yet), batches fire ASAP. Once the user has
+    // interacted, batches only fire after chunkIdleMs of idle time so active
+    // editing is not interrupted.
+    const scheduleNextChunk = (nextPos: number) => {
+      if (!csview || typeof nextPos !== 'number') {
+        return;
+      }
+      if (styleChunkTimer !== null) {
+        clearTimeout(styleChunkTimer);
+        styleChunkTimer = null;
+      }
+      const tick = () => {
+        styleChunkTimer = null;
+        if (!csview?.dispatch || (csview as { isDestroyed?: boolean }).isDestroyed) {
+          return;
+        }
+        // During initial load (no interaction yet), dispatch immediately.
+        // Once the user has interacted, wait for chunkIdleMs of idle time
+        // before dispatching so we don't block active typing/editing.
+        if (
+          styleChunkLastInteractionAt > 0 &&
+          Date.now() - styleChunkLastInteractionAt < chunkIdleMs
+        ) {
+          styleChunkTimer = setTimeout(tick, chunkIdleMs);
+          return;
+        }
+        resumePos = nextPos;
+        const hadFocus =
+          typeof (csview as { hasFocus?: () => boolean }).hasFocus === 'function'
+            ? (csview as { hasFocus: () => boolean }).hasFocus()
+            : false;
+        const continuationTr = (
+          csview as { state: EditorState }
+        ).state.tr.setMeta('addToHistory', false);
+        (csview as { dispatch: (tr: Transaction) => void }).dispatch(continuationTr);
+        if (
+          hadFocus &&
+          typeof (csview as { hasFocus?: () => boolean }).hasFocus === 'function' &&
+          !(csview as { hasFocus: () => boolean }).hasFocus()
+        ) {
+          (csview as { focus: () => void }).focus();
+        }
+      };
+      // setTimeout(0) yields to the browser — any pending input events are
+      // processed before the callback fires.
+      styleChunkTimer = setTimeout(tick, 0);
+    };
+
     super({
       key: new PluginKey('CustomstylePlugin'),
       state: {
@@ -196,6 +266,7 @@ export class CustomstylePlugin extends Plugin {
         },
         handleDOMEvents: {
           keydown(view, event) {
+            styleChunkLastInteractionAt = Date.now();
             csview = view;
             pendingKey = event.key;
           },
@@ -203,6 +274,16 @@ export class CustomstylePlugin extends Plugin {
             if (pendingKey === event.key) {
               pendingKey = null;
             }
+          },
+          mousedown(view) {
+            styleChunkLastInteractionAt = Date.now();
+            csview = view;
+            return false;
+          },
+          focus(view) {
+            styleChunkLastInteractionAt = Date.now();
+            csview = view;
+            return false;
           },
           blur() {
             pendingKey = null;
@@ -213,8 +294,23 @@ export class CustomstylePlugin extends Plugin {
       appendTransaction: (transactions, prevState, nextState) => {
         let tr: TrLike = null;
         const ref = { firstTime, loaded, currentKey: pendingKey };
-        if (!loaded) {
-          tr = onInitAppendTransaction(ref, tr, nextState);
+        const isChunking = resumePos !== null;
+        if (!loaded || isChunking) {
+          const startPos = isChunking ? resumePos : 0;
+          if (isChunking) {
+            resumePos = null;
+          }
+          tr = onInitAppendTransaction(
+            ref,
+            tr,
+            nextState,
+            startPos,
+            chunkBudgetMs,
+            scheduleNextChunk
+          );
+          if (tr?.docChanged) {
+            tr.setMeta('styleInitialLoad', true);
+          }
         } else if (isDocChanged(transactions)) {
           // Avoid infinite recursion: skip when any plugin-generated update already is present.
 
@@ -264,12 +360,20 @@ export class CustomstylePlugin extends Plugin {
 export function onInitAppendTransaction(
   ref: { loaded?: boolean; firstTime?: boolean },
   tr: LooseTr,
-  nextState: LooseState
+  nextState: LooseState,
+  startPos: number = 0,
+  budgetMs: number = DEFAULT_CHUNK_BUDGET_MS,
+  scheduleNext: ((nextPos: number) => void) | null = null
 ): LooseTr {
   ref.loaded = isStylesLoaded();
   if (ref.loaded) {
-    // do this only once when the document is loaded.
-    tr = applyStyles(nextState, tr);
+    const result = applyStylesTimeBatched(nextState, startPos, budgetMs);
+    if (!result.done && scheduleNext) {
+      // Continue batched style application asynchronously so host app
+      // focus/update work does not break the appendTransaction chain.
+      scheduleNext(result.lastPos);
+    }
+    tr = result.tr;
   }
 
   return tr;
@@ -817,6 +921,60 @@ export function applyStyles(state: LooseState, tr?: LooseTr): LooseTr {
     }
   });
   return tr;
+}
+
+// Apply styles using a time-based budget. Processes nodes from startPos until
+// the time budget (budgetMs) is exhausted, then returns the last processed
+// position so the caller can schedule the next batch.
+export function applyStylesTimeBatched(
+  state: LooseState,
+  startPos: number = 0,
+  budgetMs: number = DEFAULT_CHUNK_BUDGET_MS
+): { tr: Transaction; lastPos: number; done: boolean } {
+  let tr = state.tr ?? null;
+  if (!tr) {
+    return { tr: null, lastPos: startPos, done: true };
+  }
+  const docSize = tr.doc.content.size;
+  const startTime = Date.now();
+  let lastPos = startPos;
+  let stopped = false;
+
+  tr.doc.nodesBetween(startPos, docSize, (child: Node, pos: number) => {
+    if (stopped || pos < startPos) {
+      return true;
+    }
+    // Check time budget after each eligible node. If exceeded, stop
+    // processing — remaining nodes will be handled in the next batch.
+    if (Date.now() - startTime >= budgetMs) {
+      stopped = true;
+      return false;
+    }
+
+    const contentLen = child.content.size;
+    if (haveEligibleChildren(child, contentLen)) {
+      const docLen = tr.doc.content.size;
+      const end = Math.min(pos + contentLen, docLen);
+      const styleName = child.attrs?.styleName ?? RESERVED_STYLE_NONE;
+      tr = applyLatestStyle(styleName, state as EditorState, tr, {
+        node: child,
+        startPos: pos,
+        endPos: end,
+      }) as Transaction;
+      lastPos = Math.max(lastPos, pos + child.nodeSize);
+      // Don't descend into the paragraph's inline/text children —
+      // applyLatestStyle already handled its content.
+      return false;
+    }
+    return true;
+  });
+
+  const done = !stopped;
+  return {
+    tr,
+    lastPos: done ? docSize : lastPos,
+    done,
+  };
 }
 
 function validateStyleName(node: Node | null | undefined): boolean {

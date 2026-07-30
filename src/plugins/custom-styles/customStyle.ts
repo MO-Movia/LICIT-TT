@@ -42,6 +42,36 @@ const sharedState = (sharedStates[CUSTOM_STYLE_STATE_KEY] ??= {
   customStyles: [],
   styleRuntime: null,
 });
+
+// O(1) lookup cache for style-by-name. Rebuilt whenever the style list changes.
+let styleByNameMap = new Map<string, Style>();
+
+// Cache invalidation callbacks — other modules register to be notified
+// when the style list changes so they can clear their own caches.
+let styleCacheInvalidators: (() => void)[] = [];
+
+function rebuildStyleByNameMap() {
+  styleByNameMap = new Map<string, Style>();
+  for (const style of sharedState.customStyles) {
+    if (style?.styleName) {
+      styleByNameMap.set(style.styleName, style);
+    }
+  }
+}
+
+export function invalidateStyleCache() {
+  for (const fn of styleCacheInvalidators) {
+    fn();
+  }
+}
+
+export function registerStyleCacheInvalidator(fn: () => void): () => void {
+  styleCacheInvalidators.push(fn);
+  return () => {
+    styleCacheInvalidators = styleCacheInvalidators.filter((f) => f !== fn);
+  };
+}
+
 let hideNumbering = false;
 let _view: EditorView | null = null;
 let hasdocTypechanged = false;
@@ -80,6 +110,8 @@ export function addStyleToList(style: Style): Style[] {
       customStyles[index] = style;
     }
   }
+  rebuildStyleByNameMap();
+  invalidateStyleCache();
   return customStyles;
 }
 
@@ -100,30 +132,19 @@ export function isCustomStyleExists(styleName: string) {
 
 // get a style by styleName
 export function getCustomStyleByName(name: string): Style {
-  let style: Style = { styleName: name };
-  let has = false;
   if (isValidStyleName(name)) {
-    const customStyles = sharedState.customStyles;
-    // break the loop if find any matches
-    for (let i = 0; !has && i < customStyles.length; i++) {
-      if (name === customStyles[i].styleName) {
-        style = customStyles[i];
-        has = true;
-      }
+    const cached = styleByNameMap.get(name);
+    if (cached) {
+      return cached;
     }
-
     // Imported docs may carry style names that do not exist in the runtime
     // style list (e.g. class-derived names like CellHeading). Do not coerce
     // those unknown names to Normal, or we inject Normal spacing unexpectedly.
-    if (!has) {
-      style = shouldFallbackToNormalStyle(name)
-        ? DEFAULT_NORMAL_STYLE
-        : ({ styleName: name, styles: {} });
-    }
-  } else {
-    style = DEFAULT_NORMAL_STYLE;
+    return shouldFallbackToNormalStyle(name)
+      ? DEFAULT_NORMAL_STYLE
+      : { styleName: name, styles: {} };
   }
-  return style;
+  return DEFAULT_NORMAL_STYLE;
 }
 
 export function setView(csview: EditorView) {
@@ -133,6 +154,8 @@ export function setView(csview: EditorView) {
 // store styles in cache
 export function setStyles(style: Style[]) {
   sharedState.customStyles = style;
+  rebuildStyleByNameMap();
+  invalidateStyleCache();
   setCustomStyles(style);
   let documentType;
   if (style && Array.isArray(style)) {
