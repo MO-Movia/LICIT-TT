@@ -141,6 +141,14 @@ export class CustomNodeView implements NodeView {
       });
       selectionObserver.observe(/*document*/ editorView.dom);
     }
+
+    queueMicrotask(() => {
+      if (!pendingViews.delete(this)) {
+        return;
+      }
+      this.__renderReactComponent();
+      mountedViews.add(this);
+    });
   }
 
   update(node: Node, _decorations: Array<Decoration>): boolean {
