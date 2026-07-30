@@ -99,9 +99,6 @@ type KeyInput = string | number | null | undefined;
 let slice1: Slice | null = null;
 let styleChunkTimer: ReturnType<typeof setTimeout> | null = null;
 let styleChunkLastInteractionAt = 0;
-// TEMP: tracks wall-clock start time of the initial style application pass
-// so the total time-to-complete can be logged when all styles are applied.
-let styleApplyStartTime = 0;
 
 function isBackspaceKey(key: KeyInput): boolean {
   return BACKSPACEKEY === key || BACKSPACEKEYCODE === key;
@@ -370,20 +367,11 @@ export function onInitAppendTransaction(
 ): LooseTr {
   ref.loaded = isStylesLoaded();
   if (ref.loaded) {
-    if (startPos === 0) {
-      styleApplyStartTime = Date.now();
-    }
     const result = applyStylesTimeBatched(nextState, startPos, budgetMs);
     if (!result.done && scheduleNext) {
       // Continue batched style application asynchronously so host app
       // focus/update work does not break the appendTransaction chain.
       scheduleNext(result.lastPos);
-    } else if (result.done) {
-      // TEMP: log when all styles have finished applying to the document.
-      const elapsedMs = Date.now() - styleApplyStartTime;
-      console.warn(
-        `[CustomstylePlugin] All styles applied to document in ${elapsedMs}ms.`
-      );
     }
     tr = result.tr;
   }
