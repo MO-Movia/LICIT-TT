@@ -526,9 +526,10 @@ class TableDetailsCommand extends UICommand {
     cellDOM?: HTMLElement | null
   ): TableEditorDialogData {
     const tableMap = TableMap.get(nodes.table.node);
-    const cellAttrs = nodes.cell?.node.attrs ?? {};
-    const computedStyle = cellDOM ? getComputedStyle(cellDOM) : null;
     const selectedCells = nodes.cells ?? [];
+    const selectedCell = nodes.cell ?? selectedCells[0] ?? null;
+    const cellAttrs = selectedCell?.node.attrs ?? {};
+    const computedStyle = cellDOM ? getComputedStyle(cellDOM) : null;
 
     return {
       table: {
@@ -547,7 +548,11 @@ class TableDetailsCommand extends UICommand {
         pageOrientation: 'portrait',
       },
       borders: this.getBorderDialogData(cellAttrs),
-      typography: this.getTypographyDialogData(cellAttrs, computedStyle),
+      typography: this.getTypographyDialogData(
+        cellAttrs,
+        computedStyle,
+        selectedCell?.node
+      ),
       layout: this.getLayoutDialogData(cellAttrs, computedStyle),
       metadata: {
         totalRows: tableMap.height,
@@ -584,50 +589,170 @@ class TableDetailsCommand extends UICommand {
 
   getTypographyDialogData(
     attrs: Record<string, unknown>,
-    _computedStyle: CSSStyleDeclaration | null
+    computedStyle: CSSStyleDeclaration | null,
+    cellNode?: ProseMirrorNode
   ): TypographyConfig {
-    const fontWeight = this.toStringValue(attrs.fontWeight);
-    const textDecoration = this.toStringValue(attrs.textDecoration);
+    const fontWeight =
+      this.toStringValue(attrs.fontWeight) ??
+      this.toStringValue(computedStyle?.fontWeight);
+    const textDecoration =
+      this.toStringValue(attrs.textDecoration) ??
+      this.toStringValue(computedStyle?.textDecorationLine);
+
+    const cellTypography: TypographyConfig = {
+      fontFamily:
+        this.normalizeFontFamily(
+          this.toStringValue(attrs.fontName) ??
+          this.toStringValue(computedStyle?.fontFamily)
+        ) ?? DEFAULT_TYPOGRAPHY.fontFamily,
+      fontSize:
+        this.toStringValue(attrs.fontSize) ??
+        this.toStringValue(computedStyle?.fontSize) ??
+        DEFAULT_TYPOGRAPHY.fontSize,
+      bold: this.isBold(fontWeight),
+      italic:
+        (this.toStringValue(attrs.fontStyle) ??
+          this.toStringValue(computedStyle?.fontStyle)) === 'italic',
+      underline: textDecoration?.includes('underline') ?? false,
+      textColor:
+        this.toStringValue(attrs.textColor) ?? DEFAULT_TYPOGRAPHY.textColor,
+      backgroundColor:
+        this.normalizeTransparentColor(
+          this.toStringValue(attrs.backgroundColor)
+        ) ?? DEFAULT_TYPOGRAPHY.backgroundColor,
+      letterSpacing:
+        this.toStringValue(attrs.letterSpacing) ??
+        this.toStringValue(computedStyle?.letterSpacing) ??
+        DEFAULT_TYPOGRAPHY.letterSpacing,
+      lineHeight:
+        this.toStringValue(attrs.lineHeight) ??
+        this.toStringValue(computedStyle?.lineHeight) ??
+        DEFAULT_TYPOGRAPHY.lineHeight,
+      textAlign: this.toTextAlign(
+        this.toStringValue(attrs.textAlign) ??
+        this.toStringValue(computedStyle?.textAlign)
+      ),
+      verticalAlign: this.toVerticalAlign(
+        this.toStringValue(attrs.verticalAlign) ??
+        this.toStringValue(computedStyle?.verticalAlign)
+      ),
+    };
 
     return {
-      fontFamily: this.isOverrideAttrSet(attrs, 'fontNameOverridden')
-        ? this.normalizeFontFamily(this.toStringValue(attrs.fontName)) ?? ''
-        : '',
-      fontSize: this.isOverrideAttrSet(attrs, 'fontSizeOverridden')
-        ? this.toStringValue(attrs.fontSize) ?? ''
-        : '',
-      bold:
-        this.isOverrideAttrSet(attrs, 'fontWeightOverridden') &&
-        this.isBold(fontWeight),
-      italic:
-        this.isOverrideAttrSet(attrs, 'fontStyleOverridden') &&
-        this.toStringValue(attrs.fontStyle) === 'italic',
-      underline:
-        this.isOverrideAttrSet(attrs, 'textDecorationOverridden') &&
-        (textDecoration?.includes('underline') ?? false),
-      textColor:
-        this.isOverrideAttrSet(attrs, 'textColorOverridden')
-          ? this.toStringValue(attrs.textColor) ?? ''
-          : '',
-      backgroundColor:
-        this.isOverrideAttrSet(attrs, 'backgroundColorOverridden')
-          ? this.normalizeTransparentColor(
-            this.toStringValue(attrs.backgroundColor)
-          ) ?? 'transparent'
-          : '',
-      letterSpacing: this.isOverrideAttrSet(attrs, 'letterSpacingOverridden')
-        ? this.toStringValue(attrs.letterSpacing) ?? ''
-        : '',
-      lineHeight: this.isOverrideAttrSet(attrs, 'lineHeightOverridden')
-        ? this.toStringValue(attrs.lineHeight) ?? ''
-        : '',
-      textAlign: this.isOverrideAttrSet(attrs, 'textAlignOverridden')
-        ? this.toTextAlign(this.toStringValue(attrs.textAlign), '')
-        : '',
-      verticalAlign: this.isOverrideAttrSet(attrs, 'verticalAlignOverridden')
-        ? this.toVerticalAlign(this.toStringValue(attrs.verticalAlign), '')
-        : '',
+      ...cellTypography,
+      ...this.getCellContentTypography(cellNode, cellTypography),
     };
+  }
+
+  getCellContentTypography(
+    cellNode: ProseMirrorNode | undefined,
+    fallback: TypographyConfig
+  ): Partial<TypographyConfig> {
+    const typography: Partial<TypographyConfig> = {};
+    if (!cellNode) {
+      return typography;
+    }
+
+    const textNodes: ProseMirrorNode[] = [];
+    const textBlocks: ProseMirrorNode[] = [];
+    cellNode.descendants((node) => {
+      if (node.isTextblock) {
+        textBlocks.push(node);
+      }
+      if (node.isText && node.text?.trim()) {
+        textNodes.push(node);
+      }
+      return true;
+    });
+
+    if (textNodes.length) {
+      const fontFamilies = textNodes.map((node) => {
+        const mark = this.getNodeMark(node, MARK_FONT_TYPE);
+        return this.normalizeFontFamily(
+          this.toStringValue(mark?.attrs.name)
+        ) ?? fallback.fontFamily;
+      });
+      const fontSizes = textNodes.map((node) => {
+        const mark = this.getNodeMark(node, MARK_FONT_SIZE);
+        return this.toMarkedFontSize(mark?.attrs.pt) ?? fallback.fontSize;
+      });
+      const textColors = textNodes.map((node) => {
+        const mark = this.getNodeMark(node, MARK_TEXT_COLOR);
+        return this.toStringValue(mark?.attrs.color) ?? fallback.textColor;
+      });
+      const letterSpacings = textNodes.map((node) => {
+        const mark = this.getNodeMark(node, MARK_LETTER_SPACING);
+        return this.toStringValue(mark?.attrs.letterSpacing) ??
+          fallback.letterSpacing;
+      });
+
+      typography.fontFamily = this.getUniformStringValue(
+        fontFamilies,
+        (first, second) => this.sameNormalizedString(first, second)
+      ) ?? '';
+      typography.fontSize = this.getUniformStringValue(fontSizes) ?? '';
+      typography.textColor = this.getUniformStringValue(
+        textColors,
+        (first, second) => this.sameColorValue(first, second)
+      ) ?? '';
+      typography.letterSpacing = this.getUniformStringValue(
+        letterSpacings,
+        (first, second) => this.sameCssNumericValue(first, second)
+      ) ?? '';
+      typography.bold = textNodes.every(
+        (node) => fallback.bold || Boolean(this.getNodeMark(node, MARK_STRONG))
+      );
+      typography.italic = textNodes.every(
+        (node) => fallback.italic || Boolean(this.getNodeMark(node, MARK_EM))
+      );
+      typography.underline = textNodes.every(
+        (node) =>
+          fallback.underline || Boolean(this.getNodeMark(node, MARK_UNDERLINE))
+      );
+    }
+
+    if (textBlocks.length) {
+      const textAlignments = textBlocks.map((node) => {
+        const value =
+          this.toStringValue(node.attrs.align) ??
+          this.toStringValue(node.attrs.textAlign) ??
+          this.toStringValue(node.attrs.overriddenAlignValue);
+        return this.toTextAlign(value, fallback.textAlign);
+      });
+      const lineHeights = textBlocks.map((node) =>
+        this.toStringValue(node.attrs.lineSpacing) ??
+        this.toStringValue(node.attrs.lineHeight) ??
+        this.toStringValue(node.attrs.overriddenLineSpacingValue) ??
+        fallback.lineHeight
+      );
+
+      const textAlignment = this.getUniformStringValue(textAlignments);
+      typography.textAlign = textAlignment
+        ? this.toTextAlign(textAlignment, '')
+        : '';
+      typography.lineHeight = this.getUniformStringValue(
+        lineHeights,
+        (first, second) => this.sameCssNumericValue(first, second)
+      ) ?? '';
+    }
+
+    return typography;
+  }
+
+  getNodeMark(node: ProseMirrorNode, markName: string) {
+    return node.marks.find((mark) => mark.type.name === markName);
+  }
+
+  getUniformStringValue(
+    values: string[],
+    sameValue: (first: string, second: string) => boolean =
+      (first, second) => first === second
+  ): string | null {
+    const first = values[0];
+    if (first === undefined) {
+      return null;
+    }
+    return values.every((value) => sameValue(first, value)) ? first : null;
   }
 
   getLayoutDialogData(
@@ -669,6 +794,21 @@ class TableDetailsCommand extends UICommand {
 
   toStringValue(value: unknown): string | null {
     return typeof value === 'string' && value.trim().length ? value : null;
+  }
+
+  toStringOrNumberValue(value: unknown): string | null {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+    return this.toStringValue(value);
+  }
+
+  toMarkedFontSize(value: unknown): string | null {
+    const fontSize = this.toStringOrNumberValue(value);
+    if (!fontSize) {
+      return null;
+    }
+    return /[a-z%]/i.test(fontSize) ? fontSize : `${fontSize}pt`;
   }
 
   normalizeTransparentColor(value: string | null | undefined): string | null {
@@ -744,10 +884,6 @@ class TableDetailsCommand extends UICommand {
   normalizeString(value: string | null | undefined): string | null {
     const normalized = value?.trim() ?? '';
     return normalized.length ? normalized : null;
-  }
-
-  isOverrideAttrSet(attrs: Record<string, unknown>, attrName: string): boolean {
-    return attrs[attrName] === true || attrs[attrName] === 'true';
   }
 
   normalizeNumber(value: string): number | null {

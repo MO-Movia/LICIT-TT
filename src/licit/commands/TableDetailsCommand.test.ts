@@ -591,17 +591,17 @@ describe('TableDetailsCommand', () => {
     expect(data.metadata).toEqual({totalRows: 2, totalColumns: 2});
     expect(data.selectionMode).toBe('single');
     expect(data.typography).toMatchObject({
-      fontFamily: '',
-      fontSize: '',
+      fontFamily: 'inherit',
+      fontSize: '15px',
       bold: false,
       italic: false,
       underline: false,
-      textColor: '',
-      backgroundColor: '',
-      letterSpacing: '',
-      lineHeight: '',
-      textAlign: '',
-      verticalAlign: '',
+      textColor: '#000000',
+      backgroundColor: 'transparent',
+      letterSpacing: '0px',
+      lineHeight: 'normal',
+      textAlign: 'left',
+      verticalAlign: 'middle',
     });
     expect(data.fontOptions).toEqual([
       {label: 'Default Font', value: 'inherit'},
@@ -818,6 +818,117 @@ describe('TableDetailsCommand', () => {
     expect(updatedMarkTypes).not.toContain('mark-font-type');
     expect(updatedMarkTypes).not.toContain('mark-text-color');
     expect(updatedMarkTypes).not.toContain('mark-letter-spacing');
+  });
+
+  it('initializes typography from the selected cell content', () => {
+    const command = new TableDetailsCommand();
+    const marks = [
+      schema.marks['mark-font-type'].create({
+        name: 'Tahoma',
+        overridden: true,
+      }),
+      schema.marks['mark-font-size'].create({pt: 13, overridden: true}),
+      schema.marks['mark-text-color'].create({
+        color: '#123456',
+        overridden: true,
+      }),
+      schema.marks['mark-letter-spacing'].create({
+        letterSpacing: '2px',
+        overridden: true,
+      }),
+      schema.marks.strong.create({overridden: true}),
+      schema.marks.em.create({overridden: true}),
+      schema.marks.underline.create({overridden: true}),
+    ];
+    const paragraph = schema.nodes.paragraph.create(
+      {
+        align: 'center',
+        lineSpacing: '1.15',
+        overriddenAlign: true,
+        overriddenAlignValue: 'center',
+        overriddenLineSpacing: true,
+        overriddenLineSpacingValue: '1.15',
+      },
+      schema.text('formatted', marks)
+    );
+    const cell = schema.nodes.table_cell.create(
+      {
+        fontName: 'Arial',
+        fontSize: '20px',
+        lineHeight: 'normal',
+        textAlign: 'left',
+      },
+      [paragraph]
+    );
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.table.create(
+        {noOfColumns: 1, tableHeight: '120px'},
+        [schema.nodes.table_row.create(null, [cell])]
+      ),
+    ]);
+    const state = createState(doc, 'formatted');
+    const view = createView(state);
+    const openTableEditorDialog = jest.fn();
+    RuntimeService.Runtime = {openTableEditorDialog};
+
+    expect(command.execute(state, jest.fn(), view)).toBe(true);
+
+    const [data] = openTableEditorDialog.mock.calls[0];
+    expect(data.typography).toMatchObject({
+      fontFamily: 'Tahoma',
+      fontSize: '13pt',
+      bold: true,
+      italic: true,
+      underline: true,
+      textColor: '#123456',
+      letterSpacing: '2px',
+      lineHeight: '1.15',
+      textAlign: 'center',
+    });
+  });
+
+  it('only shows formatting shared by all content in the cell', () => {
+    const command = new TableDetailsCommand();
+    const boldTahoma = schema.text('bold Tahoma', [
+      schema.marks['mark-font-type'].create({
+        name: 'Tahoma',
+        overridden: true,
+      }),
+      schema.marks.strong.create({overridden: true}),
+    ]);
+    const firstParagraph = schema.nodes.paragraph.create(
+      {align: 'center', lineSpacing: '1.15'},
+      boldTahoma
+    );
+    const otherParagraphs = ['second', 'third', 'fourth'].map((text) =>
+      schema.nodes.paragraph.create(null, schema.text(text))
+    );
+    const cell = schema.nodes.table_cell.create(null, [
+      firstParagraph,
+      ...otherParagraphs,
+    ]);
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.table.create(
+        {noOfColumns: 1, tableHeight: '120px'},
+        [schema.nodes.table_row.create(null, [cell])]
+      ),
+    ]);
+    const state = createState(doc, 'bold Tahoma');
+    const view = createView(state);
+    const openTableEditorDialog = jest.fn();
+    RuntimeService.Runtime = {openTableEditorDialog};
+
+    expect(command.execute(state, jest.fn(), view)).toBe(true);
+
+    const [data] = openTableEditorDialog.mock.calls[0];
+    expect(data.typography).toMatchObject({
+      fontFamily: '',
+      bold: false,
+      italic: false,
+      underline: false,
+      lineHeight: '',
+      textAlign: '',
+    });
   });
 
   it('preserves unselected font size without adding an override mark', () => {
