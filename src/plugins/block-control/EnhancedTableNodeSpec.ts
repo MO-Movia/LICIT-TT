@@ -97,6 +97,8 @@ export const enhancedTableFigureNodeSpec: NodeSpec = {
     maximized: { default: false },
     width: { default: 600 },
     height: { default: 300 },
+    dirty: { default: false },
+
   },
   parseDOM: [
     {
@@ -107,6 +109,7 @@ export const enhancedTableFigureNodeSpec: NodeSpec = {
           figureType: dom.dataset.figureType || 'table',
           orientation: dom.dataset.orientation || 'portrait',
           maximized: dom.dataset.maximized === 'true',
+          dirty: dom.dataset.dirty === 'true',
         };
       },
     },
