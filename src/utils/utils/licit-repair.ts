@@ -46,7 +46,9 @@ function processNodeContent(this: void, node: LicitNode): void {
       break;
   }
   for (const child of node.content ?? []) {
-    processNodeContent(child);
+    if (child) {
+      processNodeContent(child);
+    }
   }
 }
 
