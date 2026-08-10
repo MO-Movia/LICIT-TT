@@ -45,6 +45,7 @@ const ALLOWED_NODES = [
   'table_cell',
   'table_row',
   'citationnote',
+  'enhanced_table_figure'
 ];
 
 interface IdConfig {
@@ -652,7 +653,9 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
     );
     const isOnLoad = this.isOnLoadParagraphChange(para, prevPara);
     tr = this.markParagraphDirty(tr, nextState, para, docChanged, isOnLoad, isDirty);
-    return this.markParentTableDirty(tr, nextState, para, schema.nodes.table);
+    tr = this.markParentTableDirty(tr, nextState, para, schema.nodes.table);
+    tr = this.markEnhancedTableFigureDirty(tr, nextState, para, schema.nodes.enhanced_table_figure);
+    return tr;
   }
 
   private isCurrentOrPreviousParagraphDirty(
@@ -725,7 +728,34 @@ export class ObjectIdPlugin extends Plugin<IdConfig> {
       ...parentTable.node.attrs,
       dirty: true,
     });
+
   }
+  private markEnhancedTableFigureDirty(
+    tr: Transaction,
+    nextState: EditorState,
+    para,
+    enhancedTableFigureType: NodeType
+  ): Transaction {
+    if (!para) {
+      return tr;
+    }
+
+    const parentEnhancedTableFigure = this.getParentByPosition(
+      nextState.doc,
+      para.pos,
+      enhancedTableFigureType
+    );
+    if (!parentEnhancedTableFigure || parentEnhancedTableFigure.node.attrs.dirty) {
+      return tr;
+    }
+
+    tr ??= nextState.tr;
+    return tr.setNodeMarkup(parentEnhancedTableFigure.pos, null, {
+      ...parentEnhancedTableFigure.node.attrs,
+      dirty: true,
+    });
+  }
+
 
   // set the dirty flag on each changes on editor and also for undo operations.
   setDirtyFlagOnChange(

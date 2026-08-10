@@ -15,10 +15,13 @@ import {
 } from './constants';
 import { SYSTEMCAPCO } from './editorSchema';
 import { EditorView } from 'prosemirror-view';
-import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import type { NodeType, Node as ProseMirrorNode } from 'prosemirror-model';
+import { Node } from 'prosemirror-model';
 import { CapcoRuntime, CapcoState } from './types';
 import { getBlockControlCapco, safeCapcoParse } from './utils';
 import { MenuKeyboardNav } from '../../commands/ui/menuKeyboardNav';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
 export type capcoContextMenuProps = {
   editorView: EditorView;
@@ -311,6 +314,8 @@ export class CapcoContextMenu extends React.Component<
       ) {
         enhanced_capco_pos = enhanced_capco_pos + 2;
       }
+      const { schema } = this.props.editorView.state;
+      tr = this.markEnhancedTableFigureDirty(tr, this.props.editorView.state, enhanced_capco_pos, schema?.nodes?.enhanced_table_figure);
       tr.setNodeMarkup(enhanced_capco_pos, null, newAttrs);
     }
     if (typeof tr.setMeta === 'function') {
@@ -353,6 +358,34 @@ export class CapcoContextMenu extends React.Component<
     return { node, pos };
   }
 
+  private markEnhancedTableFigureDirty(
+    tr: Transaction,
+    nextState: EditorState,
+    pos: number,
+    enhancedTableFigureType: NodeType
+  ): Transaction {
+
+    const parentEnhancedTableFigure = this.getParentByPosition(
+      nextState.doc,
+      pos,
+      enhancedTableFigureType
+    );
+    if (!parentEnhancedTableFigure || parentEnhancedTableFigure.node.attrs.dirty) {
+      return tr;
+    }
+
+    tr ??= nextState.tr;
+    return tr.setNodeMarkup(parentEnhancedTableFigure.pos, null, {
+      ...parentEnhancedTableFigure.node.attrs,
+      dirty: true,
+    });
+  }
+  private getParentByPosition(doc: Node, pos: number, type: NodeType) {
+    return findParentNodeClosestToPos(
+      doc.resolve(pos),
+      (node) => node.type === type
+    );
+  }
   closePopUP(): void {
     this.props.close();
   }
