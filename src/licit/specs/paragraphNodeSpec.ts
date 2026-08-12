@@ -242,6 +242,7 @@ function toDOM(node): DOMOutputSpec {
     hangingIndent
   } = node.attrs;
   const attrs = { ...node.attrs };
+  delete attrs.pendingMarks;
   const style = getStyle(node.attrs);
 
   if (style) {
@@ -488,6 +489,12 @@ const ParagraphNode = Node.create({
           return { objectId: attributes.objectId };
         },
       },
+      pendingMarks: {
+        default: null,
+        renderHTML: () => {
+          return {};
+        },
+      },
     };
   },
 
@@ -498,6 +505,7 @@ const ParagraphNode = Node.create({
   renderHTML({ HTMLAttributes }) {
     const style = getStyle(HTMLAttributes);
     const attrs = { ...HTMLAttributes };
+    delete attrs.pendingMarks;
 
     if (style) {
       attrs.style = style;

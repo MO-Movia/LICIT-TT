@@ -163,8 +163,7 @@ function createBorderAttributes(): Record<string, AttributeConfig> {
       borderAttributes[attributeName] = createInlineStyleAttribute(
         attributeName,
         cssProperty,
-        styleProperty,
-        ''
+        styleProperty
       );
     }
   }
@@ -412,7 +411,7 @@ export const TableHeaderEx = TableHeader.extend({
           }
 
           return {
-            style: `border-color: ${attributes.borderColor}`,
+            style: `border-color: ${attributes.borderColor};`,
           };
         },
         parseHTML: (element) => {
@@ -426,7 +425,7 @@ export const TableHeaderEx = TableHeader.extend({
             ? {
               verticalAlign: attributes.verticalAlign,
               valign: attributes.verticalAlign,
-              style: `vertical-align: ${attributes.verticalAlign}`,
+              style: `vertical-align: ${attributes.verticalAlign};`,
             }
             : {};
         },

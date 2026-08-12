@@ -188,7 +188,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.paddingLeft
-            ? { style: `padding-left: ${attributes.paddingLeft}` }
+            ? { style: `padding-left: ${attributes.paddingLeft};` }
             : {};
         },
         parseHTML: (element) => {
@@ -262,7 +262,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderLeft
-            ? { style: `border-left: ${attributes.borderLeft}` }
+            ? { style: `border-left: ${attributes.borderLeft};` }
             : {};
         },
         parseHTML: (element) => element.style.borderLeft || null,
@@ -271,7 +271,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderRight
-            ? { style: `border-right: ${attributes.borderRight}` }
+            ? { style: `border-right: ${attributes.borderRight};` }
             : {};
         },
         parseHTML: (element) => element.style.borderRight || null,
@@ -280,7 +280,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderTop
-            ? { style: `border-top: ${attributes.borderTop}` }
+            ? { style: `border-top: ${attributes.borderTop};` }
             : {};
         },
         parseHTML: (element) => element.style.borderTop || null,
@@ -289,7 +289,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderBottom
-            ? { style: `border-bottom: ${attributes.borderBottom}` }
+            ? { style: `border-bottom: ${attributes.borderBottom};` }
             : {};
         },
         parseHTML: (element) => element.style.borderBottom || null,
@@ -302,7 +302,7 @@ export const TableCellEx = TableCell.extend({
           }
 
           return {
-            style: `border-color: ${attributes.borderColor}`,
+            style: `border-color: ${attributes.borderColor};`,
           };
         },
         parseHTML: (element) => {
@@ -436,7 +436,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderLeftWidth
-            ? { style: `border-left-width: ${attributes.borderLeftWidth}` }
+            ? { style: `border-left-width: ${attributes.borderLeftWidth};` }
             : {};
         },
         parseHTML: (element) => element.style.borderLeftWidth || null,
@@ -445,7 +445,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderRightWidth
-            ? { style: `border-right-width: ${attributes.borderRightWidth}` }
+            ? { style: `border-right-width: ${attributes.borderRightWidth};` }
             : {};
         },
         parseHTML: (element) => element.style.borderRightWidth || null,
@@ -454,7 +454,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderTopWidth
-            ? { style: `border-top-width: ${attributes.borderTopWidth}` }
+            ? { style: `border-top-width: ${attributes.borderTopWidth};` }
             : {};
         },
         parseHTML: (element) => element.style.borderTopWidth || null,
@@ -463,7 +463,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderBottomWidth
-            ? { style: `border-bottom-width: ${attributes.borderBottomWidth}` }
+            ? { style: `border-bottom-width: ${attributes.borderBottomWidth};` }
             : {};
         },
         parseHTML: (element) => element.style.borderBottomWidth || null,
@@ -472,7 +472,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderLeftColor
-            ? { style: `border-left-color: ${attributes.borderLeftColor}` }
+            ? { style: `border-left-color: ${attributes.borderLeftColor};` }
             : {};
         },
         parseHTML: (element) => element.style.borderLeftColor || null,
@@ -481,7 +481,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderRightColor
-            ? { style: `border-right-color: ${attributes.borderRightColor}` }
+            ? { style: `border-right-color: ${attributes.borderRightColor};` }
             : {};
         },
         parseHTML: (element) => element.style.borderRightColor || null,
@@ -490,7 +490,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderTopColor
-            ? { style: `border-top-color: ${attributes.borderTopColor}` }
+            ? { style: `border-top-color: ${attributes.borderTopColor};` }
             : {};
         },
         parseHTML: (element) => element.style.borderTopColor || null,
@@ -499,7 +499,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderBottomColor
-            ? { style: `border-bottom-color: ${attributes.borderBottomColor}` }
+            ? { style: `border-bottom-color: ${attributes.borderBottomColor};` }
             : {};
         },
         parseHTML: (element) => element.style.borderBottomColor || null,
@@ -508,7 +508,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderBottomStyle
-            ? { style: `border-bottom-style: ${attributes.borderBottomStyle}` }
+            ? { style: `border-bottom-style: ${attributes.borderBottomStyle};` }
             : {};
         },
         parseHTML: (element) => element.style.borderBottomStyle || null,
@@ -517,7 +517,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderTopStyle
-            ? { style: `border-top-style: ${attributes.borderTopStyle}` }
+            ? { style: `border-top-style: ${attributes.borderTopStyle};` }
             : {};
         },
         parseHTML: (element) => element.style.borderTopStyle || null,
@@ -526,7 +526,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderLeftStyle
-            ? { style: `border-left-style: ${attributes.borderLeftStyle}` }
+            ? { style: `border-left-style: ${attributes.borderLeftStyle};` }
             : {};
         },
         parseHTML: (element) => element.style.borderLeftStyle || null,
@@ -535,7 +535,7 @@ export const TableCellEx = TableCell.extend({
         default: null,
         renderHTML: (attributes) => {
           return attributes.borderRightStyle
-            ? { style: `border-right-style: ${attributes.borderRightStyle}` }
+            ? { style: `border-right-style: ${attributes.borderRightStyle};` }
             : {};
         },
         parseHTML: (element) => element.style.borderRightStyle || null,
@@ -547,7 +547,7 @@ export const TableCellEx = TableCell.extend({
             ? {
               verticalAlign: attributes.verticalAlign,
               valign: attributes.verticalAlign,
-              style: `vertical-align: ${attributes.verticalAlign}`,
+              style: `vertical-align: ${attributes.verticalAlign};`,
             }
             : {};
         },

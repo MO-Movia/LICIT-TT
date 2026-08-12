@@ -3,20 +3,20 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Node as ProseMirrorNode} from 'prosemirror-model';
-import {TextSelection} from 'prosemirror-state';
-import {TableView} from 'prosemirror-tables';
-import {EditorView} from 'prosemirror-view';
+import { Node as ProseMirrorNode } from 'prosemirror-model';
+import { TextSelection } from 'prosemirror-state';
+import { TableView } from 'prosemirror-tables';
+import { EditorView } from 'prosemirror-view';
 
-import {atAnchorBottomLeft, createPopUp, PopUpHandle} from '../../commands';
+import { atAnchorBottomLeft, createPopUp, PopUpHandle } from '../../commands';
 import {
   BlockControlMenu,
   BlockControlMenuItem,
   createBlockControlHandle,
   getBlockControlIcon,
 } from './blockControls';
-import {normalizeCssSize, normalizeValue} from '../extensions/table.utils';
-import {openTableStylePicker} from './tableStylePicker';
+import { normalizeCssSize, normalizeValue } from '../extensions/table.utils';
+import { openTableStylePicker } from './tableStylePicker';
 
 const FRAMESET_BODY_CLASSNAME = 'czi-editor-frame-body';
 const ENHANCED_TABLE_FIGURE = 'enhanced_table_figure';
@@ -53,6 +53,11 @@ export class LicitTableNodeView extends TableView {
       this._node = node;
       this._applyTableAttributes(node);
       this._syncMenuButtonVisibility();
+      if (node.attrs?.coverPage) {
+        this.table.dataset.coverPage = 'true';
+      } else {
+        delete this.table.dataset.coverPage;
+      }
     }
     return updated;
   }
@@ -246,7 +251,7 @@ export class LicitTableNodeView extends TableView {
     return vignette === true || vignette === 'true';
   }
 
-  private _getTableInfo(): {node: ProseMirrorNode; pos: number} | null {
+  private _getTableInfo(): { node: ProseMirrorNode; pos: number } | null {
     if (this._tablePos === null) {
       return null;
     }
@@ -256,7 +261,7 @@ export class LicitTableNodeView extends TableView {
       return null;
     }
 
-    return {node: table, pos: this._tablePos};
+    return { node: table, pos: this._tablePos };
   }
 
   private _openStylePicker(anchor?: HTMLElement): boolean {

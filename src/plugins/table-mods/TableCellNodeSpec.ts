@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {DOMOutputSpec, Node, NodeSpec} from 'prosemirror-model';
+import { DOMOutputSpec, Node, NodeSpec } from 'prosemirror-model';
 
 const VALID_VERTICAL_ALIGNMENTS = new Set(['top', 'middle', 'bottom']);
 
@@ -25,9 +25,18 @@ const normalizeVerticalAlignment = (
     : fallback;
 };
 
+const appendInlineStyle = (style: unknown, declaration: string): string => {
+  const currentStyle = typeof style === 'string' ? style.trim() : '';
+  if (!currentStyle) {
+    return declaration;
+  }
+
+  return `${currentStyle}${currentStyle.endsWith(';') ? '' : ';'}${declaration}`;
+};
+
 export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
   ...nodespec,
-  attrs: {...nodespec.attrs, fullSize: {default: 0}, vAlign: {default: 'top'}},
+  attrs: { ...nodespec.attrs, fullSize: { default: 0 }, vAlign: { default: 'top' } },
   parseDOM: [
     {
       tag: 'td',
@@ -59,13 +68,11 @@ export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
   ],
   toDOM(node: Node): DOMOutputSpec {
     const base = nodespec.toDOM(node);
-    let style = '';
-    if (Array.isArray(base) && 1 < base.length && base[1].style) {
-      style = base[1].style;
-    }
-
     if (node.attrs.fullSize && node.attrs.fullSize === 1) {
-      base[1].style = style + 'padding:0;margin:0;';
+      base[1].style = appendInlineStyle(
+        base[1].style,
+        'padding:0;margin:0;'
+      );
     }
     const verticalAlignment = normalizeVerticalAlignment(
       node.attrs.vAlign ?? node.attrs.verticalAlign,
@@ -74,7 +81,10 @@ export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
 
     const currentStyle = String(base[1].style ?? '');
     if (!/vertical-align\s*:/i.test(currentStyle)) {
-      base[1].style = `${currentStyle}vertical-align: ${verticalAlignment};`;
+      base[1].style = appendInlineStyle(
+        currentStyle,
+        ''
+      );
     }
 
     base[1].fullSize = node.attrs.fullSize;
