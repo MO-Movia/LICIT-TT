@@ -1075,7 +1075,7 @@ function applyStyleEx<T extends Transaction | Transform>(
   }
 
   if (styleProp?.styles) {
-    tr = applyStyleExt(styleProp, styleName, state, tr, context, endPos);
+    tr = applystyleExt(styleProp, styleName, state, tr, context, endPos);
   } else {
     // No style — just remove marks (original behavior for clearing styles)
     tr = removeAllMarksExceptLink(startPos, endPos, tr) as T;
@@ -1083,8 +1083,7 @@ function applyStyleEx<T extends Transaction | Transform>(
   return tr;
 }
 
-
-function applyStyleExt<T extends Transaction | Transform>(
+function applystyleExt<T extends Transaction | Transform>(
   styleProp: Style,
   styleName: string,
   state: EditorState,
@@ -1092,8 +1091,8 @@ function applyStyleExt<T extends Transaction | Transform>(
   context: ApplyStyleContext,
   endPos: number
 ): T {
-  const { node, startPos } = context;
   const _commands = getCachedStyleCommands(styleName, styleProp.styles);
+  const { node, startPos } = context;
   let newattrs = { ...node.attrs };
 
   // Indent overriding not working on a paragraph where custom style is applied
@@ -1147,10 +1146,8 @@ function applyStyleExt<T extends Transaction | Transform>(
       TextSelection.create(tr.doc, originalSelectionPos)
     );
   }
-
   return tr;
 }
-
 
 // [FS] IRAD-1238 2021-03-08
 // Fix: Shows alert message 'This Numberings breaks hierarchy, Previous levels are missing' on create styles

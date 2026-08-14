@@ -3,10 +3,14 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import { Editor, Extension } from '@tiptap/core';
+import { Editor, Extension, Mark } from '@tiptap/core';
 import { StarterKit } from '@tiptap/starter-kit';
 import { TableEx } from './tableEx';
 import { createTable } from '@tiptap/extension-table';
+import {
+  addColumnAfter as addColumnAfterCommand,
+  addRowAfter as addRowAfterCommand,
+} from '@tiptap/pm/tables';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableRowEx } from '../tableRowEx';
@@ -14,11 +18,19 @@ import { TableHeaderEx } from '../tableHeaderEx';
 import { TableCellEx } from '../tableCellEx';
 import ParagraphNodeSpec from '../../specs/paragraphNodeSpec';
 import { setStyles } from '../../../plugins/custom-styles/customStyle';
+import { EditorState } from 'prosemirror-state';
 import {
+  applyStoredTableStyles,
   applyStoredTableStyleAtSelection,
   applyTableStyle,
+  createPendingTableMarksPlugin,
+  findTableAtSelection,
+  isSelectionInsideTable,
+  normalizeTableStyleName,
+  PENDING_TABLE_MARKS_ATTRIBUTE,
   TABLE_STYLE_NAME_ATTRIBUTE,
 } from './tableStyle';
+import { Schema } from 'prosemirror-model';
 import type { Node as PMNode } from 'prosemirror-model';
 import type { Transaction } from 'prosemirror-state';
 
@@ -211,7 +223,66 @@ describe('TableEx Extension', () => {
             styleName: {
               default: null,
             },
+            [PENDING_TABLE_MARKS_ATTRIBUTE]: {
+              default: null,
+            },
           };
+        },
+      });
+      const StrongMark = Mark.create({
+        name: 'strong',
+        addAttributes() {
+          return {
+            overridden: {
+              default: false,
+              parseHTML: (element) => element.getAttribute('overridden') === 'true',
+              renderHTML: (attributes) => ({
+                overridden: attributes.overridden,
+              }),
+            },
+          };
+        },
+        parseHTML() {
+          return [{tag: 'strong'}, {tag: 'b'}];
+        },
+        renderHTML({HTMLAttributes}) {
+          return ['strong', HTMLAttributes, 0];
+        },
+      });
+      const FontSizeMark = Mark.create({
+        name: 'mark-font-size',
+        addAttributes() {
+          return {
+            pt: {default: null},
+            overridden: {default: false},
+          };
+        },
+        parseHTML() {
+          return [{tag: 'span'}];
+        },
+        renderHTML({HTMLAttributes}) {
+          return ['span', HTMLAttributes, 0];
+        },
+      });
+      const FontTypeMark = Mark.create({
+        name: 'mark-font-type',
+        addAttributes() {
+          return {
+            name: {default: ''},
+            overridden: {default: false},
+          };
+        },
+        parseHTML() {
+          return [{tag: 'span'}];
+        },
+        renderHTML({HTMLAttributes}) {
+          return ['span', HTMLAttributes, 0];
+        },
+      });
+      const PendingTableMarksExtension = Extension.create({
+        name: 'pendingTableMarks',
+        addProseMirrorPlugins() {
+          return [createPendingTableMarksPlugin()];
         },
       });
 
@@ -221,12 +292,16 @@ describe('TableEx Extension', () => {
       ]);
       editor = new Editor({
         extensions: [
-          StarterKit.configure({ paragraph: false }),
+          StarterKit.configure({ bold: false, paragraph: false }),
           StyledParagraph,
+          StrongMark,
+          FontSizeMark,
+          FontTypeMark,
           TableEx,
           TableRowEx,
           TableHeaderEx,
           TableCellEx,
+          PendingTableMarksExtension,
         ],
         content:
           '<table><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Cell 3</td><td>Cell 4</td></tr></table>',
@@ -380,6 +455,573 @@ describe('TableEx Extension', () => {
       expect(paragraphStyleNames).toEqual(
         Array(paragraphStyleNames.length).fill('Table body')
       );
+    });
+
+    test('table style helpers return unchanged transactions for non-table selections and invalid table positions', () => {
+      editor.commands.setContent('<p>Outside</p>');
+      editor.commands.setTextSelection(2);
+
+      expect(normalizeTableStyleName('Default')).toBe('Normal');
+      expect(normalizeTableStyleName('Table body')).toBe('Table body');
+      expect(findTableAtSelection(editor.state)).toBeNull();
+      expect(isSelectionInsideTable(editor.state)).toBe(false);
+
+      const tr = editor.state.tr;
+      expect(applyTableStyle(editor.state, tr, 0, 'Table body')).toBe(tr);
+      expect(applyStoredTableStyleAtSelection(editor.state, tr)).toBe(tr);
+      expect(applyStoredTableStyles(editor.state, tr)).toBe(tr);
+    });
+
+    test('does not reapply stored style for vignette tables', () => {
+      editor.commands.setContent(
+        '<table data-vignette="true" data-table-style-name="Table body"><tr><td>Cell</td></tr></table>'
+      );
+
+      let firstCellContentPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'tableCell' && firstCellContentPos === 0) {
+          firstCellContentPos = pos + 2;
+        }
+      });
+      editor.commands.setTextSelection(firstCellContentPos);
+
+      const tr = editor.state.tr;
+      expect(applyStoredTableStyleAtSelection(editor.state, tr)).toBe(tr);
+    });
+
+    test('pending table marks plugin returns null when no update is needed', () => {
+      const plugin = createPendingTableMarksPlugin();
+      const result = plugin.spec.appendTransaction?.(
+        [editor.state.tr],
+        editor.state,
+        editor.state
+      );
+
+      expect(result).toBeNull();
+    });
+
+    test('pending table marks plugin applies stored marks for empty paragraphs', () => {
+      const pendingSchema = new Schema({
+        nodes: {
+          doc: {content: 'paragraph+'},
+          paragraph: {
+            content: 'text*',
+            attrs: {
+              [PENDING_TABLE_MARKS_ATTRIBUTE]: {default: null},
+            },
+            toDOM: () => ['p', 0],
+            parseDOM: [{tag: 'p'}],
+          },
+          text: {group: 'inline'},
+        },
+        marks: {
+          strong: {
+            attrs: {overridden: {default: false}},
+            parseDOM: [{tag: 'strong'}],
+            toDOM: () => ['strong', 0],
+          },
+        },
+      });
+      const mark = pendingSchema.marks.strong.create({overridden: true});
+      const paragraph = pendingSchema.nodes.paragraph.create({
+        [PENDING_TABLE_MARKS_ATTRIBUTE]: [mark.toJSON()],
+      });
+      const doc = pendingSchema.nodes.doc.create({}, [paragraph]);
+      const state = EditorState.create({
+        doc,
+        schema: pendingSchema,
+        plugins: [createPendingTableMarksPlugin()],
+      });
+      const plugin = createPendingTableMarksPlugin();
+
+      const result = plugin.spec.appendTransaction?.(
+        [state.tr],
+        state,
+        state
+      );
+
+      expect(result?.storedMarks).toEqual([mark]);
+    });
+
+    test('pending table marks plugin clears pending marks after content is entered', () => {
+      const plugin = createPendingTableMarksPlugin();
+      const paragraph: {
+        attrs: Record<string, unknown>;
+        content: {size: number};
+        type: {name: string};
+      } = {
+        attrs: {[PENDING_TABLE_MARKS_ATTRIBUTE]: [{type: 'missing-mark'}]},
+        content: {size: 5},
+        type: {name: 'paragraph'},
+      };
+      const tr = {
+        doc: {
+          descendants: jest.fn((callback) => {
+            callback(paragraph, 1);
+          }),
+        },
+        docChanged: false,
+        setNodeMarkup: jest.fn(function setNodeMarkup(
+          this: {docChanged: boolean},
+          _pos: number,
+          _type: unknown,
+          attrs: Record<string, unknown>
+        ) {
+          paragraph.attrs = attrs;
+          this.docChanged = true;
+          return this;
+        }),
+        storedMarksSet: false,
+      } as unknown as Transaction;
+      const newState = {
+        selection: {empty: false},
+        tr,
+      } as unknown as EditorState;
+
+      const result = plugin.spec.appendTransaction?.(
+        [{docChanged: true} as Transaction],
+        newState,
+        newState
+      );
+
+      expect(tr.setNodeMarkup).toHaveBeenCalledWith(
+        1,
+        undefined,
+        expect.objectContaining({
+          [PENDING_TABLE_MARKS_ATTRIBUTE]: null,
+        })
+      );
+      expect(result).toBe(tr);
+    });
+
+    test('pending table marks plugin applies marks to newly entered content', () => {
+      const pendingSchema = new Schema({
+        nodes: {
+          doc: {content: 'paragraph+'},
+          paragraph: {
+            content: 'text*',
+            attrs: {
+              [PENDING_TABLE_MARKS_ATTRIBUTE]: {default: null},
+            },
+            toDOM: () => ['p', 0],
+            parseDOM: [{tag: 'p'}],
+          },
+          text: {group: 'inline'},
+        },
+        marks: {
+          strong: {
+            attrs: {overridden: {default: false}},
+            parseDOM: [{tag: 'strong'}],
+            toDOM: () => ['strong', 0],
+          },
+        },
+      });
+      const mark = pendingSchema.marks.strong.create({overridden: true});
+      const paragraph = pendingSchema.nodes.paragraph.create(
+        {
+          [PENDING_TABLE_MARKS_ATTRIBUTE]: [mark.toJSON()],
+        },
+        pendingSchema.text('Typed')
+      );
+      const state = EditorState.create({
+        doc: pendingSchema.nodes.doc.create({}, [paragraph]),
+        schema: pendingSchema,
+        plugins: [createPendingTableMarksPlugin()],
+      });
+      const plugin = createPendingTableMarksPlugin();
+
+      const result = plugin.spec.appendTransaction?.(
+        [{docChanged: true} as Transaction],
+        state,
+        state
+      );
+      const updatedParagraph = result?.doc.firstChild;
+      const typedText = updatedParagraph?.firstChild;
+
+      expect(updatedParagraph?.attrs[PENDING_TABLE_MARKS_ATTRIBUTE]).toBeNull();
+      expect(typedText?.marks).toEqual([mark]);
+    });
+
+    test('copies paragraph overrides to a new row when operation is supplied', () => {
+      let firstParagraphPos = 0;
+      let firstCellTextPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'paragraph' && firstParagraphPos === 0) {
+          firstParagraphPos = pos;
+        }
+        if (node.type.name === 'tableCell' && firstCellTextPos === 0) {
+          firstCellTextPos = pos + 2;
+        }
+      });
+
+      editor.view.dispatch(
+        editor.state.tr.setNodeMarkup(firstParagraphPos, undefined, {
+          ...editor.state.doc.nodeAt(firstParagraphPos).attrs,
+          align: 'right',
+          marginTop: '12px',
+          overriddenAlign: true,
+          overriddenAlignValue: 'right',
+        })
+      );
+      editor.commands.setTextSelection(firstCellTextPos);
+
+      let styledTr: Transaction | null = null;
+      addRowAfterCommand(editor.state, (tr) => {
+        styledTr = applyStoredTableStyles(editor.state, tr, 'addRowAfter') as Transaction;
+      });
+
+      const copiedParagraphAttrs: Record<string, unknown>[] = [];
+      styledTr.doc.descendants((node) => {
+        if (node.type.name === 'paragraph') {
+          copiedParagraphAttrs.push(node.attrs);
+        }
+      });
+
+      expect(
+        copiedParagraphAttrs.some(
+          (attrs) =>
+            attrs.overriddenAlign === true &&
+            attrs.overriddenAlignValue === 'right' &&
+            attrs.align === 'right' &&
+            attrs.marginTop === '12px'
+        )
+      ).toBe(true);
+    });
+
+    test('copies paragraph overrides to a new column when operation is supplied', () => {
+      let firstParagraphPos = 0;
+      let firstCellTextPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'paragraph' && firstParagraphPos === 0) {
+          firstParagraphPos = pos;
+        }
+        if (node.type.name === 'tableCell' && firstCellTextPos === 0) {
+          firstCellTextPos = pos + 2;
+        }
+      });
+
+      editor.view.dispatch(
+        editor.state.tr.setNodeMarkup(firstParagraphPos, undefined, {
+          ...editor.state.doc.nodeAt(firstParagraphPos).attrs,
+          align: 'right',
+          marginTop: '12px',
+          overriddenAlign: true,
+          overriddenAlignValue: 'right',
+        })
+      );
+      editor.commands.setTextSelection(firstCellTextPos);
+
+      let styledTr: Transaction | null = null;
+      addColumnAfterCommand(editor.state, (tr) => {
+        styledTr = applyStoredTableStyles(
+          editor.state,
+          tr,
+          'addColumnAfter'
+        ) as Transaction;
+      });
+
+      let cellCount = 0;
+      styledTr.doc.descendants((node) => {
+        if (node.type.name === 'tableCell') {
+          cellCount++;
+        }
+      });
+
+      expect(styledTr).not.toBeNull();
+      expect(cellCount).toBe(6);
+    });
+
+    test('addRowAfter command copies paragraph overrides through the editor command path', () => {
+      let firstParagraphPos = 0;
+      let firstCellTextPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'paragraph' && firstParagraphPos === 0) {
+          firstParagraphPos = pos;
+        }
+        if (node.type.name === 'tableCell' && firstCellTextPos === 0) {
+          firstCellTextPos = pos + 2;
+        }
+      });
+
+      editor.view.dispatch(
+        editor.state.tr.setNodeMarkup(firstParagraphPos, undefined, {
+          ...editor.state.doc.nodeAt(firstParagraphPos).attrs,
+          align: 'right',
+          marginTop: '12px',
+          overriddenAlign: true,
+          overriddenAlignValue: 'right',
+        })
+      );
+      editor.commands.setTextSelection(firstCellTextPos);
+      editor.commands.addRowAfter();
+
+      const copiedParagraphAttrs: Record<string, unknown>[] = [];
+      editor.state.doc.descendants((node) => {
+        if (
+          node.type.name === 'paragraph' &&
+          node.attrs.overriddenAlign === true &&
+          node.attrs.overriddenAlignValue === 'right' &&
+          node.attrs.align === 'right' &&
+          node.attrs.marginTop === '12px'
+        ) {
+          copiedParagraphAttrs.push(node.attrs);
+        }
+      });
+
+      expect(copiedParagraphAttrs).toHaveLength(2);
+    });
+
+    test('typing in a row added after fully bold cells keeps overridden bold', () => {
+      editor.commands.setContent(
+        '<table><tr><td>A</td><td>B</td></tr><tr><td><strong overridden="true">C</strong></td><td><strong overridden="true">D</strong></td></tr></table>'
+      );
+
+      let lastRowCellTextPos = 0;
+      let rowIndex = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'tableRow') {
+          rowIndex++;
+        }
+        if (
+          rowIndex === 1 &&
+          node.type.name === 'tableCell' &&
+          lastRowCellTextPos === 0
+        ) {
+          lastRowCellTextPos = pos + 2;
+        }
+      });
+
+      editor.commands.setTextSelection(lastRowCellTextPos);
+      editor.commands.addRowAfter();
+
+      let newRowParagraphPos = 0;
+      rowIndex = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'tableRow') {
+          rowIndex++;
+        }
+        if (
+          rowIndex === 2 &&
+          node.type.name === 'paragraph' &&
+          newRowParagraphPos === 0
+        ) {
+          newRowParagraphPos = pos;
+        }
+      });
+
+      editor.view.dispatch(
+        editor.state.tr.insert(
+          newRowParagraphPos + 1,
+          editor.schema.text('Typed')
+        )
+      );
+
+      let typedHasOverriddenBold = false;
+      editor.state.doc.descendants((node) => {
+        if (node.isText && node.text === 'Typed') {
+          typedHasOverriddenBold = node.marks.some(
+            (mark) =>
+              mark.type.name === 'strong' && mark.attrs.overridden === true
+          );
+        }
+      });
+
+      expect(typedHasOverriddenBold).toBe(true);
+    });
+
+    test('typing in a row added to a Normal styled table keeps Normal font marks', () => {
+      setStyles([
+        {
+          styleName: 'Normal',
+          styles: {
+            fontName: 'Arial',
+            fontSize: '12',
+          },
+        },
+      ]);
+      editor.commands.setContent(
+        '<table data-table-style-name="Normal"><tr><td>A</td><td>B</td></tr></table>'
+      );
+
+      let firstCellTextPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'tableCell' && firstCellTextPos === 0) {
+          firstCellTextPos = pos + 2;
+        }
+      });
+
+      editor.commands.setTextSelection(firstCellTextPos);
+      editor.commands.addRowAfter();
+
+      let newRowParagraphPos = 0;
+      let rowIndex = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'tableRow') {
+          rowIndex++;
+        }
+        if (
+          rowIndex === 1 &&
+          node.type.name === 'paragraph' &&
+          newRowParagraphPos === 0
+        ) {
+          newRowParagraphPos = pos;
+        }
+      });
+
+      editor.commands.setTextSelection(newRowParagraphPos + 1);
+      editor.commands.insertContent('Typed');
+
+      let typedMarks: string[] = [];
+      editor.state.doc.descendants((node) => {
+        if (node.isText && node.text === 'Typed') {
+          typedMarks = node.marks.map((mark) =>
+            `${mark.type.name}:${JSON.stringify(mark.attrs)}`
+          );
+        }
+      });
+
+      expect(typedMarks).toContain(
+        'mark-font-type:{"name":"Arial","overridden":false}'
+      );
+      expect(typedMarks).toContain(
+        'mark-font-size:{"pt":"12","overridden":false}'
+      );
+    });
+
+    test('Normal style font marks replace stale non-overridden pending marks', () => {
+      setStyles([
+        {
+          styleName: 'Normal',
+          styles: {
+            fontName: 'Times New Roman',
+            fontSize: '20',
+          },
+        },
+      ]);
+      editor.commands.setContent(
+        '<table data-table-style-name="Normal"><tr><td>A</td><td>B</td></tr></table>'
+      );
+
+      let firstCellTextPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'tableCell' && firstCellTextPos === 0) {
+          firstCellTextPos = pos + 2;
+        }
+      });
+
+      editor.commands.setTextSelection(firstCellTextPos);
+      editor.commands.addRowAfter();
+
+      let newRowParagraphPos = 0;
+      let rowIndex = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'tableRow') {
+          rowIndex++;
+        }
+        if (
+          rowIndex === 1 &&
+          node.type.name === 'paragraph' &&
+          newRowParagraphPos === 0
+        ) {
+          newRowParagraphPos = pos;
+        }
+      });
+
+      const paragraph = editor.state.doc.nodeAt(newRowParagraphPos);
+      const stalePendingMarks = [
+        editor.schema.marks['mark-font-type']
+          .create({name: 'Courier New', overridden: false})
+          .toJSON(),
+        editor.schema.marks['mark-font-size']
+          .create({pt: '18', overridden: false})
+          .toJSON(),
+        editor.schema.marks.strong
+          .create({overridden: true})
+          .toJSON(),
+      ];
+      editor.view.dispatch(
+        editor.state.tr.setNodeMarkup(newRowParagraphPos, undefined, {
+          ...paragraph?.attrs,
+          [PENDING_TABLE_MARKS_ATTRIBUTE]: stalePendingMarks,
+        })
+      );
+      setStyles([
+        {
+          styleName: 'Normal',
+          styles: {
+            fontName: 'Arial',
+            fontSize: '12',
+          },
+        },
+      ]);
+
+      editor.commands.setTextSelection(newRowParagraphPos + 1);
+      editor.commands.insertContent('Typed');
+
+      let typedMarks: string[] = [];
+      editor.state.doc.descendants((node) => {
+        if (node.isText && node.text === 'Typed') {
+          typedMarks = node.marks.map((mark) =>
+            `${mark.type.name}:${JSON.stringify(mark.attrs)}`
+          );
+        }
+      });
+
+      expect(typedMarks).toContain(
+        'mark-font-type:{"name":"Arial","overridden":false}'
+      );
+      expect(typedMarks).toContain(
+        'mark-font-size:{"pt":"12","overridden":false}'
+      );
+      expect(typedMarks).toContain(
+        'strong:{"overridden":true}'
+      );
+      expect(typedMarks).not.toContain(
+        'mark-font-type:{"name":"Courier New","overridden":false}'
+      );
+      expect(typedMarks).not.toContain(
+        'mark-font-size:{"pt":"18","overridden":false}'
+      );
+    });
+
+    test('addColumnAfter command copies paragraph overrides through the editor command path', () => {
+      let firstParagraphPos = 0;
+      let firstCellTextPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'paragraph' && firstParagraphPos === 0) {
+          firstParagraphPos = pos;
+        }
+        if (node.type.name === 'tableCell' && firstCellTextPos === 0) {
+          firstCellTextPos = pos + 2;
+        }
+      });
+
+      editor.view.dispatch(
+        editor.state.tr.setNodeMarkup(firstParagraphPos, undefined, {
+          ...editor.state.doc.nodeAt(firstParagraphPos).attrs,
+          align: 'right',
+          marginTop: '12px',
+          overriddenAlign: true,
+          overriddenAlignValue: 'right',
+        })
+      );
+      editor.commands.setTextSelection(firstCellTextPos);
+      editor.commands.addColumnAfter();
+
+      const copiedParagraphAttrs: Record<string, unknown>[] = [];
+      editor.state.doc.descendants((node) => {
+        if (
+          node.type.name === 'paragraph' &&
+          node.attrs.overriddenAlign === true &&
+          node.attrs.overriddenAlignValue === 'right' &&
+          node.attrs.align === 'right' &&
+          node.attrs.marginTop === '12px'
+        ) {
+          copiedParagraphAttrs.push(node.attrs);
+        }
+      });
+
+      expect(copiedParagraphAttrs).toHaveLength(2);
     });
   });
 
@@ -543,6 +1185,91 @@ describe('TableEx Extension', () => {
     });
 
     expect(result).toBe(true);
+  });
+
+  test.each([
+    'addColumnBefore',
+    'addColumnAfter',
+    'addRowBefore',
+    'addRowAfter',
+    'splitCell',
+  ])('command wrapper %s returns without dispatch', (commandName) => {
+    editor.commands.setContent('<table><tr><td>A</td><td>B</td></tr></table>');
+    let cellPos = 0;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'tableCell' && cellPos === 0) {
+        cellPos = pos + 2;
+      }
+    });
+    editor.commands.setTextSelection(cellPos);
+
+    const commandFactory = editor.extensionManager.commands[commandName];
+    const command = commandFactory();
+    const result = command({
+      tr: editor.state.tr,
+      dispatch: undefined,
+      editor,
+      state: editor.state,
+      view: editor.view,
+      commands: editor.commands,
+      chain: editor.chain,
+      can: editor.can,
+    });
+
+    expect(typeof result).toBe('boolean');
+  });
+
+  test('attribute render and parse functions cover empty and populated values', () => {
+    const attrs = (TableEx.config.addAttributes as () => Record<
+      string,
+      {
+        renderHTML: (attributes: Record<string, unknown>) => Record<string, unknown>;
+        parseHTML: (element: HTMLElement) => unknown;
+      }
+    >).call({parent: () => ({})});
+    const element = document.createElement('table');
+    element.dataset.noOfColumns = '4';
+    element.dataset.coverPage = 'true';
+    element.dataset.tableStyleName = 'Table body';
+    element.style.height = '120px';
+
+    expect(attrs.noOfColumns.renderHTML({noOfColumns: 3})).toEqual({
+      'data-no-of-columns': '3',
+    });
+    expect(attrs.noOfColumns.renderHTML({noOfColumns: null})).toEqual({});
+    expect(attrs.noOfColumns.parseHTML(element)).toBe(4);
+    element.dataset.noOfColumns = 'abc';
+    expect(attrs.noOfColumns.parseHTML(element)).toBeNull();
+    delete element.dataset.noOfColumns;
+    expect(attrs.noOfColumns.parseHTML(element)).toBeNull();
+
+    expect(attrs.tableHeight.renderHTML({tableHeight: 120})).toEqual({
+      style: 'height: 120px',
+    });
+    expect(attrs.tableHeight.renderHTML({tableHeight: ''})).toEqual({});
+    expect(attrs.tableHeight.parseHTML(element)).toBe('120px');
+
+    expect(attrs.coverPage.renderHTML({coverPage: 'yes'})).toEqual({
+      'data-cover-page': 'yes',
+    });
+    expect(attrs.coverPage.renderHTML({coverPage: ''})).toEqual({});
+    expect(attrs.coverPage.parseHTML(element)).toBeUndefined();
+    delete element.dataset.coverPage;
+    expect(attrs.coverPage.parseHTML(element)).toBeNull();
+
+    expect(
+      attrs[TABLE_STYLE_NAME_ATTRIBUTE].renderHTML({
+        [TABLE_STYLE_NAME_ATTRIBUTE]: 'Table body',
+      })
+    ).toEqual({'data-table-style-name': 'Table body'});
+    expect(
+      attrs[TABLE_STYLE_NAME_ATTRIBUTE].renderHTML({
+        [TABLE_STYLE_NAME_ATTRIBUTE]: '',
+      })
+    ).toEqual({});
+    expect(attrs[TABLE_STYLE_NAME_ATTRIBUTE].parseHTML(element)).toBe(
+      'Table body'
+    );
   });
 });
 
