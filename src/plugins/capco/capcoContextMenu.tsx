@@ -273,17 +273,16 @@ export class CapcoContextMenu extends React.Component<
     let pos = this.props.pos - 1; // nodeAt and setNodeMarkup resolve to the node AFTER the given position, so -1 to correct for that.
     let enhanced_capco_pos = pos;
     let node = this.props.editorView.state.doc.nodeAt(pos);
+    const isEnhancedFigureCapco = node?.type?.name === TABLE_FIGURE_CAPCO;
     ({ node, pos } = this.correctNodeTarget(node, pos));
-    let newAttrs = this.getCapcoAttrs(node, capco);
+    const targetNode = this.props.editorView.state.doc.nodeAt(pos) ?? node;
+    const newAttrs = this.getCapcoAttrs(targetNode, capco);
     const event = new KeyboardEvent('keydown', {
       keyCode: 0,
       bubbles: true,
     });
     this.props.editorView.dom?.dispatchEvent(event);
     const ParentNodeType = this.props.editorView.state.doc.nodeAt(pos);
-    if (ParentNodeType?.type?.name === 'image') {
-      newAttrs = this.getCapcoAttrs(ParentNodeType, capco);
-    }
     const selectedParagraphPositions =
       node?.type?.name === PARAGRAPH ? this.getSelectedParagraphPositions() : [];
     const capcoChangedPositions =
@@ -301,22 +300,23 @@ export class CapcoContextMenu extends React.Component<
     } else {
       tr = tr.setNodeMarkup(pos, null, newAttrs);
     }
-    if (node?.type?.name === TABLE_FIGURE_CAPCO) {
-      const newAttrs = {
-        ...ParentNodeType?.attrs,
-        [CAPCOKEY]: safeCapcoParse(capco).portionMarking,
-        ['isValidate']: false,
-      };
-      const enhanced_capco_node = tr.doc?.nodeAt(enhanced_capco_pos);
+    if (isEnhancedFigureCapco) {
+      let enhanced_capco_node = tr.doc?.nodeAt(enhanced_capco_pos);
       if (
         ParentNodeType?.type?.name !== TABLE &&
         enhanced_capco_node?.type.name !== TABLE_FIGURE_CAPCO
       ) {
         enhanced_capco_pos = enhanced_capco_pos + 2;
+        enhanced_capco_node = tr.doc?.nodeAt(enhanced_capco_pos);
       }
+      const footerAttrs = {
+        ...enhanced_capco_node?.attrs,
+        [CAPCOKEY]: safeCapcoParse(capco).portionMarking,
+        ['isValidate']: false,
+      };
       const { schema } = this.props.editorView.state;
       tr = this.markEnhancedTableFigureDirty(tr, this.props.editorView.state, enhanced_capco_pos, schema?.nodes?.enhanced_table_figure);
-      tr.setNodeMarkup(enhanced_capco_pos, null, newAttrs);
+      tr.setNodeMarkup(enhanced_capco_pos, null, footerAttrs);
     }
     if (typeof tr.setMeta === 'function') {
       tr.setMeta('capcoChangedPos', capcoChangedPositions);

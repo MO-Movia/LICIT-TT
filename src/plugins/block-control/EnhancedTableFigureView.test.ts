@@ -87,7 +87,7 @@ describe('EnhancedTableFigureView', () => {
     mockView = {
       state: {
         tr: {},
-        schema: {},
+        schema: {nodes: {landscape_section: {}}},
         selection: {},
         doc: {},
       },
@@ -472,6 +472,7 @@ describe('EnhancedTableFigureView', () => {
       expect(ids).toEqual([
         'insert-above',
         'insert-below',
+        'convert-to-landscape',
         'apply-style',
         'add-notes',
         'delete',
@@ -480,7 +481,7 @@ describe('EnhancedTableFigureView', () => {
 
     it('should expose image actions for figure nodes with a nested image', () => {
       const image = createNode('image', { src: 'data:image/png;base64,a' });
-      const wrapper = createNode('paragraph', {}, [image]);
+      const wrapper = createNode('enhanced_table_figure_image', {}, [image]);
       view.node = createFigureNode({ figureType: 'figure' }, [wrapper]);
       mockView.state.doc = {
         nodeAt: jest.fn().mockReturnValue(image),
@@ -521,6 +522,51 @@ describe('EnhancedTableFigureView', () => {
       expect(getMenuItem('delete-notes')?.hidden).toBe(false);
     });
 
+    it('shows one conversion action based on landscape ancestry', () => {
+      jest
+        .spyOn(EnhancedTableCommands, 'isEnhancedTableFigureInLandscape')
+        .mockReturnValue(false);
+      expect(getMenuItem('convert-to-landscape')?.label).toBe(
+        'Convert To Landscape'
+      );
+      expect(getMenuItem('convert-to-portrait')).toBeUndefined();
+
+      jest
+        .spyOn(EnhancedTableCommands, 'isEnhancedTableFigureInLandscape')
+        .mockReturnValue(true);
+      expect(getMenuItem('convert-to-landscape')).toBeUndefined();
+      expect(getMenuItem('convert-to-portrait')?.label).toBe(
+        'Convert To Portrait'
+      );
+    });
+
+    it('dispatches landscape and portrait conversion transactions', () => {
+      const landscapeTr = {steps: [{}]};
+      const portraitTr = {steps: [{}]};
+      const ancestry = jest
+        .spyOn(EnhancedTableCommands, 'isEnhancedTableFigureInLandscape')
+        .mockReturnValue(false);
+      jest
+        .spyOn(EnhancedTableCommands, 'convertEnhancedTableFigureToLandscape')
+        .mockReturnValue(landscapeTr as never);
+      jest
+        .spyOn(EnhancedTableCommands, 'convertEnhancedTableFigureToPortrait')
+        .mockReturnValue(portraitTr as never);
+
+      getMenuItem('convert-to-landscape')?.action();
+      expect(
+        EnhancedTableCommands.convertEnhancedTableFigureToLandscape
+      ).toHaveBeenCalledWith(mockView.state.tr, mockView.state.schema, 10);
+      expect(mockView.dispatch).toHaveBeenCalledWith(landscapeTr);
+
+      ancestry.mockReturnValue(true);
+      getMenuItem('convert-to-portrait')?.action();
+      expect(
+        EnhancedTableCommands.convertEnhancedTableFigureToPortrait
+      ).toHaveBeenCalledWith(mockView.state.tr, 10);
+      expect(mockView.dispatch).toHaveBeenCalledWith(portraitTr);
+    });
+
     it('should disable image actions when figure has no image', () => {
       view.node = createFigureNode({ figureType: 'figure' }, [
         createNode('paragraph'),
@@ -543,7 +589,7 @@ describe('EnhancedTableFigureView', () => {
   describe('image actions', () => {
     const setupImageFigure = (imageAttrs: Record<string, unknown> = {}) => {
       const image = createNode('image', imageAttrs);
-      const wrapper = createNode('paragraph', {}, [image]);
+      const wrapper = createNode('enhanced_table_figure_image', {}, [image]);
       view.node = createFigureNode({ figureType: 'figure' }, [wrapper]);
       mockView.state.doc = {
         nodeAt: jest.fn().mockReturnValue(image),
@@ -887,7 +933,7 @@ describe('EnhancedTableFigureView', () => {
         src: 'sizing-src',
         ...imageAttrs,
       });
-      const wrapper = createNode('paragraph', {}, [image]);
+      const wrapper = createNode('enhanced_table_figure_image', {}, [image]);
       view.node = createFigureNode({ figureType: 'figure' }, [wrapper]);
       mockView.state.doc = {
         nodeAt: jest.fn().mockReturnValue(image),

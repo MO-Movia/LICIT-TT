@@ -3,12 +3,23 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Schema} from 'prosemirror-model';
-import {EditorState, TextSelection, Transaction} from 'prosemirror-state';
+import {Node as ProseMirrorNode, Schema} from 'prosemirror-model';
+import {
+  EditorState,
+  NodeSelection,
+  TextSelection,
+  Transaction,
+} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import type {EditorView} from 'prosemirror-view';
 import type {SyntheticEvent} from 'react';
-import {EnhancedTableCommands, addNotesCommand} from './EnhancedTableCommands';
+import {
+  EnhancedTableCommands,
+  addNotesCommand,
+  convertEnhancedTableFigureToLandscape,
+  convertEnhancedTableFigureToPortrait,
+  isEnhancedTableFigureInLandscape,
+} from './EnhancedTableCommands';
 import {schema as basicSchema} from 'prosemirror-schema-basic';
 import {p} from 'jest-prosemirror';
 
@@ -26,7 +37,14 @@ const nodes = basicSchema.spec.nodes.append({
     parseDOM: [{tag: 'div'}],
   },
   enhanced_table_figure_body: {
+    content: 'enhanced_table_figure_table',
+    toDOM: () => ['div', 0],
+    parseDOM: [{tag: 'div'}],
+  },
+  enhanced_table_figure_table: {
     content: 'table',
+    group: 'block',
+    isolating: true,
     toDOM: () => ['div', 0],
     parseDOM: [{tag: 'div'}],
   },
@@ -41,18 +59,18 @@ const nodes = basicSchema.spec.nodes.append({
     parseDOM: [{tag: 'div'}],
   },
   table: {
-    content: 'table_row+',
+    content: 'tableRow+',
     tableRole: 'table',
     toDOM: () => ['table', 0],
     parseDOM: [{tag: 'table'}],
   },
-  table_row: {
-    content: 'table_cell+',
+  tableRow: {
+    content: 'tableCell+',
     tableRole: 'row',
     toDOM: () => ['tr', 0],
     parseDOM: [{tag: 'tr'}],
   },
-  table_cell: {
+  tableCell: {
     content: 'paragraph+',
     attrs: {background: {default: null}},
     tableRole: 'cell',
@@ -66,6 +84,13 @@ const nodes = basicSchema.spec.nodes.append({
       0,
     ],
     parseDOM: [{tag: 'td'}],
+  },
+  landscape_section: {
+    attrs: {class: {default: 'section-landscape'}},
+    content: 'block+',
+    group: 'block',
+    toDOM: () => ['section', 0],
+    parseDOM: [{tag: 'section'}],
   },
 });
 
@@ -114,8 +139,23 @@ describe('EnhancedTableCommands', () => {
 
   test('createBlueTable creates a table node', () => {
     const tableNode = command.createBlueTable(schema, 2, 2);
-    expect(tableNode?.type.name).toBe(undefined);
-    expect(tableNode?.childCount).toBe(undefined);
+    expect(tableNode?.type.name).toBe('table');
+    expect(tableNode?.childCount).toBe(2);
+  });
+
+  test('inserts the table inside the dedicated EIC table payload', () => {
+    const state = EditorState.create({
+      doc: schema.nodes.doc.create({}, schema.nodes.paragraph.create()),
+      schema,
+    });
+    const tr = command.insertEnhancedTableFigure(state.tr, schema);
+    const figure = tr.doc.firstChild;
+
+    expect(figure.type.name).toBe('enhanced_table_figure');
+    expect(figure.firstChild.firstChild.type.name).toBe(
+      'enhanced_table_figure_table'
+    );
+    expect(figure.firstChild.firstChild.firstChild.type.name).toBe('table');
   });
 
   test('waitForUserInput resolves to undefined', async () => {
@@ -138,6 +178,92 @@ describe('EnhancedTableCommands', () => {
   });
 });
 
+describe('EIC landscape conversion', () => {
+  it('wraps a portrait EIC and selects the converted figure', () => {
+    const figure = createEicFigure();
+    const state = EditorState.create({
+      doc: schema.nodes.doc.create({}, figure),
+      schema,
+    });
+
+    const tr = convertEnhancedTableFigureToLandscape(state.tr, schema, 0);
+    const figurePos = findNodePosition(tr.doc, 'enhanced_table_figure');
+
+    expect(tr.doc.firstChild.type.name).toBe('landscape_section');
+    expect(isEnhancedTableFigureInLandscape(tr.doc, figurePos)).toBe(true);
+    expect(tr.selection).toBeInstanceOf(NodeSelection);
+  });
+
+  it('unwraps a lone EIC from landscape', () => {
+    const figure = createEicFigure('figure');
+    const landscape = schema.nodes.landscape_section.create(
+      {class: 'custom-landscape'},
+      figure
+    );
+    const state = EditorState.create({
+      doc: schema.nodes.doc.create({}, landscape),
+      schema,
+    });
+    const figurePos = findNodePosition(state.doc, 'enhanced_table_figure');
+
+    const tr = convertEnhancedTableFigureToPortrait(state.tr, figurePos);
+
+    expect(tr.doc.firstChild.type.name).toBe('enhanced_table_figure');
+    expect(tr.doc.firstChild.attrs.figureType).toBe('figure');
+  });
+
+  it('preserves landscape siblings and moves the EIC after their section', () => {
+    const landscape = schema.nodes.landscape_section.create(
+      {class: 'custom-landscape'},
+      [
+        schema.nodes.paragraph.create({}, schema.text('Before')),
+        createEicFigure(),
+        schema.nodes.paragraph.create({}, schema.text('After')),
+      ]
+    );
+    const state = EditorState.create({
+      doc: schema.nodes.doc.create({}, landscape),
+      schema,
+    });
+
+    const tr = convertEnhancedTableFigureToPortrait(
+      state.tr,
+      findNodePosition(state.doc, 'enhanced_table_figure')
+    );
+
+    expect(tr.doc.childCount).toBe(2);
+    expect(tr.doc.firstChild.attrs.class).toBe('custom-landscape');
+    expect(tr.doc.firstChild.textContent).toBe('BeforeAfter');
+    expect(tr.doc.child(1).type.name).toBe('enhanced_table_figure');
+  });
+
+  it('does not re-convert an EIC already in the requested orientation', () => {
+    const figure = createEicFigure();
+    const portraitState = EditorState.create({
+      doc: schema.nodes.doc.create({}, figure),
+      schema,
+    });
+    const landscapeState = EditorState.create({
+      doc: schema.nodes.doc.create(
+        {},
+        schema.nodes.landscape_section.create({}, figure)
+      ),
+      schema,
+    });
+
+    expect(
+      convertEnhancedTableFigureToPortrait(portraitState.tr, 0).steps
+    ).toHaveLength(0);
+    expect(
+      convertEnhancedTableFigureToLandscape(
+        landscapeState.tr,
+        schema,
+        findNodePosition(landscapeState.doc, 'enhanced_table_figure')
+      ).steps
+    ).toHaveLength(0);
+  });
+});
+
 describe('addNotesCommand', () => {
   let state: EditorState;
   let tr: Transform;
@@ -147,7 +273,7 @@ describe('addNotesCommand', () => {
     const tableNode = schema.nodes.table.createAndFill();
     const bodyNode = schema.nodes.enhanced_table_figure_body.create(
       {},
-      tableNode
+      schema.nodes.enhanced_table_figure_table.create({}, tableNode)
     );
     const capcoNode = schema.nodes.enhanced_table_figure_capco.create(
       {},
@@ -179,7 +305,7 @@ describe('addNotesCommand', () => {
     const tableNode = schema.nodes.table.createAndFill();
     const bodyNode = schema.nodes.enhanced_table_figure_body.create(
       {},
-      tableNode
+      schema.nodes.enhanced_table_figure_table.create({}, tableNode)
     );
     const capcoNode = schema.nodes.enhanced_table_figure_capco.create(
       {},
@@ -210,3 +336,35 @@ describe('addNotesCommand', () => {
     expect(result).toBe(tr);
   });
 });
+
+function createEicFigure(figureType = 'table'): ProseMirrorNode {
+  const table = schema.nodes.table.createAndFill();
+  const tablePayload = schema.nodes.enhanced_table_figure_table.create(
+    {},
+    table
+  );
+  const body = schema.nodes.enhanced_table_figure_body.create(
+    {},
+    tablePayload
+  );
+  const capco = schema.nodes.enhanced_table_figure_capco.create(
+    {},
+    schema.text('CAPCO')
+  );
+  return schema.nodes.enhanced_table_figure.create(
+    {figureType},
+    [body, capco]
+  );
+}
+
+function findNodePosition(doc: ProseMirrorNode, typeName: string): number {
+  let found = -1;
+  doc.descendants((node, pos) => {
+    if (found < 0 && node.type.name === typeName) {
+      found = pos;
+      return false;
+    }
+    return true;
+  });
+  return found;
+}

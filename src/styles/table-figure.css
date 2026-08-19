@@ -64,8 +64,47 @@
   padding: 0;
 }
 
-/* Image EICs store the inline image in a paragraph. Remove the paragraph line
- * box and ProseMirror cursor helpers so a resize cannot add baseline space.
+.enhanced-table-figure-table {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.enhanced-table-figure-table > .czi-table-control,
+.enhanced-table-figure-table > .tableWrapper {
+  width: 100%;
+  margin: 0;
+}
+
+.enhanced-table-figure-image {
+  display: block;
+  line-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.enhanced-table-figure-image > .molm-czi-image-view {
+  display: block;
+  line-height: 0;
+  margin: 0 !important;
+  vertical-align: top;
+}
+
+.enhanced-table-figure-image
+  > .molm-czi-image-view:not(
+    .align-left,
+    .align-center,
+    .align-right,
+    .align-float-left,
+    .align-float-right
+  ) {
+  text-align: left;
+}
+
+/* Legacy image EICs may store the inline image in a paragraph. Remove the
+ * paragraph line box and ProseMirror cursor helpers so a resize cannot add baseline space.
  * ProseMirror injects display:inline!important for its separator image, so the
  * EIC-scoped override below must use the same priority. */
 .enhanced-table-figure-body > p:has(.molm-czi-image-view) {

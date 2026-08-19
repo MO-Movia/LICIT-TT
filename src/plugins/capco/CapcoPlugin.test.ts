@@ -1597,20 +1597,25 @@ describe('capco plugin', () => {
     ).toBeDefined();
   });
   it('should handle enhancedTableFigureCapco', () => {
-    expect(capcoplugin.enhancedTableFigureCapco('TBD', true)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('U', true),).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('S', true)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('C', true)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('CUI', true)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('TS', true)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('', true)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('TBD', false)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('U', false),).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('S', false)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('C', false)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('CUI', false)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('TS', false)).toBeDefined();
-    expect(capcoplugin.enhancedTableFigureCapco('', false)).toBeDefined();
+    expect(capcoplugin.enhancedTableFigureCapco('TBD', true)).toBe(
+      'To be Determined'
+    );
+    expect(capcoplugin.enhancedTableFigureCapco('U', true)).toBe(
+      'Unclassified'
+    );
+    expect(capcoplugin.enhancedTableFigureCapco('C', true)).toBe(
+      'Confidential'
+    );
+    expect(capcoplugin.enhancedTableFigureCapco('S', true)).toBe('Secret');
+    expect(capcoplugin.enhancedTableFigureCapco('TS', true)).toBe(
+      'Top Secret'
+    );
+    expect(capcoplugin.enhancedTableFigureCapco('CUI', true)).toBe(
+      'Controlled Unclassified Information'
+    );
+    expect(capcoplugin.enhancedTableFigureCapco('CUSTOM', true)).toBe(
+      'CUSTOM'
+    );
   });
   it('should handle getCursorPosition', () => {
     expect(
