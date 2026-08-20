@@ -5,7 +5,10 @@
 
 import { Mark, MarkSpec, Node } from 'prosemirror-model';
 
-import { toClosestFontPtSize } from '../toClosestFontPtSize';
+import convertToCSSPTValue from '../convertToCSSPTValue';
+
+const parseFontPointSize = (value: string): number =>
+  Math.round(convertToCSSPTValue(value) * 1000) / 1000;
 
 const FontSizeMarkSpec: MarkSpec = {
   attrs: {
@@ -27,10 +30,10 @@ const FontSizeMarkSpec: MarkSpec = {
         const mparent_overriden = (domNode.parentNode as HTMLElement | null)?.getAttribute?.('overridden') ?? null;
 
         if (fontSize !== '') {
-          ptValue = toClosestFontPtSize(fontSize);
+          ptValue = parseFontPointSize(fontSize);
         }
         if (parentFontsize !== '') {
-          _mptValue = toClosestFontPtSize(parentFontsize);
+          _mptValue = parseFontPointSize(parentFontsize);
         }
 
         const overridden = (_mOverriden === 'true' && fontSize !== '') || (parentFontsize !== '' && mparent_overriden === 'true');  // Check if the font is overridden

@@ -4,6 +4,7 @@
  */
 
 import {EditorState, TextSelection} from 'prosemirror-state';
+import {Schema} from 'prosemirror-model';
 import {schema} from 'prosemirror-schema-basic';
 import { HEADING, MARK_FONT_TYPE } from '../commands';
 import findActiveFontType from './findActiveFontType';
@@ -127,5 +128,37 @@ describe('findActiveFontType', () => {
       empty: false,
     });
     expect(findActiveFontType(state)).toBe('Arial');
+  });
+
+  it('uses and normalizes the effective table-cell font when no mark remains', () => {
+    const tableSchema = new Schema({
+      nodes: {
+        doc: {content: 'table'},
+        text: {group: 'inline'},
+        paragraph: {content: 'inline*'},
+        table: {content: 'row', tableRole: 'table'},
+        row: {content: 'header', tableRole: 'row'},
+        header: {
+          content: 'paragraph',
+          tableRole: 'header_cell',
+          attrs: {fontName: {default: null}},
+        },
+      },
+      marks: {[MARK_FONT_TYPE]: FontTypeMarkSpec},
+    });
+    const doc = tableSchema.nodes.doc.create(null, [
+      tableSchema.nodes.table.create(null, [
+        tableSchema.nodes.row.create(null, [
+          tableSchema.nodes.header.create(
+            {fontName: '"Times New Roman", serif'},
+            [tableSchema.nodes.paragraph.create(null, tableSchema.text('Header'))]
+          ),
+        ]),
+      ]),
+    ]);
+
+    expect(findActiveFontType(EditorState.create({doc}))).toBe(
+      'Times New Roman'
+    );
   });
 });

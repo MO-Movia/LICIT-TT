@@ -60,7 +60,11 @@ describe('StrongMarkSpec', () => {
       }
 
       const result = StrongMarkSpec.toDOM(mockMark, false);
-      expect(result).toEqual(['strong', {overridden: true}, 0]);
+      expect(result).toEqual([
+        'strong',
+        {overridden: true, style: 'font-weight: 700;'},
+        0,
+      ]);
     });
 
     it('should return correct DOM structure when overridden is false', () => {
@@ -73,7 +77,11 @@ describe('StrongMarkSpec', () => {
       }
 
       const result = StrongMarkSpec.toDOM(mockMark, false);
-      expect(result).toEqual(['strong', {overridden: false}, 0]);
+      expect(result).toEqual([
+        'strong',
+        {overridden: false, style: 'font-weight: 700;'},
+        0,
+      ]);
     });
   });
 });

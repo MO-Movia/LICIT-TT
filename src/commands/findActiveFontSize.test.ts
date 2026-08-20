@@ -48,6 +48,22 @@ describe('findActiveFontSize', () => {
     expect(findActiveFontSize(state)).toBe('11');
   });
 
+  it('returns a decimal effective font size from the selected table cell', () => {
+    const selection = {
+      empty: true,
+      $from: {depth: 0},
+      forEachCell: (callback: (node: unknown) => void) =>
+        callback({
+          attrs: {fontSize: '10.70pt'},
+          descendants: (visitor: (node: unknown) => void) =>
+            visitor({isText: true, text: 'cell', marks: []}),
+        }),
+    };
+    const state = createState(selection);
+
+    expect(findActiveFontSize(state)).toBe('10.7');
+  });
+
   it('returns font size from storedMarks when selection is empty', () => {
     const doc = schema.node('doc', null, [
       schema.node('paragraph', null, [schema.text('Test text')]),

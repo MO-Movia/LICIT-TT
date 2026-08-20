@@ -76,4 +76,31 @@ describe('TableHeaderEx Extension', () => {
     expect(html).toContain('text-transform: uppercase');
     expect(html).toContain('font-size: 19px');
   });
+
+  test('should keep every side border color separate from vertical-align', () => {
+    let headerPos = 0;
+    editor.state.doc.descendants((node: PMNode, pos: number) => {
+      if (node.type.name === 'tableHeader') {
+        headerPos = pos + 1;
+      }
+    });
+
+    editor.commands.setTextSelection(headerPos);
+    editor
+      .chain()
+      .setCellAttribute('borderLeftColor', 'red')
+      .setCellAttribute('borderRightColor', 'blue')
+      .setCellAttribute('borderTopColor', 'green')
+      .setCellAttribute('borderBottomColor', 'purple')
+      .setCellAttribute('verticalAlign', 'top')
+      .run();
+
+    const html = editor.getHTML();
+    expect(html).toContain('border-left-color: red');
+    expect(html).toContain('border-right-color: blue');
+    expect(html).toContain('border-top-color: green');
+    expect(html).toContain('border-bottom-color: purple');
+    expect(html).toContain('vertical-align: top');
+    expect(html).not.toMatch(/(?:red|blue|green|purple)vertical-align/);
+  });
 });

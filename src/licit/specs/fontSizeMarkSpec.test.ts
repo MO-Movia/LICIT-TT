@@ -5,10 +5,11 @@
 
 import {Mark, ParseRule} from 'prosemirror-model';
 import FontSizeMarkSpec from './fontSizeMarkSpec';
-import {toClosestFontPtSize} from '../toClosestFontPtSize';
+import convertToCSSPTValue from '../convertToCSSPTValue';
 
-jest.mock('../toClosestFontPtSize', () => ({
-  toClosestFontPtSize: jest.fn(),
+jest.mock('../convertToCSSPTValue', () => ({
+  __esModule: true,
+  default: jest.fn(),
 }));
 
 describe('FontSizeMarkSpec', () => {
@@ -31,7 +32,7 @@ describe('FontSizeMarkSpec', () => {
       spanEl.style.fontSize = '14pt';
       spanEl.setAttribute('overridden', 'true');
 
-      (toClosestFontPtSize as jest.Mock).mockReturnValue(14);
+      (convertToCSSPTValue as jest.Mock).mockReturnValue(14);
 
       const getAttrs = rule.getAttrs as (domNode: HTMLElement) => {
         pt: number;
@@ -39,7 +40,7 @@ describe('FontSizeMarkSpec', () => {
       };
       const result = getAttrs(spanEl);
 
-      expect(toClosestFontPtSize).toHaveBeenCalledWith('14pt');
+      expect(convertToCSSPTValue).toHaveBeenCalledWith('14pt');
       expect(result).toEqual({
         pt: 14,
         overridden: true,
@@ -54,7 +55,7 @@ describe('FontSizeMarkSpec', () => {
       const childEl = document.createElement('span');
       parentEl.appendChild(childEl);
 
-      (toClosestFontPtSize as jest.Mock).mockReturnValueOnce(12);
+      (convertToCSSPTValue as jest.Mock).mockReturnValueOnce(12);
 
       const getAttrs = rule.getAttrs as (domNode: HTMLElement) => {
         pt: number;
@@ -62,7 +63,7 @@ describe('FontSizeMarkSpec', () => {
       };
       const result = getAttrs(childEl);
 
-      expect(toClosestFontPtSize).toHaveBeenCalledWith('12pt');
+      expect(convertToCSSPTValue).toHaveBeenCalledWith('12pt');
       expect(result).toEqual({
         pt: 12,
         overridden: true,
@@ -73,7 +74,7 @@ describe('FontSizeMarkSpec', () => {
       const rule = getRule();
       const spanEl = document.createElement('span');
 
-      (toClosestFontPtSize as jest.Mock).mockReturnValue(0);
+      (convertToCSSPTValue as jest.Mock).mockReturnValue(0);
 
       const getAttrs = rule.getAttrs as (domNode: HTMLElement) => {
         pt: number;
@@ -97,7 +98,7 @@ describe('FontSizeMarkSpec', () => {
       childEl.style.fontSize = '10pt';
       parentEl.appendChild(childEl);
 
-      (toClosestFontPtSize as jest.Mock).mockImplementation((size) =>
+      (convertToCSSPTValue as jest.Mock).mockImplementation((size) =>
         parseInt(size, 10)
       );
 
@@ -111,6 +112,21 @@ describe('FontSizeMarkSpec', () => {
         pt: 10,
         overridden: true,
       });
+    });
+
+    it('preserves decimal point sizes instead of snapping to a menu preset', () => {
+      const rule = getRule();
+      const spanEl = document.createElement('span');
+      spanEl.style.fontSize = '10.7pt';
+      spanEl.setAttribute('overridden', 'true');
+      (convertToCSSPTValue as jest.Mock).mockReturnValue(10.7);
+
+      const getAttrs = rule.getAttrs as (domNode: HTMLElement) => {
+        pt: number;
+        overridden: boolean;
+      };
+
+      expect(getAttrs(spanEl)).toEqual({pt: 10.7, overridden: true});
     });
   });
 

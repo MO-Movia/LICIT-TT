@@ -473,6 +473,36 @@ function createTableDoc(): ProseMirrorNode {
   ]);
 }
 
+function createMixedColspanTableDoc(): ProseMirrorNode {
+  const p = (text: string) => schema.nodes.paragraph.create(null, schema.text(text));
+  const cell = (
+    text: string,
+    colspan: number,
+    colwidth: number[],
+    cellWidth: string
+  ) =>
+    schema.nodes.table_cell.create(
+      {colspan, colwidth, cellWidth},
+      [p(text)]
+    );
+
+  return schema.nodes.doc.create(null, [
+    schema.nodes.table.create(
+      {noOfColumns: 3},
+      [
+        schema.nodes.table_row.create(null, [
+          cell('spanning', 2, [40, 60], '100px'),
+          cell('right', 1, [70], '70px'),
+        ]),
+        schema.nodes.table_row.create(null, [
+          cell('left', 1, [40], '40px'),
+          cell('lower-spanning', 2, [60, 70], '130px'),
+        ]),
+      ]
+    ),
+  ]);
+}
+
 function findTextPos(doc: ProseMirrorNode, text: string): number {
   let found = -1;
   doc.descendants((node, pos) => {
@@ -569,6 +599,96 @@ describe('TableDetailsCommand', () => {
     RuntimeService.Runtime = null;
   });
 
+  it('discovers regular and header cells from semantic table roles', () => {
+    const command = new TableDetailsCommand();
+    const semanticSchema = new Schema({
+      nodes: {
+        doc: {content: 'grid'},
+        text: {group: 'inline'},
+        paragraph: {content: 'inline*'},
+        grid: {content: 'grid_row+', tableRole: 'table'},
+        grid_row: {
+          content: '(data_box | heading_box)+',
+          tableRole: 'row',
+        },
+        data_box: {content: 'paragraph+', tableRole: 'cell'},
+        heading_box: {content: 'paragraph+', tableRole: 'header_cell'},
+      },
+    });
+
+    expect(
+      command
+        .getNodeTypesByTableRole(semanticSchema, ['cell', 'header_cell'])
+        .map((nodeType) => nodeType.name)
+    ).toEqual(['data_box', 'heading_box']);
+
+    const semanticDoc = semanticSchema.nodes.doc.create(null, [
+      semanticSchema.nodes.grid.create(null, [
+        semanticSchema.nodes.grid_row.create(null, [
+          semanticSchema.nodes.heading_box.create(null, [
+            semanticSchema.nodes.paragraph.create(
+              null,
+              semanticSchema.text('heading')
+            ),
+          ]),
+        ]),
+      ]),
+    ]);
+    expect(
+      command.isEnabled(EditorState.create({doc: semanticDoc}))
+    ).toBe(true);
+  });
+
+  it('ignores blank structural cells for text styles but includes their fill', () => {
+    const command = new TableDetailsCommand();
+    const blankCell = schema.nodes.table_cell.create(null, [
+      schema.nodes.paragraph.create(),
+    ]);
+    const styledCell = schema.nodes.table_cell.create(
+      {
+        fontName: 'Times New Roman',
+        fontSize: '10.7pt',
+        fontWeight: 'bold',
+        backgroundColor: '#bfebff',
+      },
+      [schema.nodes.paragraph.create(null, schema.text('Heading'))]
+    );
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.table.create(
+        {noOfColumns: 2},
+        [schema.nodes.table_row.create(null, [blankCell, styledCell])]
+      ),
+    ]);
+    const cells = findNodeRefs(doc, 'table_cell');
+
+    const resolution = command.getSelectedCellsTypography(cells, null);
+
+    expect(resolution.typography).toMatchObject({
+      fontFamily: 'Times New Roman',
+      fontSize: '10.7pt',
+      bold: true,
+      backgroundColor: '',
+    });
+    expect(resolution.mixed).toEqual({backgroundColor: true});
+  });
+
+  it('resolves object-valued cell colors used by the table fill command', () => {
+    const command = new TableDetailsCommand();
+
+    const typography = command.getTypographyDialogData(
+      {
+        textColor: {color: 'hsl(0, 100%, 50%)'},
+        backgroundColor: {color: '#bfebff'},
+      },
+      null
+    );
+
+    expect(typography).toMatchObject({
+      textColor: 'hsl(0, 100%, 50%)',
+      backgroundColor: '#bfebff',
+    });
+  });
+
   it('opens table editor through runtime with table, row and cell metadata', () => {
     const command = new TableDetailsCommand();
     const state = createState();
@@ -591,17 +711,17 @@ describe('TableDetailsCommand', () => {
     expect(data.metadata).toEqual({totalRows: 2, totalColumns: 2});
     expect(data.selectionMode).toBe('single');
     expect(data.typography).toMatchObject({
-      fontFamily: '',
-      fontSize: '',
+      fontFamily: 'inherit',
+      fontSize: '11.25pt',
       bold: false,
       italic: false,
       underline: false,
-      textColor: '',
-      backgroundColor: '',
-      letterSpacing: '',
-      lineHeight: '',
-      textAlign: '',
-      verticalAlign: '',
+      textColor: '#000000',
+      backgroundColor: 'transparent',
+      letterSpacing: '0px',
+      lineHeight: 'normal',
+      textAlign: 'left',
+      verticalAlign: 'middle',
     });
     expect(data.fontOptions).toEqual([
       {label: 'Default Font', value: 'inherit'},
@@ -820,6 +940,85 @@ describe('TableDetailsCommand', () => {
     expect(updatedMarkTypes).not.toContain('mark-letter-spacing');
   });
 
+  it('initializes table typography from effective cell content and preserves decimals', () => {
+    const command = new TableDetailsCommand();
+    const marks = [
+      schema.marks['mark-font-type'].create({name: 'Tahoma', overridden: false}),
+      schema.marks['mark-font-size'].create({pt: 10.7, overridden: true}),
+      schema.marks['mark-text-color'].create({
+        color: '#123456',
+        overridden: false,
+      }),
+      schema.marks.strong.create({overridden: false}),
+    ];
+    const paragraph = schema.nodes.paragraph.create(
+      {align: 'center', lineSpacing: '1.15'},
+      schema.text('formatted', marks)
+    );
+    const cell = schema.nodes.table_cell.create(
+      {backgroundColor: '#bfebff', backgroundColorOverridden: true},
+      [paragraph]
+    );
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.table.create(
+        {noOfColumns: 1},
+        [schema.nodes.table_row.create(null, [cell])]
+      ),
+    ]);
+    const state = createState(doc, 'formatted');
+    const view = createView(state);
+    const openTableEditorDialog = jest.fn();
+    RuntimeService.Runtime = {openTableEditorDialog};
+
+    expect(command.execute(state, jest.fn(), view)).toBe(true);
+
+    const [data] = openTableEditorDialog.mock.calls[0];
+    expect(data.typography).toMatchObject({
+      fontFamily: 'Tahoma',
+      fontSize: '10.7pt',
+      bold: true,
+      textColor: '#123456',
+      backgroundColor: '#bfebff',
+      lineHeight: '1.15',
+      textAlign: 'center',
+    });
+  });
+
+  it('marks differing selected-cell typography as mixed', () => {
+    const command = new TableDetailsCommand();
+    const makeCell = (fontSize: number) =>
+      schema.nodes.table_cell.create(null, [
+        schema.nodes.paragraph.create(
+          null,
+          schema.text('cell', [
+            schema.marks['mark-font-size'].create({pt: fontSize}),
+          ])
+        ),
+      ]);
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.table.create(
+        {noOfColumns: 2},
+        [schema.nodes.table_row.create(null, [makeCell(10.7), makeCell(12)])]
+      ),
+    ]);
+    const tableRef = command.getParentNodeRef(
+      createState(doc, 'cell').selection,
+      schema.nodes.table
+    );
+    const cells = findNodeRefs(doc, 'table_cell');
+    if (!tableRef) {
+      throw new Error('Expected table ref for mixed-value test');
+    }
+
+    const data = command.buildTableEditorDialogData(
+      {table: tableRef, row: null, cell: cells[0], cells},
+      {width: 100, height: 40} as DOMRect
+    );
+
+    expect(data.typography?.fontSize).toBe('');
+    expect(data.mixed?.typography?.fontSize).toBe(true);
+  });
+
   it('preserves unselected font size without adding an override mark', () => {
     const command = new TableDetailsCommand();
     const staleCell = schema.nodes.table_cell.create(
@@ -1015,6 +1214,106 @@ describe('TableDetailsCommand', () => {
     expect(updated.doc.nodeAt(cellRef.pos)?.attrs.colwidth).toEqual([77]);
   });
 
+  it('distributes a spanning-cell total using its existing proportions', () => {
+    const command = new TableDetailsCommand();
+    const state = createState(createMixedColspanTableDoc(), 'spanning');
+    const tableRef = command.getParentNodeRef(
+      state.selection,
+      schema.nodes.table
+    );
+    const cellRefs = findNodeRefs(state.doc, 'table_cell');
+
+    if (!tableRef) {
+      throw new Error('Expected table ref for colspan width setup');
+    }
+
+    const updated = command.applyColumnWidth(state.tr, tableRef, cellRefs[0], 120);
+
+    expect(updated.doc.nodeAt(cellRefs[0].pos)?.attrs).toMatchObject({
+      colwidth: [48, 72],
+      cellWidth: '120px',
+    });
+    expect(updated.doc.nodeAt(cellRefs[1].pos)?.attrs).toMatchObject({
+      colwidth: [70],
+      cellWidth: '70px',
+    });
+    expect(updated.doc.nodeAt(cellRefs[2].pos)?.attrs).toMatchObject({
+      colwidth: [48],
+      cellWidth: '48px',
+    });
+    expect(updated.doc.nodeAt(cellRefs[3].pos)?.attrs).toMatchObject({
+      colwidth: [72, 70],
+      cellWidth: '142px',
+    });
+  });
+
+  it('is a no-op when a spanning-cell total already matches its slots', () => {
+    const command = new TableDetailsCommand();
+    const state = createState(createMixedColspanTableDoc(), 'spanning');
+    const tableRef = command.getParentNodeRef(
+      state.selection,
+      schema.nodes.table
+    );
+    const cellRefs = findNodeRefs(state.doc, 'table_cell');
+
+    if (!tableRef) {
+      throw new Error('Expected table ref for unchanged colspan width setup');
+    }
+
+    const updated = command.applyColumnWidth(state.tr, tableRef, cellRefs[0], 100);
+
+    expect(updated.docChanged).toBe(false);
+    expect(updated.doc.nodeAt(cellRefs[0].pos)?.attrs.colwidth).toEqual([40, 60]);
+  });
+
+  it('updates only the intersecting colwidth slot of spanning cells', () => {
+    const command = new TableDetailsCommand();
+    const state = createState(createMixedColspanTableDoc(), 'left');
+    const tableRef = command.getParentNodeRef(
+      state.selection,
+      schema.nodes.table
+    );
+    const cellRefs = findNodeRefs(state.doc, 'table_cell');
+
+    if (!tableRef) {
+      throw new Error('Expected table ref for logical column setup');
+    }
+
+    const updated = command.applyColumnWidth(state.tr, tableRef, cellRefs[2], 55);
+
+    expect(updated.doc.nodeAt(cellRefs[0].pos)?.attrs).toMatchObject({
+      colwidth: [55, 60],
+      cellWidth: '115px',
+    });
+    expect(updated.doc.nodeAt(cellRefs[1].pos)?.attrs).toMatchObject({
+      colwidth: [70],
+      cellWidth: '70px',
+    });
+    expect(updated.doc.nodeAt(cellRefs[2].pos)?.attrs).toMatchObject({
+      colwidth: [55],
+      cellWidth: '55px',
+    });
+    expect(updated.doc.nodeAt(cellRefs[3].pos)?.attrs).toMatchObject({
+      colwidth: [60, 70],
+      cellWidth: '130px',
+    });
+  });
+
+  it('keeps colwidth values serializable and clears incomplete cellWidth', () => {
+    const command = new TableDetailsCommand();
+
+    expect(command.distributeColumnWidth(100, 3)).toEqual([34, 33, 33]);
+    expect(command.distributeColumnWidth(120, 2, [40, 60])).toEqual([48, 72]);
+    expect(command.distributeColumnWidth(619, 3, [256, 129, 234])).toEqual([
+      256,
+      129,
+      234,
+    ]);
+    expect(command.distributeColumnWidth(0, 2)).toEqual([]);
+    expect(command.getCellWidthFromColwidth([34, 33, 33])).toBe('100px');
+    expect(command.getCellWidthFromColwidth([55, 0])).toBeNull();
+  });
+
   it('applies table and row attributes without a selected cell', () => {
     const command = new TableDetailsCommand();
     const state = createState();
@@ -1166,17 +1465,29 @@ describe('TableDetailsCommand', () => {
       color: '#654321',
     });
     expect(data.typography).toMatchObject({
-      fontFamily: 'Verdana',
-      fontSize: '18px',
+      fontFamily: '',
+      fontSize: '',
+      bold: false,
+      italic: false,
+      underline: false,
+      textColor: '',
+      backgroundColor: 'transparent',
+      letterSpacing: '',
+      lineHeight: '',
+      textAlign: '',
+      verticalAlign: '',
+    });
+    expect(data.mixed?.typography).toMatchObject({
+      fontFamily: true,
+      fontSize: true,
       bold: true,
       italic: true,
       underline: true,
-      textColor: '#abc',
-      backgroundColor: 'transparent',
-      letterSpacing: '2px',
-      lineHeight: '1.5',
-      textAlign: 'right',
-      verticalAlign: 'bottom',
+      textColor: true,
+      letterSpacing: true,
+      lineHeight: true,
+      textAlign: true,
+      verticalAlign: true,
     });
     expect(data.layout).toMatchObject({
       paddingTop: '1px',
@@ -1227,6 +1538,7 @@ describe('TableDetailsCommand', () => {
 
     expect(command.normalizeTransparentColor(null)).toBeNull();
     expect(command.normalizeTransparentColor('transparent')).toBeNull();
+    expect(command.normalizeTransparentColor('#00000000')).toBeNull();
     expect(command.normalizeTransparentColor('#fff')).toBe('#fff');
     expect(command.toBorderLineStyle('solid')).toBe('solid');
     expect(command.toBorderLineStyle('double')).toBe('double');
@@ -1239,30 +1551,62 @@ describe('TableDetailsCommand', () => {
     expect(command.toVerticalAlign('bad')).toBe('middle');
     expect(command.isBold(null)).toBe(false);
     expect(command.isBold('bold')).toBe(true);
+    expect(command.isBold('Bold')).toBe(true);
+    expect(command.isBold('BOLDER')).toBe(true);
     expect(command.isBold('500')).toBe(false);
+    expect(command.isItalic('Oblique')).toBe(true);
+    expect(command.isUnderlined('UNDERLINE solid')).toBe(true);
     expect(command.normalizeFontFamily(null)).toBeNull();
     expect(command.normalizeFontFamily('Custom, serif')).toBe('Custom');
+    expect(command.getFontOptions('Custom, serif')).toContainEqual({
+      label: 'Custom',
+      value: 'Custom',
+    });
     expect(command.normalizeColorValue(null)).toBeNull();
     expect(command.normalizeColorValue('#abc')).toBe('#aabbcc');
     expect(command.normalizeColorValue('#aabbcc')).toBe('#aabbcc');
     expect(command.normalizeColorValue('rgb(300, 2, 3)')).toBe('#ff0203');
+    expect(command.normalizeColorValue('red')).toBe('#ff0000');
+    expect(command.normalizeColorValue('hsl(0, 100%, 50%)')).toBe('#ff0000');
+    expect(command.normalizeColorValue('#00000000')).toBe('transparent');
     expect(command.normalizeColorValue('currentColor')).toBe('currentcolor');
     expect(command.sameColorValue('#abc', '#aabbcc')).toBe(true);
-    expect(command.sameCssNumericValue('12px', '12pt')).toBe(true);
+    expect(command.sameColorValue('red', 'rgb(255, 0, 0)')).toBe(true);
+    expect(command.sameCssNumericValue('12px', '12pt')).toBe(false);
+    expect(command.sameCssNumericValue('16px', '12pt')).toBe(true);
     expect(command.sameCssNumericValue('auto', 'auto')).toBe(true);
     expect(command.sameCssNumericValue('auto', 'normal')).toBe(false);
     expect(command.sameAttrs({a: 1}, {a: 1})).toBe(true);
     expect(command.sameAttrs({a: 1}, {a: 2})).toBe(false);
     expect(command.normalizeCssNumericValue('bad')).toBeNull();
+    expect(command.normalizeCssNumericValue('12pt')).toBe(16);
     expect(command.toOptionalCssValue(false, 'bold')).toBeNull();
     expect(command.normalizeInheritedValue(' inherit ')).toBeNull();
     expect(command.normalizeInheritedValue('Arial')).toBe('Arial');
     expect(command.normalizeFontPointSize('0')).toBeNull();
-    expect(command.normalizeFontPointSize('11px')).toBe(11);
+    expect(command.normalizeFontPointSize('11px')).toBe(8.25);
+    expect(command.normalizeFontPointSize('10.7pt')).toBe(10.7);
+    expect(command.normalizeFontSizeForDialog('14.2667px')).toBe('10.7pt');
     expect(command.normalizeLineSpacingValue('normal')).toBeNull();
     expect(command.normalizeLineSpacingValue('1.2')).toBe('1.2');
-    expect(command.normalizeTransparentResult('transparent')).toBeNull();
+    expect(command.normalizeTransparentResult('transparent')).toBe('transparent');
     expect(command.normalizeTransparentResult('#fff')).toBe('#fff');
+    const transparentAttrs: Record<string, unknown> = {};
+    command.applyChangedCellTypographyAttrs(
+      transparentAttrs,
+      result,
+      command.getApplyChanges(result)
+    );
+    expect(transparentAttrs).toMatchObject({
+      fontWeight: 'normal',
+      fontWeightOverridden: true,
+      fontStyle: 'normal',
+      fontStyleOverridden: true,
+      textDecoration: 'none',
+      textDecorationOverridden: true,
+      backgroundColor: 'transparent',
+      backgroundColorOverridden: true,
+    });
     expect(command.getApplyChanges(result)).toMatchObject({fontFamily: true});
     expect(
       command.getApplyChanges(result, {typography: result.typography})
@@ -1273,6 +1617,36 @@ describe('TableDetailsCommand', () => {
       backgroundColor: false,
       lineHeight: false,
     });
+    const legacyInitialData = {
+      typography: result.typography,
+      layout: result.layout,
+      table: {
+        ...result.table,
+        tableHeight: '50',
+        selectedCellWidth: '25',
+        selectedCellHeight: '10',
+      },
+    };
+    expect(command.getApplyChanges(result, legacyInitialData)).toMatchObject({
+      paddingTop: false,
+      paddingRight: false,
+      paddingBottom: false,
+      paddingLeft: false,
+      paddingLocked: false,
+      tableHeight: false,
+      selectedCellWidth: false,
+      selectedCellHeight: false,
+    });
+    expect(
+      command.getApplyChanges(
+        {
+          ...result,
+          layout: {...result.layout, paddingLeft: '2px'},
+          table: {...result.table, selectedCellWidth: '26px'},
+        },
+        legacyInitialData
+      )
+    ).toMatchObject({paddingLeft: true, selectedCellWidth: true});
   });
 
   it('covers target-cell, table-attrs, inline-mark and border paths', () => {

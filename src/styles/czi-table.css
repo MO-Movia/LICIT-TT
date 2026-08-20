@@ -86,10 +86,11 @@ Rezie cursor position issue fixed. */
 }
 
 .czi-table-row-resize-handle {
-  display: none;
+  display: block;
   height: 6px;
   pointer-events: none;
   position: absolute;
+  visibility: hidden;
   z-index: 2147483647;
 }
 
@@ -105,7 +106,7 @@ Rezie cursor position issue fixed. */
 }
 
 .czi-table-row-resize-handle.is-visible {
-  display: block;
+  visibility: visible;
 }
 
 .czi-table-row-resize-grip {
