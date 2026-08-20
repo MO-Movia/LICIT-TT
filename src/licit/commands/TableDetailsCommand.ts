@@ -285,9 +285,12 @@ class TableDetailsCommand extends UICommand {
     }
 
     const {selection, schema} = state;
-    const tableType = this.getNodeType(schema, ['table']);
-    const rowType = this.getNodeType(schema, ['tableRow', 'table_row']);
-    const cellTypes = this.getNodeTypes(schema, ['tableCell', 'table_cell']);
+    const tableType = this.getNodeTypeByTableRole(schema, 'table');
+    const rowType = this.getNodeTypeByTableRole(schema, 'row');
+    const cellTypes = this.getNodeTypesByTableRole(schema, [
+      'cell',
+      'header_cell',
+    ]);
 
     const tableNode = this.getParentNodeRef(selection, tableType);
     if (!tableNode) {
@@ -354,7 +357,7 @@ class TableDetailsCommand extends UICommand {
     const {$from} = state.selection;
 
     for (let depth = $from.depth; depth > 0; depth--) {
-      if ($from.node(depth).type.name === 'table') {
+      if ($from.node(depth).type.spec.tableRole === 'table') {
         return true;
       }
     }
@@ -433,28 +436,15 @@ class TableDetailsCommand extends UICommand {
     return element.closest('td, th');
   }
 
-  getNodeType(schema: Schema, names: string[]): NodeType | null {
-    for (const name of names) {
-      const nodeType = schema.nodes[name];
-      if (nodeType) {
-        return nodeType;
-      }
-    }
-
-    return null;
+  getNodeTypeByTableRole(schema: Schema, tableRole: string): NodeType | null {
+    return this.getNodeTypesByTableRole(schema, [tableRole])[0] ?? null;
   }
 
-  getNodeTypes(schema: Schema, names: string[]): NodeType[] {
-    const nodeTypes: NodeType[] = [];
-
-    for (const name of names) {
-      const nodeType = schema.nodes[name];
-      if (nodeType) {
-        nodeTypes.push(nodeType);
-      }
-    }
-
-    return nodeTypes;
+  getNodeTypesByTableRole(schema: Schema, tableRoles: string[]): NodeType[] {
+    const acceptedRoles = new Set(tableRoles);
+    return Object.values(schema.nodes).filter((nodeType) =>
+      acceptedRoles.has(nodeType.spec.tableRole ?? '')
+    );
   }
 
   getParentNodeRef(selection: Selection, nodeType: NodeType | null): ParentNodeRef | null {

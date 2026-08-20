@@ -71,6 +71,26 @@ export const TableEx = Table.extend({
           return normalizeValue(element.style.height);
         },
       },
+      coverPage: {
+        default: null,
+        renderHTML: (attributes) => {
+          const coverPage = normalizeValue(attributes.coverPage);
+          if (!coverPage) {
+            return {};
+          }
+
+          return {
+            'data-cover-page': coverPage,
+          };
+        },
+        parseHTML: (element) => {
+          const coverPage = element.dataset.coverPage;
+          if (!coverPage) {
+            return null;
+          }
+
+        },
+      },
       [TABLE_STYLE_NAME_ATTRIBUTE]: {
         default: DEFAULT_TABLE_STYLE_NAME,
         renderHTML: (attributes) => {
@@ -116,101 +136,101 @@ export const TableEx = Table.extend({
 
       addColumnBefore:
         () =>
-        ({ state, dispatch }) => {
-          return addColumnBefore(
-            state,
-            dispatch &&
+          ({ state, dispatch }) => {
+            return addColumnBefore(
+              state,
+              dispatch &&
               ((tr) => {
                 dispatch(applyStoredTableStyles(state, tr));
               })
-          );
-        },
+            );
+          },
 
       addColumnAfter:
         () =>
-        ({ state, dispatch }) => {
-          return addColumnAfter(
-            state,
-            dispatch &&
+          ({ state, dispatch }) => {
+            return addColumnAfter(
+              state,
+              dispatch &&
               ((tr) => {
-                dispatch(applyStoredTableStyles(state, tr));
+                dispatch(applyStoredTableStyles(state, tr, 'addColumnAfter'));
               })
-          );
-        },
+            );
+          },
 
       addRowBefore:
         () =>
-        ({ state, dispatch }) => {
-          return addRowBefore(
-            state,
-            dispatch &&
+          ({ state, dispatch }) => {
+            return addRowBefore(
+              state,
+              dispatch &&
               ((tr) => {
                 dispatch(applyStoredTableStyles(state, tr));
               })
-          );
-        },
+            );
+          },
 
       addRowAfter:
         () =>
-        ({ state, dispatch }) => {
-          return addRowAfter(
-            state,
-            dispatch &&
+          ({ state, dispatch }) => {
+            return addRowAfter(
+              state,
+              dispatch &&
               ((tr) => {
-                dispatch(applyStoredTableStyles(state, tr));
+                dispatch(applyStoredTableStyles(state, tr, 'addRowAfter'));
               })
-          );
-        },
+            );
+          },
 
       splitCell:
         () =>
-        ({ state, dispatch }) => {
-          return splitCell(
-            state,
-            dispatch &&
+          ({ state, dispatch }) => {
+            return splitCell(
+              state,
+              dispatch &&
               ((tr) => {
                 dispatch(applyStoredTableStyles(state, tr));
               })
-          );
-        },
+            );
+          },
 
       // override only insertTable to remove header row
       insertTable:
         ({ rows = 3, cols = 3 } = {}) =>
-        ({ tr, dispatch, editor, state }) => {
-          const withHeaderRow = false;
-          const tableNode = createTable(
-            editor.schema,
-            rows,
-            cols,
-            withHeaderRow
-          );
-          const node = tableNode.type.createChecked(
-            {
-              ...tableNode.attrs,
-              noOfColumns: cols,
-              [TABLE_STYLE_NAME_ATTRIBUTE]: DEFAULT_TABLE_STYLE_NAME,
-            },
-            tableNode.content,
-            tableNode.marks
-          );
-
-          if (dispatch) {
-            const offset = tr.selection.from + 1;
-
-            tr.replaceSelectionWith(node)
-              .scrollIntoView();
-            applyTableStyle(
-              state,
-              tr,
-              offset - 1,
-              DEFAULT_TABLE_STYLE_NAME
+          ({ tr, dispatch, editor, state }) => {
+            const withHeaderRow = false;
+            const tableNode = createTable(
+              editor.schema,
+              rows,
+              cols,
+              withHeaderRow
             );
-            tr.setSelection(TextSelection.near(tr.doc.resolve(offset)));
-          }
+            const node = tableNode.type.createChecked(
+              {
+                ...tableNode.attrs,
+                noOfColumns: cols,
+                [TABLE_STYLE_NAME_ATTRIBUTE]: DEFAULT_TABLE_STYLE_NAME,
+              },
+              tableNode.content,
+              tableNode.marks
+            );
 
-          return true;
-        },
+            if (dispatch) {
+              const offset = tr.selection.from + 1;
+
+              tr.replaceSelectionWith(node)
+                .scrollIntoView();
+              applyTableStyle(
+                state,
+                tr,
+                offset - 1,
+                DEFAULT_TABLE_STYLE_NAME
+              );
+              tr.setSelection(TextSelection.near(tr.doc.resolve(offset)));
+            }
+
+            return true;
+          },
     };
   },
 });

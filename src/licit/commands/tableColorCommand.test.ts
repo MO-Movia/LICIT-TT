@@ -8,6 +8,7 @@ import {EditorState} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 import {Editor} from '@tiptap/react';
+import {setCellAttr} from 'prosemirror-tables';
 import TableColorCommand from './tableColorCommand';
 import { UICommand } from '../../core';
 import { createPopUp } from '../../commands';
@@ -44,6 +45,18 @@ jest.mock('@modusoperandi/color-picker', () => ({
   ColorEditor: jest.fn(),
 }));
 
+jest.mock('prosemirror-tables', () => {
+  const actual =
+    jest.requireActual<typeof import('prosemirror-tables')>(
+      'prosemirror-tables'
+    );
+
+  return {
+    ...actual,
+    setCellAttr: jest.fn(() => jest.fn(() => false)),
+  };
+});
+
 // A typed synthetic mouseenter event
 interface FakeReactEvent extends React.SyntheticEvent {
   readonly type: string;
@@ -63,6 +76,7 @@ describe('TableColorCommand (typed)', () => {
     mockTransform = {} as Transform;
     dispatchMock = jest.fn();
     viewMock = {} as EditorView;
+    (setCellAttr as jest.Mock).mockReturnValue(jest.fn(() => false));
 
     setCellAttributeMock = jest.fn();
     const chainMock = {
@@ -183,7 +197,10 @@ describe('TableColorCommand (typed)', () => {
     ).toBe(false);
   });
 
-  it('calls setCellAttribute when hex provided', () => {
+  it('calls setCellAttr when hex provided', () => {
+    const setCellAttrCommandMock = jest.fn(() => false);
+    (setCellAttr as jest.Mock).mockReturnValue(setCellAttrCommandMock);
+
     const result = command.executeWithUserInput(
       mockState,
       dispatchMock,
@@ -191,25 +208,36 @@ describe('TableColorCommand (typed)', () => {
       {color: '#333333'}
     );
 
-    expect(setCellAttributeMock).toHaveBeenCalledWith('backgroundColor', {
-      color: '#333333',
-    });
+    expect(setCellAttr).toHaveBeenCalledWith('backgroundColor', '#333333');
+    expect(setCellAttrCommandMock).toHaveBeenCalledWith(
+      mockState,
+      expect.any(Function)
+    );
     expect(result).toBeFalsy();
   });
 
 it('calls setCellBorders when success is true', () => {
-  const setCellBordersSpy = jest.spyOn(command, 'setCellBorders');
-  setCellAttributeMock.mockReturnValue(true);
+  command = new TableColorCommand('borderColor');
+  const setCellBordersSpy = jest
+    .spyOn(command, 'setCellBorders')
+    .mockReturnValue(true);
 
   const hex = { color: '#333333', selectedPosition: ['Top', 'Bottom'] };
 
-  command.executeWithUserInput(mockState, dispatchMock, viewMock, hex);
+  const result = command.executeWithUserInput(
+    mockState,
+    dispatchMock,
+    viewMock,
+    hex
+  );
 
   expect(setCellBordersSpy).toHaveBeenCalledWith(
-    expect.any(Object),
+    mockState,
+    expect.any(Function),
     ['Top', 'Bottom'],
     '#333333'
   );
+  expect(result).toBe(true);
 });
 
 
