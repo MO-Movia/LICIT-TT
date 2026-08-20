@@ -149,7 +149,9 @@ describe('EnhancedTableCommands', () => {
       schema,
     });
     const tr = command.insertEnhancedTableFigure(state.tr, schema);
-    const figure = tr.doc.firstChild;
+    const figure = tr.doc.nodeAt(
+      findNodePosition(tr.doc, 'enhanced_table_figure')
+    );
 
     expect(figure.type.name).toBe('enhanced_table_figure');
     expect(figure.firstChild.firstChild.type.name).toBe(

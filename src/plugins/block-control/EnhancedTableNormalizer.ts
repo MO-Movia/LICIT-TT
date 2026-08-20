@@ -64,7 +64,8 @@ export function normalizeLegacyEnhancedTableFigureBodies(
     return false;
   });
 
-  for (const { node, pos, replacement } of replacements.reverse()) {
+  replacements.reverse();
+  for (const { node, pos, replacement } of replacements) {
     tr = tr.replaceWith(pos, pos + node.nodeSize, replacement);
   }
   return tr;
@@ -221,6 +222,6 @@ function isEmptyParagraph(node: ProseMirrorNode): boolean {
   });
   return (
     !hasNonTextContent &&
-    node.textContent.replace(/\u200B/g, '').trim().length === 0
+    node.textContent.replaceAll('\u200B', '').trim().length === 0
   );
 }
