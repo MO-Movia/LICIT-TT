@@ -37,7 +37,6 @@ import {
   applyStoredTableStyleAtSelection,
 } from '../../licit/extensions/tableEx/tableStyle';
 export * from './StyleRuntime';
-export * from './customStyle';
 
 const ENTERKEYCODE = 13;
 const BACKSPACEKEYCODE = 8;

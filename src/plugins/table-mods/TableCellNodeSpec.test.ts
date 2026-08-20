@@ -132,6 +132,20 @@ describe('TableCellNodeSpec', () => {
     ]);
   });
 
+  it.each(['top', 'middle', 'bottom'])(
+    'preserves %s vertical alignment for full-size cells',
+    (vAlign) => {
+      const dom = serializeCell({fullSize: 1, style: '', vAlign});
+
+      expect(dom[1]).toMatchObject({
+        fullSize: 1,
+        style: `padding:0;margin:0;vertical-align: ${vAlign};`,
+        vAlign,
+        valign: vAlign,
+      });
+    }
+  );
+
   it('falls back to top for an unsupported vertical alignment', () => {
     const dom = serializeCell({vAlign: 'any'});
 

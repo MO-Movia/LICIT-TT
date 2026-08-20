@@ -5,9 +5,10 @@
 
 import * as React from 'react';
 import nullthrows from '../nullthrows';
-import {EditorState, Transaction} from 'prosemirror-state';
-import {Transform} from 'prosemirror-transform';
-import {EditorView} from 'prosemirror-view';
+import type { ResolvedPos } from 'prosemirror-model';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { Transform } from 'prosemirror-transform';
+import { EditorView } from 'prosemirror-view';
 import {
   CellSelection,
   isInTable,
@@ -23,7 +24,7 @@ import {
   RuntimeService,
   // ColorEditor
 } from '../../commands';
-import {ColorEditor} from '@modusoperandi/color-picker';
+import { ColorEditor } from '@modusoperandi/color-picker';
 import { UICommand } from '../../core';
 
 const BORDER_SIDES = ['Top', 'Bottom', 'Left', 'Right'] as const;
@@ -34,6 +35,20 @@ const OPPOSITE_BORDER_SIDE: Record<BorderSide, BorderSide> = {
   Bottom: 'Top',
   Left: 'Right',
   Right: 'Left',
+};
+
+type CellRect = {
+  bottom: number;
+  left: number;
+  right: number;
+  top: number;
+};
+
+type CellRange = {
+  columnEnd: number;
+  columnStart: number;
+  rowEnd: number;
+  rowStart: number;
 };
 type ColorEditorResult = {
   color: string | null;
@@ -46,6 +61,68 @@ function normalizeBorderSides(sides?: string[]): BorderSide[] {
   }
 
   return BORDER_SIDES.filter((side) => sides.includes(side));
+}
+
+function findTableDepth($cell: ResolvedPos): number {
+  for (let depth = $cell.depth; depth >= 0; depth--) {
+    if ($cell.node(depth).type.spec.tableRole === 'table') {
+      return depth;
+    }
+  }
+
+  return -1;
+}
+
+function getAdjacentRange(rect: CellRect, side: BorderSide): CellRange {
+  switch (side) {
+    case 'Top':
+      return {
+        columnEnd: rect.right,
+        columnStart: rect.left,
+        rowEnd: rect.top,
+        rowStart: rect.top - 1,
+      };
+    case 'Bottom':
+      return {
+        columnEnd: rect.right,
+        columnStart: rect.left,
+        rowEnd: rect.bottom + 1,
+        rowStart: rect.bottom,
+      };
+    case 'Left':
+      return {
+        columnEnd: rect.left,
+        columnStart: rect.left - 1,
+        rowEnd: rect.bottom,
+        rowStart: rect.top,
+      };
+    case 'Right':
+      return {
+        columnEnd: rect.right + 1,
+        columnStart: rect.right,
+        rowEnd: rect.bottom,
+        rowStart: rect.top,
+      };
+  }
+}
+
+function addMappedCell(
+  adjacent: Set<number>,
+  map: TableMap,
+  tableStart: number,
+  row: number,
+  column: number
+): void {
+  if (
+    row < 0 ||
+    row >= map.height ||
+    column < 0 ||
+    column >= map.width
+  ) {
+    return;
+  }
+
+  adjacent.add(tableStart + map.map[row * map.width + column]);
 }
 
 class TableColorCommand extends UICommand {
@@ -73,7 +150,7 @@ class TableColorCommand extends UICommand {
   };
 
   isEnabled = (state: EditorState): boolean => {
-    const {$from} = state.selection;
+    const { $from } = state.selection;
 
     for (let depth = $from.depth; depth > 0; depth--) {
       if ($from.node(depth).type.name === 'table') {
@@ -96,7 +173,7 @@ class TableColorCommand extends UICommand {
     if (!(target instanceof HTMLElement)) {
       return Promise.resolve(undefined);
     }
-    
+
 
     const anchor = event ? event.currentTarget : null;
     return new Promise((resolve) => {
@@ -196,7 +273,7 @@ class TableColorCommand extends UICommand {
       }
 
       const update = {
-        attrs: {...node.attrs},
+        attrs: { ...node.attrs },
         changed: false,
       };
       pendingUpdates.set(pos, update);
@@ -209,7 +286,7 @@ class TableColorCommand extends UICommand {
         return;
       }
 
-      const {attrs} = update;
+      const { attrs } = update;
       const aggregateColor =
         typeof attrs.borderColor === 'string' && attrs.borderColor.trim()
           ? attrs.borderColor
@@ -241,13 +318,7 @@ class TableColorCommand extends UICommand {
       side: BorderSide
     ): number[] => {
       const $cell = state.doc.resolve(cellPos);
-      let tableDepth = -1;
-      for (let depth = $cell.depth; depth >= 0; depth--) {
-        if ($cell.node(depth).type.spec.tableRole === 'table') {
-          tableDepth = depth;
-          break;
-        }
-      }
+      const tableDepth = findTableDepth($cell);
       if (tableDepth < 0) {
         return [];
       }
@@ -257,36 +328,13 @@ class TableColorCommand extends UICommand {
       const map = TableMap.get(table);
       const rect = map.findCell(cellPos - tableStart);
       const adjacent = new Set<number>();
-      const addCellAt = (row: number, column: number): void => {
-        if (
-          row < 0 ||
-          row >= map.height ||
-          column < 0 ||
-          column >= map.width
-        ) {
-          return;
-        }
-        adjacent.add(tableStart + map.map[row * map.width + column]);
-      };
+      const range = getAdjacentRange(rect, side);
 
-      if (side === 'Top') {
-        for (let column = rect.left; column < rect.right; column++) {
-          addCellAt(rect.top - 1, column);
-        }
-      } else if (side === 'Bottom') {
-        for (let column = rect.left; column < rect.right; column++) {
-          addCellAt(rect.bottom, column);
-        }
-      } else if (side === 'Left') {
-        for (let row = rect.top; row < rect.bottom; row++) {
-          addCellAt(row, rect.left - 1);
-        }
-      } else {
-        for (let row = rect.top; row < rect.bottom; row++) {
-          addCellAt(row, rect.right);
+      for (let row = range.rowStart; row < range.rowEnd; row++) {
+        for (let column = range.columnStart; column < range.columnEnd; column++) {
+          addMappedCell(adjacent, map, tableStart, row, column);
         }
       }
-
       adjacent.delete(cellPos);
       return [...adjacent];
     };

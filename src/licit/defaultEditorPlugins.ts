@@ -19,6 +19,7 @@ import { LandscapePlugin } from './plugins/LandscapePlugin';
 import ListPasteNormalizerPlugin from './plugins/listPasteNormalizerPlugin';
 import TableCellStyleInheritancePlugin from './plugins/tableCellStyleInheritancePlugin';
 import createTableRowResizingPlugin from './plugins/createTableRowResizingPlugin';
+import { createPendingTableMarksPlugin } from './extensions/tableEx/tableStyle';
 
 // Creates the default plugin for the editor.
 export default class DefaultEditorPlugins {
@@ -38,6 +39,7 @@ export default class DefaultEditorPlugins {
       new LandscapePlugin(),
       new ListPasteNormalizerPlugin(),
       new TableCellStyleInheritancePlugin(),
+      createPendingTableMarksPlugin(),
     ];
   }
 

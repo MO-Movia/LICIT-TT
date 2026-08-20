@@ -3,13 +3,13 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {Editor} from '@tiptap/core';
-import {StarterKit} from '@tiptap/starter-kit';
-import {Table} from '@tiptap/extension-table';
-import {TableRow} from '@tiptap/extension-table-row';
-import {TableHeader} from '@tiptap/extension-table-header';
-import {TableCellEx} from './tableCellEx';
-import type {Node as PMNode} from 'prosemirror-model';
+import { Editor } from '@tiptap/core';
+import { StarterKit } from '@tiptap/starter-kit';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCellEx } from './tableCellEx';
+import type { Node as PMNode } from 'prosemirror-model';
 
 type AttributeConfig = {
   renderHTML?: (attributes: Record<string, unknown>) => Record<string, unknown>;
@@ -152,19 +152,19 @@ describe('TableCellEx Extension', () => {
     });
   });
 
-test('should render backgroundColor as string when vignette is true', () => {
-  editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
+  test('should render backgroundColor as string when vignette is true', () => {
+    editor.commands.setContent('<table><tr><td>Cell</td></tr></table>');
 
-  editor
-    .chain()
-    .setCellAttribute('backgroundColor', 'red')   
-    .setCellAttribute('vignette', true)          
-    .run();
+    editor
+      .chain()
+      .setCellAttribute('backgroundColor', 'red')
+      .setCellAttribute('vignette', true)
+      .run();
 
-  const html = editor.getHTML();
+    const html = editor.getHTML();
 
-  expect(html).toContain('background-color: red');
-});
+    expect(html).toContain('background-color: red');
+  });
 
 
   test('should render nested color value when vignette is false', () => {
@@ -173,7 +173,7 @@ test('should render backgroundColor as string when vignette is true', () => {
       if (node.type.name === 'tableCell') {
         editor
           .chain()
-          .setCellAttribute('backgroundColor', {color: 'blue'})
+          .setCellAttribute('backgroundColor', { color: 'blue' })
           .setCellAttribute('vignette', false)
           .run();
       }
@@ -321,61 +321,61 @@ test('should render backgroundColor as string when vignette is true', () => {
   test('should skip optional inline styles when table cell attributes are empty', () => {
     const attrs = getTableCellExtensionAttributes();
 
-    expect(attrs.fontName.renderHTML?.({fontName: null})).toStrictEqual({});
-    expect(attrs.paddingLeft.renderHTML?.({paddingLeft: null})).toStrictEqual({});
-    expect(attrs.backgroundColor.renderHTML?.({backgroundColor: null})).toStrictEqual({});
-    expect(attrs.borderLeft.renderHTML?.({borderLeft: null})).toStrictEqual({});
-    expect(attrs.borderRight.renderHTML?.({borderRight: null})).toStrictEqual({});
-    expect(attrs.borderTop.renderHTML?.({borderTop: null})).toStrictEqual({});
-    expect(attrs.borderBottom.renderHTML?.({borderBottom: null})).toStrictEqual({});
-    expect(attrs.borderColor.renderHTML?.({borderColor: null})).toStrictEqual({});
-    expect(attrs.cellStyle.renderHTML?.({cellStyle: null})).toStrictEqual({});
-    expect(attrs.cellWidth.renderHTML?.({cellWidth: null})).toStrictEqual({});
-    expect(attrs.fontSize.renderHTML?.({fontSize: null})).toStrictEqual({});
-    expect(attrs.letterSpacing.renderHTML?.({letterSpacing: null})).toStrictEqual({});
-    expect(attrs.marginTop.renderHTML?.({marginTop: null})).toStrictEqual({});
-    expect(attrs.marginBottom.renderHTML?.({marginBottom: null})).toStrictEqual({});
-    expect(attrs.verticalAlign.renderHTML?.({verticalAlign: null})).toStrictEqual({});
+    expect(attrs.fontName.renderHTML?.({ fontName: null })).toStrictEqual({});
+    expect(attrs.paddingLeft.renderHTML?.({ paddingLeft: null })).toStrictEqual({});
+    expect(attrs.backgroundColor.renderHTML?.({ backgroundColor: null })).toStrictEqual({});
+    expect(attrs.borderLeft.renderHTML?.({ borderLeft: null })).toStrictEqual({});
+    expect(attrs.borderRight.renderHTML?.({ borderRight: null })).toStrictEqual({});
+    expect(attrs.borderTop.renderHTML?.({ borderTop: null })).toStrictEqual({});
+    expect(attrs.borderBottom.renderHTML?.({ borderBottom: null })).toStrictEqual({});
+    expect(attrs.borderColor.renderHTML?.({ borderColor: null })).toStrictEqual({});
+    expect(attrs.cellStyle.renderHTML?.({ cellStyle: null })).toStrictEqual({});
+    expect(attrs.cellWidth.renderHTML?.({ cellWidth: null })).toStrictEqual({});
+    expect(attrs.fontSize.renderHTML?.({ fontSize: null })).toStrictEqual({});
+    expect(attrs.letterSpacing.renderHTML?.({ letterSpacing: null })).toStrictEqual({});
+    expect(attrs.marginTop.renderHTML?.({ marginTop: null })).toStrictEqual({});
+    expect(attrs.marginBottom.renderHTML?.({ marginBottom: null })).toStrictEqual({});
+    expect(attrs.verticalAlign.renderHTML?.({ verticalAlign: null })).toStrictEqual({});
   });
 
   test('should render optional inline styles from table cell attributes', () => {
     const attrs = getTableCellExtensionAttributes();
 
-    expect(attrs.fontName.renderHTML?.({fontName: 'Arial'})).toStrictEqual({
+    expect(attrs.fontName.renderHTML?.({ fontName: 'Arial' })).toStrictEqual({
       fontName: 'Arial',
       style: 'font-family: Arial;',
     });
-    expect(attrs.paddingLeft.renderHTML?.({paddingLeft: '4px'})).toStrictEqual({
+    expect(attrs.paddingLeft.renderHTML?.({ paddingLeft: '4px' })).toStrictEqual({
       style: 'padding-left: 4px;',
     });
-    expect(attrs.borderLeft.renderHTML?.({borderLeft: '1px solid red'})).toStrictEqual({
+    expect(attrs.borderLeft.renderHTML?.({ borderLeft: '1px solid red' })).toStrictEqual({
       style: 'border-left: 1px solid red;',
     });
-    expect(attrs.borderRight.renderHTML?.({borderRight: '2px solid blue'})).toStrictEqual({
+    expect(attrs.borderRight.renderHTML?.({ borderRight: '2px solid blue' })).toStrictEqual({
       style: 'border-right: 2px solid blue;',
     });
-    expect(attrs.borderTop.renderHTML?.({borderTop: '3px solid green'})).toStrictEqual({
+    expect(attrs.borderTop.renderHTML?.({ borderTop: '3px solid green' })).toStrictEqual({
       style: 'border-top: 3px solid green;',
     });
-    expect(attrs.borderBottom.renderHTML?.({borderBottom: '4px solid black'})).toStrictEqual({
+    expect(attrs.borderBottom.renderHTML?.({ borderBottom: '4px solid black' })).toStrictEqual({
       style: 'border-bottom: 4px solid black;',
     });
-    expect(attrs.borderColor.renderHTML?.({borderColor: 'purple'})).toStrictEqual({
+    expect(attrs.borderColor.renderHTML?.({ borderColor: 'purple' })).toStrictEqual({
       style: 'border-color: purple;',
     });
-    expect(attrs.borderLeftColor.renderHTML?.({borderLeftColor: 'red'})).toStrictEqual({
+    expect(attrs.borderLeftColor.renderHTML?.({ borderLeftColor: 'red' })).toStrictEqual({
       style: 'border-left-color: red;',
     });
-    expect(attrs.borderRightColor.renderHTML?.({borderRightColor: 'blue'})).toStrictEqual({
+    expect(attrs.borderRightColor.renderHTML?.({ borderRightColor: 'blue' })).toStrictEqual({
       style: 'border-right-color: blue;',
     });
-    expect(attrs.borderTopColor.renderHTML?.({borderTopColor: 'green'})).toStrictEqual({
+    expect(attrs.borderTopColor.renderHTML?.({ borderTopColor: 'green' })).toStrictEqual({
       style: 'border-top-color: green;',
     });
-    expect(attrs.borderBottomColor.renderHTML?.({borderBottomColor: 'purple'})).toStrictEqual({
+    expect(attrs.borderBottomColor.renderHTML?.({ borderBottomColor: 'purple' })).toStrictEqual({
       style: 'border-bottom-color: purple;',
     });
-    expect(attrs.verticalAlign.renderHTML?.({verticalAlign: 'middle'})).toStrictEqual({
+    expect(attrs.verticalAlign.renderHTML?.({ verticalAlign: 'middle' })).toStrictEqual({
       verticalAlign: 'middle',
       valign: 'middle',
       style: 'vertical-align: middle;',

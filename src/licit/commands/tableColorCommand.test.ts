@@ -10,7 +10,7 @@ import {EditorView} from 'prosemirror-view';
 import {Editor} from '@tiptap/react';
 import {StarterKit} from '@tiptap/starter-kit';
 import {Table} from '@tiptap/extension-table';
-import {CellSelection, selectionCell} from 'prosemirror-tables';
+import {CellSelection, selectionCell, setCellAttr} from 'prosemirror-tables';
 import TableColorCommand from './tableColorCommand';
 import { createPopUp } from '../../commands';
 import {TableRowEx} from '../extensions/tableRowEx';
@@ -49,6 +49,18 @@ jest.mock('@modusoperandi/color-picker', () => ({
   ColorEditor: jest.fn(),
 }));
 
+jest.mock('prosemirror-tables', () => {
+  const actual =
+    jest.requireActual<typeof import('prosemirror-tables')>(
+      'prosemirror-tables'
+    );
+
+  return {
+    ...actual,
+    setCellAttr: jest.fn(() => jest.fn(() => false)),
+  };
+});
+
 // A typed synthetic mouseenter event
 interface FakeReactEvent extends React.SyntheticEvent {
   readonly type: string;
@@ -67,6 +79,7 @@ describe('TableColorCommand (typed)', () => {
     mockTransform = {} as Transform;
     dispatchMock = jest.fn();
     viewMock = {} as EditorView;
+    (setCellAttr as jest.Mock).mockReturnValue(jest.fn(() => false));
 
     command = new TableColorCommand('backgroundColor');
 
@@ -175,23 +188,70 @@ describe('TableColorCommand (typed)', () => {
     ).toBe(false);
   });
 
-it('routes a border picker result to the side-border updater', () => {
-  command = new TableColorCommand('borderColor');
-  const setCellBordersSpy = jest
-    .spyOn(command, 'setCellBorders')
-    .mockReturnValue(true);
+  it('calls setCellAttr when hex provided', () => {
+    const setCellAttrCommandMock = jest.fn(() => false);
+    (setCellAttr as jest.Mock).mockReturnValue(setCellAttrCommandMock);
 
-  const hex = { color: '#333333', selectedPosition: ['Top', 'Bottom'] };
+    const result = command.executeWithUserInput(
+      mockState,
+      dispatchMock,
+      viewMock,
+      {color: '#333333'}
+    );
 
-  command.executeWithUserInput(mockState, dispatchMock, undefined, hex);
+    expect(setCellAttr).toHaveBeenCalledWith('backgroundColor', '#333333');
+    expect(setCellAttrCommandMock).toHaveBeenCalledWith(
+      mockState,
+      expect.any(Function)
+    );
+    expect(result).toBeFalsy();
+  });
 
-  expect(setCellBordersSpy).toHaveBeenCalledWith(
-    mockState,
-    dispatchMock,
-    ['Top', 'Bottom'],
-    '#333333'
-  );
-});
+  it('routes a border picker result through the supplied dispatch', () => {
+    command = new TableColorCommand('borderColor');
+    const setCellBordersSpy = jest
+      .spyOn(command, 'setCellBorders')
+      .mockReturnValue(true);
+
+    const hex = { color: '#333333', selectedPosition: ['Top', 'Bottom'] };
+    const result = command.executeWithUserInput(
+      mockState,
+      dispatchMock,
+      undefined,
+      hex
+    );
+
+    expect(setCellBordersSpy).toHaveBeenCalledWith(
+      mockState,
+      dispatchMock,
+      ['Top', 'Bottom'],
+      '#333333'
+    );
+    expect(result).toBe(true);
+  });
+
+  it('routes a border picker result through the active editor view', () => {
+    command = new TableColorCommand('borderColor');
+    const setCellBordersSpy = jest
+      .spyOn(command, 'setCellBorders')
+      .mockReturnValue(true);
+    const hex = { color: '#333333', selectedPosition: ['Top', 'Bottom'] };
+
+    const result = command.executeWithUserInput(
+      mockState,
+      dispatchMock,
+      viewMock,
+      hex
+    );
+
+    expect(setCellBordersSpy).toHaveBeenCalledWith(
+      mockState,
+      expect.any(Function),
+      ['Top', 'Bottom'],
+      '#333333'
+    );
+    expect(result).toBe(true);
+  });
 
 
   it('cancel closes popup if exists', () => {

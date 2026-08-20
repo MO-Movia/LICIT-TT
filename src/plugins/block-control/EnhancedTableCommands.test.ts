@@ -4,11 +4,19 @@
  */
 
 import {Schema} from 'prosemirror-model';
-import {EditorState, TextSelection, Transaction} from 'prosemirror-state';
+import {
+  EditorState,
+  TextSelection,
+  Transaction,
+} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import type {EditorView} from 'prosemirror-view';
 import type {SyntheticEvent} from 'react';
-import {EnhancedTableCommands, addNotesCommand} from './EnhancedTableCommands';
+import {
+  EnhancedTableCommands,
+  addNotesCommand,
+  removeEmptyNotesCommand,
+} from './EnhancedTableCommands';
 import {schema as basicSchema} from 'prosemirror-schema-basic';
 import {p} from 'jest-prosemirror';
 
@@ -41,18 +49,18 @@ const nodes = basicSchema.spec.nodes.append({
     parseDOM: [{tag: 'div'}],
   },
   table: {
-    content: 'table_row+',
+    content: 'tableRow+',
     tableRole: 'table',
     toDOM: () => ['table', 0],
     parseDOM: [{tag: 'table'}],
   },
-  table_row: {
-    content: 'table_cell+',
+  tableRow: {
+    content: 'tableCell+',
     tableRole: 'row',
     toDOM: () => ['tr', 0],
     parseDOM: [{tag: 'tr'}],
   },
-  table_cell: {
+  tableCell: {
     content: 'paragraph+',
     attrs: {background: {default: null}},
     tableRole: 'cell',
@@ -92,6 +100,11 @@ describe('EnhancedTableCommands', () => {
     );
   });
 
+  test('executeCustom returns tr', () => {
+    const mockTr = {} as Transaction;
+    expect(command.executeCustom(state, mockTr, 0, 0)).toBe(mockTr);
+  });
+
   test('execute inserts enhanced table figure', () => {
     const dispatch = jest.fn();
     const view = {focus: jest.fn()} as unknown as EditorView;
@@ -102,10 +115,28 @@ describe('EnhancedTableCommands', () => {
     expect(view.focus).toHaveBeenCalled();
   });
 
+  test('execute returns true without dispatch', () => {
+    expect(command.execute(state)).toBe(true);
+  });
+
+  test('execute dispatches unchanged transaction for non-table commands', () => {
+    const otherCommand = new EnhancedTableCommands('image');
+    const dispatch = jest.fn();
+
+    otherCommand.execute(state, dispatch);
+
+    expect(dispatch).toHaveBeenCalledWith(state.tr);
+  });
+
   test('insertEnhancedTableFigure returns unchanged tr when selection is not empty', () => {
-    const state = EditorState.create({schema});
+    const state = EditorState.create({
+      doc: schema.nodes.doc.create({}, [
+        schema.nodes.paragraph.create({}, schema.text('Hello')),
+      ]),
+      schema,
+    });
     let tr = state.tr;
-    const selection = TextSelection.create(state.doc, 0, 1);
+    const selection = TextSelection.create(state.doc, 1, 2);
     tr = tr.setSelection(selection); // works now
 
     const result = command.insertEnhancedTableFigure(tr, schema);
@@ -114,8 +145,19 @@ describe('EnhancedTableCommands', () => {
 
   test('createBlueTable creates a table node', () => {
     const tableNode = command.createBlueTable(schema, 2, 2);
-    expect(tableNode?.type.name).toBe(undefined);
-    expect(tableNode?.childCount).toBe(undefined);
+    expect(tableNode?.type.name).toBe('table');
+    expect(tableNode?.childCount).toBe(2);
+    expect(tableNode?.child(0).child(0).attrs.background).toBe('#abdbe3');
+    expect(tableNode?.child(1).child(0).attrs.background).toBeNull();
+  });
+
+  test('createBlueTable returns undefined when schema does not include table nodes', () => {
+    const basicOnlySchema = new Schema({
+      nodes: basicSchema.spec.nodes,
+      marks: basicSchema.spec.marks,
+    });
+
+    expect(command.createBlueTable(basicOnlySchema, 2, 2)).toBeUndefined();
   });
 
   test('waitForUserInput resolves to undefined', async () => {
@@ -208,5 +250,80 @@ describe('addNotesCommand', () => {
 
     const result = addNotesCommand(tr, schema, pos);
     expect(result).toBe(tr);
+  });
+});
+
+describe('removeEmptyNotesCommand', () => {
+  function createStateWithNotes(text: string): EditorState {
+    const tableNode = schema.nodes.table.createAndFill();
+    const bodyNode = schema.nodes.enhanced_table_figure_body.create(
+      {},
+      tableNode
+    );
+    const notesNode = schema.nodes.enhanced_table_figure_notes.create(
+      {},
+      schema.text(text)
+    );
+    const capcoNode = schema.nodes.enhanced_table_figure_capco.create(
+      {},
+      schema.text('Footer')
+    );
+    const figureNode = schema.nodes.enhanced_table_figure.create({}, [
+      bodyNode,
+      notesNode,
+      capcoNode,
+    ]);
+    const docNode = schema.nodes.doc.create({}, [figureNode]);
+    const state = EditorState.create({doc: docNode, schema});
+    const notesPos = bodyNode.nodeSize + 1;
+    const selection = TextSelection.create(state.doc, notesPos + 1);
+
+    return state.apply(state.tr.setSelection(selection));
+  }
+
+  test('returns false when selection is not empty', () => {
+    const state = EditorState.create({
+      doc: schema.nodes.doc.create({}, [
+        schema.nodes.paragraph.create({}, schema.text('Hello')),
+      ]),
+      schema,
+    });
+    const selectedState = state.apply(
+      state.tr.setSelection(TextSelection.create(state.doc, 1, 2))
+    );
+
+    expect(removeEmptyNotesCommand(selectedState, jest.fn())).toBe(false);
+  });
+
+  test('returns false when selection is not inside notes', () => {
+    const state = EditorState.create({
+      doc: schema.nodes.doc.create({}, [
+        schema.nodes.paragraph.create({}, schema.text('Hello')),
+      ]),
+      schema,
+    });
+
+    expect(removeEmptyNotesCommand(state, jest.fn())).toBe(false);
+  });
+
+  test('returns false when notes contain visible text', () => {
+    const state = createStateWithNotes('Keep me');
+
+    expect(removeEmptyNotesCommand(state, jest.fn())).toBe(false);
+  });
+
+  test('removes empty notes and dispatches the transaction', () => {
+    const state = createStateWithNotes('\u200B');
+    const dispatch = jest.fn();
+
+    expect(removeEmptyNotesCommand(state, dispatch)).toBe(true);
+    expect(dispatch).toHaveBeenCalled();
+    expect(dispatch.mock.calls[0][0].doc.firstChild?.childCount).toBe(2);
+  });
+
+  test('removes empty notes without dispatch', () => {
+    const state = createStateWithNotes('\u200B');
+
+    expect(removeEmptyNotesCommand(state)).toBe(true);
   });
 });

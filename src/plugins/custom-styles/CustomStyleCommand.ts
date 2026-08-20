@@ -1060,7 +1060,7 @@ function applyStyleEx<T extends Transaction | Transform>(
   tr: T,
   context: ApplyStyleContext
 ): T {
-  const { node, startPos, opt } = context;
+  const { startPos, opt } = context;
   let { endPos } = context;
   const loading = !styleProp;
   // Custom style is applied from menu the endpos is correct ie nodesize is calculating correct
@@ -1075,63 +1075,76 @@ function applyStyleEx<T extends Transaction | Transform>(
   }
 
   if (styleProp?.styles) {
-    const _commands = getCachedStyleCommands(styleName, styleProp.styles);
-    let newattrs = { ...node.attrs };
-
-    // Indent overriding not working on a paragraph where custom style is applied
-    if (!node?.attrs?.overriddenIndent) {
-      newattrs.indent = null;
-    }
-
-    newattrs.styleName = styleName;
-    if (styleProp.styles.indentPosition) {
-      newattrs.indentPosition = styleProp.styles.indentPosition;
-      newattrs.hangingIndent = true;
-    }
-
-    // Phase 1: compute newattrs from style commands (attrs only, no marks yet)
-    for (const element of _commands) {
-      newattrs = applyCommandAttrs(element, node, styleProp, newattrs);
-    }
-
-    // No-op check: if attrs are unchanged and marks already match, skip the
-    // entire remove-all-marks + re-add cycle. This is the biggest win on
-    // initial document load where nodes are already correctly styled.
-    const expectedMarks = getCachedMarksByStyleName(styleName, state.schema);
-    if (
-      shallowAttrsEqual(node.attrs, newattrs) &&
-      nodeAlreadyStyled(node, expectedMarks)
-    ) {
-      return tr;
-    }
-
-    // Phase 2: remove existing marks and re-add style marks
-    // Issue fix: applied link is missing after applying a custom style.
-    tr = removeAllMarksExceptLink(startPos, endPos, tr) as T;
-
-    for (const element of _commands) {
-      tr = executeStyleCommand(element, state, tr, startPos, endPos) as T;
-    }
-    const originalSelectionPos = state.selection?.from;
-    const storedmarks = expectedMarks;
-    newattrs.id = null === newattrs.id ? '' : null;
-
-    tr = _setNodeAttribute(state, tr, startPos, endPos, newattrs) as T;
-    (tr as Transaction).storedMarks = storedmarks;
-    if (state.selection && !state.selection.empty) {
-      const newFrom = tr?.mapping?.map(state.selection.from);
-      const newTo = tr?.mapping?.map(state.selection.to);
-      (tr as Transaction)?.setSelection(
-        TextSelection.create(tr.doc, newFrom, newTo)
-      );
-    } else if (originalSelectionPos) {
-      (tr as Transaction).setSelection(
-        TextSelection.create(tr.doc, originalSelectionPos)
-      );
-    }
+    tr = applystyleExt(styleProp, styleName, state, tr, context, endPos);
   } else {
     // No style — just remove marks (original behavior for clearing styles)
     tr = removeAllMarksExceptLink(startPos, endPos, tr) as T;
+  }
+  return tr;
+}
+
+function applystyleExt<T extends Transaction | Transform>(
+  styleProp: Style,
+  styleName: string,
+  state: EditorState,
+  tr: T,
+  context: ApplyStyleContext,
+  endPos: number
+): T {
+  const _commands = getCachedStyleCommands(styleName, styleProp.styles);
+  const { node, startPos } = context;
+  let newattrs = { ...node.attrs };
+
+  // Indent overriding not working on a paragraph where custom style is applied
+  if (!node?.attrs?.overriddenIndent) {
+    newattrs.indent = null;
+  }
+
+  newattrs.styleName = styleName;
+  if (styleProp.styles.indentPosition) {
+    newattrs.indentPosition = styleProp.styles.indentPosition;
+    newattrs.hangingIndent = true;
+  }
+
+  // Phase 1: compute newattrs from style commands (attrs only, no marks yet)
+  for (const element of _commands) {
+    newattrs = applyCommandAttrs(element, node, styleProp, newattrs);
+  }
+
+  // No-op check: if attrs are unchanged and marks already match, skip the
+  // entire remove-all-marks + re-add cycle. This is the biggest win on
+  // initial document load where nodes are already correctly styled.
+  const expectedMarks = getCachedMarksByStyleName(styleName, state.schema);
+  if (
+    shallowAttrsEqual(node.attrs, newattrs) &&
+    nodeAlreadyStyled(node, expectedMarks)
+  ) {
+    return tr;
+  }
+
+  // Phase 2: remove existing marks and re-add style marks
+  // Issue fix: applied link is missing after applying a custom style.
+  tr = removeAllMarksExceptLink(startPos, endPos, tr) as T;
+
+  for (const element of _commands) {
+    tr = executeStyleCommand(element, state, tr, startPos, endPos) as T;
+  }
+  const originalSelectionPos = state.selection?.from;
+  const storedmarks = expectedMarks;
+  newattrs.id = null === newattrs.id ? '' : null;
+
+  tr = _setNodeAttribute(state, tr, startPos, endPos, newattrs) as T;
+  (tr as Transaction).storedMarks = storedmarks;
+  if (state.selection && !state.selection.empty) {
+    const newFrom = tr?.mapping?.map(state.selection.from);
+    const newTo = tr?.mapping?.map(state.selection.to);
+    (tr as Transaction)?.setSelection(
+      TextSelection.create(tr.doc, newFrom, newTo)
+    );
+  } else if (originalSelectionPos) {
+    (tr as Transaction).setSelection(
+      TextSelection.create(tr.doc, originalSelectionPos)
+    );
   }
   return tr;
 }

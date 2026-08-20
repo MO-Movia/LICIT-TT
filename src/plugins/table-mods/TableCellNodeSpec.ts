@@ -3,7 +3,7 @@
  * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
  */
 
-import {DOMOutputSpec, Node, NodeSpec} from 'prosemirror-model';
+import { DOMOutputSpec, Node, NodeSpec } from 'prosemirror-model';
 
 const VALID_VERTICAL_ALIGNMENTS = new Set(['top', 'middle', 'bottom']);
 
@@ -36,7 +36,7 @@ const appendInlineStyle = (style: unknown, declaration: string): string => {
 
 export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
   ...nodespec,
-  attrs: {...nodespec.attrs, fullSize: {default: 0}, vAlign: {default: 'top'}},
+  attrs: { ...nodespec.attrs, fullSize: { default: 0 }, vAlign: { default: 'top' } },
   parseDOM: [
     {
       tag: 'td',

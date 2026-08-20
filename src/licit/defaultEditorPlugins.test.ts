@@ -18,6 +18,7 @@ import { LandscapePlugin } from './plugins/LandscapePlugin';
 import ListPasteNormalizerPlugin from './plugins/listPasteNormalizerPlugin';
 import createTableRowResizingPlugin from './plugins/createTableRowResizingPlugin';
 import TableCellStyleInheritancePlugin from './plugins/tableCellStyleInheritancePlugin';
+import { createPendingTableMarksPlugin } from './extensions/tableEx/tableStyle';
 
 jest.mock('./plugins/contentPlaceholderPlugin', () => jest.fn(() => new Plugin({})));
 jest.mock('./plugins/cursorPlaceholderPlugin', () => jest.fn(() => new Plugin({})));
@@ -37,6 +38,9 @@ jest.mock('./plugins/listPasteNormalizerPlugin', () =>
 jest.mock('./plugins/tableCellStyleInheritancePlugin', () =>
     jest.fn(() => new Plugin({}))
 );
+jest.mock('./extensions/tableEx/tableStyle', () => ({
+    createPendingTableMarksPlugin: jest.fn(() => new Plugin({})),
+}));
 jest.mock('./buildInputRules', () => jest.fn(() => new Plugin({})));
 jest.mock('./createEditorKeyMap', () => jest.fn(() => ({})));
 jest.mock('../core', () => ({
@@ -62,7 +66,7 @@ describe('DefaultEditorPlugins', () => {
         const editorPlugins = new DefaultEditorPlugins(schema);
         const plugins = editorPlugins.get();
 
-        expect(plugins).toHaveLength(12);
+        expect(plugins).toHaveLength(13);
         expect(ContentPlaceholderPlugin).toHaveBeenCalledTimes(1);
         expect(CursorPlaceholderPlugin).toHaveBeenCalledTimes(1);
         expect(EditorPageLayoutPlugin).toHaveBeenCalledTimes(1);
@@ -73,6 +77,7 @@ describe('DefaultEditorPlugins', () => {
         expect(LandscapePlugin).toHaveBeenCalledTimes(1);
         expect(ListPasteNormalizerPlugin).toHaveBeenCalledTimes(1);
         expect(TableCellStyleInheritancePlugin).toHaveBeenCalledTimes(1);
+        expect(createPendingTableMarksPlugin).toHaveBeenCalledTimes(1);
         expect(buildInputRules).toHaveBeenCalledWith(schema);
         expect(setPluginKey).toHaveBeenCalledWith(expect.any(Plugin), 'InputRules');
         expect(setPluginKey).toHaveBeenCalledWith(expect.any(Plugin), 'EditorKeyMap');
