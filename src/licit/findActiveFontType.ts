@@ -22,7 +22,7 @@ function normalizeFontFamily(value: unknown): string | null {
   const quoted = /^(?:"([^"]+)"|'([^']+)')/.exec(normalized);
   return (quoted?.[1] ?? quoted?.[2] ?? normalized.split(',')[0])
     .trim()
-    .replace(/^(?:"|')|(?:"|')$/g, '');
+    .replace(/^["']|["']$/g, '');
 }
 
 function findCellFontFamily(state: EditorState): string | null {

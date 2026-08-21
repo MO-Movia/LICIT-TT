@@ -30,7 +30,9 @@ const createState = (selection, storedMarks = []) => {
     doc: schema.node('doc', null, [
       schema.node('paragraph', null, [schema.text('Hello World')]),
     ]),
-    selection,
+    selection: selection.$from
+      ? selection
+      : {...selection, $from: {depth: 0}},
     tr: {storedMarks},
     storedMarks,
   } as unknown as EditorState;
@@ -93,6 +95,7 @@ describe('findActiveFontSize', () => {
     const selection = {
       ...EditorState.create({doc}).selection,
       empty: true,
+      $from: {depth: 0},
       $cursor: {marks: jest.fn()},
     };
     const state = {
@@ -118,7 +121,11 @@ describe('findActiveFontSize', () => {
       schema.node('paragraph', null, [schema.text('Hello, world!')]),
     ]);
 
-    const selection = {...EditorState.create({doc}).selection, empty: false};
+    const selection = {
+      ...EditorState.create({doc}).selection,
+      empty: false,
+      $from: {depth: 0},
+    };
     const state = {
       schema: {
         marks: {},
@@ -153,7 +160,11 @@ describe('findActiveFontSize', () => {
       schema.node('paragraph', null, [schema.text('Hello, world!')]),
     ]);
 
-    const selection = {...EditorState.create({doc}).selection, empty: false};
+    const selection = {
+      ...EditorState.create({doc}).selection,
+      empty: false,
+      $from: {depth: 0},
+    };
     const state = {
       schema: {
         marks: {

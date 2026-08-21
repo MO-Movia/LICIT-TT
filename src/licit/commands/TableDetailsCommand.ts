@@ -211,6 +211,11 @@ type CssNumericValue = {
   unit: string;
 };
 
+type ColumnWidthUpdate = {
+  cell: ProseMirrorNode;
+  colwidth: number[];
+};
+
 const CELL_LEVEL_TYPOGRAPHY_KEYS = new Set<keyof TypographyConfig>([
   'backgroundColor',
   'verticalAlign',
@@ -549,8 +554,12 @@ class TableDetailsCommand extends UICommand {
     const selectedCell = nodes.cell ?? selectedCells[0] ?? null;
     const cellAttrs = selectedCell?.node.attrs ?? {};
     const computedStyle = cellDOM ? getComputedStyle(cellDOM) : null;
+    let typographyCells = selectedCells;
+    if (!typographyCells.length && selectedCell) {
+      typographyCells = [selectedCell];
+    }
     const typographyResolution = this.getSelectedCellsTypography(
-      selectedCells.length ? selectedCells : selectedCell ? [selectedCell] : [],
+      typographyCells,
       computedStyle
     );
 
@@ -703,12 +712,10 @@ class TableDetailsCommand extends UICommand {
       underline: this.isUnderlined(textDecoration),
       textColor:
         this.toColorValue(attrs.textColor) ??
-        this.toStringValue(computedStyle?.color) ??
         DEFAULT_TYPOGRAPHY.textColor,
       backgroundColor:
         this.normalizeTransparentColor(
-          this.toColorValue(attrs.backgroundColor) ??
-          this.toStringValue(computedStyle?.backgroundColor)
+          this.toColorValue(attrs.backgroundColor)
         ) ?? DEFAULT_TYPOGRAPHY.backgroundColor,
       letterSpacing:
         this.toStringValue(attrs.letterSpacing) ??
@@ -753,115 +760,137 @@ class TableDetailsCommand extends UICommand {
       return true;
     });
 
-    if (textNodes.length) {
-      const stringValues: Array<{
-        key: 'fontFamily' | 'fontSize' | 'textColor' | 'letterSpacing';
-        values: string[];
-        same?: (first: string, second: string) => boolean;
-      }> = [
-        {
-          key: 'fontFamily',
-          values: textNodes.map((node) =>
-            this.normalizeFontFamily(
-              this.toStringValue(this.getNodeMark(node, MARK_FONT_TYPE)?.attrs.name)
-            ) ?? fallback.fontFamily
-          ),
-          same: (first, second) => this.sameNormalizedString(first, second),
-        },
-        {
-          key: 'fontSize',
-          values: textNodes.map((node) =>
-            this.normalizeFontSizeForDialog(
-              this.toMarkedFontSize(
-                this.getNodeMark(node, MARK_FONT_SIZE)?.attrs.pt
-              )
-            ) ?? fallback.fontSize
-          ),
-          same: (first, second) => this.sameCssNumericValue(first, second),
-        },
-        {
-          key: 'textColor',
-          values: textNodes.map((node) =>
-            this.toStringValue(
-              this.getNodeMark(node, MARK_TEXT_COLOR)?.attrs.color
-            ) ?? fallback.textColor
-          ),
-          same: (first, second) => this.sameColorValue(first, second),
-        },
-        {
-          key: 'letterSpacing',
-          values: textNodes.map((node) =>
-            this.toStringValue(
-              this.getNodeMark(node, MARK_LETTER_SPACING)?.attrs.letterSpacing
-            ) ?? fallback.letterSpacing
-          ),
-          same: (first, second) => this.sameCssNumericValue(first, second),
-        },
-      ];
-
-      for (const {key, values, same} of stringValues) {
-        const value = this.getUniformStringValue(values, same);
-        if (value === null) {
-          mixed[key] = true;
-          typography[key] = '';
-        } else {
-          typography[key] = value;
-        }
-      }
-
-      for (const [key, markName] of [
-        ['bold', MARK_STRONG],
-        ['italic', MARK_EM],
-        ['underline', MARK_UNDERLINE],
-      ] as const) {
-        const values = textNodes.map(
-          (node) => fallback[key] || Boolean(this.getNodeMark(node, markName))
-        );
-        if (values.some((value) => value !== values[0])) {
-          mixed[key] = true;
-          typography[key] = false;
-        } else {
-          typography[key] = values[0] ?? fallback[key];
-        }
-      }
-    }
-
-    if (textBlocks.length) {
-      const textAlignments = textBlocks.map((node) =>
-        this.toTextAlign(
-          this.toStringValue(node.attrs.align) ??
-          this.toStringValue(node.attrs.textAlign) ??
-          this.toStringValue(node.attrs.overriddenAlignValue),
-          fallback.textAlign
-        )
-      );
-      const lineHeights = textBlocks.map((node) =>
-        this.toStringValue(node.attrs.lineSpacing) ??
-        this.toStringValue(node.attrs.lineHeight) ??
-        this.toStringValue(node.attrs.overriddenLineSpacingValue) ??
-        fallback.lineHeight
-      );
-      const textAlignment = this.getUniformStringValue(textAlignments);
-      const lineHeight = this.getUniformStringValue(
-        lineHeights,
-        (first, second) => this.sameCssNumericValue(first, second)
-      );
-
-      if (textAlignment === null) {
-        mixed.textAlign = true;
-        typography.textAlign = '';
-      } else {
-        typography.textAlign = this.toTextAlign(textAlignment, '');
-      }
-      if (lineHeight === null) {
-        mixed.lineHeight = true;
-        typography.lineHeight = '';
-      } else {
-        typography.lineHeight = lineHeight;
-      }
-    }
+    this.resolveTextNodeTypography(textNodes, fallback, typography, mixed);
+    this.resolveTextBlockTypography(textBlocks, fallback, typography, mixed);
 
     return {typography, mixed};
+  }
+
+  resolveTextNodeTypography(
+    textNodes: ProseMirrorNode[],
+    fallback: TypographyConfig,
+    typography: TypographyConfig,
+    mixed: Partial<Record<keyof TypographyConfig, boolean>>
+  ): void {
+    if (!textNodes.length) {
+      return;
+    }
+
+    const stringValues: Array<{
+      key: 'fontFamily' | 'fontSize' | 'textColor' | 'letterSpacing';
+      values: string[];
+      same?: (first: string, second: string) => boolean;
+    }> = [
+      {
+        key: 'fontFamily',
+        values: textNodes.map((node) =>
+          this.normalizeFontFamily(
+            this.toStringValue(this.getNodeMark(node, MARK_FONT_TYPE)?.attrs.name)
+          ) ?? fallback.fontFamily
+        ),
+        same: (first, second) => this.sameNormalizedString(first, second),
+      },
+      {
+        key: 'fontSize',
+        values: textNodes.map((node) =>
+          this.normalizeFontSizeForDialog(
+            this.toMarkedFontSize(
+              this.getNodeMark(node, MARK_FONT_SIZE)?.attrs.pt
+            )
+          ) ?? fallback.fontSize
+        ),
+        same: (first, second) => this.sameCssNumericValue(first, second),
+      },
+      {
+        key: 'textColor',
+        values: textNodes.map((node) =>
+          this.toStringValue(
+            this.getNodeMark(node, MARK_TEXT_COLOR)?.attrs.color
+          ) ?? fallback.textColor
+        ),
+        same: (first, second) => this.sameColorValue(first, second),
+      },
+      {
+        key: 'letterSpacing',
+        values: textNodes.map((node) =>
+          this.toStringValue(
+            this.getNodeMark(node, MARK_LETTER_SPACING)?.attrs.letterSpacing
+          ) ?? fallback.letterSpacing
+        ),
+        same: (first, second) => this.sameCssNumericValue(first, second),
+      },
+    ];
+
+    for (const {key, values, same} of stringValues) {
+      const value = this.getUniformStringValue(values, same);
+      if (value === null) {
+        mixed[key] = true;
+        typography[key] = '';
+      } else {
+        typography[key] = value;
+      }
+    }
+
+    for (const [key, markName] of [
+      ['bold', MARK_STRONG],
+      ['italic', MARK_EM],
+      ['underline', MARK_UNDERLINE],
+    ] as const) {
+      const values = textNodes.map(
+        (node) => fallback[key] || Boolean(this.getNodeMark(node, markName))
+      );
+      const isMixed = values.some((value) => value !== values[0]);
+      if (isMixed) {
+        mixed[key] = true;
+        typography[key] = false;
+      } else {
+        typography[key] = values[0] ?? fallback[key];
+      }
+    }
+  }
+
+  resolveTextBlockTypography(
+    textBlocks: ProseMirrorNode[],
+    fallback: TypographyConfig,
+    typography: TypographyConfig,
+    mixed: Partial<Record<keyof TypographyConfig, boolean>>
+  ): void {
+    if (!textBlocks.length) {
+      return;
+    }
+
+    const textAlignments = textBlocks.map((node) =>
+      this.toTextAlign(
+        this.toStringValue(node.attrs.align) ??
+        this.toStringValue(node.attrs.textAlign) ??
+        this.toStringValue(node.attrs.overriddenAlignValue),
+        fallback.textAlign
+      )
+    );
+    const lineHeights = textBlocks.map((node) =>
+      this.toStringValue(node.attrs.lineSpacing) ??
+      this.toStringValue(node.attrs.lineHeight) ??
+      this.toStringValue(node.attrs.overriddenLineSpacingValue) ??
+      fallback.lineHeight
+    );
+    const textAlignment = this.getUniformStringValue(textAlignments);
+    const lineHeight = this.getUniformStringValue(
+      lineHeights,
+      (first, second) => this.sameCssNumericValue(first, second)
+    );
+
+    if (textAlignment === null) {
+      mixed.textAlign = true;
+      typography.textAlign = '';
+    } else {
+      typography.textAlign = this.toTextAlign(textAlignment, '');
+    }
+    if (lineHeight === null) {
+      mixed.lineHeight = true;
+      typography.lineHeight = '';
+    } else {
+      typography.lineHeight = lineHeight;
+    }
   }
 
   getNodeMark(node: ProseMirrorNode, markName: string) {
@@ -1144,10 +1173,28 @@ class TableDetailsCommand extends UICommand {
       return tr;
     }
 
-    const cellUpdates = new Map<
-      number,
-      {cell: ProseMirrorNode; colwidth: number[]}
-    >();
+    const cellUpdates = new Map<number, ColumnWidthUpdate>();
+
+    this.collectColumnWidthUpdates(
+      tr,
+      tableRef,
+      tableMap,
+      selectedCellRect,
+      selectedColumnWidths,
+      cellUpdates
+    );
+
+    return this.applyColumnWidthUpdates(tr, cellUpdates);
+  }
+
+  collectColumnWidthUpdates(
+    tr: Transaction,
+    tableRef: ParentNodeRef,
+    tableMap: TableMap,
+    selectedCellRect: CellRect,
+    selectedColumnWidths: number[],
+    cellUpdates: Map<number, ColumnWidthUpdate>
+  ): void {
 
     for (
       let column = selectedCellRect.left;
@@ -1159,29 +1206,13 @@ class TableDetailsCommand extends UICommand {
       for (let row = 0; row < tableMap.height; row++) {
         const mappedCellPos = tableMap.map[row * tableMap.width + column];
         const absoluteCellPos = tableRef.start + mappedCellPos;
-        let update = cellUpdates.get(absoluteCellPos);
-
+        const update = this.getColumnWidthUpdate(
+          tr,
+          absoluteCellPos,
+          cellUpdates
+        );
         if (!update) {
-          const currentCell = tr.doc.nodeAt(absoluteCellPos);
-          if (!currentCell) {
-            continue;
-          }
-
-          const colspan = Number(currentCell.attrs.colspan) || 1;
-          const currentColwidth = Array.isArray(currentCell.attrs.colwidth)
-            ? currentCell.attrs.colwidth
-            : [];
-          update = {
-            cell: currentCell,
-            colwidth: Array.from({length: colspan}, (_, index) => {
-              const currentWidth = currentColwidth[index];
-              return typeof currentWidth === 'number' &&
-                Number.isFinite(currentWidth)
-                ? currentWidth
-                : 0;
-            }),
-          };
-          cellUpdates.set(absoluteCellPos, update);
+          continue;
         }
 
         const mappedCellRect = tableMap.findCell(mappedCellPos);
@@ -1191,7 +1222,44 @@ class TableDetailsCommand extends UICommand {
         }
       }
     }
+  }
 
+  getColumnWidthUpdate(
+    tr: Transaction,
+    absoluteCellPos: number,
+    cellUpdates: Map<number, ColumnWidthUpdate>
+  ): ColumnWidthUpdate | null {
+    const existing = cellUpdates.get(absoluteCellPos);
+    if (existing) {
+      return existing;
+    }
+
+    const currentCell = tr.doc.nodeAt(absoluteCellPos);
+    if (!currentCell) {
+      return null;
+    }
+
+    const colspan = Number(currentCell.attrs.colspan) || 1;
+    const currentColwidth = Array.isArray(currentCell.attrs.colwidth)
+      ? currentCell.attrs.colwidth
+      : [];
+    const update = {
+      cell: currentCell,
+      colwidth: Array.from({length: colspan}, (_, index) => {
+        const currentWidth = currentColwidth[index];
+        return typeof currentWidth === 'number' && Number.isFinite(currentWidth)
+          ? currentWidth
+          : 0;
+      }),
+    };
+    cellUpdates.set(absoluteCellPos, update);
+    return update;
+  }
+
+  applyColumnWidthUpdates(
+    tr: Transaction,
+    cellUpdates: Map<number, ColumnWidthUpdate>
+  ): Transaction {
     for (const [absoluteCellPos, update] of cellUpdates) {
       const currentColwidth = update.cell.attrs.colwidth;
       const nextColwidth = this.sameColumnWidths(
@@ -1393,141 +1461,166 @@ class TableDetailsCommand extends UICommand {
     result: TableEditorResult,
     initialData?: TableEditorDialogData
   ): TableEditorApplyChanges {
-    const changedTypography = result.changed?.typography;
-    const changedLayout = result.changed?.layout;
-    const changedTable = result.changed?.table;
     if (result.changed) {
-      return {
-        fontFamily: Boolean(changedTypography?.fontFamily),
-        fontSize: Boolean(changedTypography?.fontSize),
-        bold: Boolean(changedTypography?.bold),
-        italic: Boolean(changedTypography?.italic),
-        underline: Boolean(changedTypography?.underline),
-        textColor: Boolean(changedTypography?.textColor),
-        backgroundColor: Boolean(changedTypography?.backgroundColor),
-        letterSpacing: Boolean(changedTypography?.letterSpacing),
-        lineHeight: Boolean(changedTypography?.lineHeight),
-        textAlign: Boolean(changedTypography?.textAlign),
-        verticalAlign: Boolean(changedTypography?.verticalAlign),
-        paddingTop: Boolean(changedLayout?.paddingTop),
-        paddingRight: Boolean(changedLayout?.paddingRight),
-        paddingBottom: Boolean(changedLayout?.paddingBottom),
-        paddingLeft: Boolean(changedLayout?.paddingLeft),
-        paddingLocked: Boolean(changedLayout?.paddingLocked),
-        tableHeight: Boolean(changedTable?.tableHeight),
-        selectedCellWidth: Boolean(changedTable?.selectedCellWidth),
-        selectedCellHeight: Boolean(changedTable?.selectedCellHeight),
-      };
+      return this.getExplicitApplyChanges(result.changed);
     }
 
+    return this.getInferredApplyChanges(result, initialData);
+  }
+
+  getExplicitApplyChanges(
+    changed: TableEditorChangedFields
+  ): TableEditorApplyChanges {
+    const typography = changed.typography;
+    const layout = changed.layout;
+    const table = changed.table;
+    return {
+      fontFamily: Boolean(typography?.fontFamily),
+      fontSize: Boolean(typography?.fontSize),
+      bold: Boolean(typography?.bold),
+      italic: Boolean(typography?.italic),
+      underline: Boolean(typography?.underline),
+      textColor: Boolean(typography?.textColor),
+      backgroundColor: Boolean(typography?.backgroundColor),
+      letterSpacing: Boolean(typography?.letterSpacing),
+      lineHeight: Boolean(typography?.lineHeight),
+      textAlign: Boolean(typography?.textAlign),
+      verticalAlign: Boolean(typography?.verticalAlign),
+      paddingTop: Boolean(layout?.paddingTop),
+      paddingRight: Boolean(layout?.paddingRight),
+      paddingBottom: Boolean(layout?.paddingBottom),
+      paddingLeft: Boolean(layout?.paddingLeft),
+      paddingLocked: Boolean(layout?.paddingLocked),
+      tableHeight: Boolean(table?.tableHeight),
+      selectedCellWidth: Boolean(table?.selectedCellWidth),
+      selectedCellHeight: Boolean(table?.selectedCellHeight),
+    };
+  }
+
+  getInferredApplyChanges(
+    result: TableEditorResult,
+    initialData?: TableEditorDialogData
+  ): TableEditorApplyChanges {
     const initialTypography = initialData?.typography;
     const initialLayout = initialData?.layout;
     const initialTable = initialData?.table;
 
     return {
-      fontFamily: initialTypography
-        ? !this.sameNormalizedString(
+      fontFamily: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameNormalizedString(
           this.normalizeInheritedValue(result.typography.fontFamily),
-          this.normalizeInheritedValue(initialTypography.fontFamily)
+          this.normalizeInheritedValue(initial.fontFamily)
         )
-        : true,
-      fontSize: initialTypography
-        ? !this.sameCssNumericValue(
+      ),
+      fontSize: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameCssNumericValue(
           result.typography.fontSize,
-          initialTypography.fontSize
+          initial.fontSize
         )
-        : true,
-      bold: initialTypography
-        ? result.typography.bold !== initialTypography.bold
-        : true,
-      italic: initialTypography
-        ? result.typography.italic !== initialTypography.italic
-        : true,
-      underline: initialTypography
-        ? result.typography.underline !== initialTypography.underline
-        : true,
-      textColor: initialTypography
-        ? !this.sameColorValue(
+      ),
+      bold: this.hasInitialValueChanged(
+        initialTypography,
+        (initial) => result.typography.bold === initial.bold
+      ),
+      italic: this.hasInitialValueChanged(
+        initialTypography,
+        (initial) => result.typography.italic === initial.italic
+      ),
+      underline: this.hasInitialValueChanged(
+        initialTypography,
+        (initial) => result.typography.underline === initial.underline
+      ),
+      textColor: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameColorValue(
           result.typography.textColor,
-          initialTypography.textColor
+          initial.textColor
         )
-        : true,
-      backgroundColor: initialTypography
-        ? !this.sameColorValue(
+      ),
+      backgroundColor: this.hasInitialValueChanged(
+        initialTypography,
+        (initial) => this.sameColorValue(
           this.normalizeTransparentResult(result.typography.backgroundColor),
-          this.normalizeTransparentResult(initialTypography.backgroundColor)
+          this.normalizeTransparentResult(initial.backgroundColor)
         )
-        : true,
-      letterSpacing: initialTypography
-        ? !this.sameCssNumericValue(
+      ),
+      letterSpacing: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameCssNumericValue(
           result.typography.letterSpacing,
-          initialTypography.letterSpacing
+          initial.letterSpacing
         )
-        : true,
-      lineHeight: initialTypography
-        ? !this.sameCssNumericValue(
+      ),
+      lineHeight: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameCssNumericValue(
           result.typography.lineHeight,
-          initialTypography.lineHeight
+          initial.lineHeight
         )
-        : true,
-      textAlign: initialTypography
-        ? !this.sameNormalizedString(
+      ),
+      textAlign: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameNormalizedString(
           result.typography.textAlign,
-          initialTypography.textAlign
+          initial.textAlign
         )
-        : true,
-      verticalAlign: initialTypography
-        ? !this.sameNormalizedString(
+      ),
+      verticalAlign: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameNormalizedString(
           result.typography.verticalAlign,
-          initialTypography.verticalAlign
+          initial.verticalAlign
         )
-        : true,
-      paddingTop: initialLayout
-        ? !this.samePixelDimensionValue(
+      ),
+      paddingTop: this.hasInitialValueChanged(initialLayout, (initial) =>
+        this.samePixelDimensionValue(
           result.layout.paddingTop,
-          initialLayout.paddingTop
+          initial.paddingTop
         )
-        : true,
-      paddingRight: initialLayout
-        ? !this.samePixelDimensionValue(
+      ),
+      paddingRight: this.hasInitialValueChanged(initialLayout, (initial) =>
+        this.samePixelDimensionValue(
           result.layout.paddingRight,
-          initialLayout.paddingRight
+          initial.paddingRight
         )
-        : true,
-      paddingBottom: initialLayout
-        ? !this.samePixelDimensionValue(
+      ),
+      paddingBottom: this.hasInitialValueChanged(initialLayout, (initial) =>
+        this.samePixelDimensionValue(
           result.layout.paddingBottom,
-          initialLayout.paddingBottom
+          initial.paddingBottom
         )
-        : true,
-      paddingLeft: initialLayout
-        ? !this.samePixelDimensionValue(
+      ),
+      paddingLeft: this.hasInitialValueChanged(initialLayout, (initial) =>
+        this.samePixelDimensionValue(
           result.layout.paddingLeft,
-          initialLayout.paddingLeft
+          initial.paddingLeft
         )
-        : true,
-      paddingLocked: initialLayout
-        ? result.layout.paddingLocked !== initialLayout.paddingLocked
-        : true,
-      tableHeight: initialTable
-        ? !this.samePixelDimensionValue(
+      ),
+      paddingLocked: this.hasInitialValueChanged(
+        initialLayout,
+        (initial) => result.layout.paddingLocked === initial.paddingLocked
+      ),
+      tableHeight: this.hasInitialValueChanged(initialTable, (initial) =>
+        this.samePixelDimensionValue(
           result.table.tableHeight,
-          initialTable.tableHeight
+          initial.tableHeight
         )
-        : true,
-      selectedCellWidth: initialTable
-        ? !this.samePixelDimensionValue(
+      ),
+      selectedCellWidth: this.hasInitialValueChanged(initialTable, (initial) =>
+        this.samePixelDimensionValue(
           result.table.selectedCellWidth,
-          initialTable.selectedCellWidth
+          initial.selectedCellWidth
         )
-        : true,
-      selectedCellHeight: initialTable
-        ? !this.samePixelDimensionValue(
+      ),
+      selectedCellHeight: this.hasInitialValueChanged(initialTable, (initial) =>
+        this.samePixelDimensionValue(
           result.table.selectedCellHeight,
-          initialTable.selectedCellHeight
+          initial.selectedCellHeight
         )
-        : true,
+      ),
     };
+  }
+
+  hasInitialValueChanged<T>(
+    initialValue: T | undefined,
+    isSame: (initialValue: T) => boolean
+  ): boolean {
+    return initialValue === undefined || !isSame(initialValue);
   }
 
   sameNormalizedString(
@@ -1775,20 +1868,7 @@ class TableDetailsCommand extends UICommand {
       nextAttrs.fontSize = fontSize;
       nextAttrs.fontSizeOverridden = Boolean(fontSize);
     }
-    if (changes.bold) {
-      nextAttrs.fontWeight = result.typography.bold ? 'bold' : 'normal';
-      nextAttrs.fontWeightOverridden = true;
-    }
-    if (changes.italic) {
-      nextAttrs.fontStyle = result.typography.italic ? 'italic' : 'normal';
-      nextAttrs.fontStyleOverridden = true;
-    }
-    if (changes.underline) {
-      nextAttrs.textDecoration = result.typography.underline
-        ? 'underline'
-        : 'none';
-      nextAttrs.textDecorationOverridden = true;
-    }
+    this.applyChangedCellTextStyleAttrs(nextAttrs, result, changes);
     if (changes.textColor) {
       const textColor = this.normalizeString(result.typography.textColor);
       nextAttrs.textColor = textColor;
@@ -1820,6 +1900,27 @@ class TableDetailsCommand extends UICommand {
       const verticalAlign = this.normalizeString(result.typography.verticalAlign);
       nextAttrs.verticalAlign = verticalAlign;
       nextAttrs.verticalAlignOverridden = Boolean(verticalAlign);
+    }
+  }
+
+  applyChangedCellTextStyleAttrs(
+    nextAttrs: Record<string, unknown>,
+    result: TableEditorResult,
+    changes: TableEditorApplyChanges
+  ): void {
+    if (changes.bold) {
+      nextAttrs.fontWeight = result.typography.bold ? 'bold' : 'normal';
+      nextAttrs.fontWeightOverridden = true;
+    }
+    if (changes.italic) {
+      nextAttrs.fontStyle = result.typography.italic ? 'italic' : 'normal';
+      nextAttrs.fontStyleOverridden = true;
+    }
+    if (changes.underline) {
+      nextAttrs.textDecoration = result.typography.underline
+        ? 'underline'
+        : 'none';
+      nextAttrs.textDecorationOverridden = true;
     }
   }
 

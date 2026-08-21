@@ -302,6 +302,11 @@ describe('TableColorCommand border attributes', () => {
   let editor: Editor;
 
   beforeEach(() => {
+    const actualSetCellAttr = jest.requireActual<
+      typeof import('prosemirror-tables')
+    >('prosemirror-tables').setCellAttr;
+    (setCellAttr as jest.Mock).mockImplementation(actualSetCellAttr);
+
     editor = new Editor({
       extensions: [
         StarterKit,
@@ -421,12 +426,11 @@ describe('TableColorCommand border attributes', () => {
     }
 
     expect(editor.getHTML()).not.toContain('[object Object]');
-    expect(editor.getHTML()).toContain('border-top-color: #ff0000');
+    expect(editor.getHTML()).toContain('border-top-color: rgb(255, 0, 0)');
   });
 
   it('renders all border sides on a freshly inserted table cell', () => {
     editor.commands.setContent('<p>Before table</p>');
-    editor.commands.focus('end');
     expect(editor.commands.insertTable({rows: 2, cols: 2})).toBe(true);
     expect(editor.commands.setCellAttribute('verticalAlign', 'top')).toBe(true);
 
@@ -452,10 +456,10 @@ describe('TableColorCommand border attributes', () => {
     });
 
     const html = editor.getHTML();
-    expect(html).toContain('border-top-color: #ff0000');
-    expect(html).toContain('border-right-color: #ff0000');
-    expect(html).toContain('border-bottom-color: #ff0000');
-    expect(html).toContain('border-left-color: #ff0000');
+    expect(html).toContain('border-top-color: rgb(255, 0, 0)');
+    expect(html).toContain('border-right-color: rgb(255, 0, 0)');
+    expect(html).toContain('border-bottom-color: rgb(255, 0, 0)');
+    expect(html).toContain('border-left-color: rgb(255, 0, 0)');
     expect(html).toContain('vertical-align: top');
     expect(html).not.toContain('#ff0000vertical-align');
   });

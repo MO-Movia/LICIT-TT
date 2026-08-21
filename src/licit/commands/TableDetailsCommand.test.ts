@@ -867,7 +867,7 @@ describe('TableDetailsCommand', () => {
     }));
     expect(updatedMarks).toEqual(
       expect.arrayContaining([
-        { type: 'mark-font-size', attrs: { pt: 12, overridden: true } },
+        { type: 'mark-font-size', attrs: { pt: 9, overridden: true } },
         { type: 'mark-font-type', attrs: { name: 'Arial', overridden: true } },
         { type: 'mark-text-color', attrs: { color: '#111111', overridden: true } },
         {
