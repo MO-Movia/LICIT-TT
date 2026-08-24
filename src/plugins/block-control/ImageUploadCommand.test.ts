@@ -79,8 +79,15 @@ describe('ImageSourceCommand', () => {
           toDOM: () => ['div', {class: 'enhanced-figure'}, 0],
           parseDOM: [{tag: 'div.enhanced-figure'}],
         },
+        enhanced_table_figure_image: {
+          content: 'inline?',
+          group: 'block',
+          isolating: true,
+          toDOM: () => ['div', 0],
+          parseDOM: [{tag: 'div'}],
+        },
         enhanced_table_figure_body: {
-          content: 'paragraph',
+          content: 'enhanced_table_figure_image',
           toDOM: () => ['div', {class: 'figure-body'}, 0],
           parseDOM: [{tag: 'div.figure-body'}],
         },
@@ -497,8 +504,14 @@ describe('ImageSourceCommand', () => {
             toDOM: () => ['div', 0],
             parseDOM: [{tag: 'div'}],
           },
+          enhanced_table_figure_image: {
+            content: 'inline?',
+            group: 'block',
+            toDOM: () => ['div', 0],
+            parseDOM: [{tag: 'div'}],
+          },
           enhanced_table_figure_body: {
-            content: 'text*',
+            content: 'enhanced_table_figure_image',
             toDOM: () => ['div', 0],
             parseDOM: [{tag: 'div'}],
           },
@@ -562,8 +575,14 @@ describe('ImageSourceCommand', () => {
             toDOM: () => ['div', 0],
             parseDOM: [{tag: 'div'}],
           },
+          enhanced_table_figure_image: {
+            content: 'inline?',
+            group: 'block',
+            toDOM: () => ['div', 0],
+            parseDOM: [{tag: 'div'}],
+          },
           enhanced_table_figure_body: {
-            content: 'paragraph',
+            content: 'enhanced_table_figure_image',
             toDOM: () => ['div', 0],
             parseDOM: [{tag: 'div'}],
           },

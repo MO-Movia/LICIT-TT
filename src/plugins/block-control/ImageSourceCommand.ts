@@ -14,6 +14,7 @@ import {
 } from './CursorPlaceholderPlugin';
 import { UICommand } from '../../core';
 import { createPopUp, PopUpHandle } from '../../commands';
+import { ENHANCED_TABLE_FIGURE_IMAGE } from './Constants';
 
 import type { ImageProps } from './Types';
 
@@ -40,9 +41,10 @@ export function insertEnhancedImageFigure(
 
   // Create the body that contains an image.
   const bodyType = schema.nodes.enhanced_table_figure_body;
+  const eicImageType = schema.nodes[ENHANCED_TABLE_FIGURE_IMAGE];
   const imageNodeType = schema.nodes['image'];
   const paragraphType = schema.nodes.paragraph;
-  if (!bodyType || !imageNodeType || !paragraphType) {
+  if (!bodyType || !eicImageType || !imageNodeType || !paragraphType) {
     return tr;
   }
   const imageAttrs: Record<string, unknown> = {
@@ -56,11 +58,7 @@ export function insertEnhancedImageFigure(
     imageAttrs.height = height;
   }
   const imageNode = imageNodeType.create(imageAttrs, null);
-  // Wrap the inline image in a paragraph so the body (content: 'block+')
-  // receives a valid block child.  Mirrors how EnhancedTableCommands wraps
-  // its table node and matches the structure the load-time repair
-  // (wrapInlineChildren) produces for legacy documents.
-  const imageWrapper = paragraphType.create({}, imageNode)
+  const imageWrapper = eicImageType.create({}, imageNode);
   const bodyNode = bodyType.create({}, imageWrapper);
 
   // No notes by default.
