@@ -6,6 +6,8 @@
 import { Compartment } from './compartment';
 import { CapcoState } from './types';
 import { EditorState } from 'prosemirror-state';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import { IMAGE, TABLE, TABLE_FIGURE } from './constants';
 export function getValueWithoutSlash(markerInputvalue: string): string {
   if (markerInputvalue.endsWith('/')) {
     markerInputvalue = markerInputvalue.substring(
@@ -81,21 +83,74 @@ export function getCapcoString(capco: unknown, fallback = 'error'): string {
 }
 
 export function getBlockControlCapco(state: EditorState, pos: number): number {
-  let posBefore = state.doc.resolve(pos).before(1);
-  const parentNode = state.doc.nodeAt(posBefore);
-  // if the EIC control is inside the landscape-section 
-  if ('landscape_section' === parentNode.type.name) {
-    posBefore = state.doc.resolve(pos).before(2);
+  const figure = findEnhancedTableFigure(state, pos);
+  if (!figure) {
+    return pos;
   }
-  if (undefined !== posBefore) {
-    if (state.doc.nodeAt(posBefore)?.attrs?.figureType === 'figure') {
-      pos = posBefore + 3;
-      if (null === state.doc.nodeAt(pos)) {
-        pos--;
-      }
-    } else {
-      pos = posBefore + 2;
+
+  const body = findDirectChild(figure.node, 'enhanced_table_figure_body');
+  if (!body) {
+    return pos;
+  }
+
+  const payloadType =
+    figure.node.attrs?.figureType === 'figure' ? IMAGE : TABLE;
+  let payloadPos: number | undefined;
+  body.node.descendants((node, relativePos) => {
+    if (payloadPos !== undefined) {
+      return false;
+    }
+    if (node.type.name === payloadType) {
+      payloadPos = figure.pos + body.offset + relativePos + 2;
+      return false;
+    }
+    return true;
+  });
+
+  return payloadPos ?? pos;
+}
+
+export function isInsideEnhancedTableFigureBody(
+  state: EditorState,
+  pos: number
+): boolean {
+  const $pos = state.doc.resolve(pos);
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    if ($pos.node(depth).type.name === 'enhanced_table_figure_body') {
+      return true;
     }
   }
-  return pos;
+  return false;
+}
+
+function findEnhancedTableFigure(
+  state: EditorState,
+  pos: number
+): { node: ProseMirrorNode; pos: number } | null {
+  const nodeAtPos = state.doc.nodeAt(pos);
+  if (nodeAtPos?.type.name === TABLE_FIGURE) {
+    return { node: nodeAtPos, pos };
+  }
+
+  const $pos = state.doc.resolve(pos);
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    const node = $pos.node(depth);
+    if (node.type.name === TABLE_FIGURE) {
+      return { node, pos: $pos.before(depth) };
+    }
+  }
+  return null;
+}
+
+function findDirectChild(
+  parent: ProseMirrorNode,
+  typeName: string
+): { node: ProseMirrorNode; offset: number } | null {
+  let result: { node: ProseMirrorNode; offset: number } | null = null;
+  parent.forEach((node, offset) => {
+    if (!result && node.type.name === typeName) {
+      result = { node, offset };
+    }
+  });
+  return result;
 }

@@ -1538,3 +1538,140 @@ describe('Capco Builder Component', () => {
     unmountSpy.mockRestore();
   });
 });
+
+describe('EIC CAPCO targets', () => {
+  it.each(['table', 'figure'])(
+    'updates the wrapped EIC %s payload and footer without losing attrs',
+    (figureType) => {
+      const wrappedSchema = createWrappedEicSchema();
+      const isImage = figureType === 'figure';
+      const payload = isImage
+        ? wrappedSchema.nodes.image.create({
+          capco: null,
+          layoutId: 'keep-image-layout',
+          src: 'eic.png',
+        })
+        : wrappedSchema.nodes.table.create({
+          capco: null,
+          layoutId: 'keep-table-layout',
+        });
+      const wrapper = wrappedSchema.nodes[
+        isImage
+          ? 'enhanced_table_figure_image'
+          : 'enhanced_table_figure_table'
+      ].create({}, payload);
+      const body = wrappedSchema.nodes.enhanced_table_figure_body.create(
+        {},
+        wrapper
+      );
+      const footer = wrappedSchema.nodes.enhanced_table_figure_capco.create({
+        capco: null,
+        form: 'short',
+      });
+      const figure = wrappedSchema.nodes.enhanced_table_figure.create(
+        {dirty: false, figureType},
+        [body, footer]
+      );
+      const state = EditorState.create({
+        doc: wrappedSchema.nodes.doc.create({}, figure),
+        schema: wrappedSchema,
+      });
+      const footerPos = findTestNodePosition(
+        state,
+        'enhanced_table_figure_capco'
+      );
+      const dispatch = jest.fn();
+      const close = jest.fn();
+      const view = {
+        dispatch,
+        dom: document.createElement('div'),
+        focus: jest.fn(),
+        state,
+      } as unknown as EditorView;
+      const menu = new CapcoContextMenu({
+        close,
+        customCapcoListItems: [],
+        editorView: view,
+        pos: footerPos + 1,
+        position: {x: 0, y: 0},
+      });
+      const capco = JSON.stringify({
+        ism: {classification: 'S'},
+        portionMarking: 'S',
+      });
+
+      menu.setCapco(capco);
+
+      const nextState = state.apply(dispatch.mock.calls[0][0]);
+      const target = nextState.doc.nodeAt(
+        findTestNodePosition(nextState, isImage ? 'image' : 'table')
+      );
+      const nextFooter = nextState.doc.nodeAt(
+        findTestNodePosition(nextState, 'enhanced_table_figure_capco')
+      );
+      const nextFigure = nextState.doc.firstChild;
+      expect(target?.attrs.capco).toBe(capco);
+      expect(target?.attrs.layoutId).toBe(
+        isImage ? 'keep-image-layout' : 'keep-table-layout'
+      );
+      expect(nextFooter?.attrs.capco).toBe('S');
+      expect(nextFooter?.attrs.form).toBe('short');
+      expect(nextFigure.attrs.dirty).toBe(true);
+      expect(close).toHaveBeenCalled();
+    }
+  );
+});
+
+function createWrappedEicSchema(): Schema {
+  const payloadAttrs = {
+    capco: {default: null},
+    isValidate: {default: false},
+    layoutId: {default: ''},
+    objectMetaData: {default: null},
+  };
+  return new Schema({
+    nodes: {
+      doc: {content: 'block+'},
+      text: {group: 'inline'},
+      table: {attrs: payloadAttrs, group: 'block'},
+      image: {
+        attrs: {...payloadAttrs, src: {default: ''}},
+        group: 'inline',
+        inline: true,
+      },
+      enhanced_table_figure_table: {content: 'table', group: 'block'},
+      enhanced_table_figure_image: {content: 'image', group: 'block'},
+      enhanced_table_figure_body: {
+        content:
+          '(enhanced_table_figure_table | enhanced_table_figure_image)',
+      },
+      enhanced_table_figure_capco: {
+        attrs: {
+          capco: {default: null},
+          form: {default: 'long'},
+          isValidate: {default: false},
+        },
+        content: 'text*',
+      },
+      enhanced_table_figure: {
+        attrs: {
+          dirty: {default: false},
+          figureType: {default: 'table'},
+        },
+        content:
+          'enhanced_table_figure_body enhanced_table_figure_capco',
+        group: 'block',
+      },
+    },
+  });
+}
+
+function findTestNodePosition(state: EditorState, typeName: string): number {
+  let found = -1;
+  state.doc.descendants((node, pos) => {
+    if (found < 0 && node.type.name === typeName) {
+      found = pos;
+    }
+  });
+  return found;
+}

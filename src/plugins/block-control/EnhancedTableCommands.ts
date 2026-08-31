@@ -4,11 +4,27 @@
  */
 
 import { Fragment, Node, Schema } from 'prosemirror-model';
-import { EditorState, TextSelection, Selection, Transaction } from 'prosemirror-state';
+import {
+  EditorState,
+  NodeSelection,
+  TextSelection,
+  Selection,
+  Transaction,
+} from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { UICommand } from '../../core';
 import { Transform } from 'prosemirror-transform';
-import { PARAGRAPH, TABLE, TABLE_CELL, TABLE_ROW, ENHANCED_TABLE_FIGURE_BODY, ENHANCED_TABLE_FIGURE_NOTES, ENHANCED_TABLE_FIGURE } from './Constants';
+import {
+  PARAGRAPH,
+  TABLE,
+  TABLE_CELL,
+  TABLE_ROW,
+  ENHANCED_TABLE_FIGURE_BODY,
+  ENHANCED_TABLE_FIGURE_NOTES,
+  ENHANCED_TABLE_FIGURE,
+  ENHANCED_TABLE_FIGURE_TABLE,
+  LANDSCAPE_SECTION,
+} from './Constants';
 import {
   applyTableStyle,
   DEFAULT_TABLE_STYLE_NAME,
@@ -102,7 +118,12 @@ export class EnhancedTableCommands extends UICommand {
     // Create the body with a 3×3 table.
     const bodyType = schema.nodes.enhanced_table_figure_body;
     const tableNode = this.createBlueTable(schema, 3, 3);
-    const bodyNode = bodyType.create({}, Fragment.from(tableNode));
+    const eicTableType = schema.nodes[ENHANCED_TABLE_FIGURE_TABLE];
+    if (!bodyType || !tableNode || !eicTableType) {
+      return tr;
+    }
+    const tableWrapper = eicTableType.create({}, tableNode);
+    const bodyNode = bodyType.create({}, Fragment.from(tableWrapper));
 
     // No notes by default.
 
@@ -120,7 +141,7 @@ export class EnhancedTableCommands extends UICommand {
       applyTableStyle(
         state,
         tr,
-        from + 2,
+        from + 3,
         DEFAULT_TABLE_STYLE_NAME
       );
     }
@@ -265,4 +286,153 @@ export function removeEmptyNotesCommand(
 
   dispatch?.(tr);
   return true;
+}
+
+type LandscapeFigureContext = {
+  figure: Node;
+  figureIndex: number;
+  landscape: Node;
+  landscapePos: number;
+};
+
+export function isEnhancedTableFigureInLandscape(
+  doc: Node,
+  figurePos: number
+): boolean {
+  if (!isValidDocumentPosition(doc, figurePos)) {
+    return false;
+  }
+
+  const $figure = doc.resolve(figurePos);
+  for (let depth = $figure.depth; depth > 0; depth--) {
+    if ($figure.node(depth).type.name === LANDSCAPE_SECTION) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function convertEnhancedTableFigureToLandscape(
+  tr: Transaction,
+  schema: Schema,
+  figurePos: number
+): Transaction {
+  const figure = getEnhancedTableFigureAt(tr.doc, figurePos);
+  const landscapeType = schema.nodes[LANDSCAPE_SECTION];
+  if (
+    !figure ||
+    !landscapeType ||
+    isEnhancedTableFigureInLandscape(tr.doc, figurePos)
+  ) {
+    return tr;
+  }
+
+  const $figure = tr.doc.resolve(figurePos);
+  const figureIndex = $figure.index();
+  if (!$figure.parent.canReplaceWith(figureIndex, figureIndex + 1, landscapeType)) {
+    return tr;
+  }
+
+  const landscape = landscapeType.create(null, figure);
+  tr = tr.replaceWith(figurePos, figurePos + figure.nodeSize, landscape);
+  return selectConvertedFigure(tr, figurePos + 1);
+}
+
+export function convertEnhancedTableFigureToPortrait(
+  tr: Transaction,
+  figurePos: number
+): Transaction {
+  const context = getDirectLandscapeFigureContext(tr.doc, figurePos);
+  if (!context) {
+    return tr;
+  }
+
+  const remainingChildren: Node[] = [];
+  context.landscape.forEach((child, _offset, index) => {
+    if (index !== context.figureIndex) {
+      remainingChildren.push(child);
+    }
+  });
+
+  let replacement: Fragment;
+  let convertedFigurePos = context.landscapePos;
+  if (remainingChildren.length) {
+    const remainingLandscape = context.landscape.copy(
+      Fragment.fromArray(remainingChildren)
+    );
+    replacement = Fragment.fromArray([remainingLandscape, context.figure]);
+    convertedFigurePos += remainingLandscape.nodeSize;
+  } else {
+    replacement = Fragment.from(context.figure);
+  }
+
+  const $landscape = tr.doc.resolve(context.landscapePos);
+  const landscapeIndex = $landscape.index();
+  if (
+    !$landscape.parent.canReplace(
+      landscapeIndex,
+      landscapeIndex + 1,
+      replacement
+    )
+  ) {
+    return tr;
+  }
+
+  tr = tr.replaceWith(
+    context.landscapePos,
+    context.landscapePos + context.landscape.nodeSize,
+    replacement
+  );
+  return selectConvertedFigure(tr, convertedFigurePos);
+}
+
+function getDirectLandscapeFigureContext(
+  doc: Node,
+  figurePos: number
+): LandscapeFigureContext | null {
+  const figure = getEnhancedTableFigureAt(doc, figurePos);
+  if (!figure) {
+    return null;
+  }
+
+  const $figure = doc.resolve(figurePos);
+  if ($figure.parent.type.name !== LANDSCAPE_SECTION) {
+    return null;
+  }
+
+  const figureIndex = $figure.index();
+  if ($figure.parent.child(figureIndex) !== figure) {
+    return null;
+  }
+
+  return {
+    figure,
+    figureIndex,
+    landscape: $figure.parent,
+    landscapePos: $figure.before($figure.depth),
+  };
+}
+
+function getEnhancedTableFigureAt(
+  doc: Node,
+  figurePos: number
+): Node | null {
+  if (!isValidDocumentPosition(doc, figurePos)) {
+    return null;
+  }
+  const node = doc.nodeAt(figurePos);
+  return node?.type.name === ENHANCED_TABLE_FIGURE ? node : null;
+}
+
+function isValidDocumentPosition(doc: Node, pos: number): boolean {
+  return Number.isInteger(pos) && pos >= 0 && pos <= doc.content.size;
+}
+
+function selectConvertedFigure(
+  tr: Transaction,
+  figurePos: number
+): Transaction {
+  return tr
+    .setSelection(NodeSelection.create(tr.doc, figurePos))
+    .scrollIntoView();
 }

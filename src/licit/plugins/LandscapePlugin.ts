@@ -10,6 +10,10 @@ import LandscapeSectionNodeSpec from '../specs/landscapeSectionNodeSpec';
 import { LandscapeCommand } from '../commands/LandscapeCommand';
 import { keymap } from 'prosemirror-keymap';
 import { EditorView } from 'prosemirror-view';
+import {
+    observe as observeResize,
+    unobserve as unobserveResize,
+} from '../resizeObserver';
 
 const LANDSCAPE_NODE_SELECTOR = 'section.section-landscape';
 const EDITOR_SCROLL_SELECTOR = '.czi-editor-frame-body-scroll';
@@ -26,6 +30,8 @@ class LandscapeScrollProxyView {
     private proxyScrollbarTrack: HTMLElement = null;
     private observer: IntersectionObserver = null;
     private activeLandscape: HTMLElement = null;
+    private resizeObservedElement: HTMLElement = null;
+    private resizeFrameID: number = null;
     private syncingFromProxy = false;
     private syncingFromLandscape = false;
 
@@ -41,6 +47,7 @@ class LandscapeScrollProxyView {
         this.ensureProxyScrollbar();
         this.bindProxyScrollbar();
         this.bindEditorScroll();
+        this.bindEditorResize();
         this.observeLandscapeNodes();
         this.refresh();
     }
@@ -57,6 +64,7 @@ class LandscapeScrollProxyView {
             this.ensureProxyScrollbar();
             this.bindProxyScrollbar();
             this.bindEditorScroll();
+            this.bindEditorResize();
             this.observeLandscapeNodes();
         }
 
@@ -72,6 +80,18 @@ class LandscapeScrollProxyView {
         this.observer = null;
 
         this.scrollContainer?.removeEventListener('scroll', this.onEditorScroll);
+
+        if (this.resizeObservedElement) {
+            unobserveResize(
+                this.resizeObservedElement,
+                this.onEditorResize
+            );
+            this.resizeObservedElement = null;
+        }
+        if (this.resizeFrameID !== null) {
+            cancelAnimationFrame(this.resizeFrameID);
+            this.resizeFrameID = null;
+        }
 
         if (this.activeLandscape) {
             this.activeLandscape.removeEventListener('scroll', this.onLandscapeScroll);
@@ -139,8 +159,34 @@ class LandscapeScrollProxyView {
         });
     }
 
+    private bindEditorResize(): void {
+        const resizeElement = this.frameBodyContainer || this.scrollContainer;
+        if (!resizeElement || this.resizeObservedElement === resizeElement) {
+            return;
+        }
+
+        if (this.resizeObservedElement) {
+            unobserveResize(
+                this.resizeObservedElement,
+                this.onEditorResize
+            );
+        }
+        observeResize(resizeElement, this.onEditorResize);
+        this.resizeObservedElement = resizeElement;
+    }
+
     private readonly onEditorScroll = (): void => {
         this.refresh();
+    };
+
+    private readonly onEditorResize = (): void => {
+        if (this.resizeFrameID !== null) {
+            return;
+        }
+        this.resizeFrameID = requestAnimationFrame(() => {
+            this.resizeFrameID = null;
+            this.refresh();
+        });
     };
 
     private readonly onProxyScroll = (): void => {
@@ -256,7 +302,12 @@ class LandscapeScrollProxyView {
 
         const totalWidth = this.activeLandscape.scrollWidth;
         const visibleWidth = this.activeLandscape.clientWidth;
-        const maxScroll = totalWidth - visibleWidth;
+        const maxScroll = Math.max(0, totalWidth - visibleWidth);
+        const scrollLeft = Math.min(this.activeLandscape.scrollLeft, maxScroll);
+
+        if (this.activeLandscape.scrollLeft !== scrollLeft) {
+            this.activeLandscape.scrollLeft = scrollLeft;
+        }
 
         if (maxScroll <= 1) {
             this.hideProxyScrollbar();

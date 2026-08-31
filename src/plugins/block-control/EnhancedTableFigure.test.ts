@@ -20,6 +20,8 @@ import { EnhancedTableFigureView } from './EnhancedTableFigureView';
 import {
   enhancedTableFigureNodeSpec,
   enhancedTableFigureBodyNodeSpec,
+  enhancedTableFigureImageNodeSpec,
+  enhancedTableFigureTableNodeSpec,
   enhancedTableFigureNotesNodeSpec,
   enhancedTableFigureCapcoNodeSpec,
 } from './EnhancedTableNodeSpec';
@@ -27,7 +29,9 @@ import {
   ENHANCED_TABLE_FIGURE_BODY,
   ENHANCED_TABLE_FIGURE,
   ENHANCED_TABLE_FIGURE_CAPCO,
+  ENHANCED_TABLE_FIGURE_IMAGE,
   ENHANCED_TABLE_FIGURE_NOTES,
+  ENHANCED_TABLE_FIGURE_TABLE,
 } from './Constants';
 import { DarkThemeIcon, LightThemeIcon } from './images';
 import { EditorView } from 'prosemirror-view';
@@ -39,6 +43,8 @@ jest.mock('./EnhancedTableFigureView');
 jest.mock('./EnhancedTableNodeSpec', () => ({
   enhancedTableFigureNodeSpec: { content: 'block+' },
   enhancedTableFigureBodyNodeSpec: { content: 'block+' },
+  enhancedTableFigureImageNodeSpec: { content: 'block+' },
+  enhancedTableFigureTableNodeSpec: { content: 'block+' },
   enhancedTableFigureNotesNodeSpec: { content: 'text*' },
   enhancedTableFigureCapcoNodeSpec: { content: 'text*' },
 }));
@@ -107,6 +113,11 @@ describe('EnhancedTableFigure', () => {
       expect(plugin.spec.props.nodeViews).toBeDefined();
       expect(plugin.spec.props.nodeViews.enhanced_table_figure).toBeDefined();
     });
+
+    it('should register legacy EIC normalization hooks', () => {
+      expect(plugin.spec.appendTransaction).toBeDefined();
+      expect(plugin.spec.view).toBeDefined();
+    });
   });
 
   describe('plugin state', () => {
@@ -168,6 +179,8 @@ describe('EnhancedTableFigure', () => {
       expect(effectiveSchema).toBeDefined();
       expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE]).toBeDefined();
       expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_BODY]).toBeDefined();
+      expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_IMAGE]).toBeDefined();
+      expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_TABLE]).toBeDefined();
       expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_NOTES]).toBeDefined();
       expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_CAPCO]).toBeDefined();
     });
@@ -203,6 +216,12 @@ describe('EnhancedTableFigure', () => {
       );
       expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_BODY].spec).toEqual(
         enhancedTableFigureBodyNodeSpec
+      );
+      expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_IMAGE].spec).toEqual(
+        enhancedTableFigureImageNodeSpec
+      );
+      expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_TABLE].spec).toEqual(
+        enhancedTableFigureTableNodeSpec
       );
       expect(effectiveSchema.nodes[ENHANCED_TABLE_FIGURE_NOTES].spec).toEqual(
         enhancedTableFigureNotesNodeSpec
