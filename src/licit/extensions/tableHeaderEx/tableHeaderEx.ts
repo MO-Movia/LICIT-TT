@@ -4,6 +4,7 @@
  */
 
 import {TableHeader} from '@tiptap/extension-table-header';
+import {tableTextRotationAttribute} from '../tableTextRotation';
 
 const DEFAULT_CELL_WIDTH = '25px';
 const DEFAULT_FONT_SIZE = '16px';
@@ -435,6 +436,7 @@ export const TableHeaderEx = TableHeader.extend({
           element.getAttribute('vAlign') ||
           null,
       },
+      textRotation: tableTextRotationAttribute,
       ...overrideAttributes,
     };
   },

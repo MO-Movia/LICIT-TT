@@ -40,6 +40,14 @@
   text-align: left;
 }
 
+.ProseMirror td[data-cell-text-rotation='clockwise'],
+.ProseMirror th[data-cell-text-rotation='clockwise'] {
+  text-align: center;
+  text-orientation: mixed;
+  vertical-align: middle;
+  writing-mode: vertical-rl;
+}
+
 .ProseMirror td[data-cell-font-size] > p,
 .ProseMirror th[data-cell-font-size] > p {
   font-size: var(--czi-cell-font-size) !important;
@@ -76,6 +84,7 @@
   left: 0;
   right: auto;
 }
+
 .ProseMirror table[data-cover-page='true'] td,
 .ProseMirror table[data-cover-page='true'] th {
   padding: 4px;
@@ -88,6 +97,7 @@
 table[data-cover-page='true'] .molm-czi-image-view.align-center {
   margin: 0 0 -18px;
 }
+
 /* [FS] IRAD-949 2020-05-27
 Rezie cursor position issue fixed. */
 .ProseMirror .column-resize-handle:focus,
@@ -97,10 +107,11 @@ Rezie cursor position issue fixed. */
 }
 
 .czi-table-row-resize-handle {
-  display: none;
+  display: block;
   height: 6px;
   pointer-events: none;
   position: absolute;
+  visibility: hidden;
   z-index: 2147483647;
 }
 
@@ -116,7 +127,7 @@ Rezie cursor position issue fixed. */
 }
 
 .czi-table-row-resize-handle.is-visible {
-  display: block;
+  visibility: visible;
 }
 
 .czi-table-row-resize-grip {

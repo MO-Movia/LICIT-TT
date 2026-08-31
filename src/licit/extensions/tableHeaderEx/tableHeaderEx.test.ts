@@ -35,6 +35,7 @@ describe('TableHeaderEx Extension', () => {
     expect(headerNode.spec.attrs).toHaveProperty('letterSpacing');
     expect(headerNode.spec.attrs).toHaveProperty('marginTop');
     expect(headerNode.spec.attrs).toHaveProperty('marginBottom');
+    expect(headerNode.spec.attrs).toHaveProperty('textRotation');
   });
 
   test('should parse custom style attrs from table header HTML', () => {
@@ -75,5 +76,62 @@ describe('TableHeaderEx Extension', () => {
     expect(html).toContain('line-height: 22px');
     expect(html).toContain('text-transform: uppercase');
     expect(html).toContain('font-size: 19px');
+  });
+
+  test('should render and parse clockwise text rotation on table headers', () => {
+    let headerPos = 0;
+    editor.state.doc.descendants((node: PMNode, pos: number) => {
+      if (node.type.name === 'tableHeader') {
+        headerPos = pos + 1;
+      }
+    });
+
+    editor.commands.setTextSelection(headerPos);
+    editor.commands.setCellAttribute('textRotation', 'clockwise');
+
+    const html = editor.getHTML();
+    expect(html).toContain('data-cell-text-rotation="clockwise"');
+    expect(html).toContain('writing-mode: vertical-rl');
+    expect(html).toContain('text-align: center');
+    expect(html).toContain('vertical-align: middle');
+
+    editor.commands.setContent(
+      '<table><tr><th data-cell-text-rotation="clockwise">Header</th></tr></table>'
+    );
+
+    let textRotation: string | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
+      if (node.type.name === 'tableHeader') {
+        textRotation = node.attrs.textRotation;
+      }
+    });
+    expect(textRotation).toBe('clockwise');
+  });
+
+  test('should keep every side border color separate from vertical-align', () => {
+    let headerPos = 0;
+    editor.state.doc.descendants((node: PMNode, pos: number) => {
+      if (node.type.name === 'tableHeader') {
+        headerPos = pos + 1;
+      }
+    });
+
+    editor.commands.setTextSelection(headerPos);
+    editor
+      .chain()
+      .setCellAttribute('borderLeftColor', 'red')
+      .setCellAttribute('borderRightColor', 'blue')
+      .setCellAttribute('borderTopColor', 'green')
+      .setCellAttribute('borderBottomColor', 'purple')
+      .setCellAttribute('verticalAlign', 'top')
+      .run();
+
+    const html = editor.getHTML();
+    expect(html).toContain('border-left-color: red');
+    expect(html).toContain('border-right-color: blue');
+    expect(html).toContain('border-top-color: green');
+    expect(html).toContain('border-bottom-color: purple');
+    expect(html).toContain('vertical-align: top');
+    expect(html).not.toMatch(/(?:red|blue|green|purple)vertical-align/);
   });
 });

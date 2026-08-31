@@ -9,6 +9,7 @@ import createTableRowResizingPlugin, {
 } from './createTableRowResizingPlugin';
 
 function createTableDom() {
+  const wrapper = document.createElement('div');
   const editor = document.createElement('div');
   const table = document.createElement('table');
   const row = document.createElement('tr');
@@ -17,7 +18,8 @@ function createTableDom() {
   row.appendChild(cell);
   table.appendChild(row);
   editor.appendChild(table);
-  document.body.appendChild(editor);
+  wrapper.appendChild(editor);
+  document.body.appendChild(wrapper);
 
   editor.getBoundingClientRect = jest.fn(
     () =>
@@ -36,7 +38,7 @@ function createTableDom() {
       }) as DOMRect
   );
 
-  return {editor, row, cell};
+  return {wrapper, editor, row, cell};
 }
 
 function createMouseEvent(target: EventTarget, clientY: number) {
@@ -110,24 +112,29 @@ describe('createTableRowResizingPlugin', () => {
   });
 
   it('shows, drags, commits, and destroys the row resize handle', () => {
-    const {editor, row, cell} = createTableDom();
+    const {wrapper, editor, row, cell} = createTableDom();
     const view = createView(editor);
     const plugin = createTableRowResizingPlugin();
     const pluginView = plugin.spec.view?.(view);
     const events = plugin.spec.props?.handleDOMEvents;
 
-    expect(editor.querySelector('.czi-table-row-resize-handle')).not.toBeNull();
+    expect(editor.querySelector('.czi-table-row-resize-handle')).toBeNull();
+    expect(wrapper.querySelector('.czi-table-row-resize-handle')).not.toBeNull();
 
     events?.mousemove?.call(plugin, view, createMouseEvent(cell, 99));
-    const handle = editor.querySelector<HTMLDivElement>(
+    const handle = wrapper.querySelector<HTMLDivElement>(
       '.czi-table-row-resize-handle'
     );
     expect(handle).not.toBeNull();
     if (!handle) {
       throw new Error('Expected row resize handle to exist');
     }
+    expect(handle.getAttribute('contenteditable')).toBe('false');
+    expect(handle.parentElement).toBe(wrapper);
     expect(editor.style.cursor).toBe('row-resize');
     expect(handle.style.display).toBe('block');
+    expect(handle.style.visibility).toBe('visible');
+    expect(handle.style.top).toBe('97px');
 
     const downEvent = new MouseEvent('mousedown', {clientY: 99, bubbles: true});
     Object.defineProperty(downEvent, 'target', {value: cell});
@@ -135,19 +142,21 @@ describe('createTableRowResizingPlugin', () => {
     expect(events?.mousemove?.call(plugin, view, createMouseEvent(cell, 99))).toBe(true);
 
     window.dispatchEvent(new MouseEvent('mousemove', {clientY: 130}));
-    expect(row.style.height).toBe('71px');
+    expect(row.style.height).toBe('');
     expect(handle.classList.contains('is-dragging')).toBe(true);
+    expect(handle.style.top).toBe('128px');
 
     window.dispatchEvent(new MouseEvent('mouseup', {clientY: 130}));
     expect(view.state.tr.setNodeMarkup).toHaveBeenCalledWith(7, undefined, {
       rowHeight: '71px',
     });
     expect(view.dispatch).toHaveBeenCalledWith(view.state.tr);
-    expect(handle.style.display).toBe('none');
+    expect(handle.style.display).toBe('block');
+    expect(handle.style.visibility).toBe('hidden');
 
     pluginView?.destroy();
     expect(editor.style.cursor).toBe('');
-    expect(editor.querySelector('.czi-table-row-resize-handle')).toBeNull();
+    expect(wrapper.querySelector('.czi-table-row-resize-handle')).toBeNull();
   });
 
   it('leaves events unhandled when no resize target is available', () => {
@@ -186,5 +195,72 @@ describe('createTableRowResizingPlugin', () => {
 
     expect(view.state.tr.setNodeMarkup).not.toHaveBeenCalled();
     expect(view.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('uses the real offset parent on the first hover', () => {
+    const {wrapper, editor, cell} = createTableDom();
+    wrapper.getBoundingClientRect = jest.fn(
+      () => ({left: 10, top: 20}) as DOMRect
+    );
+    Object.defineProperties(wrapper, {
+      clientLeft: {value: 2},
+      clientTop: {value: 3},
+      scrollLeft: {value: 7, writable: true},
+      scrollTop: {value: 50, writable: true},
+    });
+
+    const view = createView(editor);
+    const plugin = createTableRowResizingPlugin();
+    plugin.spec.view?.(view);
+    const handle = wrapper.querySelector<HTMLDivElement>(
+      '.czi-table-row-resize-handle'
+    );
+    if (!handle) {
+      throw new Error('Expected row resize handle to exist');
+    }
+    Object.defineProperty(handle, 'offsetParent', {value: wrapper});
+
+    const events = plugin.spec.props?.handleDOMEvents;
+    events?.mousemove?.call(plugin, view, createMouseEvent(cell, 99));
+    const firstPosition = {left: handle.style.left, top: handle.style.top};
+    events?.mousemove?.call(plugin, view, createMouseEvent(cell, 99));
+
+    expect(firstPosition).toEqual({left: '25px', top: '124px'});
+    expect({left: handle.style.left, top: handle.style.top}).toEqual(
+      firstPosition
+    );
+  });
+
+  it('keeps the guide on the rendered row boundary during drag and clamp', () => {
+    const {wrapper, editor, row, cell} = createTableDom();
+    const view = createView(editor);
+    const plugin = createTableRowResizingPlugin();
+    plugin.spec.view?.(view);
+    const handle = wrapper.querySelector<HTMLDivElement>(
+      '.czi-table-row-resize-handle'
+    );
+    if (!handle) {
+      throw new Error('Expected row resize handle to exist');
+    }
+    const events = plugin.spec.props?.handleDOMEvents;
+    const downEvent = new MouseEvent('mousedown', {
+      clientY: 95,
+      bubbles: true,
+    });
+    Object.defineProperty(downEvent, 'target', {value: cell});
+
+    expect(events?.mousedown?.call(plugin, view, downEvent)).toBe(true);
+    window.dispatchEvent(new MouseEvent('mousemove', {clientY: 105}));
+    expect(row.style.height).toBe('');
+    expect(handle.style.top).toBe('107px');
+
+    window.dispatchEvent(new MouseEvent('mousemove', {clientY: -100}));
+    expect(row.style.height).toBe('');
+    expect(handle.style.top).toBe('81px');
+
+    window.dispatchEvent(new MouseEvent('mouseup', {clientY: -100}));
+    expect(view.state.tr.setNodeMarkup).toHaveBeenCalledWith(7, undefined, {
+      rowHeight: '24px',
+    });
   });
 });

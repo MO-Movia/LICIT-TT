@@ -55,6 +55,7 @@ const {
   TABLE_INSERT_TABLE,
   TABLE_MERGE_CELLS,
   TABLE_SPLIT_ROW,
+  TABLE_TEXT_ROTATION,
   TEXT_ALIGN_CENTER,
   TEXT_ALIGN_JUSTIFY,
   TEXT_ALIGN_LEFT,
@@ -91,6 +92,9 @@ export const TABLE_COMMANDS_GROUP = [
   },
   {
     'Delete Table': TABLE_DELETE_TABLE,
+  },
+  {
+    'Rotate Text 90° Clockwise': TABLE_TEXT_ROTATION,
   },
   {
     'Table Settings': TABLE_DETAILS,

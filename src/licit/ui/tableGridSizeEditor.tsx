@@ -20,16 +20,15 @@ export type TableGridSizeEditorState = {
 };
 const GUTTER_SIZE = 5;
 const CELL_SIZE = 16;
-// [FS] IRAD-1012 2020-07-14
-// Fix: Limited Table Grid size from 20 to 7
-const MAX_SIZE = 7;
+// Keep the visual picker compact. Manual input is not limited to this size.
+const MAX_GRID_SIZE = 9;
 
 class GridCell extends React.PureComponent<
   TableGridSizeEditorProps,
   TableGridSizeEditorState
 > {
   render(): React.ReactElement<HTMLDivElement> {
-    const {x, y, selected}: TableGridSizeEditorProps = this.props;
+    const { x, y, selected }: TableGridSizeEditorProps = this.props;
     const style = {
       left: x + 'px',
       top: y + 'px',
@@ -75,13 +74,13 @@ class TableGridSizeEditor extends React.PureComponent<
 
   render(): React.ReactElement {
     const { rows, cols } = this.state;
-    let rr = Math.max(5, rows);
-    let cc = Math.max(5, cols);
+    let rr = Math.min(MAX_GRID_SIZE, Math.max(5, rows));
+    let cc = Math.min(MAX_GRID_SIZE, Math.max(5, cols));
     if (rr === rows) {
-      rr = Math.min(MAX_SIZE, rr + 1);
+      rr = Math.min(MAX_GRID_SIZE, rr + 1);
     }
     if (cc === cols) {
-      cc = Math.min(MAX_SIZE, cc + 1);
+      cc = Math.min(MAX_GRID_SIZE, cc + 1);
     }
     const cells = [];
     let ii = 0;
@@ -114,11 +113,12 @@ class TableGridSizeEditor extends React.PureComponent<
     const bodyStyle = { width: w + 'px', height: h + 'px' };
 
     return (
-      <div className="czi-table-grid-size-editor" ref={this._onRef}>
+      <div className="czi-table-grid-size-editor">
         <div
           className="czi-table-grid-size-editor-body"
           onMouseDown={this._onMouseDown}
           onMouseEnter={this._onMouseEnter}
+          ref={this._onRef}
           style={bodyStyle}
           role="grid"
           tabIndex={0}
@@ -133,9 +133,58 @@ class TableGridSizeEditor extends React.PureComponent<
         <div className="czi-table-grid-size-editor-footer">
           {rows} X {cols}
         </div>
+        <form
+          className="czi-table-grid-size-editor-inputs"
+          onSubmit={this._onSubmit}
+        >
+          <label>
+            <span>Rows</span>
+            <input
+              aria-label="Table rows"
+              min={1}
+              onChange={this._onDimensionChange('rows')}
+              step={1}
+              type="number"
+              value={rows}
+            />
+          </label>
+          <label>
+            <span>Columns</span>
+            <input
+              aria-label="Table columns"
+              min={1}
+              onChange={this._onDimensionChange('cols')}
+              step={1}
+              type="number"
+              value={cols}
+            />
+          </label>
+          <button type="submit">Insert</button>
+        </form>
       </div>
     );
   }
+
+  _onDimensionChange =
+    (field: keyof TableGridSizeEditorState) =>
+      (e: React.ChangeEvent<HTMLInputElement>): void => {
+        const input = e.currentTarget.value;
+        if (!input.trim()) {
+          return;
+        }
+        const value = Number(input);
+        if (!Number.isSafeInteger(value)) {
+          return;
+        }
+        const nextValue = Math.max(1, value);
+        this.setState((state) => ({ ...state, [field]: nextValue }));
+      };
+
+  _onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.props.close(this.state);
+  };
 
   _onRef = (ref: HTMLElement): void => {
     this._bodyEl = ref;
@@ -161,13 +210,17 @@ class TableGridSizeEditor extends React.PureComponent<
   _bodyEl: HTMLElement | null = null;
   _onMouseMove = (e: MouseEvent): void => {
     const elRect = this._bodyEl ? htmlElementToRect(this._bodyEl) : null;
-    const mouseRect = fromXY(e.screenX, e.screenY, 10);
+    // getBoundingClientRect() and the grid origin use viewport coordinates,
+    // so the pointer boundary check must use client coordinates as well.
+    const mouseRect = fromXY(e.clientX, e.clientY, 10);
 
-    if (elRect && mouseRect && isIntersected(elRect, mouseRect, 50)) {
-      // This prevents `PopUpManager` from collapsing the editor.
-      e.preventDefault();
-      e.stopImmediatePropagation();
+    if (!elRect || !mouseRect || !isIntersected(elRect, mouseRect, 0)) {
+      return;
     }
+
+    // This prevents `PopUpManager` from collapsing the editor.
+    e.preventDefault();
+    e.stopImmediatePropagation();
 
     const mx = Math.round(e.clientX);
     const my = Math.round(e.clientY);
@@ -187,8 +240,16 @@ class TableGridSizeEditor extends React.PureComponent<
     const my = this._my;
     const x = mx - this._ex;
     const y = my - this._ey;
-    const rr = clamp(1, Math.ceil(y / (CELL_SIZE + GUTTER_SIZE)), MAX_SIZE);
-    const cc = clamp(1, Math.ceil(x / (CELL_SIZE + GUTTER_SIZE)), MAX_SIZE);
+    const rr = clamp(
+      1,
+      Math.ceil(y / (CELL_SIZE + GUTTER_SIZE)),
+      MAX_GRID_SIZE
+    );
+    const cc = clamp(
+      1,
+      Math.ceil(x / (CELL_SIZE + GUTTER_SIZE)),
+      MAX_GRID_SIZE
+    );
     const { rows, cols } = this.state;
     if (rows !== rr || cols !== cc) {
       this.setState({ rows: rr, cols: cc });

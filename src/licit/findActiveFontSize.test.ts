@@ -30,7 +30,9 @@ const createState = (selection, storedMarks = []) => {
     doc: schema.node('doc', null, [
       schema.node('paragraph', null, [schema.text('Hello World')]),
     ]),
-    selection,
+    selection: selection.$from
+      ? selection
+      : {...selection, $from: {depth: 0}},
     tr: {storedMarks},
     storedMarks,
   } as unknown as EditorState;
@@ -45,6 +47,22 @@ describe('findActiveFontSize', () => {
     const doc = schema.node('doc', null, [schema.node('paragraph', null, [])]);
     const state = createState(EditorState.create({doc}).selection);
     expect(findActiveFontSize(state)).toBe('11');
+  });
+
+  it('returns a decimal effective font size from the selected table cell', () => {
+    const selection = {
+      empty: true,
+      $from: {depth: 0},
+      forEachCell: (callback: (node: unknown) => void) =>
+        callback({
+          attrs: {fontSize: '10.70pt'},
+          descendants: (visitor: (node: unknown) => void) =>
+            visitor({isText: true, text: 'cell', marks: []}),
+        }),
+    };
+    const state = createState(selection);
+
+    expect(findActiveFontSize(state)).toBe('10.7');
   });
 
   it('returns font size from storedMarks when selection is empty', () => {
@@ -77,6 +95,7 @@ describe('findActiveFontSize', () => {
     const selection = {
       ...EditorState.create({doc}).selection,
       empty: true,
+      $from: {depth: 0},
       $cursor: {marks: jest.fn()},
     };
     const state = {
@@ -102,7 +121,11 @@ describe('findActiveFontSize', () => {
       schema.node('paragraph', null, [schema.text('Hello, world!')]),
     ]);
 
-    const selection = {...EditorState.create({doc}).selection, empty: false};
+    const selection = {
+      ...EditorState.create({doc}).selection,
+      empty: false,
+      $from: {depth: 0},
+    };
     const state = {
       schema: {
         marks: {},
@@ -137,7 +160,11 @@ describe('findActiveFontSize', () => {
       schema.node('paragraph', null, [schema.text('Hello, world!')]),
     ]);
 
-    const selection = {...EditorState.create({doc}).selection, empty: false};
+    const selection = {
+      ...EditorState.create({doc}).selection,
+      empty: false,
+      $from: {depth: 0},
+    };
     const state = {
       schema: {
         marks: {

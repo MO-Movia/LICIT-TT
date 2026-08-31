@@ -4,14 +4,18 @@
  */
 
 import * as React from 'react';
-import {EditorState} from 'prosemirror-state';
+import {EditorState, Transaction} from 'prosemirror-state';
 import {Transform} from 'prosemirror-transform';
 import {EditorView} from 'prosemirror-view';
 import {Editor} from '@tiptap/react';
-import {setCellAttr} from 'prosemirror-tables';
+import {StarterKit} from '@tiptap/starter-kit';
+import {Table} from '@tiptap/extension-table';
+import {CellSelection, selectionCell, setCellAttr} from 'prosemirror-tables';
 import TableColorCommand from './tableColorCommand';
-import { UICommand } from '../../core';
 import { createPopUp } from '../../commands';
+import {TableRowEx} from '../extensions/tableRowEx';
+import {TableCellEx} from '../extensions/tableCellEx';
+import {TableHeaderEx} from '../extensions/tableHeaderEx';
 
 jest.mock('../../commands', () => {
   // define inside the factory → safe from hoisting issues
@@ -69,7 +73,6 @@ describe('TableColorCommand (typed)', () => {
   let mockTransform: Transform;
   let dispatchMock: jest.Mock;
   let viewMock: EditorView;
-  let setCellAttributeMock: jest.Mock;
 
   beforeEach(() => {
     mockState = {} as EditorState;
@@ -77,26 +80,6 @@ describe('TableColorCommand (typed)', () => {
     dispatchMock = jest.fn();
     viewMock = {} as EditorView;
     (setCellAttr as jest.Mock).mockReturnValue(jest.fn(() => false));
-
-    setCellAttributeMock = jest.fn();
-    const chainMock = {
-      focus: jest.fn().mockReturnThis(),
-      updateAttributes: jest.fn().mockReturnThis(),
-      run: jest.fn(),
-    };
-    // Inject a typed mock editor into UICommand
-    const mockEditor: Editor = {
-      view: {
-        focus: jest.fn(),
-        dispatch: jest.fn(),
-      },
-      commands: {
-        setCellAttribute: setCellAttributeMock,
-      },
-      chain: jest.fn(() => chainMock),
-    } as unknown as Editor;
-
-    UICommand.prototype.editor = mockEditor;
 
     command = new TableColorCommand('backgroundColor');
 
@@ -197,6 +180,14 @@ describe('TableColorCommand (typed)', () => {
     ).toBe(false);
   });
 
+  it('ignores an empty color result', () => {
+    expect(
+      command.executeWithUserInput(mockState, dispatchMock, viewMock, {
+        color: '',
+      })
+    ).toBe(false);
+  });
+
   it('calls setCellAttr when hex provided', () => {
     const setCellAttrCommandMock = jest.fn(() => false);
     (setCellAttr as jest.Mock).mockReturnValue(setCellAttrCommandMock);
@@ -216,29 +207,51 @@ describe('TableColorCommand (typed)', () => {
     expect(result).toBeFalsy();
   });
 
-it('calls setCellBorders when success is true', () => {
-  command = new TableColorCommand('borderColor');
-  const setCellBordersSpy = jest
-    .spyOn(command, 'setCellBorders')
-    .mockReturnValue(true);
+  it('routes a border picker result through the supplied dispatch', () => {
+    command = new TableColorCommand('borderColor');
+    const setCellBordersSpy = jest
+      .spyOn(command, 'setCellBorders')
+      .mockReturnValue(true);
 
-  const hex = { color: '#333333', selectedPosition: ['Top', 'Bottom'] };
+    const hex = { color: '#333333', selectedPosition: ['Top', 'Bottom'] };
+    const result = command.executeWithUserInput(
+      mockState,
+      dispatchMock,
+      undefined,
+      hex
+    );
 
-  const result = command.executeWithUserInput(
-    mockState,
-    dispatchMock,
-    viewMock,
-    hex
-  );
+    expect(setCellBordersSpy).toHaveBeenCalledWith(
+      mockState,
+      dispatchMock,
+      ['Top', 'Bottom'],
+      '#333333'
+    );
+    expect(result).toBe(true);
+  });
 
-  expect(setCellBordersSpy).toHaveBeenCalledWith(
-    mockState,
-    expect.any(Function),
-    ['Top', 'Bottom'],
-    '#333333'
-  );
-  expect(result).toBe(true);
-});
+  it('routes a border picker result through the active editor view', () => {
+    command = new TableColorCommand('borderColor');
+    const setCellBordersSpy = jest
+      .spyOn(command, 'setCellBorders')
+      .mockReturnValue(true);
+    const hex = { color: '#333333', selectedPosition: ['Top', 'Bottom'] };
+
+    const result = command.executeWithUserInput(
+      mockState,
+      dispatchMock,
+      viewMock,
+      hex
+    );
+
+    expect(setCellBordersSpy).toHaveBeenCalledWith(
+      mockState,
+      expect.any(Function),
+      ['Top', 'Bottom'],
+      '#333333'
+    );
+    expect(result).toBe(true);
+  });
 
 
   it('cancel closes popup if exists', () => {
@@ -282,5 +295,301 @@ it('calls setCellBorders when success is true', () => {
     onClose('close-value');
     expect(command._popUp).toBeNull();
     await expect(promise).resolves.toBe('close-value');
+  });
+});
+
+describe('TableColorCommand border attributes', () => {
+  let editor: Editor;
+
+  beforeEach(() => {
+    const actualSetCellAttr = jest.requireActual<
+      typeof import('prosemirror-tables')
+    >('prosemirror-tables').setCellAttr;
+    (setCellAttr as jest.Mock).mockImplementation(actualSetCellAttr);
+
+    editor = new Editor({
+      extensions: [
+        StarterKit,
+        Table,
+        TableRowEx,
+        TableHeaderEx,
+        TableCellEx,
+      ],
+      content: {
+        type: 'doc',
+        content: [
+          {
+            type: 'table',
+            content: [
+              {
+                type: 'tableRow',
+                content: [
+                  {
+                    type: 'tableHeader',
+                    attrs: {
+                      borderColor: '#000000',
+                      borderTop: '2px dashed blue',
+                      borderTopWidth: '2px',
+                      borderTopColor: 'blue',
+                      borderTopStyle: 'dashed',
+                    },
+                    content: [
+                      {
+                        type: 'paragraph',
+                        content: [{type: 'text', text: 'Header'}],
+                      },
+                    ],
+                  },
+                  {
+                    type: 'tableCell',
+                    attrs: {
+                      borderColor: '#000000',
+                      borderTop: '2px dashed blue',
+                      borderTopWidth: '2px',
+                      borderTopColor: 'blue',
+                      borderTopStyle: 'dashed',
+                    },
+                    content: [
+                      {
+                        type: 'paragraph',
+                        content: [{type: 'text', text: 'Body'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  afterEach(() => {
+    editor.destroy();
+  });
+
+  function selectBothCells(): void {
+    let headerPos: number | null = null;
+    let bodyPos: number | null = null;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'tableHeader') {
+        headerPos = pos;
+      } else if (node.type.name === 'tableCell') {
+        bodyPos = pos;
+      }
+    });
+
+    if (headerPos === null || bodyPos === null) {
+      throw new Error('Expected a header and body cell');
+    }
+
+    editor.view.dispatch(
+      editor.state.tr.setSelection(
+        CellSelection.create(editor.state.doc, headerPos, bodyPos)
+      )
+    );
+  }
+
+  it('updates canonical side colors for selected header and body cells', () => {
+    selectBothCells();
+    const command = new TableColorCommand('borderColor');
+
+    expect(
+      command.executeWithUserInput(
+        editor.state,
+        (tr) => editor.view.dispatch(tr as Transaction),
+        editor.view,
+        {color: '#ff0000', selectedPosition: ['Top', 'Bottom']}
+      )
+    ).toBe(true);
+
+    const cellAttrs: Array<Record<string, unknown>> = [];
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'tableHeader' || node.type.name === 'tableCell') {
+        cellAttrs.push(node.attrs);
+      }
+    });
+
+    expect(cellAttrs).toHaveLength(2);
+    for (const attrs of cellAttrs) {
+      expect(attrs).toMatchObject({
+        borderColor: null,
+        borderTop: '2px dashed blue',
+        borderTopWidth: '2px',
+        borderTopStyle: 'dashed',
+        borderTopColor: '#ff0000',
+        borderBottomColor: '#ff0000',
+        borderLeftColor: '#000000',
+        borderRightColor: '#000000',
+      });
+    }
+
+    expect(editor.getHTML()).not.toContain('[object Object]');
+    expect(editor.getHTML()).toContain('border-top-color: rgb(255, 0, 0)');
+  });
+
+  it('renders all border sides on a freshly inserted table cell', () => {
+    editor.commands.setContent('<p>Before table</p>');
+    expect(editor.commands.insertTable({rows: 2, cols: 2})).toBe(true);
+    expect(editor.commands.setCellAttribute('verticalAlign', 'top')).toBe(true);
+
+    const command = new TableColorCommand('borderColor');
+    expect(
+      command.executeWithUserInput(
+        editor.state,
+        (tr) => editor.view.dispatch(tr as Transaction),
+        editor.view,
+        {
+          color: '#ff0000',
+          selectedPosition: ['Top', 'Right', 'Bottom', 'Left'],
+        }
+      )
+    ).toBe(true);
+
+    const cell = editor.state.doc.nodeAt(selectionCell(editor.state).pos);
+    expect(cell?.attrs).toMatchObject({
+      borderTopColor: '#ff0000',
+      borderRightColor: '#ff0000',
+      borderBottomColor: '#ff0000',
+      borderLeftColor: '#ff0000',
+    });
+
+    const html = editor.getHTML();
+    expect(html).toContain('border-top-color: rgb(255, 0, 0)');
+    expect(html).toContain('border-right-color: rgb(255, 0, 0)');
+    expect(html).toContain('border-bottom-color: rgb(255, 0, 0)');
+    expect(html).toContain('border-left-color: rgb(255, 0, 0)');
+    expect(html).toContain('vertical-align: top');
+    expect(html).not.toContain('#ff0000vertical-align');
+  });
+
+  it('does nothing when no border side is selected', () => {
+    selectBothCells();
+    const command = new TableColorCommand('borderColor');
+    const before = editor.getJSON();
+
+    expect(
+      command.executeWithUserInput(
+        editor.state,
+        (tr) => editor.view.dispatch(tr as Transaction),
+        editor.view,
+        {color: '#ff0000', selectedPosition: []}
+      )
+    ).toBe(false);
+    expect(editor.getJSON()).toEqual(before);
+  });
+
+  it('stores fill colors as strings through the supplied editor view', () => {
+    selectBothCells();
+    const command = new TableColorCommand('backgroundColor');
+
+    expect(
+      command.executeWithUserInput(
+        editor.state,
+        (tr) => editor.view.dispatch(tr as Transaction),
+        editor.view,
+        {color: '#00ff00'}
+      )
+    ).toBe(true);
+
+    const colors: unknown[] = [];
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'tableHeader' || node.type.name === 'tableCell') {
+        colors.push(node.attrs.backgroundColor);
+      }
+    });
+    expect(colors).toEqual(['#00ff00', '#00ff00']);
+  });
+
+  it('synchronizes the opposite side of a collapsed shared border', () => {
+    editor.commands.setContent({
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: [
+                {
+                  type: 'tableCell',
+                  attrs: {
+                    borderColor: '#000000',
+                    borderBottomWidth: '2px',
+                    borderBottomStyle: 'dashed',
+                    borderBottomColor: '#000000',
+                  },
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [{type: 'text', text: 'Above'}],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'tableRow',
+              content: [
+                {
+                  type: 'tableCell',
+                  attrs: {
+                    borderColor: '#000000',
+                    borderTopWidth: '2px',
+                    borderTopStyle: 'dashed',
+                    borderTopColor: '#000000',
+                  },
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [{type: 'text', text: 'Below'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    let belowPos: number | null = null;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'tableCell' && node.textContent === 'Below') {
+        belowPos = pos;
+      }
+    });
+    if (belowPos === null) {
+      throw new Error('Expected the lower table cell');
+    }
+    editor.commands.setTextSelection(belowPos + 2);
+
+    const command = new TableColorCommand('borderColor');
+    expect(
+      command.executeWithUserInput(
+        editor.state,
+        (tr) => editor.view.dispatch(tr as Transaction),
+        editor.view,
+        {color: '#ff0000', selectedPosition: ['Top']}
+      )
+    ).toBe(true);
+
+    const byText = new Map<string, Record<string, unknown>>();
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'tableCell') {
+        byText.set(node.textContent, node.attrs);
+      }
+    });
+    expect(byText.get('Above')).toMatchObject({
+      borderBottomWidth: '2px',
+      borderBottomStyle: 'dashed',
+      borderBottomColor: '#ff0000',
+    });
+    expect(byText.get('Below')).toMatchObject({
+      borderTopWidth: '2px',
+      borderTopStyle: 'dashed',
+      borderTopColor: '#ff0000',
+    });
   });
 });

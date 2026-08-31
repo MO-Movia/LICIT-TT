@@ -83,7 +83,7 @@ export const TableCellNodeSpec = (nodespec: NodeSpec) => ({
     if (!/vertical-align\s*:/i.test(currentStyle)) {
       base[1].style = appendInlineStyle(
         currentStyle,
-        ''
+        `vertical-align: ${verticalAlignment};`
       );
     }
 

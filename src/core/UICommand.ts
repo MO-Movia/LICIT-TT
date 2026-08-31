@@ -100,11 +100,14 @@ export abstract class UICommand {
     state: EditorState,
     dispatch?: (tr: Transform) => void,
     view?: EditorView,
-    event?: unknown
+    event?: unknown,
+    onExecuted?: () => void
   ): Transform | boolean => {
     this.waitForUserInput(state, dispatch, view, event)
       .then((inputs) => {
-        this.executeWithUserInput(state, dispatch, view, inputs);
+        if (this.executeWithUserInput(state, dispatch, view, inputs)) {
+          onExecuted?.();
+        }
       })
       .catch((error) => {
         console.error(error);

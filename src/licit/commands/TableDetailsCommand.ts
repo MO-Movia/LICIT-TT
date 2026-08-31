@@ -26,6 +26,7 @@ import {
 } from '../../commands/MarkNames';
 import {UICommand} from '../../core';
 import {TableMap} from 'prosemirror-tables';
+import Color from 'color';
 
 type ParentNodeRef = {
   pos: number;
@@ -118,6 +119,14 @@ type TableEditorDialogData = {
   metadata?: Partial<TableMetadata>;
   selectionMode?: SelectionMode;
   fontOptions?: FontOption[];
+  mixed?: {
+    typography?: Partial<Record<keyof TypographyConfig, boolean>>;
+  };
+};
+
+type TypographyResolution = {
+  typography: TypographyConfig;
+  mixed: Partial<Record<keyof TypographyConfig, boolean>>;
 };
 
 type TableEditorChangedFields = {
@@ -197,6 +206,31 @@ type CellRect = {
   bottom: number;
 };
 
+type CssNumericValue = {
+  value: number;
+  unit: string;
+};
+
+type ColumnWidthUpdate = {
+  cell: ProseMirrorNode;
+  colwidth: number[];
+};
+
+const CELL_LEVEL_TYPOGRAPHY_KEYS = new Set<keyof TypographyConfig>([
+  'backgroundColor',
+  'verticalAlign',
+]);
+
+const ABSOLUTE_CSS_UNIT_TO_PX: Record<string, number> = {
+  px: 1,
+  pt: 96 / 72,
+  pc: 16,
+  in: 96,
+  cm: 96 / 2.54,
+  mm: 96 / 25.4,
+  q: 96 / 101.6,
+};
+
 const DEFAULT_BORDER: BorderStyle = {
   style: 'solid',
   width: '1px',
@@ -205,7 +239,7 @@ const DEFAULT_BORDER: BorderStyle = {
 
 const DEFAULT_TYPOGRAPHY: TypographyConfig = {
   fontFamily: 'inherit',
-  fontSize: '14px',
+  fontSize: '14pt',
   bold: false,
   italic: false,
   underline: false,
@@ -516,9 +550,18 @@ class TableDetailsCommand extends UICommand {
     cellDOM?: HTMLElement | null
   ): TableEditorDialogData {
     const tableMap = TableMap.get(nodes.table.node);
-    const cellAttrs = nodes.cell?.node.attrs ?? {};
-    const computedStyle = cellDOM ? getComputedStyle(cellDOM) : null;
     const selectedCells = nodes.cells ?? [];
+    const selectedCell = nodes.cell ?? selectedCells[0] ?? null;
+    const cellAttrs = selectedCell?.node.attrs ?? {};
+    const computedStyle = cellDOM ? getComputedStyle(cellDOM) : null;
+    let typographyCells = selectedCells;
+    if (!typographyCells.length && selectedCell) {
+      typographyCells = [selectedCell];
+    }
+    const typographyResolution = this.getSelectedCellsTypography(
+      typographyCells,
+      computedStyle
+    );
 
     return {
       table: {
@@ -537,20 +580,15 @@ class TableDetailsCommand extends UICommand {
         pageOrientation: 'portrait',
       },
       borders: this.getBorderDialogData(cellAttrs),
-      typography: this.getTypographyDialogData(cellAttrs, computedStyle),
+      typography: typographyResolution.typography,
+      mixed: {typography: typographyResolution.mixed},
       layout: this.getLayoutDialogData(cellAttrs, computedStyle),
       metadata: {
         totalRows: tableMap.height,
         totalColumns: tableMap.width,
       },
       selectionMode: selectedCells.length > 1 ? 'range' : 'single',
-      fontOptions: [
-        {label: 'Default Font', value: 'inherit'},
-        ...FONT_TYPE_NAMES.map((fontName) => ({
-          label: fontName,
-          value: fontName,
-        })),
-      ],
+      fontOptions: this.getFontOptions(typographyResolution.typography.fontFamily),
     };
   }
 
@@ -574,50 +612,322 @@ class TableDetailsCommand extends UICommand {
 
   getTypographyDialogData(
     attrs: Record<string, unknown>,
-    _computedStyle: CSSStyleDeclaration | null
+    computedStyle: CSSStyleDeclaration | null,
+    cellNode?: ProseMirrorNode
   ): TypographyConfig {
-    const fontWeight = this.toStringValue(attrs.fontWeight);
-    const textDecoration = this.toStringValue(attrs.textDecoration);
+    return this.getCellTypographyResolution(
+      attrs,
+      computedStyle,
+      cellNode
+    ).typography;
+  }
 
-    return {
-      fontFamily: this.isOverrideAttrSet(attrs, 'fontNameOverridden')
-        ? this.normalizeFontFamily(this.toStringValue(attrs.fontName)) ?? ''
-        : '',
-      fontSize: this.isOverrideAttrSet(attrs, 'fontSizeOverridden')
-        ? this.toStringValue(attrs.fontSize) ?? ''
-        : '',
-      bold:
-        this.isOverrideAttrSet(attrs, 'fontWeightOverridden') &&
-        this.isBold(fontWeight),
-      italic:
-        this.isOverrideAttrSet(attrs, 'fontStyleOverridden') &&
-        this.toStringValue(attrs.fontStyle) === 'italic',
-      underline:
-        this.isOverrideAttrSet(attrs, 'textDecorationOverridden') &&
-        (textDecoration?.includes('underline') ?? false),
+  getSelectedCellsTypography(
+    cells: ParentNodeRef[],
+    computedStyle: CSSStyleDeclaration | null
+  ): TypographyResolution {
+    if (!cells.length) {
+      return {typography: DEFAULT_TYPOGRAPHY, mixed: {}};
+    }
+
+    // Empty structural cells do not contribute text styling. They still own
+    // cell-level properties such as fill and vertical alignment, though, so a
+    // blank cell with a different fill must be reported as mixed.
+    const cellsWithText = cells.filter((cell) => cell.node.textContent.trim());
+    const textTypographyCells = cellsWithText.length ? cellsWithText : cells;
+    const allResolutions = cells.map((cell) =>
+      this.getCellTypographyResolution(
+        cell.node.attrs,
+        // One anchor DOM style cannot represent every cell in a range. For a
+        // range, rely on each node's imported attrs/content so mixed values are
+        // not accidentally hidden by the anchor cell's computed style.
+        cells.length === 1 ? computedStyle : null,
+        cell.node
+      )
+    );
+    const textResolutions = textTypographyCells.map((cell) => {
+      const cellIndex = cells.indexOf(cell);
+      return cellIndex >= 0
+        ? allResolutions[cellIndex]
+        : this.getCellTypographyResolution(cell.node.attrs, null, cell.node);
+    });
+    const typography = {...allResolutions[0].typography};
+    const mixed = {...allResolutions[0].mixed};
+    const keys = Object.keys(typography) as (keyof TypographyConfig)[];
+
+    for (const key of keys) {
+      const resolutions = CELL_LEVEL_TYPOGRAPHY_KEYS.has(key)
+        ? allResolutions
+        : textResolutions;
+      const firstResolution = resolutions[0];
+      typography[key] = firstResolution.typography[key] as never;
+      mixed[key] = firstResolution.mixed[key];
+      if (
+        resolutions.some(
+          (resolution) =>
+            resolution.mixed[key] ||
+            !this.sameTypographyValue(
+              key,
+              firstResolution.typography[key],
+              resolution.typography[key]
+            )
+        )
+      ) {
+        mixed[key] = true;
+        typography[key] = this.emptyTypographyValue(key) as never;
+      }
+    }
+
+    return {typography, mixed};
+  }
+
+  getCellTypographyResolution(
+    attrs: Record<string, unknown>,
+    computedStyle: CSSStyleDeclaration | null,
+    cellNode?: ProseMirrorNode
+  ): TypographyResolution {
+    const fontWeight =
+      this.toStringValue(attrs.fontWeight) ??
+      this.toStringValue(computedStyle?.fontWeight);
+    const textDecoration =
+      this.toStringValue(attrs.textDecoration) ??
+      this.toStringValue(computedStyle?.textDecorationLine);
+    const cellTypography: TypographyConfig = {
+      fontFamily:
+        this.normalizeFontFamily(
+          this.toStringValue(attrs.fontName) ??
+          this.toStringValue(computedStyle?.fontFamily)
+        ) ?? DEFAULT_TYPOGRAPHY.fontFamily,
+      fontSize:
+        this.normalizeFontSizeForDialog(
+          this.toStringValue(attrs.fontSize) ??
+            this.toStringValue(computedStyle?.fontSize)
+        ) ??
+        DEFAULT_TYPOGRAPHY.fontSize,
+      bold: this.isBold(fontWeight),
+      italic: this.isItalic(
+        this.toStringValue(attrs.fontStyle) ??
+          this.toStringValue(computedStyle?.fontStyle)
+      ),
+      underline: this.isUnderlined(textDecoration),
       textColor:
-        this.isOverrideAttrSet(attrs, 'textColorOverridden')
-          ? this.toStringValue(attrs.textColor) ?? ''
-          : '',
+        this.toColorValue(attrs.textColor) ??
+        DEFAULT_TYPOGRAPHY.textColor,
       backgroundColor:
-        this.isOverrideAttrSet(attrs, 'backgroundColorOverridden')
-          ? this.normalizeTransparentColor(
-            this.toStringValue(attrs.backgroundColor)
-          ) ?? 'transparent'
-          : '',
-      letterSpacing: this.isOverrideAttrSet(attrs, 'letterSpacingOverridden')
-        ? this.toStringValue(attrs.letterSpacing) ?? ''
-        : '',
-      lineHeight: this.isOverrideAttrSet(attrs, 'lineHeightOverridden')
-        ? this.toStringValue(attrs.lineHeight) ?? ''
-        : '',
-      textAlign: this.isOverrideAttrSet(attrs, 'textAlignOverridden')
-        ? this.toTextAlign(this.toStringValue(attrs.textAlign), '')
-        : '',
-      verticalAlign: this.isOverrideAttrSet(attrs, 'verticalAlignOverridden')
-        ? this.toVerticalAlign(this.toStringValue(attrs.verticalAlign), '')
-        : '',
+        this.normalizeTransparentColor(
+          this.toColorValue(attrs.backgroundColor)
+        ) ?? DEFAULT_TYPOGRAPHY.backgroundColor,
+      letterSpacing:
+        this.toStringValue(attrs.letterSpacing) ??
+        this.toStringValue(computedStyle?.letterSpacing) ??
+        DEFAULT_TYPOGRAPHY.letterSpacing,
+      lineHeight:
+        this.toStringValue(attrs.lineHeight) ??
+        this.toStringValue(computedStyle?.lineHeight) ??
+        DEFAULT_TYPOGRAPHY.lineHeight,
+      textAlign: this.toTextAlign(
+        this.toStringValue(attrs.textAlign) ??
+        this.toStringValue(computedStyle?.textAlign)
+      ),
+      verticalAlign: this.toVerticalAlign(
+        this.toStringValue(attrs.verticalAlign) ??
+        this.toStringValue(computedStyle?.verticalAlign)
+      ),
     };
+
+    return this.getCellContentTypography(cellNode, cellTypography);
+  }
+
+  getCellContentTypography(
+    cellNode: ProseMirrorNode | undefined,
+    fallback: TypographyConfig
+  ): TypographyResolution {
+    const typography = {...fallback};
+    const mixed: Partial<Record<keyof TypographyConfig, boolean>> = {};
+    if (!cellNode) {
+      return {typography, mixed};
+    }
+
+    const textNodes: ProseMirrorNode[] = [];
+    const textBlocks: ProseMirrorNode[] = [];
+    cellNode.descendants((node) => {
+      if (node.isTextblock) {
+        textBlocks.push(node);
+      }
+      if (node.isText && node.text?.trim()) {
+        textNodes.push(node);
+      }
+      return true;
+    });
+
+    this.resolveTextNodeTypography(textNodes, fallback, typography, mixed);
+    this.resolveTextBlockTypography(textBlocks, fallback, typography, mixed);
+
+    return {typography, mixed};
+  }
+
+  resolveTextNodeTypography(
+    textNodes: ProseMirrorNode[],
+    fallback: TypographyConfig,
+    typography: TypographyConfig,
+    mixed: Partial<Record<keyof TypographyConfig, boolean>>
+  ): void {
+    if (!textNodes.length) {
+      return;
+    }
+
+    const stringValues: Array<{
+      key: 'fontFamily' | 'fontSize' | 'textColor' | 'letterSpacing';
+      values: string[];
+      same?: (first: string, second: string) => boolean;
+    }> = [
+      {
+        key: 'fontFamily',
+        values: textNodes.map((node) =>
+          this.normalizeFontFamily(
+            this.toStringValue(this.getNodeMark(node, MARK_FONT_TYPE)?.attrs.name)
+          ) ?? fallback.fontFamily
+        ),
+        same: (first, second) => this.sameNormalizedString(first, second),
+      },
+      {
+        key: 'fontSize',
+        values: textNodes.map((node) =>
+          this.normalizeFontSizeForDialog(
+            this.toMarkedFontSize(
+              this.getNodeMark(node, MARK_FONT_SIZE)?.attrs.pt
+            )
+          ) ?? fallback.fontSize
+        ),
+        same: (first, second) => this.sameCssNumericValue(first, second),
+      },
+      {
+        key: 'textColor',
+        values: textNodes.map((node) =>
+          this.toStringValue(
+            this.getNodeMark(node, MARK_TEXT_COLOR)?.attrs.color
+          ) ?? fallback.textColor
+        ),
+        same: (first, second) => this.sameColorValue(first, second),
+      },
+      {
+        key: 'letterSpacing',
+        values: textNodes.map((node) =>
+          this.toStringValue(
+            this.getNodeMark(node, MARK_LETTER_SPACING)?.attrs.letterSpacing
+          ) ?? fallback.letterSpacing
+        ),
+        same: (first, second) => this.sameCssNumericValue(first, second),
+      },
+    ];
+
+    for (const {key, values, same} of stringValues) {
+      const value = this.getUniformStringValue(values, same);
+      if (value === null) {
+        mixed[key] = true;
+        typography[key] = '';
+      } else {
+        typography[key] = value;
+      }
+    }
+
+    for (const [key, markName] of [
+      ['bold', MARK_STRONG],
+      ['italic', MARK_EM],
+      ['underline', MARK_UNDERLINE],
+    ] as const) {
+      const values = textNodes.map(
+        (node) => fallback[key] || Boolean(this.getNodeMark(node, markName))
+      );
+      const isMixed = values.some((value) => value !== values[0]);
+      if (isMixed) {
+        mixed[key] = true;
+        typography[key] = false;
+      } else {
+        typography[key] = values[0] ?? fallback[key];
+      }
+    }
+  }
+
+  resolveTextBlockTypography(
+    textBlocks: ProseMirrorNode[],
+    fallback: TypographyConfig,
+    typography: TypographyConfig,
+    mixed: Partial<Record<keyof TypographyConfig, boolean>>
+  ): void {
+    if (!textBlocks.length) {
+      return;
+    }
+
+    const textAlignments = textBlocks.map((node) =>
+      this.toTextAlign(
+        this.toStringValue(node.attrs.align) ??
+        this.toStringValue(node.attrs.textAlign) ??
+        this.toStringValue(node.attrs.overriddenAlignValue),
+        fallback.textAlign
+      )
+    );
+    const lineHeights = textBlocks.map((node) =>
+      this.toStringValue(node.attrs.lineSpacing) ??
+      this.toStringValue(node.attrs.lineHeight) ??
+      this.toStringValue(node.attrs.overriddenLineSpacingValue) ??
+      fallback.lineHeight
+    );
+    const textAlignment = this.getUniformStringValue(textAlignments);
+    const lineHeight = this.getUniformStringValue(
+      lineHeights,
+      (first, second) => this.sameCssNumericValue(first, second)
+    );
+
+    if (textAlignment === null) {
+      mixed.textAlign = true;
+      typography.textAlign = '';
+    } else {
+      typography.textAlign = this.toTextAlign(textAlignment, '');
+    }
+    if (lineHeight === null) {
+      mixed.lineHeight = true;
+      typography.lineHeight = '';
+    } else {
+      typography.lineHeight = lineHeight;
+    }
+  }
+
+  getNodeMark(node: ProseMirrorNode, markName: string) {
+    return node.marks.find((mark) => mark.type.name === markName);
+  }
+
+  getUniformStringValue(
+    values: string[],
+    sameValue: (first: string, second: string) => boolean =
+      (first, second) => first === second
+  ): string | null {
+    const first = values[0];
+    if (first === undefined) {
+      return null;
+    }
+    return values.every((value) => sameValue(first, value)) ? first : null;
+  }
+
+  sameTypographyValue(
+    key: keyof TypographyConfig,
+    first: TypographyConfig[keyof TypographyConfig],
+    second: TypographyConfig[keyof TypographyConfig]
+  ): boolean {
+    if (key === 'fontSize' || key === 'letterSpacing' || key === 'lineHeight') {
+      return this.sameCssNumericValue(String(first), String(second));
+    }
+    if (key === 'textColor' || key === 'backgroundColor') {
+      return this.sameColorValue(String(first), String(second));
+    }
+    if (key === 'fontFamily') {
+      return this.sameNormalizedString(String(first), String(second));
+    }
+    return first === second;
+  }
+
+  emptyTypographyValue(key: keyof TypographyConfig): string | boolean {
+    return key === 'bold' || key === 'italic' || key === 'underline' ? false : '';
   }
 
   getLayoutDialogData(
@@ -661,9 +971,41 @@ class TableDetailsCommand extends UICommand {
     return typeof value === 'string' && value.trim().length ? value : null;
   }
 
-  normalizeTransparentColor(value: string | null | undefined): string | null {
-    if (!value || value === 'rgba(0, 0, 0, 0)' || value === 'transparent') {
+  toColorValue(value: unknown): string | null {
+    if (typeof value === 'object' && value !== null && 'color' in value) {
+      return this.toStringValue((value as {color?: unknown}).color);
+    }
+    return this.toStringValue(value);
+  }
+
+  toStringOrNumberValue(value: unknown): string | null {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+    return this.toStringValue(value);
+  }
+
+  toMarkedFontSize(value: unknown): string | null {
+    const fontSize = this.toStringOrNumberValue(value);
+    if (!fontSize) {
       return null;
+    }
+    return /[a-z%]/i.test(fontSize) ? fontSize : `${fontSize}pt`;
+  }
+
+  normalizeTransparentColor(value: string | null | undefined): string | null {
+    const normalized = this.normalizeString(value);
+    if (!normalized) {
+      return null;
+    }
+
+    try {
+      if (Color(normalized).alpha() === 0) {
+        return null;
+      }
+    } catch {
+      // Keep valid browser-specific color tokens that the color package does
+      // not understand; only fully transparent values are removed here.
     }
     return value;
   }
@@ -707,10 +1049,24 @@ class TableDetailsCommand extends UICommand {
   }
 
   isBold(fontWeight: string | undefined | null): boolean {
-    if (!fontWeight) {
+    const normalized = fontWeight?.trim().toLowerCase();
+    if (!normalized) {
       return false;
     }
-    return fontWeight === 'bold' || Number.parseInt(fontWeight, 10) >= 600;
+    return (
+      normalized === 'bold' ||
+      normalized === 'bolder' ||
+      Number.parseInt(normalized, 10) >= 600
+    );
+  }
+
+  isItalic(fontStyle: string | undefined | null): boolean {
+    const normalized = fontStyle?.trim().toLowerCase();
+    return normalized === 'italic' || normalized === 'oblique';
+  }
+
+  isUnderlined(textDecoration: string | undefined | null): boolean {
+    return textDecoration?.toLowerCase().includes('underline') ?? false;
   }
 
   normalizeFontFamily(value: string | undefined | null): string | null {
@@ -731,13 +1087,30 @@ class TableDetailsCommand extends UICommand {
     );
   }
 
+  getFontOptions(currentFontFamily: string): FontOption[] {
+    const options = [
+      {label: 'Default Font', value: 'inherit'},
+      ...FONT_TYPE_NAMES.map((fontName) => ({
+        label: fontName,
+        value: fontName,
+      })),
+    ];
+    const current = this.normalizeFontFamily(currentFontFamily);
+
+    if (
+      current &&
+      current.toLowerCase() !== 'inherit' &&
+      !options.some((option) => option.value.toLowerCase() === current.toLowerCase())
+    ) {
+      options.push({label: current, value: current});
+    }
+
+    return options;
+  }
+
   normalizeString(value: string | null | undefined): string | null {
     const normalized = value?.trim() ?? '';
     return normalized.length ? normalized : null;
-  }
-
-  isOverrideAttrSet(attrs: Record<string, unknown>, attrName: string): boolean {
-    return attrs[attrName] === true || attrs[attrName] === 'true';
   }
 
   normalizeNumber(value: string): number | null {
@@ -786,32 +1159,204 @@ class TableDetailsCommand extends UICommand {
       return tr;
     }
 
-    const column = mapIndex % tableMap.width;
-    const updatedCells = new Set<number>();
+    const selectedCellRect = tableMap.findCell(cellPosRelative);
+    const selectedColumnCount = selectedCellRect.right - selectedCellRect.left;
+    const selectedCell = tr.doc.nodeAt(cellRef.pos);
+    const selectedColumnWidths = this.distributeColumnWidth(
+      width,
+      selectedColumnCount,
+      Array.isArray(selectedCell?.attrs.colwidth)
+        ? selectedCell.attrs.colwidth
+        : undefined
+    );
+    if (!selectedColumnWidths.length) {
+      return tr;
+    }
 
-    for (let row = 0; row < tableMap.height; row++) {
-      const rowIndex = row * tableMap.width + column;
-      const mappedCellPos = tableMap.map[rowIndex];
+    const cellUpdates = new Map<number, ColumnWidthUpdate>();
 
-      if (updatedCells.has(mappedCellPos)) {
-        continue;
+    this.collectColumnWidthUpdates(
+      tr,
+      tableRef,
+      tableMap,
+      selectedCellRect,
+      selectedColumnWidths,
+      cellUpdates
+    );
+
+    return this.applyColumnWidthUpdates(tr, cellUpdates);
+  }
+
+  collectColumnWidthUpdates(
+    tr: Transaction,
+    tableRef: ParentNodeRef,
+    tableMap: TableMap,
+    selectedCellRect: CellRect,
+    selectedColumnWidths: number[],
+    cellUpdates: Map<number, ColumnWidthUpdate>
+  ): void {
+
+    for (
+      let column = selectedCellRect.left;
+      column < selectedCellRect.right;
+      column++
+    ) {
+      const columnWidth = selectedColumnWidths[column - selectedCellRect.left];
+
+      for (let row = 0; row < tableMap.height; row++) {
+        const mappedCellPos = tableMap.map[row * tableMap.width + column];
+        const absoluteCellPos = tableRef.start + mappedCellPos;
+        const update = this.getColumnWidthUpdate(
+          tr,
+          absoluteCellPos,
+          cellUpdates
+        );
+        if (!update) {
+          continue;
+        }
+
+        const mappedCellRect = tableMap.findCell(mappedCellPos);
+        const colwidthIndex = column - mappedCellRect.left;
+        if (colwidthIndex >= 0 && colwidthIndex < update.colwidth.length) {
+          update.colwidth[colwidthIndex] = columnWidth;
+        }
+      }
+    }
+  }
+
+  getColumnWidthUpdate(
+    tr: Transaction,
+    absoluteCellPos: number,
+    cellUpdates: Map<number, ColumnWidthUpdate>
+  ): ColumnWidthUpdate | null {
+    const existing = cellUpdates.get(absoluteCellPos);
+    if (existing) {
+      return existing;
+    }
+
+    const currentCell = tr.doc.nodeAt(absoluteCellPos);
+    if (!currentCell) {
+      return null;
+    }
+
+    const colspan = Number(currentCell.attrs.colspan) || 1;
+    const currentColwidth = Array.isArray(currentCell.attrs.colwidth)
+      ? currentCell.attrs.colwidth
+      : [];
+    const update = {
+      cell: currentCell,
+      colwidth: Array.from({length: colspan}, (_, index) => {
+        const currentWidth = currentColwidth[index];
+        return typeof currentWidth === 'number' && Number.isFinite(currentWidth)
+          ? currentWidth
+          : 0;
+      }),
+    };
+    cellUpdates.set(absoluteCellPos, update);
+    return update;
+  }
+
+  applyColumnWidthUpdates(
+    tr: Transaction,
+    cellUpdates: Map<number, ColumnWidthUpdate>
+  ): Transaction {
+    for (const [absoluteCellPos, update] of cellUpdates) {
+      const currentColwidth = update.cell.attrs.colwidth;
+      const nextColwidth = this.sameColumnWidths(
+        currentColwidth,
+        update.colwidth
+      )
+        ? currentColwidth
+        : update.colwidth;
+      const nextAttrs: Record<string, unknown> = {
+        ...update.cell.attrs,
+        colwidth: nextColwidth,
+      };
+
+      if (Object.hasOwn(update.cell.attrs, 'cellWidth')) {
+        nextAttrs.cellWidth = this.getCellWidthFromColwidth(update.colwidth);
       }
 
-      updatedCells.add(mappedCellPos);
-      const absoluteCellPos = tableRef.start + mappedCellPos;
-      const currentCell = tr.doc.nodeAt(absoluteCellPos);
-      if (!currentCell) {
-        continue;
+      if (!this.sameAttrs(update.cell.attrs, nextAttrs)) {
+        tr = tr.setNodeMarkup(absoluteCellPos, undefined, nextAttrs);
       }
-
-      const colspan = Number(currentCell.attrs.colspan) || 1;
-      tr = tr.setNodeMarkup(absoluteCellPos, undefined, {
-        ...currentCell.attrs,
-        colwidth: Array.from({length: colspan}, () => width),
-      });
     }
 
     return tr;
+  }
+
+  distributeColumnWidth(
+    width: number,
+    columnCount: number,
+    currentColwidth?: readonly unknown[]
+  ): number[] {
+    if (!Number.isFinite(width) || width <= 0 || columnCount <= 0) {
+      return [];
+    }
+
+    const totalWidth = Math.round(width);
+    if (totalWidth <= 0) {
+      return [];
+    }
+
+    const hasValidCurrentWidths =
+      currentColwidth?.length === columnCount &&
+      currentColwidth.every(
+        (currentWidth) =>
+          typeof currentWidth === 'number' &&
+          Number.isFinite(currentWidth) &&
+          currentWidth > 0
+      );
+    const weights: number[] = hasValidCurrentWidths
+      ? (currentColwidth as number[]).slice()
+      : Array.from({length: columnCount}, () => 1);
+    const currentTotal = weights.reduce((sum, currentWidth) => {
+      return sum + currentWidth;
+    }, 0);
+
+    if (hasValidCurrentWidths && this.nearlyEqual(totalWidth, currentTotal)) {
+      return weights;
+    }
+
+    const exactWidths = weights.map((currentWidth) => {
+      return (currentWidth / currentTotal) * totalWidth;
+    });
+    const distributedWidths = exactWidths.map(Math.floor);
+    const distributedTotal = distributedWidths.reduce((sum, currentWidth) => {
+      return sum + currentWidth;
+    }, 0);
+    const remainder = totalWidth - distributedTotal;
+    const remainderOrder = exactWidths
+      .map((exactWidth, index) => ({
+        index,
+        fraction: exactWidth - distributedWidths[index],
+      }))
+      .sort((first, second) => {
+        return second.fraction - first.fraction || first.index - second.index;
+      });
+
+    for (let index = 0; index < remainder; index++) {
+      distributedWidths[remainderOrder[index].index]++;
+    }
+
+    return distributedWidths;
+  }
+
+  sameColumnWidths(first: unknown, second: readonly number[]): boolean {
+    return (
+      Array.isArray(first) &&
+      first.length === second.length &&
+      first.every((width, index) => width === second[index])
+    );
+  }
+
+  getCellWidthFromColwidth(colwidth: number[]): string | null {
+    if (!colwidth.length || colwidth.some((width) => width <= 0)) {
+      return null;
+    }
+
+    const totalWidth = colwidth.reduce((sum, width) => sum + width, 0);
+    return `${this.formatCssNumber(totalWidth)}px`;
   }
 
   applyAttributeInputs(
@@ -844,7 +1389,9 @@ class TableDetailsCommand extends UICommand {
       const currentCell = tr.doc.nodeAt(nodes.cell.pos) || nodes.cell.node;
       tr = tr.setNodeMarkup(nodes.cell.pos, undefined, {
         ...currentCell.attrs,
-        cellWidth: this.normalizeString(inputs.cellWidth),
+        cellWidth: cellWidth
+          ? currentCell.attrs.cellWidth
+          : this.normalizeString(inputs.cellWidth),
         cellStyle: this.normalizeString(inputs.cellStyle),
         fontSize: this.normalizeString(inputs.fontSize),
         letterSpacing: this.normalizeString(inputs.letterSpacing),
@@ -914,103 +1461,166 @@ class TableDetailsCommand extends UICommand {
     result: TableEditorResult,
     initialData?: TableEditorDialogData
   ): TableEditorApplyChanges {
-    const changedTypography = result.changed?.typography;
-    const changedLayout = result.changed?.layout;
-    const changedTable = result.changed?.table;
     if (result.changed) {
-      return {
-        fontFamily: Boolean(changedTypography?.fontFamily),
-        fontSize: Boolean(changedTypography?.fontSize),
-        bold: Boolean(changedTypography?.bold),
-        italic: Boolean(changedTypography?.italic),
-        underline: Boolean(changedTypography?.underline),
-        textColor: Boolean(changedTypography?.textColor),
-        backgroundColor: Boolean(changedTypography?.backgroundColor),
-        letterSpacing: Boolean(changedTypography?.letterSpacing),
-        lineHeight: Boolean(changedTypography?.lineHeight),
-        textAlign: Boolean(changedTypography?.textAlign),
-        verticalAlign: Boolean(changedTypography?.verticalAlign),
-        paddingTop: Boolean(changedLayout?.paddingTop),
-        paddingRight: Boolean(changedLayout?.paddingRight),
-        paddingBottom: Boolean(changedLayout?.paddingBottom),
-        paddingLeft: Boolean(changedLayout?.paddingLeft),
-        paddingLocked: Boolean(changedLayout?.paddingLocked),
-        tableHeight: Boolean(changedTable?.tableHeight),
-        selectedCellWidth: Boolean(changedTable?.selectedCellWidth),
-        selectedCellHeight: Boolean(changedTable?.selectedCellHeight),
-      };
+      return this.getExplicitApplyChanges(result.changed);
     }
 
+    return this.getInferredApplyChanges(result, initialData);
+  }
+
+  getExplicitApplyChanges(
+    changed: TableEditorChangedFields
+  ): TableEditorApplyChanges {
+    const typography = changed.typography;
+    const layout = changed.layout;
+    const table = changed.table;
+    return {
+      fontFamily: Boolean(typography?.fontFamily),
+      fontSize: Boolean(typography?.fontSize),
+      bold: Boolean(typography?.bold),
+      italic: Boolean(typography?.italic),
+      underline: Boolean(typography?.underline),
+      textColor: Boolean(typography?.textColor),
+      backgroundColor: Boolean(typography?.backgroundColor),
+      letterSpacing: Boolean(typography?.letterSpacing),
+      lineHeight: Boolean(typography?.lineHeight),
+      textAlign: Boolean(typography?.textAlign),
+      verticalAlign: Boolean(typography?.verticalAlign),
+      paddingTop: Boolean(layout?.paddingTop),
+      paddingRight: Boolean(layout?.paddingRight),
+      paddingBottom: Boolean(layout?.paddingBottom),
+      paddingLeft: Boolean(layout?.paddingLeft),
+      paddingLocked: Boolean(layout?.paddingLocked),
+      tableHeight: Boolean(table?.tableHeight),
+      selectedCellWidth: Boolean(table?.selectedCellWidth),
+      selectedCellHeight: Boolean(table?.selectedCellHeight),
+    };
+  }
+
+  getInferredApplyChanges(
+    result: TableEditorResult,
+    initialData?: TableEditorDialogData
+  ): TableEditorApplyChanges {
     const initialTypography = initialData?.typography;
-    if (!initialTypography) {
-      return {
-        fontFamily: true,
-        fontSize: true,
-        bold: true,
-        italic: true,
-        underline: true,
-        textColor: true,
-        backgroundColor: true,
-        letterSpacing: true,
-        lineHeight: true,
-        textAlign: true,
-        verticalAlign: true,
-        paddingTop: true,
-        paddingRight: true,
-        paddingBottom: true,
-        paddingLeft: true,
-        paddingLocked: true,
-        tableHeight: true,
-        selectedCellWidth: true,
-        selectedCellHeight: true,
-      };
-    }
+    const initialLayout = initialData?.layout;
+    const initialTable = initialData?.table;
 
     return {
-      fontFamily: !this.sameNormalizedString(
-        this.normalizeInheritedValue(result.typography.fontFamily),
-        this.normalizeInheritedValue(initialTypography.fontFamily)
+      fontFamily: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameNormalizedString(
+          this.normalizeInheritedValue(result.typography.fontFamily),
+          this.normalizeInheritedValue(initial.fontFamily)
+        )
       ),
-      fontSize: !this.sameCssNumericValue(
-        result.typography.fontSize,
-        initialTypography.fontSize
+      fontSize: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameCssNumericValue(
+          result.typography.fontSize,
+          initial.fontSize
+        )
       ),
-      bold: result.typography.bold !== initialTypography.bold,
-      italic: result.typography.italic !== initialTypography.italic,
-      underline: result.typography.underline !== initialTypography.underline,
-      textColor: !this.sameColorValue(
-        result.typography.textColor,
-        initialTypography.textColor
+      bold: this.hasInitialValueChanged(
+        initialTypography,
+        (initial) => result.typography.bold === initial.bold
       ),
-      backgroundColor: !this.sameNormalizedString(
-        this.normalizeTransparentResult(result.typography.backgroundColor),
-        this.normalizeTransparentResult(initialTypography.backgroundColor)
+      italic: this.hasInitialValueChanged(
+        initialTypography,
+        (initial) => result.typography.italic === initial.italic
       ),
-      letterSpacing: !this.sameCssNumericValue(
-        result.typography.letterSpacing,
-        initialTypography.letterSpacing
+      underline: this.hasInitialValueChanged(
+        initialTypography,
+        (initial) => result.typography.underline === initial.underline
       ),
-      lineHeight: !this.sameCssNumericValue(
-        result.typography.lineHeight,
-        initialTypography.lineHeight
+      textColor: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameColorValue(
+          result.typography.textColor,
+          initial.textColor
+        )
       ),
-      textAlign: !this.sameNormalizedString(
-        result.typography.textAlign,
-        initialTypography.textAlign
+      backgroundColor: this.hasInitialValueChanged(
+        initialTypography,
+        (initial) => this.sameColorValue(
+          this.normalizeTransparentResult(result.typography.backgroundColor),
+          this.normalizeTransparentResult(initial.backgroundColor)
+        )
       ),
-      verticalAlign: !this.sameNormalizedString(
-        result.typography.verticalAlign,
-        initialTypography.verticalAlign
+      letterSpacing: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameCssNumericValue(
+          result.typography.letterSpacing,
+          initial.letterSpacing
+        )
       ),
-      paddingTop: true,
-      paddingRight: true,
-      paddingBottom: true,
-      paddingLeft: true,
-      paddingLocked: true,
-      tableHeight: true,
-      selectedCellWidth: true,
-      selectedCellHeight: true,
+      lineHeight: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameCssNumericValue(
+          result.typography.lineHeight,
+          initial.lineHeight
+        )
+      ),
+      textAlign: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameNormalizedString(
+          result.typography.textAlign,
+          initial.textAlign
+        )
+      ),
+      verticalAlign: this.hasInitialValueChanged(initialTypography, (initial) =>
+        this.sameNormalizedString(
+          result.typography.verticalAlign,
+          initial.verticalAlign
+        )
+      ),
+      paddingTop: this.hasInitialValueChanged(initialLayout, (initial) =>
+        this.samePixelDimensionValue(
+          result.layout.paddingTop,
+          initial.paddingTop
+        )
+      ),
+      paddingRight: this.hasInitialValueChanged(initialLayout, (initial) =>
+        this.samePixelDimensionValue(
+          result.layout.paddingRight,
+          initial.paddingRight
+        )
+      ),
+      paddingBottom: this.hasInitialValueChanged(initialLayout, (initial) =>
+        this.samePixelDimensionValue(
+          result.layout.paddingBottom,
+          initial.paddingBottom
+        )
+      ),
+      paddingLeft: this.hasInitialValueChanged(initialLayout, (initial) =>
+        this.samePixelDimensionValue(
+          result.layout.paddingLeft,
+          initial.paddingLeft
+        )
+      ),
+      paddingLocked: this.hasInitialValueChanged(
+        initialLayout,
+        (initial) => result.layout.paddingLocked === initial.paddingLocked
+      ),
+      tableHeight: this.hasInitialValueChanged(initialTable, (initial) =>
+        this.samePixelDimensionValue(
+          result.table.tableHeight,
+          initial.tableHeight
+        )
+      ),
+      selectedCellWidth: this.hasInitialValueChanged(initialTable, (initial) =>
+        this.samePixelDimensionValue(
+          result.table.selectedCellWidth,
+          initial.selectedCellWidth
+        )
+      ),
+      selectedCellHeight: this.hasInitialValueChanged(initialTable, (initial) =>
+        this.samePixelDimensionValue(
+          result.table.selectedCellHeight,
+          initial.selectedCellHeight
+        )
+      ),
     };
+  }
+
+  hasInitialValueChanged<T>(
+    initialValue: T | undefined,
+    isSame: (initialValue: T) => boolean
+  ): boolean {
+    return initialValue === undefined || !isSame(initialValue);
   }
 
   sameNormalizedString(
@@ -1033,45 +1643,65 @@ class TableDetailsCommand extends UICommand {
       return null;
     }
 
-    const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(normalized);
-    if (hex?.[1]) {
-      const color = hex[1];
-      return color.length === 3
-        ? `#${color[0]}${color[0]}${color[1]}${color[1]}${color[2]}${color[2]}`
-        : `#${color}`;
+    try {
+      const color = Color(normalized);
+      if (color.alpha() === 0) {
+        return 'transparent';
+      }
+      if (color.alpha() === 1) {
+        return String(color.hex()).toLowerCase();
+      }
+      return String(color.rgb().string()).toLowerCase();
+    } catch {
+      // Preserve browser-specific tokens such as currentColor so change
+      // detection remains stable even when they are not parseable here.
+      return normalized;
     }
-
-    const rgb = /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)$/i.exec(
-      normalized
-    );
-    if (rgb) {
-      const [, red, green, blue] = rgb;
-      return `#${this.toHexByte(red)}${this.toHexByte(green)}${this.toHexByte(
-        blue
-      )}`;
-    }
-
-    return normalized;
-  }
-
-  toHexByte(value: string): string {
-    return Math.max(0, Math.min(255, Number.parseInt(value, 10)))
-      .toString(16)
-      .padStart(2, '0');
   }
 
   sameCssNumericValue(
     first: string | null | undefined,
     second: string | null | undefined
   ): boolean {
-    const firstValue = this.normalizeCssNumericValue(first);
-    const secondValue = this.normalizeCssNumericValue(second);
+    const firstValue = this.parseCssNumericValue(first);
+    const secondValue = this.parseCssNumericValue(second);
 
     if (firstValue === null || secondValue === null) {
       return this.normalizeString(first) === this.normalizeString(second);
     }
 
-    return firstValue === secondValue;
+    if (firstValue.value === 0 && secondValue.value === 0) {
+      return true;
+    }
+
+    const firstAbsoluteFactor = ABSOLUTE_CSS_UNIT_TO_PX[firstValue.unit];
+    const secondAbsoluteFactor = ABSOLUTE_CSS_UNIT_TO_PX[secondValue.unit];
+    if (
+      firstAbsoluteFactor !== undefined &&
+      secondAbsoluteFactor !== undefined
+    ) {
+      return this.nearlyEqual(
+        firstValue.value * firstAbsoluteFactor,
+        secondValue.value * secondAbsoluteFactor
+      );
+    }
+
+    return (
+      firstValue.unit === secondValue.unit &&
+      this.nearlyEqual(firstValue.value, secondValue.value)
+    );
+  }
+
+  samePixelDimensionValue(
+    first: string | null | undefined,
+    second: string | null | undefined
+  ): boolean {
+    const firstPixels = this.normalizeCssNumericValue(first);
+    const secondPixels = this.normalizeCssNumericValue(second);
+
+    return firstPixels === null || secondPixels === null
+      ? this.sameNormalizedString(first, second)
+      : this.nearlyEqual(firstPixels, secondPixels);
   }
 
   sameAttrs(
@@ -1090,13 +1720,42 @@ class TableDetailsCommand extends UICommand {
   }
 
   normalizeCssNumericValue(value: string | null | undefined): number | null {
+    const parsed = this.parseCssNumericValue(value);
+    if (!parsed) {
+      return null;
+    }
+
+    const absoluteFactor = ABSOLUTE_CSS_UNIT_TO_PX[parsed.unit];
+    if (absoluteFactor !== undefined) {
+      return parsed.value * absoluteFactor;
+    }
+
+    return parsed.unit === '' ? parsed.value : null;
+  }
+
+  parseCssNumericValue(
+    value: string | null | undefined
+  ): CssNumericValue | null {
     const normalized = this.normalizeString(value);
     if (!normalized) {
       return null;
     }
 
-    const parsed = Number.parseFloat(normalized.replace(/px|pt/i, ''));
-    return Number.isNaN(parsed) ? null : parsed;
+    const match = /^([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*([a-z%]*)$/i.exec(
+      normalized
+    );
+    if (!match?.[1]) {
+      return null;
+    }
+
+    const parsed = Number.parseFloat(match[1]);
+    return Number.isFinite(parsed)
+      ? {value: parsed, unit: (match[2] ?? '').toLowerCase()}
+      : null;
+  }
+
+  nearlyEqual(first: number, second: number): boolean {
+    return Math.abs(first - second) <= 0.0001;
   }
 
   toOptionalCssValue(enabled: boolean, value: string): string | null {
@@ -1209,24 +1868,7 @@ class TableDetailsCommand extends UICommand {
       nextAttrs.fontSize = fontSize;
       nextAttrs.fontSizeOverridden = Boolean(fontSize);
     }
-    if (changes.bold) {
-      const fontWeight = this.toOptionalCssValue(result.typography.bold, 'bold');
-      nextAttrs.fontWeight = fontWeight;
-      nextAttrs.fontWeightOverridden = Boolean(fontWeight);
-    }
-    if (changes.italic) {
-      const fontStyle = this.toOptionalCssValue(result.typography.italic, 'italic');
-      nextAttrs.fontStyle = fontStyle;
-      nextAttrs.fontStyleOverridden = Boolean(fontStyle);
-    }
-    if (changes.underline) {
-      const textDecoration = this.toOptionalCssValue(
-        result.typography.underline,
-        'underline'
-      );
-      nextAttrs.textDecoration = textDecoration;
-      nextAttrs.textDecorationOverridden = Boolean(textDecoration);
-    }
+    this.applyChangedCellTextStyleAttrs(nextAttrs, result, changes);
     if (changes.textColor) {
       const textColor = this.normalizeString(result.typography.textColor);
       nextAttrs.textColor = textColor;
@@ -1261,14 +1903,32 @@ class TableDetailsCommand extends UICommand {
     }
   }
 
+  applyChangedCellTextStyleAttrs(
+    nextAttrs: Record<string, unknown>,
+    result: TableEditorResult,
+    changes: TableEditorApplyChanges
+  ): void {
+    if (changes.bold) {
+      nextAttrs.fontWeight = result.typography.bold ? 'bold' : 'normal';
+      nextAttrs.fontWeightOverridden = true;
+    }
+    if (changes.italic) {
+      nextAttrs.fontStyle = result.typography.italic ? 'italic' : 'normal';
+      nextAttrs.fontStyleOverridden = true;
+    }
+    if (changes.underline) {
+      nextAttrs.textDecoration = result.typography.underline
+        ? 'underline'
+        : 'none';
+      nextAttrs.textDecorationOverridden = true;
+    }
+  }
+
   applyChangedCellLayoutAttrs(
     nextAttrs: Record<string, unknown>,
     result: TableEditorResult,
     changes: TableEditorApplyChanges
   ): void {
-    if (changes.selectedCellWidth) {
-      nextAttrs.cellWidth = this.normalizeString(result.table.selectedCellWidth);
-    }
     if (changes.paddingTop) {
       nextAttrs.paddingTop = this.normalizeString(result.layout.paddingTop);
     }
@@ -1603,13 +2263,34 @@ class TableDetailsCommand extends UICommand {
   }
 
   normalizeFontPointSize(value: string | null | undefined): number | null {
-    const normalized = this.normalizeString(value);
-    if (!normalized) {
+    const parsed = this.parseCssNumericValue(value);
+    if (!parsed || parsed.value <= 0) {
       return null;
     }
 
-    const parsed = Number.parseFloat(normalized.replace(/px|pt/i, ''));
-    return Number.isNaN(parsed) || parsed <= 0 ? null : parsed;
+    if (parsed.unit === '' || parsed.unit === 'pt') {
+      return parsed.value;
+    }
+
+    const absoluteFactor = ABSOLUTE_CSS_UNIT_TO_PX[parsed.unit];
+    return absoluteFactor === undefined
+      ? null
+      : parsed.value * absoluteFactor * (72 / 96);
+  }
+
+  normalizeFontSizeForDialog(
+    value: string | null | undefined
+  ): string | null {
+    const pointSize = this.normalizeFontPointSize(value);
+    if (pointSize === null) {
+      return this.normalizeString(value);
+    }
+
+    return `${this.formatCssNumber(pointSize)}pt`;
+  }
+
+  formatCssNumber(value: number): string {
+    return String(Number(value.toFixed(4)));
   }
 
   normalizeLineSpacingValue(value: string | null | undefined): string | null {
@@ -1623,11 +2304,7 @@ class TableDetailsCommand extends UICommand {
 
   normalizeTransparentResult(value: string | null | undefined): string | null {
     const normalized = this.normalizeString(value);
-    if (!normalized || normalized.toLowerCase() === 'transparent') {
-      return null;
-    }
-
-    return normalized;
+    return normalized || null;
   }
 
   cancel(): void {

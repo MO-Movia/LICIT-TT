@@ -75,6 +75,7 @@ describe('TableCellEx Extension', () => {
     expect(node.spec.attrs).toHaveProperty('letterSpacing');
     expect(node.spec.attrs).toHaveProperty('marginTop');
     expect(node.spec.attrs).toHaveProperty('marginBottom');
+    expect(node.spec.attrs).toHaveProperty('textRotation');
     expect(node.spec.attrs?.cellWidth.default).toBe(null);
     expect(node.spec.attrs?.cellStyle.default).toBe(null);
     expect(node.spec.attrs?.fontSize.default).toBe(null);
@@ -88,6 +89,8 @@ describe('TableCellEx Extension', () => {
       .chain()
       .setCellAttribute('cellWidth', '120')
       .setCellAttribute('fontSize', '14')
+      .setCellAttribute('paddingTop', '12')
+      .setCellAttribute('paddingBottom', '10')
       .setCellAttribute('marginTop', '6')
       .setCellAttribute('marginBottom', '8')
       .run();
@@ -96,8 +99,12 @@ describe('TableCellEx Extension', () => {
 
     expect(html).toContain('width: 120px');
     expect(html).toContain('font-size: 14px');
+    expect(html).toContain('padding-top: 12px');
+    expect(html).toContain('padding-bottom: 10px');
     expect(html).toContain('margin-top: 6px');
     expect(html).toContain('margin-bottom: 8px');
+    expect(html).not.toContain('padding-top: 6px');
+    expect(html).not.toContain('padding-bottom: 8px');
   });
 
   test('should parse cellWidth, font and margin attributes from HTML', () => {
@@ -130,6 +137,43 @@ describe('TableCellEx Extension', () => {
     expect(html).toContain('--czi-cell-font-size: 45px');
     expect(html).toContain('vertical-align: top');
     expect(html).not.toContain('45pxvertical-align');
+  });
+
+  test('should render and parse clockwise text rotation', () => {
+    editor.commands.setCellAttribute('textRotation', 'clockwise');
+
+    const html = editor.getHTML();
+    expect(html).toContain('data-cell-text-rotation="clockwise"');
+    expect(html).toContain('writing-mode: vertical-rl');
+    expect(html).toContain('text-orientation: mixed');
+    expect(html).toContain('text-align: center');
+    expect(html).toContain('vertical-align: middle');
+
+    editor.commands.setContent(
+      '<table><tr><td style="writing-mode: sideways-rl">Cell</td></tr></table>'
+    );
+
+    let textRotation: string | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
+      if (node.type.name === 'tableCell') {
+        textRotation = node.attrs.textRotation;
+      }
+    });
+    expect(textRotation).toBe('clockwise');
+  });
+
+  test('should keep an imported cell style class as metadata only', () => {
+    const attrs = getTableCellExtensionAttributes();
+
+    expect(attrs.cellStyle.renderHTML?.({cellStyle: 'para'})).toStrictEqual({
+      'data-cell-style': 'para',
+    });
+    expect(
+      attrs.cellStyle.renderHTML?.({cellStyle: 'vertical-align: top;'})
+    ).toStrictEqual({
+      'data-cell-style': 'vertical-align: top;',
+      style: 'vertical-align: top;',
+    });
   });
 
   test('should render backgroundColor as string when vignette is true', () => {
@@ -260,6 +304,25 @@ describe('TableCellEx Extension', () => {
     expect(html).toContain('border-color: green');
   });
 
+  test('should keep every side border color separate from later styles', () => {
+    editor
+      .chain()
+      .setCellAttribute('borderLeftColor', 'red')
+      .setCellAttribute('borderRightColor', 'blue')
+      .setCellAttribute('borderTopColor', 'green')
+      .setCellAttribute('borderBottomColor', 'purple')
+      .setCellAttribute('verticalAlign', 'top')
+      .run();
+
+    const html = editor.getHTML();
+    expect(html).toContain('border-left-color: red');
+    expect(html).toContain('border-right-color: blue');
+    expect(html).toContain('border-top-color: green');
+    expect(html).toContain('border-bottom-color: purple');
+    expect(html).toContain('vertical-align: top');
+    expect(html).not.toMatch(/(?:red|blue|green|purple)vertical-align/);
+  });
+
   test('should parse and render vertical-align for tableCell', () => {
     editor.commands.setContent(
       '<table><tr><td style="vertical-align: bottom">Cell</td></tr></table>'
@@ -323,6 +386,18 @@ describe('TableCellEx Extension', () => {
     });
     expect(attrs.borderColor.renderHTML?.({ borderColor: 'purple' })).toStrictEqual({
       style: 'border-color: purple;',
+    });
+    expect(attrs.borderLeftColor.renderHTML?.({ borderLeftColor: 'red' })).toStrictEqual({
+      style: 'border-left-color: red;',
+    });
+    expect(attrs.borderRightColor.renderHTML?.({ borderRightColor: 'blue' })).toStrictEqual({
+      style: 'border-right-color: blue;',
+    });
+    expect(attrs.borderTopColor.renderHTML?.({ borderTopColor: 'green' })).toStrictEqual({
+      style: 'border-top-color: green;',
+    });
+    expect(attrs.borderBottomColor.renderHTML?.({ borderBottomColor: 'purple' })).toStrictEqual({
+      style: 'border-bottom-color: purple;',
     });
     expect(attrs.verticalAlign.renderHTML?.({ verticalAlign: 'middle' })).toStrictEqual({
       verticalAlign: 'middle',

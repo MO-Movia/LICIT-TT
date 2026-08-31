@@ -83,13 +83,23 @@ function createRowResizeHandle(view: EditorView): HTMLElement {
   const handle = document.createElement('div');
   handle.className = ROW_RESIZE_HANDLE_CLASSNAME;
   handle.setAttribute('aria-hidden', 'true');
+  handle.setAttribute('contenteditable', 'false');
   handle.appendChild(document.createElement('span')).className =
     ROW_RESIZE_HANDLE_GRIP_CLASSNAME;
-  handle.style.display = 'none';
+  // Keep the overlay in layout while hidden. `display: none` makes
+  // offsetParent null, so the first hover can be positioned against a
+  // different ancestor and jump when the element becomes visible.
+  handle.style.display = 'block';
+  handle.style.visibility = 'hidden';
   handle.style.pointerEvents = 'none';
   handle.style.position = 'absolute';
   handle.style.zIndex = '2147483647';
-  view.dom.appendChild(handle);
+  // The ProseMirror root is content DOM. Appending an overlay to it makes the
+  // DOM observer parse that overlay as document content. In particular, when
+  // a document starts with a table, the resulting DOM repair can wrap the
+  // entire document in the first table cell. Keep the resize UI as a sibling
+  // of the editable root instead.
+  (view.dom.parentElement ?? document.body).appendChild(handle);
   return handle;
 }
 
@@ -102,38 +112,56 @@ function showRowResizeHandle(
   positionRowResizeHandle(handle, view, rowRect, rowRect.bottom);
 }
 
-function showRowResizeHandleAtY(
+function showRowResizePreview(
   handle: HTMLElement,
   view: EditorView,
-  target: Pick<RowResizeTarget, 'rowElement'>,
-  clientY: number
+  target: Pick<RowResizeTarget, 'rowElement' | 'startHeight' | 'nextHeight'>
 ): void {
   const rowRect = target.rowElement.getBoundingClientRect();
-  positionRowResizeHandle(handle, view, rowRect, clientY);
+  const previewBottom =
+    rowRect.bottom + target.nextHeight - target.startHeight;
+  positionRowResizeHandle(handle, view, rowRect, previewBottom);
 }
 
 function positionRowResizeHandle(
   handle: HTMLElement,
-  view: EditorView,
+  _view: EditorView,
   rowRect: DOMRect,
   bottom: number
 ): void {
-  const editorRect = view.dom.getBoundingClientRect();
-  const editorScrollLeft = view.dom.scrollLeft || 0;
-  const editorScrollTop = view.dom.scrollTop || 0;
-  const left = rowRect.left - editorRect.left + editorScrollLeft;
+  const offsetParent =
+    handle.offsetParent instanceof HTMLElement
+      ? handle.offsetParent
+      : handle.parentElement;
+  const offsetParentRect = offsetParent?.getBoundingClientRect() ?? {
+    left: 0,
+    top: 0,
+  };
+  const offsetParentScrollLeft = offsetParent?.scrollLeft || 0;
+  const offsetParentScrollTop = offsetParent?.scrollTop || 0;
+  const offsetParentClientLeft = offsetParent?.clientLeft || 0;
+  const offsetParentClientTop = offsetParent?.clientTop || 0;
+  const left =
+    rowRect.left -
+    offsetParentRect.left -
+    offsetParentClientLeft +
+    offsetParentScrollLeft;
   const top =
-    bottom - editorRect.top + editorScrollTop - ROW_RESIZE_HANDLE_HEIGHT / 2;
+    bottom -
+    offsetParentRect.top -
+    offsetParentClientTop +
+    offsetParentScrollTop -
+    ROW_RESIZE_HANDLE_HEIGHT / 2;
 
   handle.style.left = `${Math.round(left)}px`;
   handle.style.top = `${Math.round(top)}px`;
   handle.style.width = `${Math.round(rowRect.width)}px`;
-  handle.style.display = 'block';
+  handle.style.visibility = 'visible';
   handle.classList.add(ROW_RESIZE_HANDLE_VISIBLE_CLASSNAME);
 }
 
 function hideRowResizeHandle(handle: HTMLElement): void {
-  handle.style.display = 'none';
+  handle.style.visibility = 'hidden';
   handle.classList.remove(
     ROW_RESIZE_HANDLE_VISIBLE_CLASSNAME,
     ROW_RESIZE_HANDLE_DRAGGING_CLASSNAME
@@ -181,14 +209,12 @@ export default function createTableRowResizingPlugin(): Plugin {
     );
 
     resizeTarget.nextHeight = nextHeight;
-    resizeTarget.rowElement.style.height = `${nextHeight}px`;
     if (resizeHandle) {
-      showRowResizeHandleAtY(
-        resizeHandle,
-        resizeTarget.view,
-        resizeTarget,
-        event.clientY
-      );
+      // The guide previews the model height without mutating the editable
+      // table DOM. An unmanaged style mutation is observed by ProseMirror as
+      // external content; for spanning/imported tables, table normalization
+      // can then add cells to repair the partially reparsed table.
+      showRowResizePreview(resizeHandle, resizeTarget.view, resizeTarget);
       resizeHandle.classList.add(ROW_RESIZE_HANDLE_DRAGGING_CLASSNAME);
     }
   };

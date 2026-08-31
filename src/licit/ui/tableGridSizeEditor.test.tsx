@@ -5,6 +5,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {fromXY} from '../../commands';
 import TableGridSizeEditor from './tableGridSizeEditor';
 
 // Mock dependencies
@@ -74,6 +75,69 @@ describe('TableGridSizeEditor', () => {
     body?.dispatchEvent(event);
 
     expect(closeMock).toHaveBeenCalledWith({ rows: 1, cols: 1 });
+  });
+
+  it('updates dimensions from number inputs and submits them', () => {
+    const closeMock = jest.fn();
+    const instance = ReactDOM.render(
+      <TableGridSizeEditor close={closeMock} />,
+      container
+    ) as unknown as TableGridSizeEditor;
+
+    instance._onDimensionChange('rows')({
+      currentTarget: {value: '3'},
+    } as React.ChangeEvent<HTMLInputElement>);
+    instance._onDimensionChange('cols')({
+      currentTarget: {value: '4'},
+    } as React.ChangeEvent<HTMLInputElement>);
+
+    const form = container.querySelector(
+      '.czi-table-grid-size-editor-inputs'
+    );
+    form?.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+
+    expect(closeMock).toHaveBeenCalledWith({rows: 3, cols: 4});
+  });
+
+  it('accepts dimensions larger than the visual grid', () => {
+    const closeMock = jest.fn();
+    const instance = ReactDOM.render(
+      <TableGridSizeEditor close={closeMock} />,
+      container
+    ) as unknown as TableGridSizeEditor;
+
+    instance._onDimensionChange('rows')({
+      currentTarget: {value: '0'},
+    } as React.ChangeEvent<HTMLInputElement>);
+    instance._onDimensionChange('cols')({
+      currentTarget: {value: '99'},
+    } as React.ChangeEvent<HTMLInputElement>);
+    instance._onDimensionChange('rows')({
+      currentTarget: {value: ''},
+    } as React.ChangeEvent<HTMLInputElement>);
+
+    expect(instance.state).toEqual({rows: 1, cols: 99});
+    expect(
+      container.querySelector<HTMLInputElement>('[aria-label="Table rows"]')
+        ?.value
+    ).toBe('1');
+    expect(
+      container.querySelector<HTMLInputElement>(
+        '[aria-label="Table columns"]'
+      )?.value
+    ).toBe('99');
+    expect(
+      container.querySelector<HTMLInputElement>('[aria-label="Table rows"]')
+        ?.max
+    ).toBe('');
+    expect(
+      container.querySelectorAll('.czi-table-grid-size-editor-cell')
+    ).toHaveLength(45);
+
+    container
+      .querySelector('form')
+      ?.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+    expect(closeMock).toHaveBeenCalledWith({rows: 1, cols: 99});
   });
 
   it('updates grid size on simulated mouse move', () => {
@@ -149,8 +213,8 @@ it('should handle _onMouseMove and update grid size correctly', () => {
     bubbles: true,
     clientX: 30,
     clientY: 40,
-    screenX: 10,
-    screenY: 10,
+    screenX: 1030,
+    screenY: 1040,
   });
 
   // Call the method directly to ensure branch coverage
@@ -159,6 +223,7 @@ it('should handle _onMouseMove and update grid size correctly', () => {
   // Assertions
   expect(cancelSpy).toHaveBeenCalledWith(1); // old frame cancelled
   expect(rafSpy).toHaveBeenCalled(); // new frame requested
+  expect(fromXY).toHaveBeenCalledWith(30, 40, 10);
   expect(instance._mx).toBe(30);
   expect(instance._my).toBe(40);
 
@@ -180,7 +245,7 @@ it('should ignore mouse enter when currentTarget is not an HTMLElement', () => {
   expect(addSpy).not.toHaveBeenCalledWith('mousemove', expect.any(Function), true);
 });
 
-it('should not request a frame when mouse position does not change', () => {
+it('should not request a frame when the pointer is outside the grid', () => {
   const closeMock = jest.fn();
   const instance = new TableGridSizeEditor({ close: closeMock });
   const rafSpy = jest.spyOn(global, 'requestAnimationFrame');
@@ -189,8 +254,8 @@ it('should not request a frame when mouse position does not change', () => {
   instance._mx = 25;
   instance._my = 35;
   instance._onMouseMove(new MouseEvent('mousemove', {
-    clientX: 25,
-    clientY: 35,
+    clientX: 40,
+    clientY: 50,
     screenX: 5,
     screenY: 5,
   }));

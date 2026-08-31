@@ -50,7 +50,6 @@ type CellRange = {
   rowEnd: number;
   rowStart: number;
 };
-
 type ColorEditorResult = {
   color: string | null;
   selectedPosition?: string[];

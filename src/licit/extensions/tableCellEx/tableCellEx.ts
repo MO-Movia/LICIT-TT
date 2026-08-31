@@ -5,9 +5,16 @@
 
 import { TableCell } from '@tiptap/extension-table-cell';
 import { normalizeCssSize, normalizeValue } from '../table.utils';
+import {tableTextRotationAttribute} from '../tableTextRotation';
 
 const DEFAULT_LINE_HEIGHT = 'normal';
 const DEFAULT_BORDER_WIDTH = '1px';
+const INLINE_STYLE_DECLARATION_PATTERN =
+  /(?:^|;)\s*(?:--)?[a-z][\w-]*\s*:/i;
+
+function isInlineStyleDeclaration(value: string): boolean {
+  return INLINE_STYLE_DECLARATION_PATTERN.test(value);
+}
 
 function createOverrideAttribute(attributeName: string, datasetName: string) {
   return {
@@ -319,7 +326,12 @@ export const TableCellEx = TableCell.extend({
 
           return {
             'data-cell-style': cellStyle,
-            style: cellStyle,
+            // FrameMaker stores paragraph class names (for example `para`) in
+            // this metadata field. A class name is not CSS and must not be
+            // concatenated into the cell's inline style declaration.
+            ...(isInlineStyleDeclaration(cellStyle)
+              ? {style: cellStyle}
+              : {}),
           };
         },
         parseHTML: (element) => {
@@ -400,14 +412,13 @@ export const TableCellEx = TableCell.extend({
 
           return {
             'data-cell-margin-top': marginTop,
-            style: `margin-top: ${marginTop}; padding-top: ${marginTop}; --czi-cell-margin-top: ${marginTop};`,
+            style: `margin-top: ${marginTop}; --czi-cell-margin-top: ${marginTop};`,
           };
         },
         parseHTML: (element) => {
           return (
             normalizeValue(element.dataset.cellMarginTop) ||
-            normalizeValue(element.style.marginTop) ||
-            normalizeValue(element.style.paddingTop)
+            normalizeValue(element.style.marginTop)
           );
         },
       },
@@ -421,14 +432,13 @@ export const TableCellEx = TableCell.extend({
 
           return {
             'data-cell-margin-bottom': marginBottom,
-            style: `margin-bottom: ${marginBottom}; padding-bottom: ${marginBottom}; --czi-cell-margin-bottom: ${marginBottom};`,
+            style: `margin-bottom: ${marginBottom}; --czi-cell-margin-bottom: ${marginBottom};`,
           };
         },
         parseHTML: (element) => {
           return (
             normalizeValue(element.dataset.cellMarginBottom) ||
-            normalizeValue(element.style.marginBottom) ||
-            normalizeValue(element.style.paddingBottom)
+            normalizeValue(element.style.marginBottom)
           );
         },
       },
@@ -561,6 +571,7 @@ export const TableCellEx = TableCell.extend({
         'verticalAlignOverridden',
         'vertical-align-overridden'
       ),
+      textRotation: tableTextRotationAttribute,
     };
   },
 });

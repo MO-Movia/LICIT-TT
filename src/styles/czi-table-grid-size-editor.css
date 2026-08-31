@@ -32,3 +32,42 @@
   padding-bottom: 5px;
   text-align: center;
 }
+
+.czi-table-grid-size-editor-inputs {
+  align-items: end;
+  border-top: var(--czi-border-grey);
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 1fr 1fr auto;
+  padding: 8px;
+  position: relative;
+  z-index: 3;
+}
+
+.czi-table-grid-size-editor-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.czi-table-grid-size-editor-inputs input {
+  box-sizing: border-box;
+  font: inherit;
+  min-width: 48px;
+  padding: 4px;
+  width: 100%;
+}
+
+.czi-table-grid-size-editor-inputs button {
+  background: var(--czi-button-bg);
+  border: var(--czi-border-grey);
+  color: var(--czi-button-text-color);
+  cursor: pointer;
+  font: inherit;
+  padding: 5px 8px;
+}
+
+.czi-table-grid-size-editor-inputs button:focus,
+.czi-table-grid-size-editor-inputs button:hover {
+  background: var(--czi-button-hover);
+}

@@ -75,8 +75,6 @@ class TableInsertCommand extends UICommand {
           if (this._popUp) {
             this._popUp = null;
             resolve(val);
-            const element = document.getElementById((anchor as HTMLElement).offsetParent.id);
-            element.remove();
           }
         },
       });

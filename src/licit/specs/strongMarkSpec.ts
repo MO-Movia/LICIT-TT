@@ -35,7 +35,15 @@ const StrongMarkSpec: MarkSpec = {
     },
   ],
   toDOM(mark) {
-    return ['strong', { overridden: mark.attrs.overridden }, 0];
+    // Explicitly pin the mark to CSS bold. The browser's user-agent
+    // `strong { font-weight: bolder }` rule compounds a bold table-cell
+    // inheritance (700 -> 900), which makes imported and overridden table
+    // text heavier than its source style.
+    return [
+      'strong',
+      {overridden: mark.attrs.overridden, style: 'font-weight: 700;'},
+      0,
+    ];
   },
 };
 
