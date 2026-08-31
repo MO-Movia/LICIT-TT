@@ -4,11 +4,52 @@
  */
 
 import type { NodeSpec } from 'prosemirror-model';
+
+// Dedicated EIC image payload. The multimedia plugin still owns the nested
+// image node and its attributes/NodeView; this wrapper only supplies a block
+// boundary without introducing a paragraph and its inline baseline.
+export const enhancedTableFigureImageNodeSpec: NodeSpec = {
+  group: 'block',
+  content: 'inline?',
+  isolating: true,
+  selectable: false,
+  parseDOM: [{ tag: "div[data-type='enhanced-table-figure-image']" }],
+  toDOM() {
+    return [
+      'div',
+      {
+        'data-type': 'enhanced-table-figure-image',
+        class: 'enhanced-table-figure-image',
+      },
+      0,
+    ];
+  },
+};
+
+// Dedicated EIC table payload. The core table remains the child so the
+// existing table extensions continue to own editing and rendering.
+export const enhancedTableFigureTableNodeSpec: NodeSpec = {
+  group: 'block',
+  content: 'table',
+  isolating: true,
+  selectable: false,
+  parseDOM: [{ tag: "div[data-type='enhanced-table-figure-table']" }],
+  toDOM() {
+    return [
+      'div',
+      {
+        'data-type': 'enhanced-table-figure-table',
+        class: 'enhanced-table-figure-table',
+      },
+      0,
+    ];
+  },
+};
 // Body spec – where the table (or multimedia) is inserted.
 export const enhancedTableFigureBodyNodeSpec: NodeSpec = {
   group: 'block',
   selectable: false,
-  content: 'block+', // This will allow your table node from the table plugin.
+  content: '(enhanced_table_figure_table | enhanced_table_figure_image)',
   parseDOM: [{ tag: "div[data-type='enhanced-table-figure-body']" }],
   toDOM() {
     return [
@@ -87,6 +128,7 @@ export const enhancedTableFigureCapcoNodeSpec: NodeSpec = {
 export const enhancedTableFigureNodeSpec: NodeSpec = {
   group: 'block',
   selectable: true,
+  allowGapCursor: false,
   content:
     'enhanced_table_figure_body enhanced_table_figure_notes? enhanced_table_figure_capco',
   isolating: true,

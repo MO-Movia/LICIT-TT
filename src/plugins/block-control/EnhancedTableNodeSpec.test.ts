@@ -5,11 +5,18 @@
 
 import {
   enhancedTableFigureBodyNodeSpec,
+  enhancedTableFigureImageNodeSpec,
+  enhancedTableFigureTableNodeSpec,
   enhancedTableFigureNotesNodeSpec,
   enhancedTableFigureCapcoNodeSpec,
   enhancedTableFigureNodeSpec,
 } from './EnhancedTableNodeSpec';
-import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import {
+  DOMParser as ProseMirrorDOMParser,
+  Fragment,
+  Node as ProseMirrorNode,
+  Schema,
+} from 'prosemirror-model';
 
 const mockNode: ProseMirrorNode = { attrs: {} } as unknown as ProseMirrorNode;
 
@@ -34,7 +41,49 @@ describe('Enhanced Table Figure Node Specs', () => {
     });
 
     it('has correct content expression', () => {
-      expect(enhancedTableFigureBodyNodeSpec.content).toBe('block+');
+      expect(enhancedTableFigureBodyNodeSpec.content).toBe(
+        '(enhanced_table_figure_table | enhanced_table_figure_image)'
+      );
+    });
+  });
+
+  describe('dedicated EIC payload specs', () => {
+    it('defines an isolated image payload without a paragraph', () => {
+      expect(enhancedTableFigureImageNodeSpec).toEqual(
+        expect.objectContaining({
+          content: 'inline?',
+          group: 'block',
+          isolating: true,
+          selectable: false,
+        })
+      );
+      expect(enhancedTableFigureImageNodeSpec.toDOM(mockNode)).toEqual([
+        'div',
+        {
+          'data-type': 'enhanced-table-figure-image',
+          class: 'enhanced-table-figure-image',
+        },
+        0,
+      ]);
+    });
+
+    it('defines an isolated table payload', () => {
+      expect(enhancedTableFigureTableNodeSpec).toEqual(
+        expect.objectContaining({
+          content: 'table',
+          group: 'block',
+          isolating: true,
+          selectable: false,
+        })
+      );
+      expect(enhancedTableFigureTableNodeSpec.toDOM(mockNode)).toEqual([
+        'div',
+        {
+          'data-type': 'enhanced-table-figure-table',
+          class: 'enhanced-table-figure-table',
+        },
+        0,
+      ]);
     });
   });
 
@@ -116,6 +165,9 @@ describe('Enhanced Table Figure Node Specs', () => {
   });
 
   describe('enhancedTableFigureNodeSpec', () => {
+    it('disables gap cursors at internal EIC boundaries', () => {
+      expect(enhancedTableFigureNodeSpec.allowGapCursor).toBe(false);
+    });
     it('returns correct DOM output with all attrs set', () => {
       const mockNode = {
         attrs: {
@@ -200,5 +252,74 @@ describe('Enhanced Table Figure Node Specs', () => {
     expect(enhancedTableFigureNodeSpec.content).toBe(
       'enhanced_table_figure_body enhanced_table_figure_notes? enhanced_table_figure_capco'
     );
+  });
+});
+
+describe('Enhanced Table Figure schema integration', () => {
+  const baseSchema = new Schema({
+    nodes: {
+      doc: {content: 'block+'},
+      paragraph: {content: 'inline*', group: 'block'},
+      text: {group: 'inline'},
+      image: {
+        attrs: {src: {default: ''}},
+        group: 'inline',
+        inline: true,
+      },
+      table: {
+        group: 'block',
+        parseDOM: [{tag: 'table'}],
+        tableRole: 'table',
+        toDOM: () => ['table'],
+      },
+    },
+  });
+  const schema = new Schema({
+    marks: baseSchema.spec.marks,
+    nodes: baseSchema.spec.nodes.append({
+      enhanced_table_figure: enhancedTableFigureNodeSpec,
+      enhanced_table_figure_body: enhancedTableFigureBodyNodeSpec,
+      enhanced_table_figure_image: enhancedTableFigureImageNodeSpec,
+      enhanced_table_figure_table: enhancedTableFigureTableNodeSpec,
+      enhanced_table_figure_notes: enhancedTableFigureNotesNodeSpec,
+      enhanced_table_figure_capco: enhancedTableFigureCapcoNodeSpec,
+    }),
+  });
+
+  it('accepts only dedicated EIC payload wrappers in the body', () => {
+    const image = schema.nodes.image.create({src: 'figure.png'});
+    const imagePayload = schema.nodes.enhanced_table_figure_image.create(
+      {},
+      image
+    );
+    const table = schema.nodes.table.create();
+    const tablePayload = schema.nodes.enhanced_table_figure_table.create(
+      {},
+      table
+    );
+    const bodyType = schema.nodes.enhanced_table_figure_body;
+
+    expect(bodyType.validContent(Fragment.from(imagePayload))).toBe(true);
+    expect(bodyType.validContent(Fragment.from(tablePayload))).toBe(true);
+    expect(bodyType.validContent(Fragment.from(table))).toBe(false);
+    expect(
+      bodyType.validContent(Fragment.from(schema.nodes.paragraph.create()))
+    ).toBe(false);
+  });
+
+  it('parses a legacy direct EIC table into its dedicated payload', () => {
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <div data-type="enhanced-table-figure">
+        <div data-type="enhanced-table-figure-body"><table></table></div>
+        <div data-type="enhanced-table-figure-capco">CAPCO</div>
+      </div>
+    `;
+
+    const parsed = ProseMirrorDOMParser.fromSchema(schema).parse(container);
+    const payload = parsed.firstChild?.firstChild?.firstChild;
+
+    expect(payload?.type.name).toBe('enhanced_table_figure_table');
+    expect(payload?.firstChild?.type.name).toBe('table');
   });
 });

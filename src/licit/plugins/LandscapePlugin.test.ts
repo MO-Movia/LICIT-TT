@@ -13,12 +13,29 @@ import type { EditorView } from 'prosemirror-view';
 import { LandscapePlugin } from './LandscapePlugin';
 import { LandscapeCommand } from '../commands/LandscapeCommand';
 import LandscapeSectionNodeSpec from '../specs/landscapeSectionNodeSpec';
+import * as ResizeObserver from '../resizeObserver';
+
+jest.mock('../resizeObserver', () => ({
+    __esModule: true,
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+}));
 
 describe('LandscapePlugin', () => {
     let schema: Schema;
+    let animationCallbacks: FrameRequestCallback[];
+    const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+    const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
 
     beforeEach(() => {
+        jest.clearAllMocks();
         document.body.innerHTML = '';
+        animationCallbacks = [];
+        globalThis.requestAnimationFrame = jest.fn((callback) => {
+            animationCallbacks.push(callback);
+            return animationCallbacks.length;
+        });
+        globalThis.cancelAnimationFrame = jest.fn();
         schema = new Schema({
             nodes: {
                 doc: { content: 'block+' },
@@ -28,6 +45,11 @@ describe('LandscapePlugin', () => {
             },
             marks: {},
         });
+    });
+
+    afterEach(() => {
+        globalThis.requestAnimationFrame = originalRequestAnimationFrame;
+        globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
     });
 
     test('should initialize with a LandscapeCommand', () => {
@@ -199,6 +221,71 @@ describe('LandscapePlugin', () => {
         const proxyView = plugin.spec.view?.(view);
         expect(document.querySelector('.czi-landscape-horizontal-proxy')).toBeNull();
         proxyView?.destroy?.();
+    });
+
+    test('refreshes and cleans up the proxy resize observation', () => {
+        const plugin = new LandscapePlugin();
+        const frame = document.createElement('div');
+        frame.className = 'czi-editor-frame-body';
+        const scroll = document.createElement('div');
+        scroll.className = 'czi-editor-frame-body-scroll';
+        frame.appendChild(scroll);
+        document.body.appendChild(frame);
+
+        const editorDom = document.createElement('div');
+        const landscape = document.createElement('section');
+        landscape.className = 'section-landscape';
+        scroll.appendChild(editorDom);
+        editorDom.appendChild(landscape);
+        Object.defineProperty(scroll, 'clientWidth', {
+            configurable: true,
+            value: 900,
+        });
+        Object.defineProperty(landscape, 'clientWidth', {
+            configurable: true,
+            value: 900,
+        });
+        Object.defineProperty(landscape, 'scrollWidth', {
+            configurable: true,
+            value: 1054,
+        });
+        landscape.getBoundingClientRect = () =>
+            ({top: 100, bottom: 200, left: 0, right: 900, width: 900, height: 100} as DOMRect);
+        scroll.getBoundingClientRect = () =>
+            ({top: 0, bottom: 500, left: 0, right: 900, width: 900, height: 500} as DOMRect);
+
+        const state = EditorState.create({schema});
+        const view = {state, dom: editorDom} as unknown as EditorView;
+        const proxyView = plugin.spec.view?.(view) as unknown as {
+            destroy: () => void;
+            proxyScrollbar: HTMLElement;
+        };
+        expect(ResizeObserver.observe).toHaveBeenCalledWith(
+            frame,
+            expect.any(Function)
+        );
+        expect(proxyView.proxyScrollbar.classList.contains('czi-visible')).toBe(true);
+
+        Object.defineProperty(landscape, 'clientWidth', {
+            configurable: true,
+            value: 1054,
+        });
+        const resizeCallback = (ResizeObserver.observe as jest.Mock).mock
+            .calls[0][1];
+        resizeCallback();
+        const pendingFrame = animationCallbacks.length;
+        animationCallbacks.shift()?.(0);
+        expect(proxyView.proxyScrollbar.classList.contains('czi-visible')).toBe(false);
+
+        resizeCallback();
+        proxyView.destroy();
+        expect(ResizeObserver.unobserve).toHaveBeenCalledWith(
+            frame,
+            resizeCallback
+        );
+        expect(globalThis.cancelAnimationFrame).toHaveBeenCalledWith(
+            pendingFrame
+        );
     });
 
     test('hides proxy when no landscape nodes are present', () => {

@@ -7,7 +7,13 @@ import { Node as ProseMirrorNode } from 'prosemirror-model';
 import { TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView, NodeView } from 'prosemirror-view';
 
-import { addNotesCommand } from './EnhancedTableCommands';
+import {
+  addNotesCommand,
+  convertEnhancedTableFigureToLandscape,
+  convertEnhancedTableFigureToPortrait,
+  isEnhancedTableFigureInLandscape,
+} from './EnhancedTableCommands';
+import { LANDSCAPE_SECTION } from './Constants';
 import {
   atAnchorBottomLeft,
   atAnchorTopCenter,
@@ -229,6 +235,33 @@ export class EnhancedTableFigureView implements NodeView {
     const hasNotes = this.hasNotes();
     const canAddNotes =
       !hasNotes && (figureType === 'table' || figureType === 'figure');
+    const hasLandscapeSchema = Boolean(
+      this.view.state.schema.nodes[LANDSCAPE_SECTION]
+    );
+    const isInsideLandscape =
+      hasLandscapeSchema &&
+      isEnhancedTableFigureInLandscape(
+        this.view.state.doc,
+        this.getPos()
+      );
+    const orientationMenuItem: BlockControlMenuItem | null =
+      hasLandscapeSchema
+        ? {
+          id: isInsideLandscape
+            ? 'convert-to-portrait'
+            : 'convert-to-landscape',
+          label: isInsideLandscape
+            ? 'Convert To Portrait'
+            : 'Convert To Landscape',
+          icon: getBlockControlIcon(
+            isInsideLandscape ? 'portrait' : 'landscape',
+            isInsideLandscape
+              ? 'Convert To Portrait'
+              : 'Convert To Landscape'
+          ),
+          action: () => this.handleOrientationConversion(!isInsideLandscape),
+        }
+        : null;
 
     return [
       {
@@ -272,6 +305,7 @@ export class EnhancedTableFigureView implements NodeView {
         icon: getBlockControlIcon('insertBelow', 'Insert Paragraph Below'),
         action: () => this.insertParagraphBelow(),
       },
+      ...(orientationMenuItem ? [orientationMenuItem] : []),
       {
         id: 'apply-style',
         label: 'Apply Style',
@@ -428,6 +462,21 @@ export class EnhancedTableFigureView implements NodeView {
     const { state, dispatch } = this.view;
     const pos = this.getPos();
     dispatch(state.tr.delete(pos, pos + this.node.nodeSize));
+  }
+
+  private handleOrientationConversion(toLandscape: boolean): void {
+    const { state, dispatch } = this.view;
+    const tr = toLandscape
+      ? convertEnhancedTableFigureToLandscape(
+        state.tr,
+        state.schema,
+        this.getPos()
+      )
+      : convertEnhancedTableFigureToPortrait(state.tr, this.getPos());
+
+    if (tr.steps.length) {
+      dispatch(tr);
+    }
   }
 
   private handleCrop(): void {

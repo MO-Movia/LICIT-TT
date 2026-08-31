@@ -19,6 +19,8 @@ const ICON_CLASS_NAMES = {
   floatRight: 'fa-outdent',
   insertAbove: 'fa-arrow-up',
   insertBelow: 'fa-arrow-down',
+  landscape: 'fa-picture-o',
+  portrait: 'fa-file-o',
   resetCrop: 'fa-history',
   resetImage: 'fa-refresh',
   fitWidth: 'fa-arrows-h',

@@ -29,6 +29,7 @@ describe('insertEnhancedImageFigure', () => {
     nodes: {
       enhanced_table_figure?: { create: jest.Mock };
       enhanced_table_figure_body?: { create: jest.Mock };
+      enhanced_table_figure_image?: { create: jest.Mock };
       image?: { create: jest.Mock };
       enhanced_table_figure_capco?: { create: jest.Mock };
       paragraph?: { create: jest.Mock; createAndFill: jest.Mock };
@@ -59,6 +60,11 @@ describe('insertEnhancedImageFigure', () => {
         enhanced_table_figure_body: {
           create: jest.fn().mockReturnValue({ type: 'body' }),
         },
+        enhanced_table_figure_image: {
+          create: jest.fn().mockReturnValue({
+            type: { name: 'enhanced_table_figure_image' },
+          }),
+        },
         image: {
           create: jest.fn().mockReturnValue({ type: { name: 'image' } }),
         },
@@ -74,7 +80,7 @@ describe('insertEnhancedImageFigure', () => {
     };
   });
 
-  it('should wrap the inline image in a paragraph before creating the body', () => {
+  it('should wrap the image in the dedicated EIC image payload', () => {
     insertEnhancedImageFigure(
       mockTr,
       mockSchema as unknown as Schema,
@@ -85,7 +91,8 @@ describe('insertEnhancedImageFigure', () => {
     );
 
     const imageNode = mockSchema.nodes.image.create.mock.results[0].value;
-    const imageParagraph = mockSchema.nodes.paragraph.create.mock.results[0].value;
+    const imagePayload =
+      mockSchema.nodes.enhanced_table_figure_image.create.mock.results[0].value;
 
     expect(mockSchema.nodes.image.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -96,13 +103,15 @@ describe('insertEnhancedImageFigure', () => {
       }),
       null
     );
-    expect(mockSchema.nodes.paragraph.create).toHaveBeenCalledWith(
+    expect(
+      mockSchema.nodes.enhanced_table_figure_image.create
+    ).toHaveBeenCalledWith(
       {},
       imageNode
     );
     expect(mockSchema.nodes.enhanced_table_figure_body.create).toHaveBeenCalledWith(
       {},
-      imageParagraph
+      imagePayload
     );
   });
 
@@ -146,7 +155,7 @@ describe('insertEnhancedImageFigure', () => {
     expect(result).toBe(mockTr);
   });
 
-  it('should wrap the image in a paragraph before passing it to the body', () => {
+  it('should pass the EIC image payload to the body', () => {
     insertEnhancedImageFigure(
       mockTr,
       mockSchema as unknown as Schema,
@@ -160,16 +169,18 @@ describe('insertEnhancedImageFigure', () => {
       null
     );
 
-    // paragraph.create should be called with the image node as content
-    expect(mockSchema.nodes.paragraph?.create).toHaveBeenCalledWith(
+    expect(
+      mockSchema.nodes.enhanced_table_figure_image?.create
+    ).toHaveBeenCalledWith(
       {},
       expect.objectContaining({ type: { name: 'image' } })
     );
 
-    // body.create should receive the paragraph (block child), not the bare image
     expect(mockSchema.nodes.enhanced_table_figure_body?.create).toHaveBeenCalledWith(
       {},
-      expect.objectContaining({ type: { name: 'paragraph' } })
+      expect.objectContaining({
+        type: { name: 'enhanced_table_figure_image' },
+      })
     );
   });
 });
