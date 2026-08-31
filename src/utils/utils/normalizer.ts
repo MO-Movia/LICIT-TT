@@ -28,21 +28,22 @@ export async function normalizeDoc(
   const div = document.createElement('div');
   div.hidden = true;
   document.body.appendChild(div);
-  return new Promise((resolve, reject) => {
-    const props: LicitProps = {
-      data: repairDoc(doc),
-      plugins,
-      readOnly: false,
-      disabled: false,
-      embedded: false,
-      height: '100vh',
-      width: '100vw',
-      onReady: (licit) => resolve(toSimpleJson(licit.editorView?.state.doc)),
-    };
-    const root = ReactDOM.createRoot(div, {
-      onRecoverableError: reject,
-    });
-    try {
+  let root: ReactDOM.Root | undefined;
+  try {
+    return await new Promise((resolve, reject) => {
+      const props: LicitProps = {
+        data: repairDoc(doc),
+        plugins,
+        readOnly: false,
+        disabled: false,
+        embedded: false,
+        height: '100vh',
+        width: '100vw',
+        onReady: (licit) => resolve(toSimpleJson(licit.editorView?.state.doc)),
+      };
+      root = ReactDOM.createRoot(div, {
+        onRecoverableError: reject,
+      });
       root.render(
         React.createElement(
           React.StrictMode,
@@ -54,11 +55,11 @@ export async function normalizeDoc(
         () => reject(new Error('Timeout. Licit Editor did not respond.')),
         timeout
       );
-    } finally {
-      root.unmount();
-      div.remove();
-    }
-  });
+    });
+  } finally {
+    root?.unmount();
+    div.remove();
+  }
 }
 
 /**

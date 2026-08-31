@@ -13,6 +13,7 @@ import {INFO_ICON} from './constants';
 import {InfoIconDialog} from './infoIconDialog';
 import {findParentNodeOfTypeClosestToPos} from 'prosemirror-utils';
 import {sanitizeURL} from './plugins/menu/sanitizeURL';
+import {sanitizeDescription} from './sanitizeDescription';
 
 export type CBFn = () => void;
 
@@ -309,7 +310,9 @@ export class InfoIconView {
       const tooltip = this.dom.appendChild(document.createElement('div'));
       tooltip.className = 'molcit-infoicon-tooltip';
       const ttContent = tooltip.appendChild(document.createElement('div'));
-      ttContent.innerHTML = this.node.attrs.description;
+      ttContent.innerHTML = sanitizeDescription(
+        this.node.attrs.description
+      );
       ttContent.className = 'ProseMirror molcit-infoicon-tooltip-content';
       ttContent.id = 'tooltip-content';
       this.setContentRight(e, parent,  tooltip, ttContent);

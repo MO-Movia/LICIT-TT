@@ -15,6 +15,7 @@ import {plugins} from './plugins';
 import {FaIcons, FONTAWESOMEICONS} from './ui/FaIcon';
 import {SELECTEDINFOICON} from './constants';
 import { UICommand } from '../../core';
+import {sanitizeDescription} from './sanitizeDescription';
 
 type InfoDialogProps = {
   infoIcon: {name; unicode};
@@ -62,7 +63,7 @@ export class InfoIconDialog extends React.PureComponent<
     });
 
     const content = document.getElementById('content');
-    content.innerHTML = this.props.description;
+    content.innerHTML = sanitizeDescription(this.props.description);
     this.view = new EditorView(document.querySelector('#editor'), {
       state: EditorState.create({
         doc: DOMParser.fromSchema(mySchema).parse(
