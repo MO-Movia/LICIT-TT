@@ -93,4 +93,12 @@ describe('TableCellMenu', () => {
       {}
     );
   });
+
+  test('includes the clockwise text rotation option', () => {
+    expect(
+      TABLE_COMMANDS_GROUP.some(
+        (group) => 'Rotate Text 90° Clockwise' in group
+      )
+    ).toBe(true);
+  });
 });

@@ -5,6 +5,7 @@
 
 import { TableCell } from '@tiptap/extension-table-cell';
 import { normalizeCssSize, normalizeValue } from '../table.utils';
+import {tableTextRotationAttribute} from '../tableTextRotation';
 
 const DEFAULT_LINE_HEIGHT = 'normal';
 const DEFAULT_BORDER_WIDTH = '1px';
@@ -570,6 +571,7 @@ export const TableCellEx = TableCell.extend({
         'verticalAlignOverridden',
         'vertical-align-overridden'
       ),
+      textRotation: tableTextRotationAttribute,
     };
   },
 });

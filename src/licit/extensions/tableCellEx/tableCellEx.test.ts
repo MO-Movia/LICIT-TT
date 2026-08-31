@@ -75,6 +75,7 @@ describe('TableCellEx Extension', () => {
     expect(node.spec.attrs).toHaveProperty('letterSpacing');
     expect(node.spec.attrs).toHaveProperty('marginTop');
     expect(node.spec.attrs).toHaveProperty('marginBottom');
+    expect(node.spec.attrs).toHaveProperty('textRotation');
     expect(node.spec.attrs?.cellWidth.default).toBe(null);
     expect(node.spec.attrs?.cellStyle.default).toBe(null);
     expect(node.spec.attrs?.fontSize.default).toBe(null);
@@ -136,6 +137,29 @@ describe('TableCellEx Extension', () => {
     expect(html).toContain('--czi-cell-font-size: 45px');
     expect(html).toContain('vertical-align: top');
     expect(html).not.toContain('45pxvertical-align');
+  });
+
+  test('should render and parse clockwise text rotation', () => {
+    editor.commands.setCellAttribute('textRotation', 'clockwise');
+
+    const html = editor.getHTML();
+    expect(html).toContain('data-cell-text-rotation="clockwise"');
+    expect(html).toContain('writing-mode: vertical-rl');
+    expect(html).toContain('text-orientation: mixed');
+    expect(html).toContain('text-align: center');
+    expect(html).toContain('vertical-align: middle');
+
+    editor.commands.setContent(
+      '<table><tr><td style="writing-mode: sideways-rl">Cell</td></tr></table>'
+    );
+
+    let textRotation: string | null = null;
+    editor.state.doc.descendants((node: PMNode) => {
+      if (node.type.name === 'tableCell') {
+        textRotation = node.attrs.textRotation;
+      }
+    });
+    expect(textRotation).toBe('clockwise');
   });
 
   test('should keep an imported cell style class as metadata only', () => {
