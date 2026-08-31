@@ -155,6 +155,7 @@ describe('FontSizeCommandMenuButton (pure Jest)', () => {
     expect(parseFontSizeInput('0')).toBeNull();
     expect(parseFontSizeInput('-1')).toBeNull();
     expect(parseFontSizeInput('10pt')).toBeNull();
+    expect(parseFontSizeInput(`${'1'.repeat(100_000)}x`)).toBeNull();
   });
 
   it('applies a decimal font size when Enter is pressed', () => {

@@ -119,18 +119,39 @@ describe('UICommand', () => {
   });
 
   describe('execute', () => {
-  it('should execute', async () => {
-    const spy = jest
-      .spyOn(uiCmd, 'waitForUserInput')
-      .mockResolvedValue({});
+    it('should execute and notify after successful asynchronous execution', async () => {
+      const waitForUserInputSpy = jest
+        .spyOn(uiCmd, 'waitForUserInput')
+        .mockResolvedValue({});
+      jest.spyOn(uiCmd, 'executeWithUserInput').mockReturnValue(true);
+      const onExecuted = jest.fn();
 
-    const state_ = {} as unknown as EditorState;
+      const state_ = {} as unknown as EditorState;
 
-    await Promise.resolve(uiCmd.execute(state_));
+      uiCmd.execute(state_, undefined, undefined, undefined, onExecuted);
+      await Promise.resolve();
 
-    expect(spy).toHaveBeenCalled();
+      expect(waitForUserInputSpy).toHaveBeenCalled();
+      expect(onExecuted).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not notify when asynchronous execution is cancelled', async () => {
+      jest.spyOn(uiCmd, 'waitForUserInput').mockResolvedValue(undefined);
+      jest.spyOn(uiCmd, 'executeWithUserInput').mockReturnValue(false);
+      const onExecuted = jest.fn();
+
+      uiCmd.execute(
+        {} as EditorState,
+        undefined,
+        undefined,
+        undefined,
+        onExecuted
+      );
+      await Promise.resolve();
+
+      expect(onExecuted).not.toHaveBeenCalled();
+    });
   });
-});
 
   describe('isEnabled', () => {
     it('should call dryRun and execute with the correct arguments', () => {

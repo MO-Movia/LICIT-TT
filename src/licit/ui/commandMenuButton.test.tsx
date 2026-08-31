@@ -224,6 +224,32 @@ describe('CommandMenuButton', () => {
     expect(command.execute).toHaveBeenCalledTimes(2);
   });
 
+  test('should pass menu cleanup callback to asynchronous commands', () => {
+    const onCommand = jest.fn();
+    const command = {
+      execute: jest.fn().mockReturnValue(false),
+    };
+    const event = {type: 'mouseenter'} as React.SyntheticEvent;
+    const instance = new CommandMenu({
+      commandGroups: [],
+      dispatch: mockProps.dispatch,
+      editorState: mockProps.editorState,
+      editorView: mockProps.editorView,
+      onCommand,
+      theme: 'light',
+    });
+
+    instance._execute(command as never, event);
+
+    expect(command.execute).toHaveBeenCalledWith(
+      mockProps.editorState,
+      mockProps.dispatch,
+      mockProps.editorView,
+      event,
+      onCommand
+    );
+  });
+
   test('should set child popup positioning props for submenu content', () => {
     const instance = new (CommandMenuButton)({
       ...mockProps,

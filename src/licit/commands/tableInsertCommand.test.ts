@@ -147,18 +147,18 @@ describe('TableInsertCommand', () => {
       },
     } as unknown as EditorState;
 
-    // Mock DOM element to be returned by getElementById
-    const mockElement = document.createElement('div');
-    mockElement.id = 'parent-id';
-    document.getElementById = jest.fn().mockReturnValue(mockElement);
-    // Mock the offsetParent to simulate a parent element with an id
-    Object.defineProperty(mockElement, 'offsetParent', {
-      value: {id: 'parent-id'},
+    const parentMenu = document.createElement('div');
+    parentMenu.id = 'parent-id';
+    const anchor = document.createElement('div');
+    parentMenu.appendChild(anchor);
+    document.body.appendChild(parentMenu);
+    Object.defineProperty(anchor, 'offsetParent', {
+      value: parentMenu,
     });
 
     const _dispatch = jest.fn();
     const event_ = {
-      currentTarget: mockElement,
+      currentTarget: anchor,
     } as unknown as Event;
 
     const editorview = {} as unknown as EditorView;
@@ -177,7 +177,8 @@ describe('TableInsertCommand', () => {
 
     await expect(result).resolves.toBe('mocked value');
 
-    expect(result).toBeDefined();
+    expect(parentMenu.isConnected).toBe(true);
+    parentMenu.remove();
   });
 
   it('waitForUserInput should resolve with undefined if _popUp is already set', async () => {

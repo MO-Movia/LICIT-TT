@@ -45,7 +45,7 @@ const COMMAND_GROUPS = [
 
 export function parseFontSizeInput(value: string): number | null {
   const normalized = value.trim();
-  if (!/^(?:\d+\.?\d*|\.\d+)$/.test(normalized)) {
+  if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) {
     return null;
   }
 
