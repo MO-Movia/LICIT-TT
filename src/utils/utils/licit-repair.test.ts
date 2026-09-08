@@ -3,7 +3,7 @@
  * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
  */
 
-import type { LicitDocument } from '../models/licit-document';
+import type { LicitDocument, LicitNode } from '../models/licit-document';
 import { blankDocument, blankNode, textNode } from './licit-gen-json';
 import { repairDoc } from './licit-repair';
 
@@ -158,7 +158,7 @@ describe('Doc Repair', () => {
     expect(cell.content?.length).toBe(1);
   });
 
-  it('wraps a legacy direct EIC image in a paragraph', () => {
+  it('wraps a legacy direct EIC image in enhanced_table_figure_image', () => {
     const image = {
       ...blankNode('image'),
       attrs: {
@@ -185,14 +185,15 @@ describe('Doc Repair', () => {
     const result = repairDoc(inputDoc);
     const body = result.content[0].content?.[0];
 
-    expect(body?.content).toEqual([blankNode('paragraph', image)]);
+    expect(body?.content?.[0]?.type).toBe('enhanced_table_figure_image');
+    expect(body?.content?.[0]?.content?.[0]).toEqual(image);
     expect(result.content[1]).toEqual(
       blankNode('paragraph', textNode('Following content'))
     );
     expect(inputDoc.content[0].content?.[0].content).toEqual([image]);
   });
 
-  it('does not wrap an EIC image paragraph twice', () => {
+  it('wraps a legacy paragraph-wrapped EIC image in enhanced_table_figure_image', () => {
     const image = blankNode('image');
     const inputDoc = blankDocument(
       blankNode(
@@ -208,6 +209,140 @@ describe('Doc Repair', () => {
     const result = repairDoc(inputDoc);
     const body = result.content[0].content?.[0];
 
-    expect(body?.content).toEqual([blankNode('paragraph', image)]);
+    expect(body?.content?.[0]?.type).toBe('enhanced_table_figure_image');
+    expect(body?.content?.[0]?.content?.[0]).toEqual(image);
+  });
+
+  it('wraps a legacy bare EIC table in enhanced_table_figure_table', () => {
+    const table = blankNode('table');
+    const inputDoc = blankDocument(
+      blankNode(
+        'enhanced_table_figure',
+        blankNode('enhanced_table_figure_body', table),
+        blankNode('enhanced_table_figure_capco', textNode(' '))
+      )
+    );
+
+    const result = repairDoc(inputDoc);
+    const body = result.content[0].content?.[0];
+
+    expect(body?.content?.[0]?.type).toBe('enhanced_table_figure_table');
+    expect(body?.content?.[0]?.content?.[0]).toEqual(table);
+  });
+
+  it('recovers displaced notes from legacy EIC body', () => {
+    const table = blankNode('table');
+    const noteText = textNode('Note text');
+    const inputDoc = blankDocument(
+      blankNode(
+        'enhanced_table_figure',
+        blankNode(
+          'enhanced_table_figure_body',
+          table,
+          blankNode('paragraph', noteText)
+        ),
+        blankNode('enhanced_table_figure_capco', textNode(' '))
+      )
+    );
+
+    const result = repairDoc(inputDoc);
+    const figure = result.content[0];
+    // Body should only have the table wrapper
+    const body = figure.content?.[0];
+    expect(body?.content?.length).toBe(1);
+    expect(body?.content?.[0]?.type).toBe('enhanced_table_figure_table');
+    // A notes node should be inserted after the body
+    const notes = figure.content?.[1];
+    expect(notes?.type).toBe('enhanced_table_figure_notes');
+    expect(notes?.content?.[0]?.content?.[0]).toEqual(noteText);
+  });
+
+  it('appends displaced notes to existing EIC notes node', () => {
+    const image = blankNode('image');
+    const inputDoc = blankDocument(
+      blankNode(
+        'enhanced_table_figure',
+        blankNode(
+          'enhanced_table_figure_body',
+          image,
+          blankNode('paragraph', textNode('Recovered'))
+        ),
+        blankNode(
+          'enhanced_table_figure_notes',
+          blankNode('paragraph', textNode('Existing'))
+        ),
+        blankNode('enhanced_table_figure_capco', textNode(' '))
+      )
+    );
+
+    const result = repairDoc(inputDoc);
+    const figure = result.content[0];
+    const notes = figure.content?.[1];
+    expect(notes?.type).toBe('enhanced_table_figure_notes');
+    expect(notes?.content?.length).toBe(2);
+    expect(notes?.content?.[0]?.content?.[0]?.text).toBe('Existing');
+    expect(notes?.content?.[1]?.content?.[0]?.text).toBe('Recovered');
+  });
+
+  it('does not alter EIC body that already has wrapper nodes', () => {
+    const inputDoc = blankDocument(
+      blankNode(
+        'enhanced_table_figure',
+        blankNode(
+          'enhanced_table_figure_body',
+          blankNode(
+            'enhanced_table_figure_table',
+            blankNode('table')
+          )
+        ),
+        blankNode('enhanced_table_figure_capco', textNode(' '))
+      )
+    );
+
+    const result = repairDoc(inputDoc);
+    const body = result.content[0].content?.[0];
+    expect(body?.content?.[0]?.type).toBe('enhanced_table_figure_table');
+    expect(body?.content?.length).toBe(1);
+  });
+
+  it('migrates legacy string marks bold/italic to strong/em', () => {
+    const inputDoc: LicitDocument = blankDocument(
+      blankNode('paragraph', {
+        ...textNode('bold text'),
+        marks: ['bold'] as unknown[],
+      } as unknown as LicitNode)
+    );
+
+    const result = repairDoc(inputDoc);
+    const text = result.content[0].content?.[0];
+    expect(text?.marks).toEqual(['strong']);
+  });
+
+  it('migrates legacy object marks {type: bold} to {type: strong}', () => {
+    const inputDoc: LicitDocument = blankDocument(
+      blankNode('paragraph', {
+        ...textNode('bold text'),
+        marks: [{ type: 'bold', attrs: { overridden: false } }],
+      } as unknown as LicitNode)
+    );
+
+    const result = repairDoc(inputDoc);
+    const text = result.content[0].content?.[0];
+    expect(text?.marks).toEqual([
+      { type: 'strong', attrs: { overridden: false } },
+    ]);
+  });
+
+  it('leaves non-legacy marks unchanged', () => {
+    const inputDoc: LicitDocument = blankDocument(
+      blankNode('paragraph', {
+        ...textNode('underlined'),
+        marks: ['underline'],
+      } as unknown as LicitNode)
+    );
+
+    const result = repairDoc(inputDoc);
+    const text = result.content[0].content?.[0];
+    expect(text?.marks).toEqual(['underline']);
   });
 });

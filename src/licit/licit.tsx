@@ -18,7 +18,6 @@ import { createRoot } from 'react-dom/client';
 import { Extension, Editor } from '@tiptap/core';
 import { EditorEvents, getSchema, JSONContent, useEditor } from '@tiptap/react';
 import {StarterKit} from '@tiptap/starter-kit';
-import {Underline} from '@tiptap/extension-underline';
 import {Collaboration} from '@tiptap/extension-collaboration';
 import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
@@ -532,7 +531,6 @@ const LicitComponent = (
       ParagraphNodeSpec,
       Subscript,
       Superscript,
-      Underline,
       TextAlign.configure({
         types: [HEADING, PARAGRAPH],
       }),
